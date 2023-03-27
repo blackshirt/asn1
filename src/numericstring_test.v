@@ -51,7 +51,7 @@ fn test_encode_decode_numericstring_advanced() ! {
 			exp_length: dst.len
 			exp_bytelength: dst
 			exp_values: b
-			err: invalid_length_error
+			err: error('invalid_length_error')
 		}
 
 		exp << d

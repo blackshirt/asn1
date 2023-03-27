@@ -84,7 +84,7 @@ fn decode_printablestring(src []u8) !(Tag, string) {
 	out := read_bytes(src, next, length)!
 	for c in out {
 		if !is_printablestring(c) {
-			return invalid_char_error
+			return error('invalid char error')
 		}
 	}
 	return tag, out.bytestr()
@@ -94,7 +94,7 @@ fn serialize_printablestring(s string) ![]u8 {
 	p := s.bytes()
 	for c in s {
 		if !is_printablestring(c) {
-			return invalid_char_error
+			return error('invalid char error')
 		}
 	}
 

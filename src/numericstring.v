@@ -3,14 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-const (
-	invalid_length_error  = error('invalid length')
-	null_payload_error    = error('null payload')
-	invalid_char_error    = error('invalid char')
-	buffer_overflow_error = error('buffer overflow')
-	invalid_args_error    = error('invalid args provided')
-)
-
 // NumericString.
 //
 // NumericString was restricted character string types
@@ -65,7 +57,7 @@ fn serialize_numericstring(s string) ![]u8 {
 	// check for numeric string
 	for c in p {
 		if !is_numericstring(c) {
-			return asn1.invalid_char_error
+			return error('invalid_char_error')
 		}
 	}
 
@@ -106,7 +98,7 @@ fn decode_numericstring(payload []u8) !(Tag, string) {
 	// check for valid numeric value
 	for c in out {
 		if !is_numericstring(c) {
-			return asn1.invalid_char_error
+			return error('invalid char_error')
 		}
 	}
 	return tag, out.bytestr()
