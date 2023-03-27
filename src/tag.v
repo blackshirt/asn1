@@ -124,7 +124,7 @@ fn serialize_tag(mut dst []u8, tag Tag) []u8 {
 // for reading length part.
 fn read_tag(data []u8, loc int) !(Tag, int) {
 	if data.len < 1 {
-		return error('get ${data.len} for reading tag, its not enough')
+		return error('get ${data.len} bytes for reading tag, its not enough')
 	}
 	mut pos := loc
 	if pos > data.len {

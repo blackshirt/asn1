@@ -190,3 +190,40 @@ fn test_serialize_tag() {
 		assert dst == c.exp
 	}
 }
+
+// ASN.1 Test Suite from https://github.com/YuryStrozhevsky/asn1-test-suite
+fn test_tc1_tag_too_long() !{
+	value := [u8(0x9f), 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, 0x01, 0x40]
+
+	_, _ := read_tag(value, 0) or {
+		assert err == error('base 128 integer too large')
+		return
+	}
+}
+
+fn test_tc2_never_ending_tagnumber() ! {
+	value := []u8{}
+	_, _ := read_tag(value, 0) or {
+		assert err == error('get $value.len bytes for reading tag, its not enough')
+		return
+	}
+}
+
+fn test_tc3_bbsenc_standard_length_block() ! {
+	value := []u8{}
+	
+	_, _ := decode_length(value, 1) or {
+		assert err == error('truncated tag or length')
+		return
+	}
+}
+
+fn test_tc5_unnecessary_usage_of_long_length_form() !{
+	// this tag above 5 bytes.
+	value := [u8(0x9f), 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, 0x81, 0x01, 0x40]
+
+	_, _ := read_tag(value, 0) or {
+		assert err == error('base 128 integer too large')
+		return
+	}
+}

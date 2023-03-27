@@ -199,3 +199,16 @@ fn test_bigint_advanced() ! {
 	assert tag.number == int(TagType.integer)
 	assert back == inp
 }
+
+
+fn test_tc18_needlessly_value_long_encoding() ! {
+	data := [u8(0x02), 0x02, 0xf0, 0x01]
+	tag, back := decode_bigint(data)!
+	
+	out := der_decode(data)!
+
+	if out is AsnInteger {
+		assert *out as int == -4095
+	}
+	
+}
