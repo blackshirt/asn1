@@ -48,6 +48,111 @@ pub fn (enc Encoder) contents() ![]u8 {
 	return out
 }
 
+fn (e Encoder) as_sequence() !Sequence {
+	if e is Sequence {
+		return *e
+	}
+	return error('not sequence')
+}
+
+fn (e Encoder) as_boolean() !AsnBoolean {
+	if e is AsnBoolean {
+		return *e
+	}
+	return error('not boolean type')
+}
+
+fn (e Encoder) as_integer() !AsnInteger {
+	if e is AsnInteger {
+		return *e
+	}
+	return error('not integer type')
+}
+
+fn (e Encoder) as_bitstring() !BitString {
+	if e is BitString {
+		return *e
+	}
+	return error('not bitstring type')
+}
+
+fn (e Encoder) as_octetstring() !OctetString {
+	if e is OctetString {
+		return *e
+	}
+	return error('not octetstring type')
+}
+
+fn (e Encoder) as_null() !Null {
+	if e is Null {
+		return *e
+	}
+	return error('not null type')
+}
+
+fn (e Encoder) as_enumerated() !Enumerated {
+	if e is Enumerated {
+		return *e
+	}
+	return error('not enumerated type')
+}
+
+fn (e Encoder) as_utf8string() !UTF8String {
+	if e is UTF8String {
+		return *e
+	}
+	return error('not utf8string type')
+}
+
+fn (e Encoder) as_numericstring() !NumericString {
+	if e is NumericString {
+		return *e
+	}
+	return error('not numericstring type')
+}
+
+fn (e Encoder) as_printablestring() !PrintableString {
+	if e is PrintableString {
+		return *e
+	}
+	return error('not printablestring type')
+}
+
+fn (e Encoder) as_ia5string() !IA5String {
+	if e is IA5String {
+		return *e
+	}
+	return error('not ia5string type')
+}
+
+fn (e Encoder) as_visiblestring() !VisibleString {
+	if e is VisibleString {
+		return *e
+	}
+	return error('not visiblestring type')
+}
+
+fn (e Encoder) as_utctime() !UtcTime {
+	if e is UtcTime {
+		return *e
+	}
+	return error('not utctime type')
+}
+
+fn (e Encoder) as_generalizedtime() !GeneralizedTime {
+	if e is GeneralizedTime {
+		return *e
+	}
+	return error('not generalizedtime type')
+}
+
+fn (e Encoder) as_oid() !Oid {
+	if e is Oid {
+		return *e
+	}
+	return error('not oid type')
+}
+
 // length gets the bytes length of multi encoder.
 fn (enc []Encoder) length() int {
 	mut length := 0

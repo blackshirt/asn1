@@ -397,3 +397,26 @@ fn test_x509_certificate_extensions() ! {
 		assert out == seq
 	}
 }
+
+fn test_encoder_casted_as_seq_and_boolean() ! {
+	data := [u8(0x30), 0x06, 0x01, 0x01, 0x00, 0x01, 0x01, 0xff]
+	out := der_decode(data)!
+
+	seq := out.as_sequence()!
+	assert typeof(seq).name == '${@MOD}.Sequence'
+	assert seq.elements.len == 2
+
+	el1 := seq.elements[0].as_boolean()!
+	assert typeof(el1).name == '${@MOD}.AsnBoolean'
+	assert el1.value == false
+
+	el2 := seq.elements[1].as_boolean()!
+	assert el2.value == true
+	assert typeof(el2).name == '${@MOD}.AsnBoolean'
+
+	// should error not bitstring type
+	c := out.as_bitstring() or {
+		assert err == error('not bitstring type')
+		return
+	}
+}
