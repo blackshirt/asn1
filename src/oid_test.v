@@ -169,3 +169,23 @@ fn test_oid_encode_decode() ! {
 	assert oid.str() == inp
 	assert tag.number == 6
 }
+
+fn test_tc21_long_format_of_oid_encoding_should_error_in_der() ! {
+	data := [u8(0x06), 0x06, 0x80, 0x80, 0x51, 0x80, 0x80, 0x01]
+
+	_ := der_decode(data) or {
+		assert err == error("integer is not minimaly encoded")
+		return
+	}
+	
+}
+
+fn test_tc22_too_big_value_oid() ! {
+	data := [u8(0x06), 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f, 0x85, 0x03, 0x02, 0x02, 0x03]
+
+	_ := der_decode(data) or {
+		assert err == error("integer is not minimaly encoded")
+		return
+	}
+	
+}

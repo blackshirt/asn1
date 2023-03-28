@@ -31,23 +31,6 @@ pub interface Encoder {
 	encode() ![]u8
 }
 
-// contents gets the contents (values) part of ASN.1 object, that is,
-// bytes values of the object  without tag and length parts.
-pub fn (enc Encoder) contents() ![]u8 {
-	bytes := enc.encode()!
-
-	// actual length bytes of data
-	length := enc.length()
-
-	// length of encoded bytes included header
-	size := enc.size()
-
-	// header length
-	hdr := size - length
-	out := read_bytes(bytes, hdr, length)!
-	return out
-}
-
 // der_decode is main routine to do parsing of DER encoded data.
 // Its accepts bytes arrays encoded in DER in `src` params and returns `Encoder` interfaces object,
 // so, you should cast it to get underlying type.
@@ -155,12 +138,30 @@ fn parse_compound_element(tag Tag, contents []u8) !Encoder {
 	}
 }
 
+// contents gets the contents (values) part of ASN.1 object, that is,
+// bytes values of the object  without tag and length parts.
+pub fn (enc Encoder) contents() ![]u8 {
+	bytes := enc.encode()!
+
+	// actual length bytes of data
+	length := enc.length()
+
+	// length of encoded bytes included header
+	size := enc.size()
+
+	// header length
+	hdr := size - length
+	out := read_bytes(bytes, hdr, length)!
+	return out
+}
+
 // Cast function.
 // Its cast encoder type to real instance type.
 
-fn (e Encoder) as_sequence() !Sequence {
+// cast encoder to sequence
+pub fn (e Encoder) as_sequence() !Sequence {
 	if e is Sequence {
-		// without dereferencing, its results in error: error: fn `as_sequence` expects you to return
+		// without dereferencing, its result in error: error: fn `as_sequence` expects you to return
 		// a non reference type `!asn1.Sequence`, but you are returning `&asn1.Sequence` instead
 		return *e
 	}

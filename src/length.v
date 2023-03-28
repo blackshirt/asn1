@@ -67,7 +67,8 @@ fn serialize_length(mut dst []u8, value int) []u8 {
 	return dst
 }
 
-// decode_length parses bytes from positon loc
+// decode_length decodes bytes from positon `loc` and returns integer length value and 
+// next offset to read bytes data from.
 fn decode_length(buf []u8, loc int) !(int, int) {
 	mut pos := loc
 	if pos >= buf.len {

@@ -137,8 +137,8 @@ fn test_tagandlength_handling() ! {
 		TagAndLengthTest{[u8(0xa0), 0x81, 0x7f], Tag{.context, true, 0}, 0, 0, error('dont needed in long form')}, //{}},
 		// Tag numbers which would overflow int32 are rejected. (The value below is 2^31.)
 		TagAndLengthTest{[u8(0x1f), 0x88, 0x80, 0x80, 0x80, 0x00, 0x00], Tag{.universal, false, 0}, 0, 0, error('base 128 integer too large')}, //{}},
-		// Tag numbers that fit in an int32 are valid. (The value below is 2^31 - 1.)
-		TagAndLengthTest{[u8(0x1f), 0x87, 0xFF, 0xFF, 0xFF, 0x7F, 0x00], Tag{.universal, false, 2147483647}, 0, 7, none},
+		// Tag numbers that fit in an int32 are valid. (The value below is 2^31 - 1.) but its bigger than max_tag_bytes_length
+		TagAndLengthTest{[u8(0x1f), 0x87, 0xFF, 0xFF, 0xFF, 0x7F, 0x00], Tag{.universal, false, 2147483647}, 0, 7, error("tag bytes is too big")},
 		// Long tag number form may not be used for tags that fit in short form.
 		TagAndLengthTest{[u8(0x1f), 0x1e, 0x00], Tag{.universal, false, 0}, 0, 0, error('non-minimal tag')}, //{}},
 	]
@@ -214,7 +214,7 @@ fn test_tc1_tag_too_long() ! {
 	value := [u8(0x9f), 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, 0x01, 0x40]
 
 	_, _ := read_tag(value, 0) or {
-		assert err == error('base 128 integer too large')
+		assert err == error('tag bytes is too big')
 		return
 	}
 }
