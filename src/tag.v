@@ -8,7 +8,7 @@ module asn1
 
 // Standard universal tag number. some of them was
 // deprecated, so its not going to be supported in this module.
-enum TagType {
+pub enum TagType {
 	reserved = 0 //	reserved for BER
 	boolean = 1 // BOOLEAN
 	integer = 2 // INTEGER
@@ -38,6 +38,24 @@ enum TagType {
 	universalstring = 28 // UniversalString
 	characterstring = 29 // CHARACTER STRING
 	bmpstring = 30 // BMPString
+}
+
+const (
+	// Maximum number of bytes to represent tag number, includes tag byte.
+	// For 5 bytes length, maximum bytes arrays to represent tag number is
+	// [u8(0x1f), 0xff, 0xff, 0xff, 0x7f] or 268435455 in base 128, so, its
+	// big enough to hold and represent different of tag number or type.
+	max_tag_bytes_length = 5
+)
+
+// `new_tag` creates new tag with class `c`, with constructed or primitive form
+// through `constructed` boolean flag, and tag `number`.
+fn new_tag(c Class, constructed bool, number int) Tag {
+	return Tag{
+		class: c
+		constructed: constructed
+		number: number
+	}
 }
 
 struct Tag {
@@ -83,16 +101,6 @@ fn (t Tag) is_set_tag() bool {
 	return t.is_constructed() && t.number == int(TagType.set)
 }
 
-// `new_tag` creates new tag with class `c`, constructed or primiitive form
-// through `constructed` boolean flag, and tag `number`.
-fn new_tag(c Class, constructed bool, number int) Tag {
-	return Tag{
-		class: c
-		constructed: constructed
-		number: number
-	}
-}
-
 // `calc_tag_length` calculates number or length of bytes needed to store tag number.
 fn calc_tag_length(t Tag) int {
 	n := if t.number < 0x1f { 1 } else { 1 + base128_int_length(i64(t.number)) }
@@ -119,9 +127,8 @@ fn serialize_tag(mut dst []u8, tag Tag) []u8 {
 	return dst
 }
 
-// `read_tag` reading back bytes of data in `data` from location (offset) `loc`
-// to tag structure. It's return the tag structure and the next position (offset) `pos`
-// for reading length part.
+// `read_tag` reading bytes of data from location (offset) `loc` to tag.
+// It's return the tag structure and the next position (offset) `pos` for reading the length part.
 fn read_tag(data []u8, loc int) !(Tag, int) {
 	if data.len < 1 {
 		return error('get ${data.len} bytes for reading tag, its not enough')
@@ -139,6 +146,8 @@ fn read_tag(data []u8, loc int) !(Tag, int) {
 	cls := int(b >> 6)
 
 	if number == 0x1f {
+		// we mimic go version of tag handling, only allowed `max_tag_bytes_length` bytes following
+		// to represent tag number.
 		number, pos = decode_base128_int(data, pos)!
 		if number < 0x1f {
 			return error('non-minimal tag')

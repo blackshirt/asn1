@@ -19,6 +19,10 @@ mut:
 	elements []Encoder // elements of the sequence
 }
 
+fn new_encoder_seq(seq Sequence) Encoder {
+	return seq
+}
+
 // new_sequence creates empty universal class of sequence type.
 // for other ASN.1 class, see `new_sequence_with_class`
 pub fn new_sequence() Sequence {

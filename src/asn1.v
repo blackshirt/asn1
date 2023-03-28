@@ -33,14 +33,14 @@ pub interface Encoder {
 
 // contents gets the contents (values) part of ASN.1 object, that is,
 // bytes values of the object  without tag and length parts.
-pub fn (asn Encoder) contents() ![]u8 {
-	bytes := asn.encode()!
+pub fn (enc Encoder) contents() ![]u8 {
+	bytes := enc.encode()!
 
 	// actual length bytes of data
-	length := asn.length()
+	length := enc.length()
 
 	// length of encoded bytes included header
-	size := asn.size()
+	size := enc.size()
 
 	// header length
 	hdr := size - length

@@ -21,6 +21,7 @@ fn base128_int_length(v i64) int {
 	return ret
 }
 
+// encode_base128_int serialize integer to bytes in base 128 integer.
 fn encode_base128_int(mut dst []u8, n i64) []u8 {
 	l := base128_int_length(n)
 
@@ -37,12 +38,14 @@ fn encode_base128_int(mut dst []u8, n i64) []u8 {
 	return dst
 }
 
+// decode_base128_int read bytes as base 128 integer for current position `loc`.
+// Its returns integer value and next offset to read from.
 fn decode_base128_int(bytes []u8, loc int) !(int, int) {
 	mut pos := loc
 	mut r64 := i64(0)
 	mut ret := 0
 	for s := 0; pos < bytes.len; s++ {
-		if s == 5 {
+		if s >= max_tag_bytes_length {
 			return error('base 128 integer too large')
 		}
 		r64 <<= 7

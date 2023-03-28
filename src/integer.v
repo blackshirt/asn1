@@ -202,6 +202,15 @@ fn read_i64(src []u8) !i64 {
 	ret <<= 64 - u8(src.len) * 8
 	ret >>= 64 - u8(src.len) * 8
 
+	// try to serialize back, and check its matching original one
+	// and gives a warning when its not match.
+	$if debug {
+		a := new_integer(ret)
+		c := a.contents()!
+		if c != src {
+			eprintln('maybe integer bytes not in shortest form')
+		}
+	}
 	return ret
 }
 

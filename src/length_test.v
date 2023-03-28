@@ -122,3 +122,29 @@ fn test_calc_length_of_length() {
 		assert out == c.exp
 	}
 }
+
+// ASN.1 Test Suite from https://github.com/YuryStrozhevsky/asn1-test-suite
+fn test_tc3_absence_standard_length_block() ! {
+	value := []u8{}
+
+	_, _ := decode_length(value, 1) or {
+		assert err == error('truncated tag or length')
+		return
+	}
+}
+
+fn test_tc5_unnecessary_usage_long_of_length_form() ! {
+	// this tag above 5 bytes.
+	value := [u8(0x9f), 0xff, 0xff, 0xff, 0x7f, 0x81, 0x01, 0x40]
+
+	tag, pos := read_tag(value, 0)!
+	// 0x9f == 10011111
+	assert tag.class == .context
+	assert tag.constructed == false
+	assert pos == 5
+	// the length bytes, [0x81, 0x01] dont needed in long form.
+	_, _ := decode_length(value, pos) or {
+		assert err == error('dont needed in long form')
+		return
+	}
+}
