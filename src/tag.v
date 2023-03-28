@@ -150,7 +150,7 @@ fn read_tag(data []u8, loc int) !(Tag, int) {
 		// to represent tag number.
 		number, pos = decode_base128_int(data, pos)!
 		// pos is the next position to read next bytes, so check tag bytes length
-		if (pos - loc - 1) >= max_tag_bytes_length {
+		if (pos - loc - 1) >= asn1.max_tag_bytes_length {
 			return error('tag bytes is too big')
 		}
 		if number < 0x1f {

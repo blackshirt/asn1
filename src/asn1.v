@@ -158,7 +158,7 @@ pub fn (enc Encoder) contents() ![]u8 {
 // Cast function.
 // Its cast encoder type to real instance type.
 
-// cast encoder to sequence
+// as_sequence cast encoder to sequence
 pub fn (e Encoder) as_sequence() !Sequence {
 	if e is Sequence {
 		// without dereferencing, its result in error: error: fn `as_sequence` expects you to return
@@ -168,55 +168,63 @@ pub fn (e Encoder) as_sequence() !Sequence {
 	return error('not sequence type')
 }
 
-fn (e Encoder) as_set() !Set {
+// as_set cast encoder to set
+pub fn (e Encoder) as_set() !Set {
 	if e is Set {
 		return *e
 	}
 	return error('not set type')
 }
 
-fn (e Encoder) as_boolean() !AsnBoolean {
+// as_boolean cast encoder to ASN.1 boolean
+pub fn (e Encoder) as_boolean() !AsnBoolean {
 	if e is AsnBoolean {
 		return *e
 	}
 	return error('not boolean type')
 }
 
-fn (e Encoder) as_integer() !AsnInteger {
+// as_integer cast encoder to ASN.1 integer
+pub fn (e Encoder) as_integer() !AsnInteger {
 	if e is AsnInteger {
 		return *e
 	}
 	return error('not integer type')
 }
 
-fn (e Encoder) as_bitstring() !BitString {
+// as_bitstring cast encoder to ASN.1 bitstring
+pub fn (e Encoder) as_bitstring() !BitString {
 	if e is BitString {
 		return *e
 	}
 	return error('not bitstring type')
 }
 
-fn (e Encoder) as_octetstring() !OctetString {
+// as_octetstring cast encoder to ASN.1 OctetString
+pub fn (e Encoder) as_octetstring() !OctetString {
 	if e is OctetString {
 		return *e
 	}
 	return error('not octetstring type')
 }
 
-fn (e Encoder) as_null() !Null {
+// as_null cast encoder to ASN.1 null type
+pub fn (e Encoder) as_null() !Null {
 	if e is Null {
 		return *e
 	}
 	return error('not null type')
 }
 
-fn (e Encoder) as_oid() !Oid {
+// as_oid cast encoder to ASN.1 object identifier type.
+pub fn (e Encoder) as_oid() !Oid {
 	if e is Oid {
 		return *e
 	}
 	return error('not oid type')
 }
 
+// as_enumerated cast encoder to ASN.1 enumerated type.
 fn (e Encoder) as_enumerated() !Enumerated {
 	if e is Enumerated {
 		return *e
@@ -224,27 +232,31 @@ fn (e Encoder) as_enumerated() !Enumerated {
 	return error('not enumerated type')
 }
 
-fn (e Encoder) as_utf8string() !UTF8String {
+// as_utf8string cast encoder to ASN.1 UTF8String.
+pub fn (e Encoder) as_utf8string() !UTF8String {
 	if e is UTF8String {
 		return *e
 	}
 	return error('not utf8string type')
 }
 
-fn (e Encoder) as_numericstring() !NumericString {
+// as_numericstring cast encoder to ASN.1 NumericString.
+pub fn (e Encoder) as_numericstring() !NumericString {
 	if e is NumericString {
 		return *e
 	}
 	return error('not numericstring type')
 }
 
-fn (e Encoder) as_printablestring() !PrintableString {
+// as_printablestring cast encoder to ASN.1 PrintableString.
+pub fn (e Encoder) as_printablestring() !PrintableString {
 	if e is PrintableString {
 		return *e
 	}
 	return error('not printablestring type')
 }
 
+// as_ia5string cast encoder to ASN.1 IA5String.
 fn (e Encoder) as_ia5string() !IA5String {
 	if e is IA5String {
 		return *e
@@ -252,6 +264,7 @@ fn (e Encoder) as_ia5string() !IA5String {
 	return error('not ia5string type')
 }
 
+// as_visiblestring cast encoder to ASN.1 VisibleString.
 fn (e Encoder) as_visiblestring() !VisibleString {
 	if e is VisibleString {
 		return *e
@@ -259,6 +272,7 @@ fn (e Encoder) as_visiblestring() !VisibleString {
 	return error('not visiblestring type')
 }
 
+// as_utctime cast encoder to ASN.1 UtcTime.
 fn (e Encoder) as_utctime() !UtcTime {
 	if e is UtcTime {
 		return *e
@@ -266,6 +280,7 @@ fn (e Encoder) as_utctime() !UtcTime {
 	return error('not utctime type')
 }
 
+// as_generalizedtime cast encoder to ASN.1 GeneralizedTime.
 fn (e Encoder) as_generalizedtime() !GeneralizedTime {
 	if e is GeneralizedTime {
 		return *e

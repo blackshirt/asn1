@@ -45,7 +45,6 @@ fn decode_base128_int(bytes []u8, loc int) !(int, int) {
 	mut r64 := i64(0)
 	mut ret := 0
 	for s := 0; pos < bytes.len; s++ {
-		
 		r64 <<= 7
 		b := bytes[pos]
 
