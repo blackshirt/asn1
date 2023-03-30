@@ -13,11 +13,16 @@ fn test_parse_der_match_length() ! {
 	assert out.tag().class == .universal
 	assert out.tag().constructed == true
 	assert out.tag().number == 16
-	if out is Sequence {
-		assert out.elements.len == 2
-		assert out.elements[0] is AsnInteger
-		assert out.elements[1] is IA5String
-	}
+
+	seq := out.as_sequence()!
+	assert seq.elements.len == 2
+	el0 := seq.elements[0].as_integer()!
+	el1 := seq.elements[1].as_ia5string()!
+
+	assert el0.tag().number == int(TagType.integer)
+	assert el1.tag().number == int(TagType.ia5string)
+	assert el0.str() == 'INTEGER 5'
+	assert el1 == 'Anybody there?'
 
 	/*
 	30 — type tag indicating SEQUENCE
@@ -83,13 +88,12 @@ fn test_parse_x509_ed25519_certificate() ! {
 	assert next == 4
 
 	out := der_decode(data)!
-	// dump(out)
-	if out is Sequence {
-		assert out.elements.len == 3
-		// dump(out.elements[0])
-		// dump(out.elements[1])
-		// dump(out.elements[2].length() == 65)
-	}
+	seq := out.as_sequence()!
+
+	assert seq.elements.len == 3
+	el0 := seq.elements[0].as_sequence()!
+	el1 := seq.elements[1].as_sequence()!
+	el2 := seq.elements[2].as_bitstring()!
 }
 
 /*
@@ -102,7 +106,7 @@ TBSCertificate  ::=  SEQUENCE  {
      version         [0]  EXPLICIT Version DEFAULT v1,
      serialNumber         CertificateSerialNumber,
      signature            AlgorithmIdentifier,
-     issuer               Name,
+     issuer               Name,SubjectPublicKeyInfo
      validity             Validity,
      subject              Name,
      subjectPublicKeyInfo SubjectPublicKeyInfo,
@@ -151,11 +155,8 @@ fn test_x509_certificate_signature() ! {
 
 	assert out == exp
 	back := der_decode(exp)!
-	if back is Sequence {
-		assert back == seq
-		// dump(back)
-		// dump(seq)
-	}
+	seqback := back.as_sequence()!
+	assert seqback == seq
 }
 
 fn test_x509_certificate_serialnumber() ! {
@@ -335,9 +336,9 @@ fn test_x509_certificate_subject() ! {
 
 	backissuer := der_decode(expissuer)!
 
-	if backissuer is Sequence {
-		assert backissuer == issuerseq
-	}
+	issuer := backissuer.as_sequence()!
+
+	assert issuer == issuerseq
 }
 
 fn test_x509_certificate_subjectpublickeyinfo() ! {
@@ -393,9 +394,10 @@ fn test_x509_certificate_extensions() ! {
 
 	// parsing back
 	out := der_decode(expseq)!
-	if out is Sequence {
-		assert out == seq
-	}
+	// cast encoder to seq
+	cast := out.as_sequence()!
+
+	assert cast == seq
 }
 
 fn test_encoder_casted_as_seq_and_boolean() ! {

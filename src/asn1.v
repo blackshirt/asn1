@@ -110,7 +110,9 @@ fn parse_primitive_element(tag Tag, contents []u8) !Encoder {
 		int(TagType.utctime) {
 			return new_utctime(contents.bytestr())
 		}
-		// TODO: add other type
+		// TODO:
+		//   - add other type
+		//   - relaxed parsing by return raw asn1 object.
 		else {
 			return error('unsupported tag type')
 		}
@@ -257,7 +259,7 @@ pub fn (e Encoder) as_printablestring() !PrintableString {
 }
 
 // as_ia5string cast encoder to ASN.1 IA5String.
-fn (e Encoder) as_ia5string() !IA5String {
+pub fn (e Encoder) as_ia5string() !IA5String {
 	if e is IA5String {
 		return *e
 	}
@@ -265,7 +267,7 @@ fn (e Encoder) as_ia5string() !IA5String {
 }
 
 // as_visiblestring cast encoder to ASN.1 VisibleString.
-fn (e Encoder) as_visiblestring() !VisibleString {
+pub fn (e Encoder) as_visiblestring() !VisibleString {
 	if e is VisibleString {
 		return *e
 	}
@@ -273,7 +275,7 @@ fn (e Encoder) as_visiblestring() !VisibleString {
 }
 
 // as_utctime cast encoder to ASN.1 UtcTime.
-fn (e Encoder) as_utctime() !UtcTime {
+pub fn (e Encoder) as_utctime() !UtcTime {
 	if e is UtcTime {
 		return *e
 	}
@@ -281,7 +283,7 @@ fn (e Encoder) as_utctime() !UtcTime {
 }
 
 // as_generalizedtime cast encoder to ASN.1 GeneralizedTime.
-fn (e Encoder) as_generalizedtime() !GeneralizedTime {
+pub fn (e Encoder) as_generalizedtime() !GeneralizedTime {
 	if e is GeneralizedTime {
 		return *e
 	}
@@ -376,15 +378,4 @@ fn serialize_asn_object(obj AsnObject) ![]u8 {
 	dst << obj.values
 
 	return dst
-}
-
-// is_allhave_same_tag checks whether all object in Encoder arrays
-// have the same tag value.
-fn is_allhave_same_tag(objects []Encoder) bool {
-	if objects.len < 1 {
-		return false
-	}
-
-	tag0 := objects[0].tag()
-	return objects.all(it.tag() == tag0)
 }

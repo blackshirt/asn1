@@ -40,6 +40,28 @@ pub enum TagType {
 	bmpstring = 30 // BMPString
 }
 
+fn (t TagType) str() string {
+	match t {
+		.boolean { return 'boolean' }
+		.integer { return 'integer' }
+		.bitstring { return 'bitstring' }
+		.octetstring { return 'octetstring' }
+		.null { return 'null' }
+		.oid { return 'oid' }
+		.enumerated { return 'enumerated' }
+		.utf8string { return 'utf8string' }
+		.sequence { return 'sequence or sequence of' }
+		.set { return 'set or set of' }
+		.numericstring { return 'numericstring' }
+		.printablestring { return 'printablestring' }
+		.ia5string { return 'ia5string' }
+		.utctime { return 'utctime' }
+		.generalizedtime { return 'generalizedtime' }
+		.visiblestring { return 'visiblestring' }
+		else { return 'unsupported name' }
+	}
+}
+
 const (
 	// Maximum number of bytes to represent tag number, includes tag byte.
 	// For 5 bytes length, maximum bytes arrays to represent tag number is

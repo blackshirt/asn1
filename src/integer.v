@@ -114,11 +114,11 @@ fn (n AsnInteger) str() string {
 		}
 		i64 {
 			val := n as i64
-			return 'INTEGER ${val}'
+			return 'INTEGER(64) ${val}'
 		}
 		big.Integer {
 			val := n as big.Integer
-			return 'INTEGER ${val}'
+			return 'INTEGER(BIG) ${val}'
 		}
 	}
 }

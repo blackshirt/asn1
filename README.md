@@ -7,9 +7,8 @@ This module provides you with the ability to generate and parse ASN.1 encoded da
 More precisely, it provides you with the ability to generate and parse data encoded with ASN.1’s DER (Distinguished Encoding Rules) encoding. 
 It does not support other than DER.
 
-**Features**
--------
-* It's currently supports following basic ASN1 type:
+## Supported ASN.1 Type
+It's currently supports following basic ASN1 type:
 - [x] Boolean
 - [x] BitString
 - [x] Integer (through i32, i64, and big.Integer)
@@ -28,8 +27,10 @@ It does not support other than DER.
 - [x] SequenceOf
 - [x] Set
 - [x] SetOf
-- [ ] ~~Real~~
 
+## **Features**
+--------------
+* Support mostly basic ASN.1 tag type, except for a few types.
 * Supports single and multibyte (high form) tag format for tag number > 31
 * Serializing and deserializing of ASN.1 objcet to bytes and vice versa.
 

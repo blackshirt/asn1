@@ -8,19 +8,20 @@ module asn1
 // octetstring handling
 type OctetString = string
 
-fn new_octetstring(s string) Encoder {
+// new_octetstring creates new octet string
+pub fn new_octetstring(s string) Encoder {
 	return OctetString(s)
 }
 
-fn (os OctetString) tag() Tag {
+pub fn (os OctetString) tag() Tag {
 	return new_tag(.universal, false, int(TagType.octetstring))
 }
 
-fn (os OctetString) length() int {
+pub fn (os OctetString) length() int {
 	return os.len
 }
 
-fn (os OctetString) size() int {
+pub fn (os OctetString) size() int {
 	mut size := 0
 	tag := os.tag()
 	t := calc_tag_length(tag)
@@ -34,7 +35,7 @@ fn (os OctetString) size() int {
 	return size
 }
 
-fn (os OctetString) encode() ![]u8 {
+pub fn (os OctetString) encode() ![]u8 {
 	return serialize_octetstring(os)
 }
 

@@ -23,10 +23,12 @@ fn test_multienc_add_and_encode() {
 	back := seq2.encode()!
 	// dump(back)
 	outback := der_decode(back)!
-	// dump(outback)
+
+	seqb := outback.as_sequence()!
+	assert seqb == seq2
 }
 
-fn test_simple_certificate() {
+fn test_simple_certificate_contains_discarded_bytes() {
 	data := [u8(0x30), 0x13, 0x02, 0x01, 0x05, 0x16, 0x0e, 0x41, 0x6e, 0x79, 0x62, 0x6f, 0x64,
 		0x79, 0x20, 0x74, 0x68, 0x65, 0x72, 0x65, 0x3f, 0xff, 0xff]
 
@@ -34,8 +36,6 @@ fn test_simple_certificate() {
 		assert err == error('malformed bytes, contains discarded bytes')
 		return
 	}
-
-	assert out.length() == 19 // 0x13
 }
 
 fn test_parse_ed25519_certificate() ! {
@@ -78,15 +78,34 @@ fn test_parse_ed25519_certificate() ! {
 }
 
 fn test_ed4418_data() ! {
-	// https://asecuritysite.com/digitalcert/sigs4cd
+	// from https://asecuritysite.com/digitalcert/sigs4cd
+	/*
+	DER: 3043300506032b6571033a00419610a534af127f583b04818cdb7f0ff300b025f2e01682bcae33fd691cee039511df0cddc690ee978426e8b38e50ce5af7dcfba50f704c00
+	// decoded as:
+	[U] SEQUENCE (30)
+  		[U] SEQUENCE (30)
+    		[U] OBJECT (06): 1.3.101.113 - Ed448
+  		[U] BIT STRING (03): 0xb'00419610A534AF127F583B04818CDB7F0FF300B025F2E01682BCAE33FD691CEE039511DF0CDDC690EE978426E8B38E50CE5AF7DCFBA50F704C00'
+  	Public key (9610a534af127f583b04818cdb7f0ff300b025f2e01682bcae33fd, 691cee039511df0cddc690ee978426e8b38e50ce5af7dcfba50f704c00)
+
+	-----BEGIN PUBLIC KEY-----
+		MEMwBQYDK2VxAzoAQZYQpTSvEn9YOwSBjNt/D/MAsCXy4BaCvK4z/Wkc7gOVEd8M3caQ7peEJuizjlDOWvfc+6UPcEwA
+	-----END PUBLIC KEY-----
+	*/
 	data := '3043300506032b6571033a00419610a534af127f583b04818cdb7f0ff300b025f2e01682bcae33fd691cee039511df0cddc690ee978426e8b38e50ce5af7dcfba50f704c00'
 
 	bytes := hex.decode(data)!
 
 	out := der_decode(bytes)!
-	if out is Sequence {
-		assert out.elements.len == 2
-	}
+	seq := out.as_sequence()!
+
+	assert seq.elements.len == 2
+	assert seq.elements[0] is Sequence
+	assert seq.elements[1] is BitString
+
+	el0 := seq.elements[0].as_sequence()!
+	sel0 := el0.elements[0].as_oid()!
+	assert sel0.str() == '1.3.101.113'
 }
 
 fn test_x25519_private_key() ? {
@@ -116,17 +135,20 @@ MC4CAQAwBQYDK2VwBCIEINTuctv5E1hK1bbY8fdp+K06/nwoy/HU++CXqI9EdVhC
 	out := der_decode(block.data)!
 	assert out is Sequence
 	assert out.length() == 46
-	if out is Sequence {
-		assert out.elements[0] is AsnInteger
-		assert out.elements[1] is Sequence
-		b := out.elements[1]
-		if b is Sequence {
-			assert b.elements[0] is Oid
-			assert b.elements[0].length() == 3
-		}
-		assert out.elements[2] is OctetString
-		assert out.elements[2].length() == 34
-	}
+	seq := out.as_sequence()!
+
+	assert seq.elements[0] is AsnInteger
+	assert seq.elements[1] is Sequence
+	b := seq.elements[1].as_sequence()!
+
+	assert b.elements[0] is Oid
+	assert b.elements[0].length() == 3
+
+	oid := b.elements[0].as_oid()!
+	assert oid.str() == '1.3.101.112'
+
+	assert seq.elements[2] is OctetString
+	assert seq.elements[2].length() == 34
 }
 
 fn test_example_x25519_certificate() {
