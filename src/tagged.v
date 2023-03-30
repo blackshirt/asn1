@@ -62,7 +62,7 @@ pub fn new_explicit_context(asn Encoder, tagnum int) Tagged {
 	return new_explicit_tagged(asn, .context, tagnum)
 }
 
-fn read_explicit_context(tag Tag, contents []u8) !Tagged {
+pub fn read_explicit_context(tag Tag, contents []u8) !Tagged {
 	if !tag.is_context() {
 		return error('not context class')
 	}
@@ -90,22 +90,22 @@ fn decode_explicit_context(src []u8) !Tagged {
 }
 
 // tag returns outer tag
-fn (ctx Tagged) tag() Tag {
+pub fn (ctx Tagged) tag() Tag {
 	return ctx.expected
 }
 
 // inner_tag return inner tag of the inner object being wrapped
-fn (ctx Tagged) inner_tag() Tag {
+pub fn (ctx Tagged) inner_tag() Tag {
 	return ctx.inner.tag()
 }
 
 // as_inner returns inner object being wrapped
-fn (ctx Tagged) as_inner() Encoder {
+pub fn (ctx Tagged) as_inner() Encoder {
 	return ctx.inner
 }
 
 // length returns the length of the context tagged object
-fn (ctx Tagged) length() int {
+pub fn (ctx Tagged) length() int {
 	match ctx.mode {
 		// explicit mode adds context specitif tag to the existing object
 		// so, the original (inner) object size becomes length of the
@@ -126,7 +126,7 @@ fn (ctx Tagged) length() int {
 // length of the length part and inner size.
 // and in implicit mode, the size was total (sum) of size of inner object,
 // and length of outer tag.
-fn (ctx Tagged) size() int {
+pub fn (ctx Tagged) size() int {
 	match ctx.mode {
 		.explicit {
 			// size := expected tag length + length of context tagged object + size of inner object
@@ -154,7 +154,7 @@ fn (ctx Tagged) size() int {
 
 // encode serializes context tagged object to array of bytes.
 // Its different between tagged mode explicit and implicit.
-fn (ctx Tagged) encode() ![]u8 {
+pub fn (ctx Tagged) encode() ![]u8 {
 	tag := ctx.tag()
 	match ctx.mode {
 		.explicit {

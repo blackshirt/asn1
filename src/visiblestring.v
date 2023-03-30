@@ -7,22 +7,22 @@ module asn1
 //
 type VisibleString = string
 
-fn new_visiblestring(s string) !Encoder {
+pub fn new_visiblestring(s string) !Encoder {
 	if !is_visiblestring(s.bytes()) {
 		return error('bad visible char')
 	}
 	return VisibleString(s)
 }
 
-fn (vs VisibleString) tag() Tag {
+pub fn (vs VisibleString) tag() Tag {
 	return new_tag(.universal, false, int(TagType.visiblestring))
 }
 
-fn (vs VisibleString) length() int {
+pub fn (vs VisibleString) length() int {
 	return vs.len
 }
 
-fn (vs VisibleString) size() int {
+pub fn (vs VisibleString) size() int {
 	mut size := 0
 	tag := vs.tag()
 	t := calc_tag_length(tag)
@@ -36,7 +36,7 @@ fn (vs VisibleString) size() int {
 	return size
 }
 
-fn (vs VisibleString) encode() ![]u8 {
+pub fn (vs VisibleString) encode() ![]u8 {
 	return serialize_visiblestring(vs)
 }
 

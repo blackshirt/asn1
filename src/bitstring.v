@@ -13,7 +13,9 @@ struct BitString {
 }
 
 fn (bts BitString) as_bits_string() string {
-	bits := bitfield.from_bytes(bts.data)
+	mut buf := []u8{}
+	write_bitstring(mut buf, bts)
+	bits := bitfield.from_bytes(buf)
 	return bits.str()
 }
 
@@ -70,7 +72,7 @@ fn length_bitstring(b BitString) int {
 	return b.data.len + 1
 }
 
-fn (b BitString) as_bytes() []u8 {
+fn (b BitString) bytes() []u8 {
 	return b.data
 }
 
@@ -112,7 +114,7 @@ fn read_bitstring(src []u8) !BitString {
 
 fn write_bitstring(mut dst []u8, b BitString) {
 	dst << b.pad_bits()
-	dst << b.as_bytes()
+	dst << b.bytes()
 }
 
 fn serialize_bitstring(b BitString) ![]u8 {

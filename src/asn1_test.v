@@ -92,8 +92,13 @@ fn test_parse_x509_ed25519_certificate() ! {
 
 	assert seq.elements.len == 3
 	el0 := seq.elements[0].as_sequence()!
+	assert el0.elements.len == 8 
+
 	el1 := seq.elements[1].as_sequence()!
+	assert el1.elements.len == 1 
+
 	el2 := seq.elements[2].as_bitstring()!
+	assert el2.length() == 65
 }
 
 /*

@@ -10,22 +10,22 @@ import encoding.utf8
 //
 type UTF8String = string
 
-fn new_utf8string(s string) !Encoder {
+pub fn new_utf8string(s string) !Encoder {
 	if !utf8.validate_str(s) {
 		return error('invalid UTF-8 string')
 	}
 	return UTF8String(s)
 }
 
-fn (ut UTF8String) tag() Tag {
+pub fn (ut UTF8String) tag() Tag {
 	return new_tag(.universal, false, int(TagType.utf8string))
 }
 
-fn (ut UTF8String) length() int {
+pub fn (ut UTF8String) length() int {
 	return ut.len
 }
 
-fn (ut UTF8String) size() int {
+pub fn (ut UTF8String) size() int {
 	mut size := 0
 	tag := ut.tag()
 	t := calc_tag_length(tag)
@@ -39,7 +39,7 @@ fn (ut UTF8String) size() int {
 	return size
 }
 
-fn (ut UTF8String) encode() ![]u8 {
+pub fn (ut UTF8String) encode() ![]u8 {
 	return serialize_utf8string(ut)
 }
 

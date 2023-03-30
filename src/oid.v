@@ -81,15 +81,15 @@ fn validate_oid(oid Oid) bool {
 	return true
 }
 
-fn (oid Oid) tag() Tag {
+pub fn (oid Oid) tag() Tag {
 	return new_tag(.universal, false, int(TagType.oid))
 }
 
-fn (oid Oid) length() int {
+pub fn (oid Oid) length() int {
 	return oid_length(oid)
 }
 
-fn (oid Oid) size() int {
+pub fn (oid Oid) size() int {
 	mut size := 0
 	tag := oid.tag()
 	t := calc_tag_length(tag)
@@ -103,7 +103,7 @@ fn (oid Oid) size() int {
 	return size
 }
 
-fn (oid Oid) encode() ![]u8 {
+pub fn (oid Oid) encode() ![]u8 {
 	return serialize_oid(oid)
 }
 

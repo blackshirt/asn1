@@ -27,15 +27,15 @@ pub fn new_printable_string(s string) !Encoder {
 	return PrintableString(s)
 }
 
-fn (ps PrintableString) tag() Tag {
+pub fn (ps PrintableString) tag() Tag {
 	return new_tag(.universal, false, int(TagType.printablestring))
 }
 
-fn (ps PrintableString) length() int {
+pub fn (ps PrintableString) length() int {
 	return ps.len
 }
 
-fn (ps PrintableString) size() int {
+pub fn (ps PrintableString) size() int {
 	mut size := 0
 	tag := ps.tag()
 	t := calc_tag_length(tag)
@@ -49,7 +49,7 @@ fn (ps PrintableString) size() int {
 	return size
 }
 
-fn (ps PrintableString) encode() ![]u8 {
+pub fn (ps PrintableString) encode() ![]u8 {
 	return serialize_printablestring(ps)
 }
 

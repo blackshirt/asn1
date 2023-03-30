@@ -7,22 +7,22 @@ module asn1
 // Standard ASCII characters
 type IA5String = string
 
-fn new_ia5string(s string) !Encoder {
+pub fn new_ia5string(s string) !Encoder {
 	if !is_ia5string(s) {
 		return error('bad ascii string')
 	}
 	return IA5String(s)
 }
 
-fn (a5 IA5String) tag() Tag {
+pub fn (a5 IA5String) tag() Tag {
 	return new_tag(.universal, false, int(TagType.ia5string))
 }
 
-fn (a5 IA5String) length() int {
+pub fn (a5 IA5String) length() int {
 	return a5.len
 }
 
-fn (a5 IA5String) size() int {
+pub fn (a5 IA5String) size() int {
 	mut size := 0
 	tag := a5.tag()
 	t := calc_tag_length(tag)
@@ -36,7 +36,7 @@ fn (a5 IA5String) size() int {
 	return size
 }
 
-fn (a5 IA5String) encode() ![]u8 {
+pub fn (a5 IA5String) encode() ![]u8 {
 	return serialize_ia5string(a5)
 }
 

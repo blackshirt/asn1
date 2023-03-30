@@ -55,16 +55,16 @@ fn decode_boolean(src []u8) !Encoder {
 	return ret
 }
 
-fn (b AsnBoolean) tag() Tag {
+pub fn (b AsnBoolean) tag() Tag {
 	t := new_tag(.universal, false, int(TagType.boolean))
 	return t
 }
 
-fn (b AsnBoolean) length() int {
+pub fn (b AsnBoolean) length() int {
 	return 1
 }
 
-fn (b AsnBoolean) size() int {
+pub fn (b AsnBoolean) size() int {
 	mut size := 0
 	tag := b.tag()
 	t := calc_tag_length(tag)
@@ -78,7 +78,7 @@ fn (b AsnBoolean) size() int {
 	return size
 }
 
-fn (b AsnBoolean) encode() ![]u8 {
+pub fn (b AsnBoolean) encode() ![]u8 {
 	res := encode_boolean(b.value)
 	return res
 }
