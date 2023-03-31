@@ -1,150 +1,105 @@
 # module asn1
 
-
-## asn1
+## about `asn1` module
 Pure V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http://www.itu.int/rec/T-REC-X.680/en) objects encoded in Distinguished Encoding Rules (DER) [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) encoding scheme.
 
-## tag handling
-- support handling short or long form (multibyte tag), but its sizes was limited to defined constant, `max_tag_bytes_length = 5` bytes long.
-- support almost popular basic type (except for a few types)
+## Table of Contents (ToC)
+- [About `asn1` module](#about-asn1-module)
+- [What is ASN.1](#what-is-asn1)
+- [Supported ASN.1 type](#supported-basic-asn1-type)
+- [Tag handling](#asn1-tag)
+  - [Create tag](#create-new-tag)
+- [Basic ASN.1 Constructor](#creating-basic-asn1-type)
+  
+## What is ASN.1
+From [Wikipedia](https://en.wikipedia.org/wiki/ASN.1) says, Abstract Syntax Notation One (ASN.1) is a standard interface description language for defining data structures that can be serialized and deserialized in a cross-platform way. It is broadly used in telecommunications and computer networking, and especially in cryptography.
 
-## limitation
-- only support DER encoding
+ASN.1 is a joint standard of the International Telecommunication Union Telecommunication Standardization Sector (ITU-T) in ITU-T Study Group 17 and ISO/IEC, originally defined in 1984 as part of CCITT X.409:1984.[2] In 1988, ASN.1 moved to its own standard, X.208, due to wide applicability. The substantially revised 1995 version is covered by the X.680 series.[3] The latest revision of the X.680 series of recommendations is the 6.0 Edition, published in 2021.
+
+## Encoding of ASN.1
+Encoding of ASN.1 is a set of encoding rules that specify how to represent a data structure as a series of bytes. The standard ASN.1 encoding rules include:
+- Basic Encoding Rules (BER)
+- Distinguished Encoding Rules (DER)
+- Canonical Encoding Rules (CER)
+- Basic XML Encoding Rules (XER)
+- many other encoding rules availables.
+
+## Basic of ASN.1 System
+Fundamentally, encoding of ASN.1 is serialization of a tag, length and value (TLV) triplets. Every ASN.1 object has a tag thats represents what is type of the object.
+
+## Supported Basic ASN.1 Type
+Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
+- [x] Boolean
+- [x] BitString
+- [x] Integer (through i32, i64, and big.Integer)
+- [x] ObjectIdentifier
+- [x] NumericString
+- [x] Null
+- [x] Enumerated
+- [x] IA5String (ascii string)
+- [x] OctetString
+- [x] PrintableString
+- [x] UTF8String
+- [x] UTCTime
+- [x] GeneralizedTime
+- [x] VisibleString
+- [x] Sequence, 
+- [x] SequenceOf
+- [x] Set
+- [x] SetOf
 
 
-## Contents
-- [new_oid_from_string](#new_oid_from_string)
-- [new_visiblestring](#new_visiblestring)
-- [new_utf8string](#new_utf8string)
-- [new_utctime](#new_utctime)
-- [new_tag](#new_tag)
-- [der_decode](#der_decode)
-- [new_set_with_class](#new_set_with_class)
-- [new_set](#new_set)
-- [new_sequence_with_class](#new_sequence_with_class)
-- [new_sequence](#new_sequence)
-- [new_asn_object](#new_asn_object)
-- [new_bitstring](#new_bitstring)
-- [new_boolean](#new_boolean)
-- [new_enumerated](#new_enumerated)
-- [new_explicit_context](#new_explicit_context)
-- [new_generalizedtime](#new_generalizedtime)
-- [new_ia5string](#new_ia5string)
-- [new_implicit_context](#new_implicit_context)
-- [new_integer](#new_integer)
-- [new_null](#new_null)
-- [new_numeric_string](#new_numeric_string)
-- [new_octetstring](#new_octetstring)
-- [new_printable_string](#new_printable_string)
-- [read_explicit_context](#read_explicit_context)
-- [Encoder](#Encoder)
-  - [contents](#contents)
-  - [as_sequence](#as_sequence)
-  - [as_set](#as_set)
-  - [as_boolean](#as_boolean)
-  - [as_integer](#as_integer)
-  - [as_bitstring](#as_bitstring)
-  - [as_octetstring](#as_octetstring)
-  - [as_null](#as_null)
-  - [as_oid](#as_oid)
-  - [as_utf8string](#as_utf8string)
-  - [as_numericstring](#as_numericstring)
-  - [as_printablestring](#as_printablestring)
-  - [as_ia5string](#as_ia5string)
-  - [as_visiblestring](#as_visiblestring)
-  - [as_utctime](#as_utctime)
-  - [as_generalizedtime](#as_generalizedtime)
-- [Enumerated](#Enumerated)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [GeneralizedTime](#GeneralizedTime)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [IA5String](#IA5String)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [UtcTime](#UtcTime)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [BitString](#BitString)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [UTF8String](#UTF8String)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [AsnInteger](#AsnInteger)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [Null](#Null)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [NumericString](#NumericString)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [OctetString](#OctetString)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [Oid](#Oid)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [PrintableString](#PrintableString)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [AsnBoolean](#AsnBoolean)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [Sequence](#Sequence)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [Set](#Set)
-  - [add](#add)
-  - [add_multi](#add_multi)
-- [Tagged](#Tagged)
-  - [tag](#tag)
-  - [inner_tag](#inner_tag)
-  - [as_inner](#as_inner)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [VisibleString](#VisibleString)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
-- [Class](#Class)
-- [TagType](#TagType)
-- [AsnObject](#AsnObject)
-  - [tag](#tag)
-  - [length](#length)
-  - [size](#size)
-  - [encode](#encode)
+### ASN.1 Tag
+ASN.1 type has a tag which is byte(s) components that describing class of the ASN.1 object, constructed (contains other object) or not and a non negative tag number. In this v `asn1` module, its support low form tag and high form tag (multi byte tag). 
+To represent tag, in this `asn1` module was using this structure:
+```v
+struct Tag {
+mut:
+	class       Class
+	constructed bool
+	number      int
+}
+```
+There are four class of ASN.1 type thats be represented in :
+```v
+enum Class {
+	universal = 0x00
+	application = 0x01
+	context = 0x02
+	private = 0x03
+}
+```
+
+### Create new tag
+You can create a new tag, with the following constructor:
+```
+fn new_tag(c Class, constructed bool, number int) Tag
+```
+where `c` is the ASN.1 class this object belong to, `constructed` boolean flag tells if this object constructed or primitive, and provided tag `number`.
+
+## Creating Basic ASN.1 Type
+You can use following function to create basic ASN.1 type
+  - [new_oid_from_string](#new_oid_from_string)
+  - [new_visiblestring](#new_visiblestring)
+  - [new_utf8string](#new_utf8string)
+  - [new_utctime](#new_utctime)
+  - [new_bitstring](#new_bitstring)
+  - [new_boolean](#new_boolean)
+  - [new_enumerated](#new_enumerated)
+  - [new_implicit_context](#new_implicit_context)
+  - [new_integer](#new_integer)
+  - [new_null](#new_null)
+  - [new_numeric_string](#new_numeric_string)
+  - [new_octetstring](#new_octetstring)
+  - [new_generalizedtime](#new_generalizedtime)
+  - [new_ia5string](#new_ia5string)
+  - [new_printable_string](#new_printable_string)
+  - [new_set_with_class](#new_set_with_class)
+  - [new_set](#new_set)
+  - [new_sequence_with_class](#new_sequence_with_class)
+  - [new_sequence](#new_sequence)
+
+
 
 ## new_oid_from_string
 ```v
