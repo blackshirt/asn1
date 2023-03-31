@@ -81,7 +81,7 @@ if seq is Sequence {
 
 
 ## Documentation
-See the [[ocumentation]](DOCS.md) for more detail information.
+See the [documentation](DOCS.md) for more detail information.
 
 ## License
 
