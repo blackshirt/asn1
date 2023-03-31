@@ -1,4 +1,4 @@
-# Vlang `asn1` documentation.
+# `asn1` module documentation.
 
 ## About `asn1` module
 `asn.1` is a pure V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http://www.itu.int/rec/T-REC-X.680/en) objects encoded in Distinguished Encoding Rules (DER) [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) encoding scheme.
@@ -12,6 +12,9 @@
   - [Create tag](#create-new-tag)
 - [Generic ASN.1 Object](#generic-asn1-object)
 - [Basic ASN.1 Constructor](#creating-basic-asn1-type)
+- [Encoding of ASN.1 Object](#serializing-asn1-object)
+  - [Encoder interface](#encoder-interface)
+  - [Encode ASN.1 Object to bytes](#encode-asn1-object-to-bytes)
   
 ## What is ASN.1
 From [Wikipedia](https://en.wikipedia.org/wiki/ASN.1) says, Abstract Syntax Notation One (ASN.1) is a standard interface description language for defining data structures that can be serialized and deserialized in a cross-platform way. It is broadly used in telecommunications and computer networking, and especially in cryptography.
@@ -27,6 +30,9 @@ Encoding of ASN.1 is a set of encoding rules that specify how to represent a dat
 - many other encoding rules availables.
 
 See [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) for more information about ASN.1 encoding.
+> **Note**
+>
+> This module only support the DER encoding
 
 ## Basic of ASN.1 System
 Fundamentally, DER 
@@ -134,7 +140,33 @@ You can use following function to create basic ASN.1 type
   - [new_sequence_with_class](#new_sequence_with_class)
   - [new_sequence](#new_sequence)
 
+## Serializing ASN.1 Object
+This section describes a way to do serializing ASN.1 to bytes array,
+included serialized tag and length. 
+The most important to facilitate encoding functionality of the ASN.1 object
+we use `Encoder` interface.
 
+### Encoder Interface
+`Encoder` is a main interrface that wraps ASN.1 encoding functionality.  
+Mostly all of basic types in this module implements this interface.  
+`Encoder` interface defined as;
+```v
+interface Encoder {
+	// tag of the underlying ASN.1 object
+	tag() Tag
+	// length of ASN.1 object (without tag and length part)
+	length() int
+	// length of encoded bytes of the object (included tag and length part)
+	size() int
+	// Serializes object to bytes array with DER encoding
+	encode() ![]u8
+}
+```
+### Encode ASN.1 Object to Bytes
+For serializing ASN.1 object to bytes array, do following step to get bytes:
+* create desired ASN.1 object by calling desired constructor.
+* call `encode()!` method of the created object in previous step.
+* get the bytes array ready to transfer.
 
 ## new_oid_from_string
 ```v
@@ -352,22 +384,8 @@ fn read_explicit_context(tag Tag, contents []u8) !Tagged
 
 [[Return to contents]](#Contents)
 
-## Encoder
-```v
-interface Encoder {
-	// tag of the underlying ASN.1 object
-	tag() Tag
-	// length of ASN.1 object (without tag and length part)
-	length() int
-	// length of encoded bytes of the object (included tag and length part)
-	size() int
-	// Serializes object to bytes array with DER encoding
-	encode() ![]u8
-}
-```
 
-Encoder is a main interrface that wraps ASN.1 encoding functionality.  
-Most of basic types in this module implements this interface.  
+
 
 [[Return to contents]](#Contents)
 
