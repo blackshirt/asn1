@@ -18,7 +18,7 @@ It does not support other than DER.
 It's currently supports following basic ASN1 type:
 - [x] Boolean
 - [x] BitString
-- [x] Integer (through i32, i64, and big.Integer)
+- [x] Integer (through int, i64, and `math.big.Integer`)
 - [x] ObjectIdentifier
 - [x] NumericString
 - [x] Null
