@@ -80,6 +80,9 @@ if seq is Sequence {
 ```
 
 
+## Documentation
+See the [documentation](DOCS.md) for more detail information.
+
 ## License
 
 This project is licensed under the MIT License (see LICENSE file)
