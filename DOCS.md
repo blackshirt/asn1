@@ -6,6 +6,7 @@ Pure V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http:/
 ## Table of Contents (ToC)
 - [About `asn1` module](#about-asn1-module)
 - [What is ASN.1](#what-is-asn1)
+- [ASN.1 Encoding](#encoding-of-asn1)
 - [Supported ASN.1 type](#supported-basic-asn1-type)
 - [Tag handling](#asn1-tag)
   - [Create tag](#create-new-tag)
@@ -25,7 +26,7 @@ Encoding of ASN.1 is a set of encoding rules that specify how to represent a dat
 - many other encoding rules availables.
 
 ## Basic of ASN.1 System
-Fundamentally, encoding of ASN.1 is serialization of a tag, length and value (TLV) triplets. Every ASN.1 object has a tag thats represents what is type of the object.
+Fundamentally, encoding of ASN.1 is serialization of a Tag, Length and Value (TLV) triplets. Every ASN.1 object has a tag thats represents what is type of the object. The Tag part specifies the type of the data structure being sent, the Length part specifies the number of bytes of content being transferred, and the Value part contains the content. Note that the Value part can be a triplet if it contains a constructed data type.
 
 ## Supported Basic ASN.1 Type
 Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
