@@ -1,7 +1,7 @@
-# module asn1
+# Vlang `asn1` documentation.
 
-## about `asn1` module
-Pure V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http://www.itu.int/rec/T-REC-X.680/en) objects encoded in Distinguished Encoding Rules (DER) [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) encoding scheme.
+## About `asn1` module
+`asn.1` is a pure V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http://www.itu.int/rec/T-REC-X.680/en) objects encoded in Distinguished Encoding Rules (DER) [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) encoding scheme.
 
 ## Table of Contents (ToC)
 - [About `asn1` module](#about-asn1-module)
@@ -18,15 +18,18 @@ From [Wikipedia](https://en.wikipedia.org/wiki/ASN.1) says, Abstract Syntax Nota
 ASN.1 is a joint standard of the International Telecommunication Union Telecommunication Standardization Sector (ITU-T) in ITU-T Study Group 17 and ISO/IEC, originally defined in 1984 as part of CCITT X.409:1984.[2] In 1988, ASN.1 moved to its own standard, X.208, due to wide applicability. The substantially revised 1995 version is covered by the X.680 series.[3] The latest revision of the X.680 series of recommendations is the 6.0 Edition, published in 2021.
 
 ## Encoding of ASN.1
-Encoding of ASN.1 is a set of encoding rules that specify how to represent a data structure as a series of bytes. The standard ASN.1 encoding rules include:
+Encoding of ASN.1 is a set of encoding rules that specify how to represent a data structure as a series of bytes. There are multiple rules available that describes way of serializing ASN.1 object. The standard ASN.1 encoding rules include:
 - Basic Encoding Rules (BER)
 - Distinguished Encoding Rules (DER)
 - Canonical Encoding Rules (CER)
 - Basic XML Encoding Rules (XER)
 - many other encoding rules availables.
 
+See [X690](https://www.itu.int/rec/T-REC-X.690/en) for more information about ASN.1 encoding.
+
 ## Basic of ASN.1 System
-Fundamentally, encoding of ASN.1 is serialization of a Tag, Length and Value (TLV) triplets. Every ASN.1 object has a tag thats represents what is type of the object. The Tag part specifies the type of the data structure being sent, the Length part specifies the number of bytes of content being transferred, and the Value part contains the content. Note that the Value part can be a triplet if it contains a constructed data type.
+Fundamentally, DER 
+encoding of ASN.1 is serialization of a Tag, Length and Value (TLV) triplets. Every ASN.1 object has a tag that represents what is type of the object. The Tag part specifies the type of the data structure being sent, the Length part specifies the number of bytes of content being transferred, and the Value part contains the content. Note that the Value part can be a triplet if it contains a constructed data type.
 
 ## Supported Basic ASN.1 Type
 Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
@@ -51,7 +54,7 @@ Basic ASN.1 type was a ASN.1 object which has universal class. It's currently su
 
 
 ### ASN.1 Tag
-ASN.1 type has a tag which is byte(s) components that describing class of the ASN.1 object, constructed (contains other object) or not and a non negative tag number. In this v `asn1` module, its support low form tag and high form tag (multi byte tag). 
+ASN.1 type has a tag which is byte(s) components that describing class of the ASN.1 object, constructed (contains other object) or not and a non negative tag number. In this v `asn1` module, its support short form tag for tag number below 31 and long form tag (multi byte tag) for representing tag number bigger than 31.
 To represent tag, in this `asn1` module was using this structure:
 ```v
 struct Tag {
