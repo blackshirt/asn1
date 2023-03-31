@@ -3,7 +3,7 @@
 ## About `asn1` module
 `asn.1` is a pure V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http://www.itu.int/rec/T-REC-X.680/en) objects encoded in Distinguished Encoding Rules (DER) [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) encoding scheme.
 
-## Table of Contents (ToC)
+## Table of Contents
 - [About `asn1` module](#about-asn1-module)
 - [What is ASN.1](#what-is-asn1)
 - [ASN.1 Encoding](#encoding-of-asn1)
@@ -26,7 +26,7 @@ Encoding of ASN.1 is a set of encoding rules that specify how to represent a dat
 - Basic XML Encoding Rules (XER)
 - many other encoding rules availables.
 
-See [X.690](https://www.itu.int/rec/T-REC-X.690/en) for more information about ASN.1 encoding.
+See [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) for more information about ASN.1 encoding.
 
 ## Basic of ASN.1 System
 Fundamentally, DER 
@@ -36,7 +36,7 @@ encoding of ASN.1 is serialization of a Tag, Length and Value (TLV) triplets. Ev
 Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
 - [x] Boolean
 - [x] BitString
-- [x] Integer (through i32, i64, and big.Integer)
+- [x] Integer (through i32, i64, and `big.Integer`)
 - [x] ObjectIdentifier
 - [x] NumericString
 - [x] Null
@@ -77,7 +77,7 @@ enum Class {
 
 ### Create new tag
 You can create a new tag, with the following constructor:
-```
+```v
 fn new_tag(c Class, constructed bool, number int) Tag
 ```
 where `c` is the ASN.1 class this object belong to, `constructed` boolean flag tells if this object constructed or primitive, and provided tag `number`.
@@ -87,25 +87,29 @@ For the purposes of handling ASN.1 object in general way, we use `AsnObject` tha
 ```v
 struct AsnObject {
 	tag    Tag 
-	values []u
+	values []u8
 }
 ```
 where:
 * `tag` is the tag of object, and 
-* `values` is the raw bytess array (contents) of thr object without tag and length part.
+* `values` is the raw bytes array (contents) of the object without tag and length part.
 
 You can create  `AsnObject` object with  the constructor, provided with parameters :
 * `Class` this object belong to,
-* `constructed` boolean flag that tell this object constructed or primitive, and
+* `constructed` boolean flag that tell this object constructed or primitive, 
+* `tagnum` is the tag number, and, 
 * `values` is bytes array of contents.
 
 
 ```v
-fn new_asn_object(c Class, constructed bool, values []u8) AsnObject
+fn new_asn_object(c Class, constructed bool, tagnum int, values []u8) AsnObject
 ```
---Note--
---------
-Mostly you dont need to use `AsnObject` directly, but, the recommended way to create ASN.1 object was using most basic type constructor described in [Creating Basic ASN.1 Type](#creating-asn1-object) below.
+
+> **Note**
+>
+> Most of the time, you don't need to use `AsnObject` directly, but, 
+> the recommended way to create ASN.1 object was using most basic type constructor 
+> described in [[Creating Basic ASN.1 Type]](#creating-asn1-object) below.
 
 
 ## Creating Basic ASN.1 Type
