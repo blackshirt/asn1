@@ -7,6 +7,13 @@ This module provides you with the ability to generate and parse ASN.1 encoded da
 More precisely, it provides you with the ability to generate and parse data encoded with ASN.1’s DER (Distinguished Encoding Rules) encoding. 
 It does not support other than DER.
 
+## Status
+> **Warning**
+>
+> This module is under development, its changed rapidly, and even 
+> its functionality mostly and hardly tested, i'm sure there are buggy code uncovered recently,
+> so feel free to report an isdue or submit a bug report, or give a feedback.
+
 ## Supported ASN.1 Type
 It's currently supports following basic ASN1 type:
 - [x] Boolean
@@ -74,14 +81,14 @@ seq := der_decode(data)!
 // smart casting
 if seq is Sequence {
     assert seq.elements[0] is UTF8String
-	assert seq.elements[1] is AsnInteger
-	assert seq.elements[2] is Tagged
+    assert seq.elements[1] is AsnInteger
+    assert seq.elements[2] is Tagged
 }
 ```
 
 
 ## Documentation
-See the [documentation](DOCS.md) for more detail information.
+See the [documentation](DOCS.md) for more detail information on how to use functionality in this module.
 
 ## License
 
