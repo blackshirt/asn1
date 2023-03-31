@@ -68,7 +68,7 @@ seq.add(new_integer(i64(42)))
 seq.add(new_explicit_context(new_oid_from_string('1.3.6.1.3')!, 1))
 
 out := seq.encode()!
-// dump(out) == [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1), 6, 6, 4, 43, 6, 1, 3]
+assert out == [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1), 6, 6, 4, 43, 6, 1, 3]
 ```
 
 ### Decode
@@ -77,13 +77,16 @@ Decode DER encoding from above.
 
 ```v
 data := [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1), 6, 6, 4, 43, 6, 1, 3]
-seq := der_decode(data)!
-// smart casting
-if seq is Sequence {
-    assert seq.elements[0] is UTF8String
-    assert seq.elements[1] is AsnInteger
-    assert seq.elements[2] is Tagged
-}
+//decode the data 
+out := der_decode(data)!
+
+// cast to Sequence 
+seq := out.as_sequence()!
+
+assert seq.elements[0] is UTF8String
+assert seq.elements[1] is AsnInteger
+assert seq.elements[2] is Tagged
+
 ```
 
 
