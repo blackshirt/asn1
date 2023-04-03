@@ -13,10 +13,14 @@
   - [Length handling](#length-handling)
 - [Supported ASN.1 type](#supported-basic-asn1-type)
 - [Generic ASN.1 Object](#generic-asn1-object)
-- [Basic ASN.1 Constructor](#creating-basic-asn1-type)
-- [Encoding of ASN.1 Object](#serializing-asn1-object)
+- [Basic ASN.1 Constructor](#create-basic-asn1-type)
+- [Encoding of ASN.1 Object](#encoding-asn1-object)
   - [Encoder interface](#encoder-interface)
-  - [Encode ASN.1 Object to bytes](#encode-asn1-object-to-bytes)
+  - [Serializing ASN.1 Object to bytes](#serializing-asn1-object-to-bytes)
+  - [Example #1](#example-1)
+  - [Example #2](#example-2)
+- [Decoding of ASN.1 Bytes](#decoding-asn1-bytes)
+- [Module Index](#module-index)
   
 ## What is ASN.1
 From [Wikipedia](https://en.wikipedia.org/wiki/ASN.1) says, Abstract Syntax Notation One (ASN.1) is a standard interface description language for defining data structures that can be serialized and deserialized in a cross-platform way. It is broadly used in telecommunications and computer networking, and especially in cryptography.
@@ -126,29 +130,33 @@ fn new_asn_object(c Class, constructed bool, tagnum int, values []u8) AsnObject
 > described in [[Creating Basic ASN.1 Type]](#creating-asn1-object) below.
 
 
-## Creating Basic ASN.1 Type
-You can use following function to create basic ASN.1 type
-  - [new_oid_from_string](#new_oid_from_string)
-  - [new_visiblestring](#new_visiblestring)
-  - [new_utf8string](#new_utf8string)
-  - [new_utctime](#new_utctime)
-  - [new_bitstring](#new_bitstring)
-  - [new_boolean](#new_boolean)
-  - [new_enumerated](#new_enumerated)
-  - [new_implicit_context](#new_implicit_context)
-  - [new_integer](#new_integer)
-  - [new_null](#new_null)
-  - [new_numeric_string](#new_numeric_string)
-  - [new_octetstring](#new_octetstring)
-  - [new_generalizedtime](#new_generalizedtime)
-  - [new_ia5string](#new_ia5string)
-  - [new_printable_string](#new_printable_string)
-  - [new_set_with_class](#new_set_with_class)
-  - [new_set](#new_set)
-  - [new_sequence_with_class](#new_sequence_with_class)
-  - [new_sequence](#new_sequence)
-
-## Serializing ASN.1 Object
+## Create Basic ASN.1 Type
+You can use following function to create basic UNIVERSAL ASN.1 type. Most of the constructor return `Encoder` interfaces.
+|No | Func Signature     		      			   	| ASN.1 Object 	| Description |
+|:--:|---------------------------------------------------------------	|:-------------:|-------------|
+| 1 | [new_boolean](#new_boolean)	   	| BOOLEAN	|  |
+| 2 | [new_integer](#new_integer)		| INTEGER	|  |
+| 3 | [new_bitstring](#new_bitstring)		| BITSTRING	| its accepts arbitrary v string, not a bit string |
+| 4 | [new_octetstring](#new_octetstring)	| OCTET STRING	| |
+| 5 | [new_null](#new_null)			| NULL		|  |
+| 6 | [new_oid_from_string](#new_oid_from_string) | OBJECT IDENTIFIER | |
+| 7 | [new_enumerated](#new_enumerated)		| ENUMERATED | |
+| 8 | [new_utf8string](#new_utf8string) 	| UTF8STRING | |
+| 9 | [new_sequence](#new_sequence)		| SEQUENCE, SEQUENCE OF | for sequence of, you should ensure you add the same object to sequence elements.|
+| 10 | [new_set](#new_set) 			| SET, SET OF | likes a sequence of, ensure add the same object to set elements|
+| 11 | [new_numeric_string](#new_numeric_string)| NUMERIC STRING | |
+| 12 | [new_printable_string](#new_printable_string) | PRINTABLE STRING | |
+| 13 | [new_ia5string](#new_ia5string) 		| IA5STRING | |
+| 14 | [new_utctime](#new_utctime)		| UTCTIME | |
+| 15 | [new_generalizedtime](#new_generalizedtime) | GENERALIZED TIME | | 
+| 16 | [new_visiblestring](#new_visiblestring)| VISIBLESTRING | |
+  
+and for handling `EXPLICIT` or `IMPLICIT` tagged object, there are two availables constructor:
+- [new_implicit_context](#new_implicit_context) for wraps ASN.1 object in implicit mode.
+- [new_explicit_context](#new_explicit_context) for wraps ASN.1 object in explicit mode.
+  
+  
+## Encoding ASN.1 Object
 This section describes a way to do serializing ASN.1 to bytes array,
 included serialized tag and length. 
 The most important to facilitate encoding functionality of the ASN.1 object
@@ -170,12 +178,46 @@ interface Encoder {
 	encode() ![]u8
 }
 ```
-### Encode ASN.1 Object to Bytes
+### Serializing ASN.1 Object to Bytes
 For serializing ASN.1 object to bytes array, do following step to get bytes:
 * create desired ASN.1 object by calling desired constructor.
 * call `encode()!` method of the created object in previous step.
 * get the bytes array ready to transfer.
 
+### Example #1
+In this example, we would create object identifier object from string. 
+```v
+input := '1.2.840.113549'
+
+src := new_oid_from_string(input)!
+
+out := src.encode()!
+exp := [u8(0x06), 0x06, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d]
+assert out == exp
+```
+### Example #2
+In this example, we create sequence type.
+```v
+mut seq := new_sequence()
+
+seq.add(new_utf8string('Hello')!) 
+seq.add(new_integer(i64(42))) 
+seq.add(new_explicit_context(new_oid_from_string('1.3.6.1.3')!, 1))
+
+out := seq.encode()!
+assert out == [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1), 6, 6, 4, 43, 6, 1, 3]
+```
+### Example #3
+
+## Decoding ASN.1 Bytes
+This section describes how to parse (decode) bytes of data encoded in ASN.1 DER encoding. This module export `der_decode` defined below as main routine to do parsing of DER encoded data. Its accepts bytes arrays encoded in DER in `src` params and returns `Encoder` interfaces object,
+so, you should cast it to get underlying type.  By default, in context specific class, its try to read as tagged object, whether its explicit or implicit.  
+```v
+fn der_decode(src []u8) !Encoder
+```
+
+
+## Module Index
 ## new_oid_from_string
 ```v
 fn new_oid_from_string(s string) !Encoder
@@ -191,7 +233,7 @@ fn new_visiblestring(s string) !Encoder
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_utf8string
 ```v
@@ -220,16 +262,7 @@ through `constructed` boolean flag, and tag `number`.
 
 [[Return to contents]](#Contents)
 
-## der_decode
-```v
-fn der_decode(src []u8) !Encoder
-```
 
-der_decode is main routine to do parsing of DER encoded data.  
-Its accepts bytes arrays encoded in DER in `src` params and returns `Encoder` interfaces object,
-so, you should cast it to get underlying type.  
-By default, in context specific class, its try to read as tagged object, whether its explicit or implicit.  
-TODO: more robust parsing function to handle specific use cases.  
 
 [[Return to contents]](#Contents)
 
@@ -327,7 +360,7 @@ fn new_ia5string(s string) !Encoder
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_implicit_context
 ```v
@@ -337,7 +370,7 @@ fn new_implicit_context(asn Encoder, tagnum int) Tagged
 new_implicit_context creates new implicit mode of context specific class of tagged object from original
 ASN.1 object with new tag number sets to tagnum.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_integer
 ```v
@@ -347,7 +380,7 @@ fn new_integer(val AsnInteger) Encoder
 new_integer creates asn.1 serializable integer object. Its supports arbitrary integer value, with support from `math.big` module for
 integer bigger than 64 bit number.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_null
 ```v
@@ -355,7 +388,7 @@ fn new_null() Encoder
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_numeric_string
 ```v
@@ -364,7 +397,7 @@ fn new_numeric_string(s string) !Encoder
 
 new_numeric_string creates new numeric string
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_octetstring
 ```v
@@ -373,7 +406,7 @@ fn new_octetstring(s string) Encoder
 
 new_octetstring creates new octet string
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_printable_string
 ```v
@@ -382,7 +415,7 @@ fn new_printable_string(s string) !Encoder
 
 new_printable_string creates PrintableString from the string s
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## read_explicit_context
 ```v
@@ -390,12 +423,12 @@ fn read_explicit_context(tag Tag, contents []u8) !Tagged
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## contents
 ```v
@@ -405,7 +438,7 @@ fn (enc Encoder) contents() ![]u8
 contents gets the contents (values) part of ASN.1 object, that is,
 bytes values of the object  without tag and length parts.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_sequence
 ```v
@@ -414,7 +447,7 @@ fn (e Encoder) as_sequence() !Sequence
 
 as_sequence cast encoder to sequence
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_set
 ```v
@@ -423,7 +456,7 @@ fn (e Encoder) as_set() !Set
 
 as_set cast encoder to set
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_boolean
 ```v
@@ -432,7 +465,7 @@ fn (e Encoder) as_boolean() !AsnBoolean
 
 as_boolean cast encoder to ASN.1 boolean
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_integer
 ```v
@@ -441,7 +474,7 @@ fn (e Encoder) as_integer() !AsnInteger
 
 as_integer cast encoder to ASN.1 integer
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_bitstring
 ```v
@@ -450,7 +483,7 @@ fn (e Encoder) as_bitstring() !BitString
 
 as_bitstring cast encoder to ASN.1 bitstring
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_octetstring
 ```v
@@ -459,7 +492,7 @@ fn (e Encoder) as_octetstring() !OctetString
 
 as_octetstring cast encoder to ASN.1 OctetString
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_null
 ```v
@@ -468,7 +501,7 @@ fn (e Encoder) as_null() !Null
 
 as_null cast encoder to ASN.1 null type
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_oid
 ```v
