@@ -213,33 +213,25 @@ out := seq.encode()!
 assert out == [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1), 6, 6, 4, 43, 6, 1, 3]
 ```
 ### Example #3
+In the third example, lets create more complex type where sequence contains another sequence.
 ```v
+// lets create first sequence
 mut seq1 := new_sequence()
+// add two primitive elements to the sequence
+seq1.add(new_boolean(true))
+seq1.add(new_boolean(false))
+
+// lets creates another sequences, where it contains primitive element and first sequnce created above.
 mut seq2 := new_sequence()
+seq2.add(new_boolean(false))
+seq2.add(seq1)
+seq2.add(new_boolean(true))
 
-o1 := new_boolean(true) // 3
-o2 := new_boolean(false) // 3
-o3 := new_boolean(false) // 3
-o4 := new_boolean(true) // 3
-
-// seq2 contains only the primitive object
-seq2.add(o2)
-seq2.add(o3)
-
-out2 := seq2.encode()!
-exp2 := [u8(0x30), 6, 0x01, 0x01, 0x00, 0x01, 0x01, 0x00]
-assert out2 == exp2
-assert seq2.length() == 6
-assert seq2.size() == 8
-
-// seq1 contains the primitive, and other sequeance, seq2
-seq1.add(o1)
-seq1.add(seq2)
-seq1.add(o4)
-
-out1 := seq1.encode()!
-exp1 := [u8(0x30), 14, u8(0x01), 0x01, 0xff, u8(0x30), 6, 0x01, 0x01, 0x00, 0x01, 0x01, 0x00,
+// lets serialize it to bytes
+out1 := seq2.encode()!
+exp1 := [u8(0x30), 14, u8(0x01), 0x01, 0x00, u8(0x30), 6, 0x01, 0x01, 0xff, 0x01, 0x01, 0x00,
 		u8(0x01), 0x01, 0xff]
+// assert for right value
 assert seq1.length() == 14
 assert seq1.size() == 16
 assert out1 == exp1
