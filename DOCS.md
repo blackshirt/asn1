@@ -19,6 +19,7 @@
   - [Serializing ASN.1 Object to bytes](#serializing-asn1-object-to-bytes)
   - [Example #1](#example-1)
   - [Example #2](#example-2)
+  - [Example #3](#example-3)
 - [Decoding of ASN.1 Bytes](#decoding-asn1-bytes)
 - [Module Index](#module-index)
   
@@ -185,7 +186,8 @@ For serializing ASN.1 object to bytes array, do following step to get bytes:
 * get the bytes array ready to transfer.
 
 ### Example #1
-In this example, we would create object identifier object from string. 
+In the first example, we would create simple object identifier object from string and serializing it to bytes array.
+For other object, see [Basic ASN.1 Constructor](#create-basic-asn1-type).
 ```v
 input := '1.2.840.113549'
 
@@ -196,18 +198,52 @@ exp := [u8(0x06), 0x06, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d]
 assert out == exp
 ```
 ### Example #2
-In this example, we create sequence type.
+In the second example, we would create more complex type, sequence contains other object.
 ```v
+// create universal type sequence
 mut seq := new_sequence()
 
+// add three object to the sequence elements.
 seq.add(new_utf8string('Hello')!) 
 seq.add(new_integer(i64(42))) 
 seq.add(new_explicit_context(new_oid_from_string('1.3.6.1.3')!, 1))
 
+// lets serialize it to bytes
 out := seq.encode()!
 assert out == [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1), 6, 6, 4, 43, 6, 1, 3]
 ```
 ### Example #3
+```v
+mut seq1 := new_sequence()
+mut seq2 := new_sequence()
+
+o1 := new_boolean(true) // 3
+o2 := new_boolean(false) // 3
+o3 := new_boolean(false) // 3
+o4 := new_boolean(true) // 3
+
+// seq2 contains only the primitive object
+seq2.add(o2)
+seq2.add(o3)
+
+out2 := seq2.encode()!
+exp2 := [u8(0x30), 6, 0x01, 0x01, 0x00, 0x01, 0x01, 0x00]
+assert out2 == exp2
+assert seq2.length() == 6
+assert seq2.size() == 8
+
+// seq1 contains the primitive, and other sequeance, seq2
+seq1.add(o1)
+seq1.add(seq2)
+seq1.add(o4)
+
+out1 := seq1.encode()!
+exp1 := [u8(0x30), 14, u8(0x01), 0x01, 0xff, u8(0x30), 6, 0x01, 0x01, 0x00, 0x01, 0x01, 0x00,
+		u8(0x01), 0x01, 0xff]
+assert seq1.length() == 14
+assert seq1.size() == 16
+assert out1 == exp1
+```
 
 ## Decoding ASN.1 Bytes
 This section describes how to parse (decode) bytes of data encoded in ASN.1 DER encoding. This module export `der_decode` defined below as main routine to do parsing of DER encoded data. Its accepts bytes arrays encoded in DER in `src` params and returns `Encoder` interfaces object,
