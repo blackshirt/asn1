@@ -221,20 +221,20 @@ mut seq1 := new_sequence()
 seq1.add(new_boolean(true))
 seq1.add(new_boolean(false))
 
-// lets creates another sequences, where it contains primitive element and first sequnce created above.
+// lets create another sequences, where it contains primitive element and first sequence created above.
 mut seq2 := new_sequence()
 seq2.add(new_boolean(false))
 seq2.add(seq1)
 seq2.add(new_boolean(true))
 
 // lets serialize it to bytes
-out1 := seq2.encode()!
-exp1 := [u8(0x30), 14, u8(0x01), 0x01, 0x00, u8(0x30), 6, 0x01, 0x01, 0xff, 0x01, 0x01, 0x00,
+out := seq2.encode()!
+expected := [u8(0x30), 14, u8(0x01), 0x01, 0x00, u8(0x30), 6, 0x01, 0x01, 0xff, 0x01, 0x01, 0x00,
 		u8(0x01), 0x01, 0xff]
 // assert for right value
-assert seq1.length() == 14
-assert seq1.size() == 16
-assert out1 == exp1
+assert seq2.length() == 14
+assert seq2.size() == 16
+assert out == expected
 ```
 
 ## Decoding ASN.1 Bytes
@@ -244,6 +244,43 @@ so, you should cast it to get underlying type.  By default, in context specific 
 fn der_decode(src []u8) !Encoder
 ```
 
+--Example--
+-----------
+We're going to use above data in [Example #3](#example-3) as an example for `der_decode` functionality.
+```v
+// the data we're going to decode, serialized in DER encoding.
+data := [u8(0x30), 14, u8(0x01), 0x01, 0x00, u8(0x30), 6, 0x01, 0x01, 0xff, 0x01, 0x01,
+		0x00, u8(0x01), 0x01, 0xff]
+
+// lets call `der_decode` routine
+out := der_decode(data)!
+// lets cast it to sequence
+seq := out.as_sequence()!
+	
+
+el0 := seq.elements[0].as_boolean()!
+assert el0.value == false 
+
+el1 := seq.elements[1].as_sequence()!
+//dump(el1)
+el2 := seq.elements[2].as_boolean()!
+assert el2.value == true 
+```
+If we dump `el1` element, we exactly got the structure of sequence, with elements contains two bolean values, like we constructed in [Example #3](#example-3) above.
+Similar like this output:
+```bash
+el1: asn1.Sequence{
+    tag: asn1.Tag{
+        class: universal
+        constructed: true
+        number: 16
+    }
+    elements: [asn1.Encoder(asn1.AsnBoolean{
+        value: true
+    }), asn1.Encoder(asn1.AsnBoolean{
+        value: false
+    })]
+```
 
 ## Module Index
 ## new_oid_from_string

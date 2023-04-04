@@ -7,56 +7,43 @@ import math
 import math.big
 
 fn test_sequence_contains_other_seq() ! {
+	// lets create first sequence
 	mut seq1 := new_sequence()
+	// add two primitive elements to the sequence
+	seq1.add(new_boolean(true))
+	seq1.add(new_boolean(false))
+
+	// lets create another sequences, where it contains primitive element and first sequence created above.
 	mut seq2 := new_sequence()
+	seq2.add(new_boolean(false))
+	seq2.add(seq1)
+	seq2.add(new_boolean(true))
 
-	o1 := new_boolean(true) // 3
-	o2 := new_boolean(false) // 3
-	o3 := new_boolean(false) // 3
-	o4 := new_boolean(true) // 3
+	// lets serialize it to bytes
+	out := seq2.encode()!
+	expected := [u8(0x30), 14, u8(0x01), 0x01, 0x00, u8(0x30), 6, 0x01, 0x01, 0xff, 0x01, 0x01,
+		0x00, u8(0x01), 0x01, 0xff]
+	// assert for right value
+	assert seq2.length() == 14
+	assert seq2.size() == 16
+	assert out == expected
+}
 
-	// seq2 contains only the primitive object
-	seq2.add(o2)
-	seq2.add(o3)
+fn test_sequence_der_decode()! {
+	data := [u8(0x30), 14, u8(0x01), 0x01, 0x00, u8(0x30), 6, 0x01, 0x01, 0xff, 0x01, 0x01,
+		0x00, u8(0x01), 0x01, 0xff]
+	out := der_decode(data)!
+	// lets cast it to sequence
+	seq := out.as_sequence()!
+	
 
-	out2 := seq2.encode()!
-	exp2 := [u8(0x30), 6, 0x01, 0x01, 0x00, 0x01, 0x01, 0x00]
-	assert out2 == exp2
-	assert seq2.length() == 6
-	assert seq2.size() == 8
+	el0 := seq.elements[0].as_boolean()!
+	assert el0.value == false 
 
-	// seq1 contains the primitive, and other sequeance, seq2
-	seq1.add(o1)
-	seq1.add(seq2)
-	seq1.add(o4)
-
-	out1 := seq1.encode()!
-	exp1 := [u8(0x30), 14, u8(0x01), 0x01, 0xff, u8(0x30), 6, 0x01, 0x01, 0x00, 0x01, 0x01, 0x00,
-		u8(0x01), 0x01, 0xff]
-	assert seq1.length() == 14
-	assert seq1.size() == 16
-	assert out1 == exp1
-
-	// reading back to the Seuence
-	back := decode_sequence(exp1)!
-
-	exp1out := back.encode()!
-	assert exp1out == exp1
-
-	back2 := decode_sequence(exp1)!
-	res := back2.encode()!
-	assert res == exp1
-
-	assert back.elements.len == 3
-	assert back.elements[1].size() == 8
-	assert back.elements[1].length() == 6
-
-	// check if second obj was a sequence, contains 2 boolean primitive
-	second := back.elements[1]
-	// elements item was Encoder interfaces, lets smart cast it
-	if second is Sequence {
-		assert second.elements.len == 2
-	}
+	el1 := seq.elements[1].as_sequence()!
+	//dump(el1)
+	el2 := seq.elements[2].as_boolean()!
+	assert el2.value == true 
 }
 
 fn test_sequence_add_and_encode_boolean() {
