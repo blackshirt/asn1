@@ -22,11 +22,11 @@
   - [Example #3](#example-3)
 - [Decoding of ASN.1 Bytes](#decoding-asn1-bytes)
 - [Module Index](#module-index)
+- [Reference](#reference)
   
 ## What is ASN.1
 From [Wikipedia](https://en.wikipedia.org/wiki/ASN.1) says, Abstract Syntax Notation One (ASN.1) is a standard interface description language for defining data structures that can be serialized and deserialized in a cross-platform way. It is broadly used in telecommunications and computer networking, and especially in cryptography.
 
-ASN.1 is a joint standard of the International Telecommunication Union Telecommunication Standardization Sector (ITU-T) in ITU-T Study Group 17 and ISO/IEC, originally defined in 1984 as part of CCITT X.409:1984.[2] In 1988, ASN.1 moved to its own standard, X.208, due to wide applicability. The substantially revised 1995 version is covered by the X.680 series.[3] The latest revision of the X.680 series of recommendations is the 6.0 Edition, published in 2021.
 
 ## Encoding of ASN.1
 Encoding of ASN.1 is a set of encoding rules that specify how to represent a data structure as a series of bytes. There are multiple rules available that describes way of serializing ASN.1 object. The standard ASN.1 encoding rules include:
@@ -290,7 +290,7 @@ fn new_oid_from_string(s string) !Encoder
 
 new_oid_from_string creates Oid serializer from string
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_visiblestring
 ```v
@@ -306,7 +306,7 @@ fn new_utf8string(s string) !Encoder
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_utctime
 ```v
@@ -315,7 +315,7 @@ fn new_utctime(s string) !Encoder
 
 new_utctime creates new UtcTime from string s.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_tag
 ```v
@@ -325,11 +325,9 @@ fn new_tag(c Class, constructed bool, number int) Tag
 `new_tag` creates new tag with class `c`, with constructed or primitive form
 through `constructed` boolean flag, and tag `number`.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 
-
-[[Return to contents]](#Contents)
 
 ## new_set_with_class
 ```v
@@ -338,7 +336,7 @@ fn new_set_with_class(c Class) Set
 
 new_set_with_class creates new set with specific ASN.1 class.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_set
 ```v
@@ -347,7 +345,7 @@ fn new_set() Set
 
 new_set creates universal set.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_sequence_with_class
 ```v
@@ -356,7 +354,7 @@ fn new_sequence_with_class(c Class) Sequence
 
 new_sequence_with_class creates new empty sequence with specific ASN.1 class.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_sequence
 ```v
@@ -366,7 +364,7 @@ fn new_sequence() Sequence
 new_sequence creates empty universal class of sequence type.  
 for other ASN.1 class, see `new_sequence_with_class`
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_asn_object
 ```v
@@ -375,7 +373,7 @@ fn new_asn_object(cls Class, constructed bool, tagnum int, values []u8) AsnObjec
 
 `new_asn_object` creates new ASN.1 Object
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_bitstring
 ```v
@@ -383,7 +381,7 @@ fn new_bitstring(s string) !Encoder
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_boolean
 ```v
@@ -391,7 +389,7 @@ fn new_boolean(value bool) Encoder
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_enumerated
 ```v
@@ -399,7 +397,7 @@ fn new_enumerated(val int) Encoder
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_explicit_context
 ```v
@@ -409,7 +407,7 @@ fn new_explicit_context(asn Encoder, tagnum int) Tagged
 new_explicit_context creates new explicit mode of context specific class of tagged object
 from original ASN.1 object with tag number sets to tagnum.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_generalizedtime
 ```v
@@ -417,7 +415,7 @@ fn new_generalizedtime(s string) !Encoder
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## new_ia5string
 ```v
@@ -575,7 +573,7 @@ fn (e Encoder) as_oid() !Oid
 
 as_oid cast encoder to ASN.1 object identifier type.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_utf8string
 ```v
@@ -584,7 +582,7 @@ fn (e Encoder) as_utf8string() !UTF8String
 
 as_utf8string cast encoder to ASN.1 UTF8String.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_numericstring
 ```v
@@ -593,7 +591,7 @@ fn (e Encoder) as_numericstring() !NumericString
 
 as_numericstring cast encoder to ASN.1 NumericString.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_printablestring
 ```v
@@ -602,7 +600,7 @@ fn (e Encoder) as_printablestring() !PrintableString
 
 as_printablestring cast encoder to ASN.1 PrintableString.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_ia5string
 ```v
@@ -611,7 +609,7 @@ fn (e Encoder) as_ia5string() !IA5String
 
 as_ia5string cast encoder to ASN.1 IA5String.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_visiblestring
 ```v
@@ -620,7 +618,7 @@ fn (e Encoder) as_visiblestring() !VisibleString
 
 as_visiblestring cast encoder to ASN.1 VisibleString.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_utctime
 ```v
@@ -629,7 +627,7 @@ fn (e Encoder) as_utctime() !UtcTime
 
 as_utctime cast encoder to ASN.1 UtcTime.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_generalizedtime
 ```v
@@ -638,7 +636,7 @@ fn (e Encoder) as_generalizedtime() !GeneralizedTime
 
 as_generalizedtime cast encoder to ASN.1 GeneralizedTime.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## Enumerated
 ```v
@@ -650,7 +648,7 @@ Enumerated type treated as ordinary integer, only differs on tag value.
 The encoding of an enumerated value shall be that of the integer value with which it is associated.  
 NOTE: It is primitive.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## tag
 ```v
@@ -666,7 +664,7 @@ fn (en Enumerated) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -674,7 +672,7 @@ fn (en Enumerated) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -682,7 +680,7 @@ fn (en Enumerated) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## GeneralizedTime
 ```v
@@ -703,7 +701,7 @@ GeneralizedTime values MUST be:
 is zero.  
 - GeneralizedTime values MUST NOT include fractional seconds.
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## tag
 ```v
@@ -711,7 +709,7 @@ fn (gt GeneralizedTime) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -719,7 +717,7 @@ fn (gt GeneralizedTime) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -727,7 +725,7 @@ fn (gt GeneralizedTime) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -735,7 +733,7 @@ fn (gt GeneralizedTime) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## IA5String
 ## tag
@@ -744,7 +742,7 @@ fn (a5 IA5String) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -752,7 +750,7 @@ fn (a5 IA5String) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -760,7 +758,7 @@ fn (a5 IA5String) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -768,7 +766,7 @@ fn (a5 IA5String) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## UtcTime
 ```v
@@ -796,7 +794,7 @@ TODO:
 - check for invalid representation of date and hhmmss part.
 - represented UTCTime in time.Time
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## tag
 ```v
@@ -804,7 +802,7 @@ fn (utc UtcTime) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -812,7 +810,7 @@ fn (utc UtcTime) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -820,7 +818,7 @@ fn (utc UtcTime) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -828,7 +826,7 @@ fn (utc UtcTime) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## BitString
 ## tag
@@ -837,7 +835,7 @@ fn (bs BitString) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -845,7 +843,7 @@ fn (bs BitString) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -853,7 +851,7 @@ fn (bs BitString) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -861,7 +859,7 @@ fn (bs BitString) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## UTF8String
 ## tag
@@ -870,7 +868,7 @@ fn (ut UTF8String) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -878,7 +876,7 @@ fn (ut UTF8String) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -886,7 +884,7 @@ fn (ut UTF8String) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -894,7 +892,7 @@ fn (ut UTF8String) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## AsnInteger
 ```v
@@ -907,7 +905,7 @@ ASN.1 Integer represented by AsnInteger sum type of `int`, `i64` and `big.Intege
 Its handles number arbitrary length of number with support of `math.big` module.  
 The encoding of an integer value shall be primitive.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## tag
 ```v
@@ -915,7 +913,7 @@ fn (n AsnInteger) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -923,7 +921,7 @@ fn (n AsnInteger) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -931,7 +929,7 @@ fn (n AsnInteger) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -939,7 +937,7 @@ fn (n AsnInteger) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## Null
 ## tag
@@ -948,7 +946,7 @@ fn (n Null) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -956,7 +954,7 @@ fn (n Null) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -964,7 +962,7 @@ fn (n Null) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -972,7 +970,7 @@ fn (n Null) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## NumericString
 ## tag
@@ -981,7 +979,7 @@ fn (ns NumericString) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -989,7 +987,7 @@ fn (ns NumericString) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -997,7 +995,7 @@ fn (ns NumericString) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -1005,7 +1003,7 @@ fn (ns NumericString) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## OctetString
 ## tag
@@ -1014,7 +1012,7 @@ fn (os OctetString) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -1022,7 +1020,7 @@ fn (os OctetString) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -1030,7 +1028,7 @@ fn (os OctetString) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -1038,7 +1036,7 @@ fn (os OctetString) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## Oid
 ```v
@@ -1047,7 +1045,7 @@ type Oid = []int
 
 ObjectIdentifier
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## tag
 ```v
@@ -1055,7 +1053,7 @@ fn (oid Oid) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -1063,7 +1061,7 @@ fn (oid Oid) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -1071,7 +1069,7 @@ fn (oid Oid) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -1088,7 +1086,7 @@ fn (ps PrintableString) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -1096,7 +1094,7 @@ fn (ps PrintableString) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -1104,7 +1102,7 @@ fn (ps PrintableString) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -1112,7 +1110,7 @@ fn (ps PrintableString) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## AsnBoolean
 ## tag
@@ -1121,7 +1119,7 @@ fn (b AsnBoolean) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -1129,7 +1127,7 @@ fn (b AsnBoolean) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -1137,7 +1135,7 @@ fn (b AsnBoolean) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -1145,7 +1143,7 @@ fn (b AsnBoolean) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## Sequence
 ## length
@@ -1154,7 +1152,7 @@ fn (seq Sequence) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -1162,7 +1160,7 @@ fn (seq Sequence) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -1170,7 +1168,7 @@ fn (seq Sequence) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## Set
 ## add
@@ -1179,7 +1177,7 @@ fn (mut set Set) add(obj Encoder) Set
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## add_multi
 ```v
@@ -1187,7 +1185,7 @@ fn (mut set Set) add_multi(objs []Encoder) Set
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## Tagged
 ## tag
@@ -1197,7 +1195,7 @@ fn (ctx Tagged) tag() Tag
 
 tag returns outer tag
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## inner_tag
 ```v
@@ -1206,7 +1204,7 @@ fn (ctx Tagged) inner_tag() Tag
 
 inner_tag return inner tag of the inner object being wrapped
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## as_inner
 ```v
@@ -1215,7 +1213,7 @@ fn (ctx Tagged) as_inner() Encoder
 
 as_inner returns inner object being wrapped
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -1224,7 +1222,7 @@ fn (ctx Tagged) length() int
 
 length returns the length of the context tagged object
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -1237,7 +1235,7 @@ length of the length part and inner size.
 and in implicit mode, the size was total (sum) of size of inner object,
 and length of outer tag.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -1247,7 +1245,7 @@ fn (ctx Tagged) encode() ![]u8
 encode serializes context tagged object to array of bytes.  
 Its different between tagged mode explicit and implicit.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## VisibleString
 ## tag
@@ -1256,7 +1254,7 @@ fn (vs VisibleString) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -1264,7 +1262,7 @@ fn (vs VisibleString) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -1272,7 +1270,7 @@ fn (vs VisibleString) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -1280,7 +1278,7 @@ fn (vs VisibleString) encode() ![]u8
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## Class
 ```v
@@ -1295,7 +1293,7 @@ enum Class {
 Class is ASN.1 tag class.  
 Currently most of universal class supported in this module, with limited support for other class.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## TagType
 ```v
@@ -1335,7 +1333,7 @@ enum TagType {
 Standard universal tag number. some of them was
 deprecated, so its not going to be supported in this module.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## AsnObject
 ```v
@@ -1349,7 +1347,7 @@ AsnObject is generic ASN.1 Object representation.
 Its implements Encoder, so it can be used to support other class of der encoded ASN.1 object
 other than universal class supported in this module.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## tag
 ```v
@@ -1357,7 +1355,7 @@ fn (obj AsnObject) tag() Tag
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## length
 ```v
@@ -1365,7 +1363,7 @@ fn (obj AsnObject) length() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## size
 ```v
@@ -1373,7 +1371,7 @@ fn (obj AsnObject) size() int
 ```
 
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
 
 ## encode
 ```v
@@ -1382,6 +1380,11 @@ fn (obj AsnObject) encode() ![]u8
 
 encode serialize ASN.1 object to bytes array. its return error on fail.  
 
-[[Return to contents]](#Contents)
+[[Return to contents]](#table-of-contents)
+
+## Reference
+1. [A Warm Welcome to ASN.1 and DER](https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der/)
+2. [A Layman's Guide to a Subset of ASN.1, BER, and DER](https://luca.ntop.org/Teaching/Appunti/asn1.html)
+3. [ASN.1](https://en.wikipedia.org/wiki/ASN.1)
 
 #### Powered by vdoc. Generated on: 30 Mar 2023 15:00:53
