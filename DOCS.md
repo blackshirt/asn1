@@ -133,7 +133,13 @@ fn new_asn_object(c Class, constructed bool, tagnum int, values []u8) AsnObject
 
 ## Create Basic ASN.1 Type
 You can use following function to create basic UNIVERSAL ASN.1 type. Most of the constructor return `Encoder` interfaces.
-|No | Func Signature     		      			   	| ASN.1 Object 	| Description |
+> **Note**
+>
+> By default, all basic constructor has ASN.1 UNIVERSAL class tag, and the tag number is universal tag number defined in [`TagType`](#tagtyoe) enum, where 
+> constructed flag set to `true` value by default on SEQUENCE (SEQUENCE OF) and SET (SET OF) type.
+> Some of the tag number was not supported in this module.
+
+|No | Function    		      			   	| ASN.1 Object 	| Description |
 |:--:|---------------------------------------------------------------	|:-------------:|-------------|
 | 1 | [new_boolean](#new_boolean)	   	| BOOLEAN	|  |
 | 2 | [new_integer](#new_integer)		| INTEGER	|  |
