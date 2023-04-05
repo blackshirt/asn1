@@ -74,7 +74,7 @@ fn test_parse_ed25519_certificate() ! {
 	casted := out.as_sequence()!
 	assert casted.length() == 383
 	assert casted.size() == 387
-	assert casted.elements.len == 3 
+	assert casted.elements.len == 3
 
 	// first element of sequence is tbsCertificate
 	tbscert := casted.elements[0].as_sequence()!
@@ -85,7 +85,7 @@ fn test_parse_ed25519_certificate() ! {
 	issuer := tbscert.elements[3].as_sequence()!
 	assert issuer.elements.len == 3
 	assert issuer.length() == 53
-	
+
 	dmp := out.encode()!
 
 	assert dmp == data
