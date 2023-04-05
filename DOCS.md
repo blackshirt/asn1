@@ -123,6 +123,7 @@ You can create  `AsnObject` object with  the constructor, provided with paramete
 ```v
 fn new_asn_object(c Class, constructed bool, tagnum int, values []u8) AsnObject
 ```
+This object implements `Encoder` interface, so you can treat it like other ASN.1 object and serialize it to bytes.
 
 > **Note**
 >
@@ -135,7 +136,7 @@ fn new_asn_object(c Class, constructed bool, tagnum int, values []u8) AsnObject
 You can use following function to create basic UNIVERSAL ASN.1 type. Most of the constructor return `Encoder` interfaces.
 > **Note**
 >
-> By default, all basic constructor has ASN.1 UNIVERSAL class tag, and the tag number is universal tag number defined in [`TagType`](#tagtyoe) enum, where 
+> By default, all basic constructor has ASN.1 UNIVERSAL class tag, and the tag number is universal tag number defined in [`TagType`](#tagtype) enum, where 
 > constructed flag set to `true` value by default on SEQUENCE (SEQUENCE OF) and SET (SET OF) type.
 > Some of the tag number was not supported in this module.
 
