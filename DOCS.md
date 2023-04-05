@@ -1383,8 +1383,8 @@ encode serialize ASN.1 object to bytes array. its return error on fail.
 [[Return to contents]](#table-of-contents)
 
 ## Reference
-1. [A Warm Welcome to ASN.1 and DER](https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der/)
-2. [A Layman's Guide to a Subset of ASN.1, BER, and DER](https://luca.ntop.org/Teaching/Appunti/asn1.html)
-3. [ASN.1](https://en.wikipedia.org/wiki/ASN.1)
-
-#### Powered by vdoc. Generated on: 30 Mar 2023 15:00:53
+1. [ASN.1](https://en.wikipedia.org/wiki/ASN.1)
+2. [A Warm Welcome to ASN.1 and DER](https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der/)
+3. [A Layman's Guide to a Subset of ASN.1, BER, and DER](https://luca.ntop.org/Teaching/Appunti/asn1.html)
+4. [X.690 PDF](https://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf)
+5. [X.680 PDF](https://www.itu.int/ITU-T/studygroups/com17/languages/X.680-0207.pdf)
