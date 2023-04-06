@@ -22,7 +22,11 @@
   - [Example #3](#example-3)
 - [Decoding of ASN.1 Bytes](#decoding-asn1-bytes)
 - [Module Index](#module-index)
+  - [ASN.1 Class](#class)
   - [Tag Type](#tagtype)
+  - [NULL](#null)
+  - [BOOLEAN](#boolean)
+  - [INTEGER](#integer)
   - [Sequence Type](#sequence)
   - [Set Type](#set)
 - [Reference](#reference)
@@ -296,7 +300,7 @@ el1: asn1.Sequence{
 This section describes available functions, methods, or others structure to build and mixup functionality in this module.
 
 ### Class
-`Class` is ASN.1 tag class.  Its represents scope of the tag type. ASN.1 specs says its available for class,
+`Class` is ASN.1 tag class.  Its represents scope of the type. ASN.1 specs says there are four ASN.1 class,
 ie, UNIVERSAL, APPLICATION, CONTEXT SPECIFIC, and PRIVATE class.
 Currently most of universal class type supported in this module, with limited support for other class.  
 ```v
@@ -307,13 +311,10 @@ enum Class {
 	private = 0x03
 }
 ```
-
-
-
 [[Return to contents]](#table-of-contents)
 
 ## TagType
-`TagType` enum represent standard of class ASN.1 UNIVERSAL of the tag number. Some of them was
+`TagType` enum represent ASN.1 UNIVERSAL tag number. Some of them was
 deprecated, so its not going to be supported in this module.
 
 ```v
