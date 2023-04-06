@@ -22,6 +22,9 @@
   - [Example #3](#example-3)
 - [Decoding of ASN.1 Bytes](#decoding-asn1-bytes)
 - [Module Index](#module-index)
+  - [Tag Type](#tagtype)
+  - [Sequence Type](#sequence)
+  - [Set Type](#set)
 - [Reference](#reference)
   
 ## What is ASN.1
@@ -290,6 +293,64 @@ el1: asn1.Sequence{
 ```
 
 ## Module Index
+This section describes available functions, methods, or others structure to build and mixup functionality in this module.
+
+### Class
+`Class` is ASN.1 tag class.  Its represents scope of the tag type. ASN.1 specs says its available for class,
+ie, UNIVERSAL, APPLICATION, CONTEXT SPECIFIC, and PRIVATE class.
+Currently most of universal class type supported in this module, with limited support for other class.  
+```v
+enum Class {
+	universal = 0x00
+	application = 0x01
+	context = 0x02
+	private = 0x03
+}
+```
+
+
+
+[[Return to contents]](#table-of-contents)
+
+## TagType
+`TagType` enum represent standard of class ASN.1 UNIVERSAL of the tag number. Some of them was
+deprecated, so its not going to be supported in this module.
+
+```v
+enum TagType {
+	reserved = 0 //	reserved for BER
+	boolean = 1 // BOOLEAN
+	integer = 2 // INTEGER
+	bitstring = 3 // BIT STRING
+	octetstring = 4 // OCTET STRING
+	null = 5 // NULL
+	oid = 6 // OBJECT IDENTIFIER
+	objdesc = 7 // ObjectDescriptor
+	external = 8 //	INSTANCE OF, EXTERNAL
+	real = 9 // REAL
+	enumerated = 10 // ENUMERATED
+	embedded = 11 // EMBEDDED PDV
+	utf8string = 12 // UTF8String
+	relativeoid = 13 // RELATIVE-OID
+	sequence = 16 // SEQUENCE, SEQUENCE OF, Constructed
+	set = 17 ///SET, SET OF, Constructed
+	numericstring = 18 // NumericString
+	printablestring = 19 // PrintableString
+	t61string = 20 // eletexString, T61String
+	videotexstring = 21 // VideotexString
+	ia5string = 22 // IA5String
+	utctime = 23 // UTCTime
+	generalizedtime = 24 // GeneralizedTime
+	graphicstring = 25 // GraphicString
+	visiblestring = 26 // VisibleString, ISO646String
+	generalstring = 27 // GeneralString
+	universalstring = 28 // UniversalString
+	characterstring = 29 // CHARACTER STRING
+	bmpstring = 30 // BMPString
+}
+```
+[[Return to contents]](#table-of-contents)
+
 ## new_oid_from_string
 ```v
 fn new_oid_from_string(s string) !Encoder
@@ -1287,60 +1348,6 @@ fn (vs VisibleString) encode() ![]u8
 
 [[Return to contents]](#table-of-contents)
 
-## Class
-```v
-enum Class {
-	universal = 0x00
-	application = 0x01
-	context = 0x02
-	private = 0x03
-}
-```
-
-Class is ASN.1 tag class.  
-Currently most of universal class supported in this module, with limited support for other class.  
-
-[[Return to contents]](#table-of-contents)
-
-## TagType
-```v
-enum TagType {
-	reserved = 0 //	reserved for BER
-	boolean = 1 // BOOLEAN
-	integer = 2 // INTEGER
-	bitstring = 3 // BIT STRING
-	octetstring = 4 // OCTET STRING
-	null = 5 // NULL
-	oid = 6 // OBJECT IDENTIFIER
-	objdesc = 7 // ObjectDescriptor
-	external = 8 //	INSTANCE OF, EXTERNAL
-	real = 9 // REAL
-	enumerated = 10 // ENUMERATED
-	embedded = 11 // EMBEDDED PDV
-	utf8string = 12 // UTF8String
-	relativeoid = 13 // RELATIVE-OID
-	sequence = 16 // SEQUENCE, SEQUENCE OF, Constructed
-	set = 17 ///SET, SET OF, Constructed
-	numericstring = 18 // NumericString
-	printablestring = 19 // PrintableString
-	t61string = 20 // eletexString, T61String
-	videotexstring = 21 // VideotexString
-	ia5string = 22 // IA5String
-	utctime = 23 // UTCTime
-	generalizedtime = 24 // GeneralizedTime
-	graphicstring = 25 // GraphicString
-	visiblestring = 26 // VisibleString, ISO646String
-	generalstring = 27 // GeneralString
-	universalstring = 28 // UniversalString
-	characterstring = 29 // CHARACTER STRING
-	bmpstring = 30 // BMPString
-}
-```
-
-Standard universal tag number. some of them was
-deprecated, so its not going to be supported in this module.  
-
-[[Return to contents]](#table-of-contents)
 
 ## AsnObject
 ```v
