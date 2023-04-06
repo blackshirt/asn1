@@ -21,6 +21,8 @@
   - [Example #2](#example-2)
   - [Example #3](#example-3)
 - [Decoding of ASN.1 Bytes](#decoding-asn1-bytes)
+  - [Decoding ASN.1 bytes](#der_decode-function)
+  - [Example](#example)
 - [Module Index](#module-index)
   - [ASN.1 Class](#class)
   - [Tag Type](#tagtype)
@@ -264,11 +266,12 @@ assert out == expected
 ## Decoding ASN.1 Bytes
 This section describes how to parse (decode) bytes of data encoded in ASN.1 DER encoding. This module export `der_decode` defined below as main routine to do parsing of DER encoded data. Its accepts bytes arrays encoded in DER in `src` params and returns `Encoder` interfaces object,
 so, you should cast it to get underlying type.  By default, in context specific class, its try to read as tagged object, whether its explicit or implicit.  
+### `der_decode` function
 ```v
 fn der_decode(src []u8) !Encoder
 ```
 
---Example--
+## --Example--
 -----------
 We're going to use above data in [Example #3](#example-3) as an example for `der_decode` functionality.
 ```v
