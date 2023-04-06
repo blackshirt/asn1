@@ -21,7 +21,7 @@
   - [Example #2](#example-2)
   - [Example #3](#example-3)
 - [Decoding of ASN.1 Bytes](#decoding-asn1-bytes)
-  - [Decoding ASN.1 bytes](#der_decode-function)
+  - [Decoding function](#der_decode-function)
   - [Example](#example)
 - [Module Index](#module-index)
   - [ASN.1 Class](#class)
@@ -272,7 +272,6 @@ fn der_decode(src []u8) !Encoder
 ```
 
 ## --Example--
------------
 We're going to use above data in [Example #3](#example-3) as an example for `der_decode` functionality.
 ```v
 // the data we're going to decode, serialized in DER encoding.
