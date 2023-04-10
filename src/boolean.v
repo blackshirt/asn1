@@ -3,7 +3,8 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// BOOLEAN
+// ASN.1 BOOLEAN
+//
 // A Boolean value can take true or false.
 // ASN.1 DER encoding restricts encoding of boolean true value to 0xff
 // and otherwise, encodes to zero (0x00) for false value.
@@ -54,7 +55,9 @@ fn decode_boolean(src []u8) !Encoder {
 		return error('tag.number=${tag.number} is not boolean type (${TagType.boolean})')
 	}
 	length, idx := decode_length(src, pos)!
-
+	if length != 1 {
+		return error('boolean length ${length} != 1')
+	}
 	contents := read_bytes(src, idx, length)!
 	ret := read_boolean(contents)!
 
