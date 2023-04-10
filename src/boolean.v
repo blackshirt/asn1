@@ -8,16 +8,14 @@ module asn1
 // ASN.1 DER encoding restricts encoding of boolean true value to 0xff
 // and otherwise, encodes to zero (0x00) for false value.
 // The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.
-struct AsnBoolean {
-	value bool
-}
+type Boolean = bool
 
 const (
 	allowed_boolean_value = [u8(0x00), 0xff]
 )
 
 pub fn new_boolean(value bool) Encoder {
-	return AsnBoolean{value}
+	return Boolean(value)
 }
 
 fn new_boolean_from_bytes(src []u8) !Encoder {
@@ -25,23 +23,31 @@ fn new_boolean_from_bytes(src []u8) !Encoder {
 	return ret
 }
 
-// read_boolean read boolean contents without tag and length parts
-fn read_boolean(contents []u8) !Encoder {
-	if contents.len != 1 {
-		return error('bad len of boolean bytes')
-	}
-	if contents[0] !in asn1.allowed_boolean_value {
-		return error('bad bool bytes')
-	}
-	val := if contents[0] == u8(0xff) { true } else { false }
+fn validate_boolean(content []u8) bool {
+	return content.len == 1 && content[0] in asn1.allowed_boolean_value
+}
 
-	return AsnBoolean{val}
+// read_boolean read boolean content without tag and length parts
+fn read_boolean(content []u8) !Encoder {
+	if !validate_boolean(content) {
+		return error('bad boolean content')
+	}
+	val := if content[0] == u8(0xff) { true } else { false }
+
+	return Boolean(val)
+}
+
+fn validate_boolean_contents(src []u8) bool {
+	if src.len != 3 || src[0] != 0x01 || src[1] != 0x01 || (src[2] != 0x00 && src[2] != 0xff) {
+		return false
+	}
+	return true
 }
 
 // decode_boolean checks whether bytes arrays was ASN.1 boolean.
 fn decode_boolean(src []u8) !Encoder {
-	if src.len < 3 || src[0] != 0x01 || src[1] != 0x01 || (src[2] != 0x00 && src[2] != 0xff) {
-		return error('boolean: invalid args of src')
+	if !validate_boolean_contents(src) {
+		return error('bad boolean contents argument')
 	}
 	tag, pos := read_tag(src, 0)!
 	if tag.number != int(TagType.boolean) {
@@ -55,16 +61,16 @@ fn decode_boolean(src []u8) !Encoder {
 	return ret
 }
 
-pub fn (b AsnBoolean) tag() Tag {
+pub fn (b Boolean) tag() Tag {
 	t := new_tag(.universal, false, int(TagType.boolean))
 	return t
 }
 
-pub fn (b AsnBoolean) length() int {
+pub fn (b Boolean) length() int {
 	return 1
 }
 
-pub fn (b AsnBoolean) size() int {
+pub fn (b Boolean) size() int {
 	mut size := 0
 	tag := b.tag()
 	t := calc_tag_length(tag)
@@ -78,8 +84,8 @@ pub fn (b AsnBoolean) size() int {
 	return size
 }
 
-pub fn (b AsnBoolean) encode() ![]u8 {
-	res := encode_boolean(b.value)
+pub fn (b Boolean) encode() ![]u8 {
+	res := encode_boolean(b)
 	return res
 }
 

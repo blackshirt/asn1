@@ -414,12 +414,12 @@ fn test_encoder_casted_as_seq_and_boolean() ! {
 	assert seq.elements.len == 2
 
 	el1 := seq.elements[0].as_boolean()!
-	assert typeof(el1).name == '${@MOD}.AsnBoolean'
-	assert el1.value == false
+	assert typeof(el1).name == '${@MOD}.Boolean'
+	assert el1 == Boolean(false)
 
 	el2 := seq.elements[1].as_boolean()!
-	assert el2.value == true
-	assert typeof(el2).name == '${@MOD}.AsnBoolean'
+	assert el2 == Boolean(true)
+	assert typeof(el2).name == '${@MOD}.Boolean'
 
 	// should error not bitstring type
 	c := out.as_bitstring() or {

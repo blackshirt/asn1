@@ -29,21 +29,20 @@ fn test_sequence_contains_other_seq() ! {
 	assert out == expected
 }
 
-fn test_sequence_der_decode()! {
-	data := [u8(0x30), 14, u8(0x01), 0x01, 0x00, u8(0x30), 6, 0x01, 0x01, 0xff, 0x01, 0x01,
-		0x00, u8(0x01), 0x01, 0xff]
+fn test_sequence_der_decode() ! {
+	data := [u8(0x30), 14, u8(0x01), 0x01, 0x00, u8(0x30), 6, 0x01, 0x01, 0xff, 0x01, 0x01, 0x00,
+		u8(0x01), 0x01, 0xff]
 	out := der_decode(data)!
 	// lets cast it to sequence
 	seq := out.as_sequence()!
-	
 
 	el0 := seq.elements[0].as_boolean()!
-	assert el0.value == false 
+	assert el0 == Boolean(false)
 
 	el1 := seq.elements[1].as_sequence()!
-	//dump(el1)
+	// dump(el1)
 	el2 := seq.elements[2].as_boolean()!
-	assert el2.value == true 
+	assert el2 == Boolean(true)
 }
 
 fn test_sequence_add_and_encode_boolean() {
@@ -225,7 +224,7 @@ fn test_sequnce_of_sequence() {
 		assert back == seq
 		assert back.elements.len == 3
 		assert back.elements[0] is Null
-		assert back.elements[1] is AsnBoolean
+		assert back.elements[1] is Boolean
 		assert back.elements[2] is Sequence
 
 		two := back.elements[2]
