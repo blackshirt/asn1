@@ -147,7 +147,9 @@ pub fn (enc Encoder) contents() ![]u8 {
 
 	// actual length bytes of data
 	length := enc.length()
-
+	if length == 0 {
+		return []u8{}
+	}
 	// length of encoded bytes included header
 	size := enc.size()
 
@@ -179,8 +181,8 @@ pub fn (e Encoder) as_set() !Set {
 }
 
 // as_boolean cast encoder to ASN.1 boolean
-pub fn (e Encoder) as_boolean() !AsnBoolean {
-	if e is AsnBoolean {
+pub fn (e Encoder) as_boolean() !Boolean {
+	if e is Boolean {
 		return *e
 	}
 	return error('not boolean type')
@@ -320,18 +322,18 @@ fn (mut enc []Encoder) add_multi(es []Encoder) {
 	enc << es
 }
 
-// AsnObject is generic ASN.1 Object representation.
+// ASN1Object is generic ASN.1 Object representation.
 // Its implements Encoder, so it can be used
 // to support other class of der encoded ASN.1 object
 // other than universal class supported in this module.
-pub struct AsnObject {
+struct ASN1Object {
 	tag    Tag  // tag of the ASN.1 object
 	values []u8 // unencoded values of the object.
 }
 
 // `new_asn_object` creates new ASN.1 Object
-pub fn new_asn_object(cls Class, constructed bool, tagnum int, values []u8) AsnObject {
-	return AsnObject{
+pub fn new_asn_object(cls Class, constructed bool, tagnum int, values []u8) ASN1Object {
+	return ASN1Object{
 		tag: Tag{
 			class: cls
 			constructed: constructed
@@ -341,15 +343,15 @@ pub fn new_asn_object(cls Class, constructed bool, tagnum int, values []u8) AsnO
 	}
 }
 
-pub fn (obj AsnObject) tag() Tag {
+pub fn (obj ASN1Object) tag() Tag {
 	return obj.tag
 }
 
-pub fn (obj AsnObject) length() int {
+pub fn (obj ASN1Object) length() int {
 	return obj.values.len
 }
 
-pub fn (obj AsnObject) size() int {
+pub fn (obj ASN1Object) size() int {
 	mut size := 0
 	tag := obj.tag()
 
@@ -365,11 +367,11 @@ pub fn (obj AsnObject) size() int {
 }
 
 // encode serialize ASN.1 object to bytes array. its return error on fail.
-pub fn (obj AsnObject) encode() ![]u8 {
+pub fn (obj ASN1Object) encode() ![]u8 {
 	return serialize_asn_object(obj)
 }
 
-fn serialize_asn_object(obj AsnObject) ![]u8 {
+fn serialize_asn_object(obj ASN1Object) ![]u8 {
 	mut dst := []u8{}
 
 	serialize_tag(mut dst, obj.tag())

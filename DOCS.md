@@ -121,9 +121,9 @@ Basic ASN.1 type was a ASN.1 object which has universal class. It's currently su
 
 
 ## Generic ASN.1 Object 
-For the purposes of handling ASN.1 object in general way, we use `AsnObject` that defined as:
+For the purposes of handling ASN.1 object in general way, we use `ASN1Object` that defined as:
 ```v
-struct AsnObject {
+struct ASN1Object {
 	tag    Tag 
 	values []u8
 }
@@ -132,7 +132,7 @@ where:
 * `tag` is the tag of object, and 
 * `values` is the raw bytes array (contents) of the object without tag and length part.
 
-You can create  `AsnObject` object with  the constructor, provided with parameters :
+You can create  `ASN1Object` object with  the constructor, provided with parameters :
 * `Class` this object belong to,
 * `constructed` boolean flag that tell this object constructed or primitive, 
 * `tagnum` is the tag number, and, 
@@ -140,13 +140,13 @@ You can create  `AsnObject` object with  the constructor, provided with paramete
 
 
 ```v
-fn new_asn_object(c Class, constructed bool, tagnum int, values []u8) AsnObject
+fn new_asn_object(c Class, constructed bool, tagnum int, values []u8) ASN1Object
 ```
 This object implements `Encoder` interface, so you can treat it like other ASN.1 object and serialize it to bytes.
 
 > **Note**
 >
-> Most of the time, you don't need to use `AsnObject` directly, but, 
+> Most of the time, you don't need to use `ASN1Object` directly, but, 
 > the recommended way to create ASN.1 object was using most basic type constructor 
 > described in [[Creating Basic ASN.1 Type]](#creating-asn1-object) below.
 
@@ -267,6 +267,7 @@ assert out == expected
 This section describes how to parse (decode) bytes of data encoded in ASN.1 DER encoding. This module export `der_decode` defined below as main routine to do parsing of DER encoded data. Its accepts bytes arrays encoded in DER in `src` params and returns `Encoder` interfaces object,
 so, you should cast it to get underlying type.  By default, in context specific class, its try to read as tagged object, whether its explicit or implicit.  
 ### `der_decode` function
+`der_decode` function signature as below:
 ```v
 fn der_decode(src []u8) !Encoder
 ```
@@ -301,9 +302,9 @@ el1: asn1.Sequence{
         constructed: true
         number: 16
     }
-    elements: [asn1.Encoder(asn1.AsnBoolean{
+    elements: [asn1.Encoder(asn1.Boolean{
         value: true
-    }), asn1.Encoder(asn1.AsnBoolean{
+    }), asn1.Encoder(asn1.Boolean{
         value: false
     })]
 ```
@@ -449,7 +450,7 @@ for other ASN.1 class, see `new_sequence_with_class`
 
 ## new_asn_object
 ```v
-fn new_asn_object(cls Class, constructed bool, tagnum int, values []u8) AsnObject
+fn new_asn_object(cls Class, constructed bool, tagnum int, values []u8) ASN1Object
 ```
 
 `new_asn_object` creates new ASN.1 Object
@@ -604,7 +605,7 @@ as_set cast encoder to set
 
 ## as_boolean
 ```v
-fn (e Encoder) as_boolean() !AsnBoolean
+fn (e Encoder) as_boolean() !Boolean
 ```
 
 as_boolean cast encoder to ASN.1 boolean
@@ -1193,10 +1194,10 @@ fn (ps PrintableString) encode() ![]u8
 
 [[Return to contents]](#table-of-contents)
 
-## AsnBoolean
+## Boolean
 ## tag
 ```v
-fn (b AsnBoolean) tag() Tag
+fn (b Boolean) tag() Tag
 ```
 
 
@@ -1204,7 +1205,7 @@ fn (b AsnBoolean) tag() Tag
 
 ## length
 ```v
-fn (b AsnBoolean) length() int
+fn (b Boolean) length() int
 ```
 
 
@@ -1212,7 +1213,7 @@ fn (b AsnBoolean) length() int
 
 ## size
 ```v
-fn (b AsnBoolean) size() int
+fn (b Boolean) size() int
 ```
 
 
@@ -1220,7 +1221,7 @@ fn (b AsnBoolean) size() int
 
 ## encode
 ```v
-fn (b AsnBoolean) encode() ![]u8
+fn (b Boolean) encode() ![]u8
 ```
 
 
@@ -1362,15 +1363,15 @@ fn (vs VisibleString) encode() ![]u8
 [[Return to contents]](#table-of-contents)
 
 
-## AsnObject
+## ASN1Object
 ```v
-struct AsnObject {
+struct ASN1Object {
 	tag    Tag  // tag of the ASN.1 object
 	values []u8 // unencoded values of the object.
 }
 ```
 
-AsnObject is generic ASN.1 Object representation.  
+ASN1Object is generic ASN.1 Object representation.  
 Its implements Encoder, so it can be used to support other class of der encoded ASN.1 object
 other than universal class supported in this module.  
 
@@ -1378,7 +1379,7 @@ other than universal class supported in this module.
 
 ## tag
 ```v
-fn (obj AsnObject) tag() Tag
+fn (obj ASN1Object) tag() Tag
 ```
 
 
@@ -1386,7 +1387,7 @@ fn (obj AsnObject) tag() Tag
 
 ## length
 ```v
-fn (obj AsnObject) length() int
+fn (obj ASN1Object) length() int
 ```
 
 
@@ -1394,7 +1395,7 @@ fn (obj AsnObject) length() int
 
 ## size
 ```v
-fn (obj AsnObject) size() int
+fn (obj ASN1Object) size() int
 ```
 
 
@@ -1402,7 +1403,7 @@ fn (obj AsnObject) size() int
 
 ## encode
 ```v
-fn (obj AsnObject) encode() ![]u8
+fn (obj ASN1Object) encode() ![]u8
 ```
 
 encode serialize ASN.1 object to bytes array. its return error on fail.  

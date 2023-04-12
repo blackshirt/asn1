@@ -8,9 +8,13 @@ fn test_read_boolean() {
 	// tag := new_tag(.universal, false, int(TagType.boolean))
 	o1 := read_boolean(b1)!
 
-	if o1 is AsnBoolean {
-		assert o1.value == false
-	}
+	exp := o1.as_boolean()!
+	assert exp == false
+	b2 := [u8(0xff)]
+	o2 := read_boolean(b2)!
+
+	exp2 := o2.as_boolean()!
+	assert exp2 == true
 }
 
 fn test_encode_boolean() {
@@ -30,24 +34,19 @@ fn test_encode_decode_boolean() {
 	bd := [
 		BooleanTest{[u8(TagType.boolean), 0x01, 0xff], true, none},
 		BooleanTest{[u8(TagType.boolean), 0x01, 0x00], false, none},
-		BooleanTest{[u8(TagType.boolean), 0x01, 0x10], false, error('boolean: invalid args of src')}, // invalid value
-		BooleanTest{[u8(TagType.boolean), 0x02, 0x00], false, error('boolean: invalid args of src')}, // bad length
-		BooleanTest{[u8(TagType.integer), 0x01, 0x00], false, error('boolean: invalid args of src')}, // bad tag number
+		BooleanTest{[u8(TagType.boolean), 0x01, 0x10], false, error('bad boolean contents argument')}, // invalid value
+		BooleanTest{[u8(TagType.boolean), 0x02, 0x00], false, error('bad boolean contents argument')}, // bad length
+		BooleanTest{[u8(TagType.integer), 0x01, 0x00], false, error('bad boolean contents argument')}, // bad tag number
 	]
 	for c in bd {
 		out := decode_boolean(c.inp) or {
 			assert err == c.err
 			continue
 		}
-		assert out is AsnBoolean
-		if out is AsnBoolean {
-			assert out.value == c.out
-		}
+		o1 := out.as_boolean()!
+		assert o1 == c.out
 
-		// back
-		if out is AsnBoolean {
-			back := encode_boolean(out.value)
-			assert back == c.inp
-		}
+		back := encode_boolean(o1)
+		assert back == c.inp
 	}
 }

@@ -12,13 +12,6 @@ struct BitString {
 	padbits u8
 }
 
-fn (bts BitString) as_bits_string() string {
-	mut buf := []u8{}
-	write_bitstring(mut buf, bts)
-	bits := bitfield.from_bytes(buf)
-	return bits.str()
-}
-
 pub fn new_bitstring(s string) !Encoder {
 	return new_bitstring_with_pad(s.bytes(), 0x00)
 }
@@ -26,6 +19,13 @@ pub fn new_bitstring(s string) !Encoder {
 fn new_bitstring_from_bytes(src []u8) !Encoder {
 	bs := read_bitstring(src)!
 	return bs
+}
+
+fn (bts BitString) as_bits_string() string {
+	mut buf := []u8{}
+	write_bitstring(mut buf, bts)
+	bits := bitfield.from_bytes(buf)
+	return bits.str()
 }
 
 fn new_bitstring_with_pad(src []u8, pad u8) !Encoder {

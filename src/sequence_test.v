@@ -11,6 +11,7 @@ fn test_sequence_contains_other_seq() ! {
 	mut seq1 := new_sequence()
 	// add two primitive elements to the sequence
 	seq1.add(new_boolean(true))
+	seq1.add(new_null())
 	seq1.add(new_boolean(false))
 
 	// lets create another sequences, where it contains primitive element and first sequence created above.
@@ -21,29 +22,29 @@ fn test_sequence_contains_other_seq() ! {
 
 	// lets serialize it to bytes
 	out := seq2.encode()!
-	expected := [u8(0x30), 14, u8(0x01), 0x01, 0x00, u8(0x30), 6, 0x01, 0x01, 0xff, 0x01, 0x01,
+	expected := [u8(0x30), 16, u8(0x01), 0x01, 0x00, u8(0x30), 8, 0x01, 0x01, 0xff, u8(0x05),0x00, u8(0x01), 0x01,
 		0x00, u8(0x01), 0x01, 0xff]
 	// assert for right value
-	assert seq2.length() == 14
-	assert seq2.size() == 16
+	assert seq2.length() == 16
+	assert seq2.size() == 18
 	assert out == expected
 }
 
-fn test_sequence_der_decode()! {
-	data := [u8(0x30), 14, u8(0x01), 0x01, 0x00, u8(0x30), 6, 0x01, 0x01, 0xff, 0x01, 0x01,
+fn test_sequence_der_decode() ! {
+	data := [u8(0x30), 16, u8(0x01), 0x01, 0x00, u8(0x30), 8, u8(0x01), 0x01, 0xff, u8(0x05),0x00, u8(0x01), 0x01,
 		0x00, u8(0x01), 0x01, 0xff]
 	out := der_decode(data)!
 	// lets cast it to sequence
 	seq := out.as_sequence()!
-	
 
 	el0 := seq.elements[0].as_boolean()!
-	assert el0.value == false 
+	assert el0 == Boolean(false)
 
 	el1 := seq.elements[1].as_sequence()!
+	assert el1.elements.len == 3 // [boolean(true), null, boolean(false)]
 	//dump(el1)
 	el2 := seq.elements[2].as_boolean()!
-	assert el2.value == true 
+	assert el2 == Boolean(true)
 }
 
 fn test_sequence_add_and_encode_boolean() {
@@ -225,7 +226,7 @@ fn test_sequnce_of_sequence() {
 		assert back == seq
 		assert back.elements.len == 3
 		assert back.elements[0] is Null
-		assert back.elements[1] is AsnBoolean
+		assert back.elements[1] is Boolean
 		assert back.elements[2] is Sequence
 
 		two := back.elements[2]
