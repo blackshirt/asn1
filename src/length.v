@@ -17,6 +17,10 @@ import math
 //
 // This mpdule only support definite length, in short or long form. Its required for DER encoding
 // the length octets should in definite length.
+const maxnull_in_ber_length = 1008
+// todo: represent it in 'big.Integer'
+const max_ber_length = (1<<1008)-1
+
 type Length = int
 
 fn (l Length) bytes_needed() int {
@@ -51,6 +55,15 @@ fn append_length(mut dst []u8, i int) []u8 {
 	return dst
 }
 
+fn (v Length) length() int {
+	mut len := 1
+	if v >= 128 {
+		n := v.bytes_needed()
+		len += n
+	}
+	return len
+}
+		
 // calculates length of length bytes
 fn calc_length_of_length(value int) int {
 	mut length := 1
