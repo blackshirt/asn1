@@ -3,6 +3,9 @@ module core
 // ASN1 identifier tag handling 
 
 // Maximum number of bytes to represent tag value, includes tag byte.
+// Implementation detail:
+// We impose limit on the tag number to be in range 0..8943
+// Its big enough to define and represent different of yours own tag number.
 // For 5 bytes length, maximum bytes arrays to represent tag value is
 // [u8(0x1f), 0xff, 0xff, 0xff, 0x7f] or 268435455 in base 128, so, its
 // big enough to hold and represent different of tag value or type.
@@ -102,6 +105,11 @@ fn (t Tag) tag_length() int {
 	return n
 }
 
+// ASN.1 Tag value part
+// ASN.1 imposes no limit on the tag number, 
+// but the NIST Stable Implementation Agreements (1991) 
+// and its European and Asian counterparts limit the size of tags to 16383.
+// see https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation
 type TagValue = i64 
 
 fn TagValue.new_from_int(v int) !TagValue {
