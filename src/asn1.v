@@ -6,17 +6,17 @@ module asn1
 // Class is ASN.1 tag class.
 // Currently most of universal class supported in this module, with limited support for other class.
 pub enum Class {
-	universal = 0x00
+	universal   = 0x00
 	application = 0x01
-	context = 0x02
-	private = 0x03
+	context     = 0x02
+	private     = 0x03
 }
 
-const (
-	class_mask     = 0xc0 // 192, bits 7-8
-	compound_mask  = 0x20 //  32, bits 6
-	tagnumber_mask = 0x1f //  32, bits 1-5
-)
+const class_mask = 0xc0 // 192, bits 7-8
+
+const compound_mask = 0x20 //  32, bits 6
+
+const tagnumber_mask = 0x1f //  32, bits 1-5
 
 // Encoder is a main interrface that wraps ASN.1 encoding functionality.
 // Most of basic types in this module implements this interface.

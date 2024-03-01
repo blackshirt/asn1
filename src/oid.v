@@ -6,9 +6,7 @@ module asn1
 import math
 
 // TODO: doing check for limiting oid array length.
-const (
-	max_oid_length = 128
-)
+const max_oid_length = 128
 
 // ObjectIdentifier
 pub type Oid = []int

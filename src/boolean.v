@@ -11,9 +11,7 @@ module asn1
 // The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.
 type Boolean = bool
 
-const (
-	allowed_boolean_value = [u8(0x00), 0xff]
-)
+const allowed_boolean_value = [u8(0x00), 0xff]
 
 pub fn new_boolean(value bool) Encoder {
 	return Boolean(value)
