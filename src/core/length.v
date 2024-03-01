@@ -17,7 +17,7 @@ module core
 // This mpdule only support definite length, in short or long form. Its required for DER encoding
 // the length octets should in definite length.
 
-const maxnull_in_ber_length = 126 // in bytes, 1008:8
+const max_definite_length = 126 // in bytes, 1008:8
 // TODO: represent it in 'big.Integer'
 // const max_ber_length = (1<<1008)-1
 
@@ -55,12 +55,17 @@ fn (v Length) length() int {
 }
 
 // pack serializes Length v into bytes and append it into `to` 
-fn (v Length) pack(mut to []u8) {
+fn (v Length) pack(mut to []u8) ! {
 	// Long form 
 	if v >= 128 {
 		length := v.bytes_needed()
+		// if the length overflow the limit, something bad happen
+		// return error instead
+		if length > max_definite_length {
+			return error("something bad in your length")
+		}
 		to << 0x80 | u8(length)
-		v.pack_and_append(mut to)
+		length.pack_and_append(mut to)
 	} else {
 		// short form
 		to << u8(v)
