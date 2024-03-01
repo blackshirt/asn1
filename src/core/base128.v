@@ -3,61 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-type TagValue = i64 
-
-fn (v TagValue) bytes_needed() int {
-	if v == 0 {
-		return 1
-	}
-	mut n := v
-	mut ret := 0
-
-	for n > 0 {
-		ret += 1
-		n >>= 7
-	}
-
-	return ret
-}
-
-// pack serializes TagValue v into bytes and append it into `to`
-fn (v TagValue) pack(mut to []u8) {
-	n := v.bytes_needed()
-	for i := n - 1; i >= 0; i-- {
-		mut o := u8(v >> u32(i * 7))
-		o &= 0x7f
-		if i != 0 {
-			o |= 0x80
-		}
-
-		to << o
-	}
-}
-
-fn TagValue.unpack(bytes []u8, loc int) !(TagValue, int) {
-	mut pos := loc
-	mut r64 := i64(0)
-	for s := 0; pos < bytes.len; s++ {
-		r64 <<= 7
-		b := bytes[pos]
-
-		if s == 0 && b == 0x80 {
-			return error('integer is not minimaly encoded')
-		}
-
-		r64 |= i64(b & 0x7f)
-		pos += 1
-
-		if b & 0x80 == 0 {
-			if r64 > max_i64 {
-				return error('base 128 integer too large')
-			}
-			return TagValue(r64), pos
-		}
-	}
-	return error('truncated base 128 integer')
-}
-
 fn base128_int_length(v i64) int {
 	mut n := v
 	mut ret := 0

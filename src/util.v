@@ -117,7 +117,7 @@ fn validate_date(year u16, month u8, day u8) bool {
 }
 
 
-	
+/*
 // calculate lenght of bytes needed to store n
 fn calc_length(n int) int {
 	mut i := n
@@ -212,3 +212,64 @@ fn decode_length(buf []u8, loc int) !(int, int) {
 	}
 	return length, pos
 }
+
+
+// `serialize_tag` return bytes of serialized tag.
+// This routine supports multi byte tag form to represents tag value that bigger than 31 (0x1f).
+fn serialize_tag(mut dst []u8, tag Tag) []u8 {
+	mut b := u8(tag.cls) << 6
+	if tag.compound {
+		b |= compound_mask
+	}
+
+	if tag.value >= 0x1f {
+		b |= tag_mask // 0x1f
+		dst << b
+		dst = encode_base128_int(mut dst, i64(tag.value))
+	} else {
+		b |= u8(tag.value)
+		dst << b
+	}
+
+	return dst
+}
+
+// `read_tag` reading bytes of data from location (offset) `loc` to tag.
+// It's return the tag structure and the next position (offset) `pos` for reading the length part.
+fn read_tag(data []u8, loc int) !(Tag, int) {
+	if data.len < 1 {
+		return error('get ${data.len} bytes for reading tag, its not enough')
+	}
+	mut pos := loc
+	if pos > data.len {
+		return error('invalid len')
+	}
+
+	b := data[pos]
+	pos += 1
+
+	mut value := int(b & tag_mask)
+	compound := b & compound_mask == compound_mask
+	cls := int(b >> 6)
+
+	if value == 0x1f {
+		// we mimic go version of tag handling, only allowed `max_tag_length` bytes following
+		// to represent tag value.
+		value, pos = decode_base128_int(data, pos)!
+		// pos is the next position to read next bytes, so check tag bytes length
+		if (pos - loc - 1) >= asn1.max_tag_length {
+			return error('tag bytes is too big')
+		}
+		if value < 0x1f {
+			return error('non-minimal tag')
+		}
+	}
+	tag := Tag{
+		// casting numbers to enums, should be done inside `unsafe{}` blocks
+		cls: unsafe { Class(cls) }
+		compound: compound
+		value: value
+	}
+	return tag, pos
+}
+*/

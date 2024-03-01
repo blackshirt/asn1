@@ -1,7 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module core
 
 // ASN.1 length handling routines.
 //
@@ -19,7 +19,7 @@ module asn1
 
 const maxnull_in_ber_length = 126 // in bytes, 1008:8
 // TODO: represent it in 'big.Integer'
-const max_ber_length = (1<<1008)-1
+// const max_ber_length = (1<<1008)-1
 
 type Length = int
 
