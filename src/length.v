@@ -17,7 +17,18 @@ import math
 //
 // This mpdule only support definite length, in short or long form. Its required for DER encoding
 // the length octets should in definite length.
+type Length = int
 
+fn (l Length) bytes_needed() int {
+	mut i := n
+	mut num := 1
+	for i > 255 {
+		num++
+		i >>= 8
+	}
+	return num
+}
+	
 // calculate lenght of bytes needed to store n
 fn calc_length(n int) int {
 	mut i := n
