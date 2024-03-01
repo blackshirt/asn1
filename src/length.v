@@ -43,7 +43,15 @@ fn calc_length(n int) int {
 	}
 	return num
 }
-
+		
+// pack_and_append packs v to bytes and apends it to to
+fn (v Length) pack_and_append(mut to []u8) {
+	mut n := v.bytes_needed()
+	for ; n > 0; n-- {
+		to << u8(i >> (n - 1) * 8)
+	}
+}
+		
 // bytes part of the length
 fn append_length(mut dst []u8, i int) []u8 {
 	mut n := calc_length(i)
