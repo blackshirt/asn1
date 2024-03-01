@@ -62,11 +62,21 @@ fn (t TagType) str() string {
 	}
 }
 
+
+struct Identifier {
+	// Type class.
+	cls 		Class
+	tag_value 	TagValue 
+}
+
+fn (id Identifier) is_constructed() bool {}
+
 // Maximum number of bytes to represent tag number, includes tag byte.
 // For 5 bytes length, maximum bytes arrays to represent tag number is
 // [u8(0x1f), 0xff, 0xff, 0xff, 0x7f] or 268435455 in base 128, so, its
 // big enough to hold and represent different of tag number or type.
 const max_tag_bytes_length = 5
+const max_tag_value = 268435455
 
 // `new_tag` creates new tag with class `c`, with constructed or primitive form
 // through `constructed` boolean flag, and tag `number`.
