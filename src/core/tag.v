@@ -1,5 +1,7 @@
 module core
 
+// ASN1 identifier tag handling 
+
 // Maximum number of bytes to represent tag value, includes tag byte.
 // For 5 bytes length, maximum bytes arrays to represent tag value is
 // [u8(0x1f), 0xff, 0xff, 0xff, 0x7f] or 268435455 in base 128, so, its
@@ -78,8 +80,23 @@ fn Tag.unpack(data []u8, loc int) !(Tag, int) {
 	return tag, pos
 }
 
+// clone_with_class clones t to new Tag with class is set to c 
+fn (t Tag) clone_with_class(c Class) Tag {
+    if t.cls == c { return }
+    mut new := t 
+    new.cls = c 
+    return new 
+}
 
-// `calc_tag_length` calculates length of bytes needed to store tag value.
+fn (t Tag) clone_with_tag(v int) Tag {
+    if t.value == v { return }
+    val := TagValue.new_from_int(v)!
+    mut new := t 
+    t.value = val 
+    return new 
+}
+
+// `tag_length` calculates length of bytes needed to store tag value.
 fn (t Tag) tag_length() int {
 	n := if t.value < 0x1f { 1 } else { 1 + t.value.bytes_needed() }
 	return n
@@ -97,7 +114,7 @@ fn TagValue.new_from_int(v int) !TagValue {
     return TagValue(i64(v))
 }
 
-// bytes_needed tells amount of bytes needed to store v in base 128 bit 
+// bytes_needed tells amount of bytes needed to store v in base 128  
 fn (v TagValue) bytes_needed() int {
     if v == 0 {
 		return 1
@@ -113,7 +130,7 @@ fn (v TagValue) bytes_needed() int {
 	return ret
 }
 
-// pack_base128 serializes TagValue v into bytes and append it into `to` in base 128 bit 
+// pack_base128 serializes TagValue v into bytes and append it into `to` in base 128  
 fn (v TagValue) pack_base128(mut to []u8) {
 	n := v.bytes_needed()
 	for i := n - 1; i >= 0; i-- {
@@ -127,7 +144,7 @@ fn (v TagValue) pack_base128(mut to []u8) {
 	}
 }
 
-// unpack deserializes bytes into TagValue from offset loc in base 128 bit.
+// unpack deserializes bytes into TagValue from offset loc in base 128.
 fn TagValue.unpack_base128(bytes []u8, loc int) !(TagValue, int) {
 	mut pos := loc
 	mut r64 := i64(0)
