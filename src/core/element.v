@@ -11,8 +11,15 @@ interface ElementBase {
 }
 
 struct Element {
-    type_tag Tag 
-    indefinite_length bool = false
+    tag         Tag 
+    len         Length  
+    raw_content []u8
+    tagged      bool
+
+}
+
+fn (e Element) is_constructed() bool {
+    return e.tag.compound
 }
 
 // encoding mode 
