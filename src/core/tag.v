@@ -2,15 +2,13 @@ module core
 
 // ASN1 identifier tag handling 
 
-// Maximum number of bytes to represent tag value, includes tag byte.
-// Implementation detail:
-// We impose limit on the tag number to be in range 0..8943
-// Its big enough to define and represent different of yours own tag number.
-// For 5 bytes length, maximum bytes arrays to represent tag value is
-// [u8(0x1f), 0xff, 0xff, 0xff, 0x7f] or 268435455 in base 128, so, its
-// big enough to hold and represent different of tag value or type.
-const max_tag_length  = 5
-const max_tag_value   = 268435455
+// Maximum number of bytes to represent tag value, includes the tag byte.
+// We impose limit on the tag number to be in range 0..16383. See comment on `TagValue` type below. 
+// Its big enough to accomodate and represent different of yours own tag number.
+// Its represents 2 bytes length, maximum bytes arrays to represent tag value is
+// [u8(0xfff), 0x7f] or 16383 in base 128.
+const max_tag_length  = 2
+const max_tag_value   = 16383
 
 // Tag represents identifier of the ASN1 element (object)
 struct Tag {
@@ -20,12 +18,13 @@ mut:
 	value    TagValue
 }
 
-// `new_tag` creates new tag with class `c`, `compound` boolean flag, and tag `value`.
+// `new_tag` creates new tag identifier. Its accepts params of Class `c`, constructed or primitive 
+// form in `compound` boolean flag, and the tag `value`. 
 fn new_tag(c Class, compound bool, value int) !Tag {
 	return Tag{
 		cls: c
 		compound: compound
-		value: TagValue.new_from_int(value)!
+		value: TagValue.from_int(value)!
 	}
 }
 
@@ -46,7 +45,8 @@ fn (t Tag) pack(mut dst []u8) {
 	}
 }
 
-
+// unpack deserializes bytes of data to Tag structure, start from offset loc position.
+// Its return Tag and next offset to operate on, and return error if fail to unpack.
 fn Tag.unpack(data []u8, loc int) !(Tag, int) {
     if data.len < 1 {
 		return error('get ${data.len} bytes for reading tag, its not enough')
@@ -61,7 +61,7 @@ fn Tag.unpack(data []u8, loc int) !(Tag, int) {
 
     cls := int((b & class_mask) >> 6)
 	compound := b & compound_mask == compound_mask
-    mut value :=  TagValue.new_from_int(int(b & tag_mask))!
+    mut value :=  TagValue.from_int(int(b & tag_mask))!
 	
 	if value == 0x1f {
 		// we mimic go version of tag handling, only allowed `max_tag_length` bytes following
@@ -93,7 +93,7 @@ fn (t Tag) clone_with_class(c Class) Tag {
 
 fn (t Tag) clone_with_tag(v int) Tag {
     if t.value == v { return }
-    val := TagValue.new_from_int(v)!
+    val := TagValue.from_int(v)!
     mut new := t 
     t.value = val 
     return new 
@@ -106,25 +106,24 @@ fn (t Tag) tag_length() int {
 }
 
 // ASN.1 Tag value part
-// ASN.1 imposes no limit on the tag number, 
-// but the NIST Stable Implementation Agreements (1991) 
+// ASN.1 imposes no limit on the tag number, but the NIST Stable Implementation Agreements (1991) 
 // and its European and Asian counterparts limit the size of tags to 16383.
 // see https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation
-type TagValue = i64 
+type TagValue = int
 
-fn TagValue.new_from_int(v int) !TagValue {
-    if v < 0 { 
-        return error("negative value")
-    }
-    if v > max_tag_value { 
-        return error("v is too big")
-    }
-    return TagValue(i64(v))
+fn TagValue.from_int(v int) !TagValue {
+	if v < 0 {
+		return error('TagValue: negative value')
+	}
+	if v > max_tag_value {
+		return error('TagValue: ${v} is too big, dont exceed ${max_tag_value}')
+	}
+	return TagValue(v)
 }
 
-// bytes_needed tells amount of bytes needed to store v in base 128  
+// bytes_needed tells amount of bytes needed to store v in base 128
 fn (v TagValue) bytes_needed() int {
-    if v == 0 {
+	if v == 0 {
 		return 1
 	}
 	mut n := v
@@ -138,7 +137,7 @@ fn (v TagValue) bytes_needed() int {
 	return ret
 }
 
-// pack_base128 serializes TagValue v into bytes and append it into `to` in base 128  
+// pack_base128 serializes TagValue v into bytes and append it into `to` in base 128
 fn (v TagValue) pack_base128(mut to []u8) {
 	n := v.bytes_needed()
 	for i := n - 1; i >= 0; i-- {
@@ -155,30 +154,32 @@ fn (v TagValue) pack_base128(mut to []u8) {
 // unpack deserializes bytes into TagValue from offset loc in base 128.
 fn TagValue.unpack_base128(bytes []u8, loc int) !(TagValue, int) {
 	mut pos := loc
-	mut r64 := i64(0)
+	mut ret := 0
 	for s := 0; pos < bytes.len; s++ {
-		r64 <<= 7
+		ret <<= 7
 		b := bytes[pos]
 
 		if s == 0 && b == 0x80 {
 			return error('integer is not minimaly encoded')
 		}
 
-		r64 |= i64(b & 0x7f)
+		ret |= b & 0x7f
 		pos += 1
 
 		if b & 0x80 == 0 {
-			if r64 > max_i64 {
+			if ret > max_tag_value {
 				return error('base 128 integer too large')
 			}
-			return TagValue(r64), pos
+			val := TagValue.from_int(ret)!
+			return val, pos
 		}
 	}
 	return error('truncated base 128 integer')
 }
 
-// tag_type transforrms this TagValue into available Universal class of TagType, or return error if unknown value 
-fn (v TagValue) tag_type() !TagType {
+// universal_tag_type transforrms this TagValue into available Universal class of TagType, 
+// or return error if it is unknown value.
+fn (v TagValue) universal_tag_type() !TagType {
     // currently, only support Standard universal tag value
     if v > 36 {
         return error("TagValue: unknown TagType value=${v}")

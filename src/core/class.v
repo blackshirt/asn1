@@ -12,6 +12,7 @@ enum Class {
 	private     		= 0x03
 }
 
+// class_from_int creates Class from integer v 
 fn class_from_int(v int) !Class {
 	match v {
 		0x00 { return .universal }

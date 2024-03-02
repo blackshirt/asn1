@@ -73,7 +73,7 @@ fn (v Length) pack(mut to []u8) ! {
 }
 
 // unpack deserializes back of buffer into Length form, start from offset loc in the buf.
-// Its return Length and next offset in the buffer buf to process on.
+// Its return Length and next offset in the buffer buf to process on, and return error if fail.
 fn Length.unpack(buf []u8, loc int) !(Length, int) {
 	mut pos := loc
 	if pos >= buf.len {
