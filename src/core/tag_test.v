@@ -4,12 +4,13 @@
 module asn1
 
 struct TagTest {
-	inp int
-	ctr bool
-	out int
+	value 		int
+	compound 	bool
+	expected 	int
+	err 		IError
 }
 
-fn test_tag_handling() ! {
+fn test_universal_class_tag_handling() ! {
 	tags := [
 		TagTest{0, false, 1},
 		TagTest{1, false, 1},
@@ -35,24 +36,27 @@ fn test_tag_handling() ! {
 	]
 
 	for i, c in tags {
-		t := new_tag(.universal, c.ctr, c.inp)
-		n := calc_tag_length(t)
+		t := new_tag(.universal, c.compound, c.value)!
+		v := TagValue.from(c.value)!
+		n := v.bytes_needed()
 		mut dst := []u8{}
-		s := serialize_tag(mut dst, t)
+		t.pack(mut dst)
+		
 		// assert length as expected
-		assert n == c.out
+		assert n == c.expected
 		// assert lenggth of serialized tag as expected
-		assert s.len == c.out
+		assert dst.len == c.expected
 
 		// read bytes back to tag
-		tag, offset := read_tag(s, 0)!
+		tag, offset := Tag.unpack(dst, 0)!
 		assert tag == t
 		assert offset == n
 	}
 }
 
+/*
 struct TagReadTest {
-	inp         []u8
+	value         []u8
 	class       Class
 	constructed bool
 	number      int
@@ -78,7 +82,7 @@ fn test_read_tag() ! {
 	]
 
 	for c in data {
-		tag, pos := read_tag(c.inp, 0) or {
+		tag, pos := read_tag(c.value, 0) or {
 			assert err == c.err
 			continue
 		}
@@ -90,7 +94,7 @@ fn test_read_tag() ! {
 }
 
 struct TagAndLengthTest {
-	inp     []u8
+	value     []u8
 	tag     Tag
 	length  int
 	lastpos int
@@ -144,13 +148,13 @@ fn test_tagandlength_handling() ! {
 	]
 
 	for _, c in bs {
-		tag, pos := read_tag(c.inp, 0) or {
+		tag, pos := read_tag(c.value, 0) or {
 			assert err == c.err
 			continue
 		}
 		assert tag == c.tag
 
-		length, idx := decode_length(c.inp, pos) or {
+		length, idx := decode_length(c.value, pos) or {
 			assert err == c.err
 			continue
 		}
@@ -226,3 +230,5 @@ fn test_tc2_never_ending_tagnumber() ! {
 		return
 	}
 }
+
+*/

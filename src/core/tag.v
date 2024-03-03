@@ -11,6 +11,9 @@ const max_tag_length  = 2
 const max_tag_value   = 16383
 
 // Tag represents identifier of the ASN1 element (object)
+// ASN.1 tag value can be represented in two form, short form and long form.
+// The short form for tag value below <= 30 and stored enough in single byte, 
+// where long form for tag value > 30, and stored in two or more bytes (see limit restriction above).
 struct Tag {
 mut:
 	cls      Class
@@ -63,6 +66,7 @@ fn Tag.unpack(data []u8, loc int) !(Tag, int) {
 	compound := b & compound_mask == compound_mask
     mut value :=  TagValue.from_int(int(b & tag_mask))!
 	
+	// check if this `value` is a long (multibyte) form, and interpretes more bytes as a tag value.
 	if value == 0x1f {
 		// we mimic go version of tag handling, only allowed `max_tag_length` bytes following
 		// to represent tag value.
@@ -72,6 +76,8 @@ fn Tag.unpack(data []u8, loc int) !(Tag, int) {
 			return error('tag bytes is too big')
 		}
 		if value < 0x1f {
+			// requirement for DER encoding. 
+			// TODO: the other encoding may remove this restriction
 			return error('non-minimal tag')
 		}
 	}

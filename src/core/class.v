@@ -6,10 +6,10 @@ module core
 // Class is ASN.1 tag class.
 // Currently most of universal class supported in this module, with limited support for other class.
 enum Class {
-	universal   		= 0x00
-	application 		= 0x01
-	context_specific    = 0x02
-	private     		= 0x03
+	universal   		= 0x00 // 0b00
+	application 		= 0x01 // 0b01
+	context_specific    = 0x02 // 0b10
+	private     		= 0x03 // 0b11
 }
 
 // class_from_int creates Class from integer v 

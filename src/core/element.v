@@ -11,11 +11,8 @@ interface ElementBase {
 }
 
 struct Element {
-    tag         Tag 
-    len         Length  
-    raw_content []u8
-    tagged      bool
-
+    type_tag Tag 
+    
 }
 
 fn (e Element) is_constructed() bool {
@@ -27,6 +24,7 @@ enum Mode {
     der = 0
     ber = 1
     cer = 2
-    per = 3
-    xer = 4
+    oer = 3
+    per = 4
+    xer = 5
 }
