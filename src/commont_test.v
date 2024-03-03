@@ -252,7 +252,6 @@ fn test_x509_certificate_validity() ! {
 	// Validity ::= SEQUENCE {
 	// notBefore      Time,
 	// notAfter       Time }
-
 	notbefore := new_utctime('200902132526Z')!
 	assert notbefore.encode()! == [u8(0x17), 0x0D, 0x32, 0x30, 0x30, 0x39, 0x30, 0x32, 0x31, 0x33,
 		0x32, 0x35, 0x32, 0x36, 0x5A]
@@ -382,6 +381,7 @@ fn test_x509_certificate_extensions() ! {
 		0x17, 0xAE, 0x1E, 0x72, 0xD8, 0x9A, 0x80, 0x4A, 0xE8]
 
 	assert oct.encode()! == expoct
+
 	// encapsulated keyval, preserve tag value
 	extnkeyvalue := hex.decode('04146BA5BDCF9DFA235978126417AE1E72D89A804AE8')! //[]u8
 	extoct := new_octetstring(extnkeyvalue.bytestr())
@@ -399,6 +399,7 @@ fn test_x509_certificate_extensions() ! {
 
 	// parsing back
 	out := der_decode(expseq)!
+
 	// cast encoder to seq
 	cast := out.as_sequence()!
 

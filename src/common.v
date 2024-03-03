@@ -1,6 +1,5 @@
 module asn1
 
-
 // der_decode is main routine to do parsing of DER encoded data.
 // Its accepts bytes arrays encoded in DER in `src` params and returns `Encoder` interfaces object,
 // so, you should cast it to get underlying type.
@@ -12,6 +11,7 @@ pub fn der_decode(src []u8) !Encoder {
 	if src.len > next + length {
 		return error('malformed bytes, contains discarded bytes')
 	}
+
 	// remaining is a contents
 	// contents := src[next..next + length]
 	contents := read_bytes(src, next, length)!
@@ -120,6 +120,7 @@ pub fn (enc Encoder) contents() ![]u8 {
 	if length == 0 {
 		return []u8{}
 	}
+
 	// length of encoded bytes included header
 	size := enc.size()
 
@@ -297,8 +298,10 @@ fn (mut enc []Encoder) add_multi(es []Encoder) {
 // to support other class of der encoded ASN.1 object
 // other than universal class supported in this module.
 struct ASN1Object {
-	tag    Tag  // tag of the ASN.1 object
-	values []u8 // unencoded values of the object.
+	tag    Tag
+	// tag of the ASN.1 object
+	values []u8
+	// unencoded values of the object.
 }
 
 // `new_asn_object` creates new ASN.1 Object

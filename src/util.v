@@ -116,7 +116,6 @@ fn validate_date(year u16, month u8, day u8) bool {
 	return true
 }
 
-
 /*
 // calculate lenght of bytes needed to store n
 fn calc_length(n int) int {

@@ -6,37 +6,45 @@ module core
 // Class is ASN.1 tag class.
 // Currently most of universal class supported in this module, with limited support for other class.
 enum Class {
-	universal   		= 0x00 // 0b00
-	application 		= 0x01 // 0b01
-	context_specific    = 0x02 // 0b10
-	private     		= 0x03 // 0b11
+	universal        = 0x00 // 0b00
+	application      = 0x01 // 0b01
+	context_specific = 0x02 // 0b10
+	private          = 0x03 // 0b11
 }
 
-// class_from_int creates Class from integer v 
+// class_from_int creates Class from integer v
 fn class_from_int(v int) !Class {
 	match v {
-		0x00 { return .universal }
-		0x01 { return .application }
-		0x02 { return .context_specific }
-		0x03 { return .private }
+		0x00 {
+			return .universal
+		}
+		0x01 {
+			return .application
+		}
+		0x02 {
+			return .context_specific
+		}
+		0x03 {
+			return .private
+		}
 		else {
-			return error("Bad class number")
+			return error('Bad class number')
 		}
 	}
 }
 
 fn (c Class) str() string {
 	match c {
-		.universal { return "universal" }
-		.application { return "application" }
-		.context_specific { return "context_specific" }
-		.private { return "private" }
+		.universal { return 'universal' }
+		.application { return 'application' }
+		.context_specific { return 'context_specific' }
+		.private { return 'private' }
 	}
 }
 
-const class_mask 	= 0xc0 // 192, bits 8-7
+const class_mask = 0xc0 // 192, bits 8-7
 const compound_mask = 0x20 //  32, bits 6
-const tag_mask 		= 0x1f //  32, bits 1-5
+const tag_mask = 0x1f //  32, bits 1-5
 
 // Encoder is a main interrface that wraps ASN.1 encoding functionality.
 // Most of basic types in this module implements this interface.
