@@ -17,19 +17,20 @@ enum TaggedMode {
 }
 	
 struct TaggedType {
-	cls  Class
-	compound bool
+	// class of TaggedType element default to .context_specifiv
+	cls        Class = .context_specifiv
+	compound   bool
 	tag_number TagValue
-	mode TaggedMode
-	wrapped_type Element
+	mode       TaggedMode = .explicit
+	inner_el   Element
 }
 	
 struct Element {
 	cls        Class
 	compound   bool
 	tag_number TagValue
-	tagged     bool
 	length     Length
+	// raw payload of this element
 	content    []u8
 }
 
