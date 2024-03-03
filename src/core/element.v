@@ -15,14 +15,32 @@ enum TaggedMode {
 	implicit
 	explicit
 }
-	
+
+// Tagged type element
 struct TaggedType {
-	// class of TaggedType element default to .context_specifiv
-	cls        Class = .context_specifiv
-	compound   bool
-	tag_number TagValue
-	mode       TaggedMode = .explicit
-	inner_el   Element
+	// class of TaggedType element was default to .context_specifiv
+	tag      Tag
+	mode     TaggedMode = .explicit
+	inner_el Element
+}
+	
+fn (tt TaggedType) pack_and_wrap(mut to []u8) ! {
+	match tt mode {
+		.explicit {
+			// wraps the inner element with this tag and length
+			tt.tag.pack(mut to)!
+			length:= tt.inner_el.packed_length()!
+			len := Length.from_int(length)!
+			len.pack(mut to)!
+			tt.inner_el.pack(mut to)!
+		}
+		.implicit {
+			// replace the tag.of inner element with this tag
+			tt.tag.pack(mut to)!
+			tt.inner_el.length.pack(mut to)!
+			to << tt.inner_el.content
+		}
+	}
 }
 	
 struct Element {
