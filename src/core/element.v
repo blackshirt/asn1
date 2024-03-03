@@ -11,12 +11,30 @@ interface ElementBase {
 	is_tagged() bool
 }
 
+enum TaggedMode {
+	implicit
+	explicit
+}
+	
+struct TaggedType {
+	cls  Class
+	compound bool
+	tag_number TagValue
+	mode TaggedMode
+	wrapped_type Element
+}
+	
 struct Element {
-	tag Tag
+	cls        Class
+	compound   bool
+	tag_number TagValue
+	tagged     bool
+	length     Length
+	content    []u8
 }
 
 fn (e Element) is_constructed() bool {
-	return e.tag.compound
+	return e.compound
 }
 
 // encoding mode
