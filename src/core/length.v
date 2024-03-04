@@ -23,6 +23,11 @@ const max_definite_length = 126 // in bytes, 1008:8
 
 type Length = int
 
+struct Asn1Length {
+	length 	int 
+	value 	big.Integer
+}
+
 // bytes_needed tells how many bytes to represent this length
 fn (v Length) bytes_needed() int {
 	mut i := v

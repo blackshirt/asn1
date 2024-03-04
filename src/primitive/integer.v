@@ -33,12 +33,14 @@ fn Integer.from_u64(v u64) Integer {
 }
 
 fn (n Integer) length() int {
-	return n.bit_len()
+	len := Length(n.value.bit_len())
+	return len.length()
 }
 
 fn (n Integer) packed_length() !int {
 	mut n := 0
 	n += n.tag.tag_length()
+
 }
 
 // new_integer creates asn.1 serializable integer object. Its supports
