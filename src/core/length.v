@@ -18,44 +18,9 @@ module core
 // the length octets should in definite length.
 
 const max_definite_length = 126 // in bytes, 1008:8
-// TODO: represent it in 'big.Integer'
-// const max_ber_length = (1<<1008)-1
-const big128 = big.integer_from_int(128)
 
 type Length = int
 
-struct Asn1Length = big.Integer
-
-fn (v Asn1Length) bytes_needed() int {
-	nbits := v.bit_len()
-	if nbits % 8 == 0 { return nbits/8 }
-	return nbits/8 + 1
-}
-	
-fn (v Asn1Length) total_length() int {
-	mut len := 1
-	if v >= big128 {
-		n := v.bytes_needed()
-		len += n
-	}
-	return len
-}
-		
-fn (v Asn1Length) pack(mut to []u8) ! {
-	bytes, _ := v.bytes()
-	if bytes.len > max_definite_length {
-		return error("big: bytes len exceed limit")
-	}
-	// Long form
-	if v >= big128 {
-		to << 0x80 | u8(bytes.len)
-		to << bytes
-	} else {
-		// short form
-		to << bytes
-	}
-}
-		
 // bytes_needed tells how many bytes to represent this length
 fn (v Length) bytes_needed() int {
 	mut i := v
