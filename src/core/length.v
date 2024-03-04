@@ -20,6 +20,7 @@ module core
 const max_definite_length = 126 // in bytes, 1008:8
 // TODO: represent it in 'big.Integer'
 // const max_ber_length = (1<<1008)-1
+const big128 = big.integer_from_int(128)
 
 type Length = int
 
@@ -30,7 +31,16 @@ fn (v Asn1Length) bytes_needed() int {
 	if nbits % 8 == 0 { return nbits/8 }
 	return nbits/8 + 1
 }
-
+	
+fn (v Asn1Length) total_length() int {
+	mut len := 1
+	if v >= big128 {
+		n := v.bytes_needed()
+		len += n
+	}
+	return len
+}
+		
 // bytes_needed tells how many bytes to represent this length
 fn (v Length) bytes_needed() int {
 	mut i := v
