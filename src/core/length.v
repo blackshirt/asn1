@@ -14,11 +14,11 @@ module core
 // the number of additional length octets.
 // Second and following octets give the length, base 256, most significant digit first.
 //
-// This mpdule only support definite length, in short or long form. Its required for DER encoding
+// This module only support definite length, in short or long form. Its required for DER encoding
 // the length octets should in definite length.
 
-const max_definite_length = 126 // in bytes, 1008:8
-
+const max_definite_length = 4
+// Length represent ASN.1 length
 type Length = int
 
 // bytes_needed tells how many bytes to represent this length
@@ -98,7 +98,9 @@ fn Length.unpack(buf []u8, loc int) !(Length, int) {
 			}
 			b = buf[pos]
 			pos += 1
-			if length > (max_i64 >> 8) {
+			// currently, we're only support limited length.
+			// The length is in integer range
+			if length >= max_int-1 {
 				return error('Length: integer overflow')
 			}
 			length <<= 8
