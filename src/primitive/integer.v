@@ -38,9 +38,14 @@ fn (v Integer) bytes_needed() int {
 	return nbits/8 + 1
 }
 
-fn (n Integer) packed_length() !int {
+fn (v Integer) packed_length() !int {
 	mut n := 0
-	n += n.tag.tag_length()
+	n += v.tag.tag_length()
+	x := Length(v.bytes_needed())
+	n += x.length()
+	n += v.bytes_needed()
+
+	return n
     
 }
 
