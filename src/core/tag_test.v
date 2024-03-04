@@ -21,8 +21,8 @@ fn test_universal_class_tag_length_handling() ! {
 		TagLengthTest{256, 3, none},
 		TagLengthTest{16380, 3, none},
 		TagLengthTest{16383, 3, none}, // maximum tag value of universal class, [u8(0x1f), 0xff, 0x7f]
-		TagLengthTest{16384, 4, error('TagValue: 16384 is too big, dont exceed 16383')},
-		TagLengthTest{65535, 4, error('TagValue: 65535 is too big, dont exceed 16383')},
+		TagLengthTest{16384, 4, error('TagNumber: 16384 is too big, dont exceed 16383')},
+		TagLengthTest{65535, 4, error('TagNumber: 65535 is too big, dont exceed 16383')},
 	]
 
 	for i, c in tags {
@@ -121,7 +121,7 @@ fn test_tagandlength_handling() ! {
 		// Long length form may not be used for lengths that fit in short form.
 		TagAndLengthTest{[u8(0xa0), 0x81, 0x7f], Tag{.context_specific, true, 0}, 0, 0, error('Length: dont needed in long form')}, //{}},
 		// Tag numbers which would overflow int32 are rejected. (The value below is 2^31.)
-		TagAndLengthTest{[u8(0x1f), 0x88, 0x80, 0x80, 0x80, 0x00, 0x00], Tag{.universal, false, 0}, 0, 0, error('TagValue: negative value')}, //{}},
+		TagAndLengthTest{[u8(0x1f), 0x88, 0x80, 0x80, 0x80, 0x00, 0x00], Tag{.universal, false, 0}, 0, 0, error('TagNumber: negative value')}, //{}},
 		// Tag numbers that fit in an int32 are valid. (The value below is 2^31 - 1.) but its bigger than max_tag_bytes_length
 		TagAndLengthTest{[u8(0x1f), 0x87, 0xFF, 0xFF, 0xFF, 0x7F, 0x00], Tag{.universal, false, 2147483647}, 0, 7, error('base 128 integer too large')},
 		// Long tag number form may not be used for tags that fit in short form.
@@ -146,7 +146,7 @@ fn test_tagandlength_handling() ! {
 	}
 }
 
-struct TagValueTest {
+struct TagNumberTest {
 	num      int
 	cls      Class
 	compound bool
@@ -156,20 +156,20 @@ struct TagValueTest {
 
 fn test_serialize_tag() ! {
 	data := [
-		TagValueTest{0, .universal, false, [u8(0x00)], none},
-		TagValueTest{32, .universal, false, [u8(0x1f), 0x20], none}, // multibyte tag: 0x1f 0x20
-		TagValueTest{255, .universal, false, [u8(0x1f), 0x81, 0x7f], none}, // multibyte tag: 0x1f 0x81 0x7f
-		TagValueTest{0, .universal, true, [u8(0x20)], none}, // bits 6 set, 0010 0000 == 32
-		TagValueTest{1, .universal, true, [u8(0x21)], none}, // bits 6 set, 0010 0001 == 31
-		TagValueTest{32, .universal, true, [u8(0x3f), 0x20], none}, // multibyte tag: 00111111 0x20
-		TagValueTest{32, .application, true, [u8(0x7f), 0x20], none}, // multibyte tag: 127 (01111111) 0x20
-		TagValueTest{32, .context_specific, true, [u8(0xbf), 0x20], none}, // multibyte tag: 197 (10111111) 0x20
-		TagValueTest{32, .private, true, [u8(0xff), 0x20], none}, // multibyte tag: 255 (11111111) 0x20
-		TagValueTest{255, .context_specific, true, [u8(0xbf), 0x81, 0x7f], none}, // multibyte tag: 0xbf 0x81 0x7f
-		TagValueTest{255, .context_specific, false, [u8(0x9f), 0x81, 0x7f], none}, // multibyte tag: 0xbf 0x81 0x7f
-		TagValueTest{16383, .universal, false, [u8(0x1f), 0xff, 0x7f], none}, // multibyte tag: 0x1f 0xff 0x7f
+		TagNumberTest{0, .universal, false, [u8(0x00)], none},
+		TagNumberTest{32, .universal, false, [u8(0x1f), 0x20], none}, // multibyte tag: 0x1f 0x20
+		TagNumberTest{255, .universal, false, [u8(0x1f), 0x81, 0x7f], none}, // multibyte tag: 0x1f 0x81 0x7f
+		TagNumberTest{0, .universal, true, [u8(0x20)], none}, // bits 6 set, 0010 0000 == 32
+		TagNumberTest{1, .universal, true, [u8(0x21)], none}, // bits 6 set, 0010 0001 == 31
+		TagNumberTest{32, .universal, true, [u8(0x3f), 0x20], none}, // multibyte tag: 00111111 0x20
+		TagNumberTest{32, .application, true, [u8(0x7f), 0x20], none}, // multibyte tag: 127 (01111111) 0x20
+		TagNumberTest{32, .context_specific, true, [u8(0xbf), 0x20], none}, // multibyte tag: 197 (10111111) 0x20
+		TagNumberTest{32, .private, true, [u8(0xff), 0x20], none}, // multibyte tag: 255 (11111111) 0x20
+		TagNumberTest{255, .context_specific, true, [u8(0xbf), 0x81, 0x7f], none}, // multibyte tag: 0xbf 0x81 0x7f
+		TagNumberTest{255, .context_specific, false, [u8(0x9f), 0x81, 0x7f], none}, // multibyte tag: 0xbf 0x81 0x7f
+		TagNumberTest{16383, .universal, false, [u8(0x1f), 0xff, 0x7f], none}, // multibyte tag: 0x1f 0xff 0x7f
 		// overflow max_tag_value
-		TagValueTest{16385, .universal, false, [u8(0x1f), 0xff, 0x7f], error('TagValue: 16385 is too big, dont exceed 16383')}, // multibyte tag: 0x1f 0xff 0x7f
+		TagNumberTest{16385, .universal, false, [u8(0x1f), 0xff, 0x7f], error('TagNumber: 16385 is too big, dont exceed 16383')}, // multibyte tag: 0x1f 0xff 0x7f
 	]
 
 	for c in data {

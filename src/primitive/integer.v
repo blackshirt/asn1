@@ -7,10 +7,39 @@ import math.big
 
 // INTEGER.
 //
-// ASN.1 Integer represented by AsnInteger sum type of `int`, `i64` and `big.Integer`.
+// ASN.1 Integer represented by `big.Integer`.
 // Its handles number arbitrary length of number with support of `math.big` module.
 // The encoding of an integer value shall be primitive.
-pub type AsnInteger = big.Integer | i64 | int
+// pub type AsnInteger = big.Integer | i64 | int
+
+struct Integer {
+	tag 	Tag = new_tag(.universal, false, 2)!
+	value 	big.Integer
+}
+
+fn Integer.from_int(v int) Integer {
+	val := big.integer_from_int(v)
+	return Integer{value: val}
+}
+
+fn Integer.from_int64(v i64) Integer {
+	val := big.integer_from_i64(v)
+	return Integer{value: val}
+}
+
+fn Integer.from_u64(v u64) Integer {
+	val := big.integer_from_u64(v)
+	return Integer{value: val}
+}
+
+fn (n Integer) length() int {
+	return n.bit_len()
+}
+
+fn (n Integer) packed_length() !int {
+	mut n := 0
+	n += n.tag.tag_length()
+}
 
 // new_integer creates asn.1 serializable integer object. Its supports
 // arbitrary integer value, with support from `math.big` module for

@@ -46,7 +46,7 @@ fn (tt TaggedType) pack_and_wrap(mut to []u8) ! {
 struct Element {
 	cls        Class
 	compound   bool
-	tag_number TagValue
+	tag_number TagNumber
 	length     Length
 	// raw payload of this element
 	content    []u8

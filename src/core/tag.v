@@ -3,7 +3,7 @@ module core
 // ASN1 identifier tag handling
 
 // Maximum number of bytes to represent tag value, includes the tag byte.
-// We impose limit on the tag number to be in range 0..16383. See comment on `TagValue` type below.
+// We impose limit on the tag number to be in range 0..16383. See comment on `TagNumber` type below.
 // Its big enough to accomodate and represent different of yours own tag number.
 // Its represents 2 bytes length, maximum bytes arrays to represent tag value is
 // [u8(0x1f), u8(0xff), 0x7f] or 16383 in base 128.
@@ -18,7 +18,7 @@ struct Tag {
 mut:
 	cls      Class
 	compound bool
-	value    TagValue
+	value    TagNumber
 }
 
 // `new_tag` creates new tag identifier. Its accepts params of Class `c`, constructed or primitive
@@ -27,7 +27,7 @@ fn new_tag(c Class, compound bool, value int) !Tag {
 	return Tag{
 		cls: c
 		compound: compound
-		value: TagValue.from_int(value)!
+		value: TagNumber.from_int(value)!
 	}
 }
 
@@ -64,13 +64,13 @@ fn Tag.unpack(data []u8, loc int) !(Tag, int) {
 
 	cls := int((b & class_mask) >> 6)
 	compound := b & compound_mask == compound_mask
-	mut value := TagValue.from_int(int(b & tag_mask))!
+	mut value := TagNumber.from_int(int(b & tag_mask))!
 
 	// check if this `value` is a long (multibyte) form, and interpretes more bytes as a tag value.
 	if value == 0x1f {
 		// we mimic go version of tag handling, only allowed `max_tag_length` bytes following
 		// to represent tag value.
-		value, pos = TagValue.unpack_base128(data, pos)!
+		value, pos = TagNumber.unpack_base128(data, pos)!
 
 		// pos is the next position to read next bytes, so check tag bytes length
 		if pos >= core.max_tag_length + loc + 1 {
@@ -104,7 +104,7 @@ fn (mut t Tag) clone_with_tag(v int) !Tag {
 	if t.value == v {
 		return t
 	}
-	val := TagValue.from_int(v)!
+	val := TagNumber.from_int(v)!
 	mut new := t
 	t.value = val
 	return new
@@ -120,20 +120,20 @@ fn (t Tag) tag_length() int {
 // ASN.1 imposes no limit on the tag number, but the NIST Stable Implementation Agreements (1991)
 // and its European and Asian counterparts limit the size of tags to 16383.
 // see https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation
-type TagValue = int
+type TagNumber = int
 
-fn TagValue.from_int(v int) !TagValue {
+fn TagNumber.from_int(v int) !TagNumber {
 	if v < 0 {
-		return error('TagValue: negative value')
+		return error('TagNumber: negative value')
 	}
 	if v > core.max_tag_value {
-		return error('TagValue: ${v} is too big, dont exceed ${core.max_tag_value}')
+		return error('TagNumber: ${v} is too big, dont exceed ${core.max_tag_value}')
 	}
-	return TagValue(v)
+	return TagNumber(v)
 }
 
 // bytes_needed tells amount of bytes needed to store v in base 128
-fn (v TagValue) bytes_needed() int {
+fn (v TagNumber) bytes_needed() int {
 	if v == 0 {
 		return 1
 	}
@@ -148,7 +148,7 @@ fn (v TagValue) bytes_needed() int {
 	return ret
 }
 
-fn (v TagValue) length() int {
+fn (v TagNumber) length() int {
 	mut len := 1
 	// when value is greater than 31 (0x1f), its more bytes
 	// to represent this value.
@@ -159,8 +159,8 @@ fn (v TagValue) length() int {
 	return len
 }
 
-// pack_base128 serializes TagValue v into bytes and append it into `to` in base 128
-fn (v TagValue) pack_base128(mut to []u8) {
+// pack_base128 serializes TagNumber v into bytes and append it into `to` in base 128
+fn (v TagNumber) pack_base128(mut to []u8) {
 	n := v.bytes_needed()
 	for i := n - 1; i >= 0; i-- {
 		mut o := u8(v >> u32(i * 7))
@@ -173,8 +173,8 @@ fn (v TagValue) pack_base128(mut to []u8) {
 	}
 }
 
-// unpack deserializes bytes into TagValue from offset loc in base 128.
-fn TagValue.unpack_base128(bytes []u8, loc int) !(TagValue, int) {
+// unpack deserializes bytes into TagNumber from offset loc in base 128.
+fn TagNumber.unpack_base128(bytes []u8, loc int) !(TagNumber, int) {
 	mut pos := loc
 	mut ret := 0
 	for s := 0; pos < bytes.len; s++ {
@@ -192,19 +192,19 @@ fn TagValue.unpack_base128(bytes []u8, loc int) !(TagValue, int) {
 			if ret > core.max_tag_value {
 				return error('base 128 integer too large')
 			}
-			val := TagValue.from_int(ret)!
+			val := TagNumber.from_int(ret)!
 			return val, pos
 		}
 	}
 	return error('truncated base 128 integer')
 }
 
-// universal_tag_type transforrms this TagValue into available Universal class of TagType,
+// universal_tag_type transforrms this TagNumber into available Universal class of TagType,
 // or return error if it is unknown value.
-fn (v TagValue) universal_tag_type() !TagType {
+fn (v TagNumber) universal_tag_type() !TagType {
 	// currently, only support Standard universal tag value
 	if v > 36 {
-		return error('TagValue: unknown TagType value=${v}')
+		return error('TagNumber: unknown TagType value=${v}')
 	}
 	match v {
 		0 {
@@ -324,76 +324,76 @@ fn (v TagValue) universal_tag_type() !TagType {
 // Standard universal tag value. Some of them was deprecated,
 // so its not going to be supported on this module.
 enum TagType {
-	reserved         = 0
 	//	reserved for BER
+	reserved         = 0
+	// BOOLEAN type 
 	boolean          = 1
-	// BOOLEAN
+	// INTEGER type
 	integer          = 2
-	// INTEGER
-	bitstring        = 3
 	// BIT STRING
-	octetstring      = 4
+	bitstring        = 3
 	// OCTET STRING
-	null             = 5
+	octetstring      = 4
 	// NULL
-	oid              = 6
+	null             = 5
 	// OBJECT IDENTIFIER
-	objdesc          = 7
+	oid              = 6
 	// ObjectDescriptor
-	external         = 8
+	objdesc          = 7
 	//	INSTANCE OF, EXTERNAL
-	real             = 9
+	external         = 8
 	// REAL
-	enumerated       = 10
+	real             = 9
 	// ENUMERATED
-	embedded         = 11
+	enumerated       = 10
 	// EMBEDDED PDV
-	utf8string       = 12
+	embedded         = 11
 	// UTF8String
-	relativeoid      = 13
+	utf8string       = 12
 	// RELATIVE-OID
-	time             = 14
+	relativeoid      = 13
 	// deprecated
 	// 0x0f is reserved
-	sequence         = 16
+	time             = 14
 	// SEQUENCE, SEQUENCE OF, Constructed
-	set              = 17
+	sequence         = 16
 	///SET, SET OF, Constructed
-	numericstring    = 18
+	set              = 17
 	// NumericString
-	printablestring  = 19
+	numericstring    = 18
 	// PrintableString
+	printablestring  = 19
+	// TeletexString, T61String
 	t61string        = 20
-	// eletexString, T61String
-	videotexstring   = 21
 	// VideotexString
-	ia5string        = 22
+	videotexstring   = 21
 	// IA5String
-	utctime          = 23
+	ia5string        = 22
 	// UTCTime
-	generalizedtime  = 24
+	utctime          = 23
 	// GeneralizedTime
-	graphicstring    = 25
+	generalizedtime  = 24
 	// GraphicString
-	visiblestring    = 26
+	graphicstring    = 25
 	// VisibleString, ISO646String
-	generalstring    = 27
+	visiblestring    = 26
 	// GeneralString
-	universalstring  = 28
+	generalstring    = 27
 	// UniversalString
-	characterstring  = 29
+	universalstring  = 28
 	// CHARACTER STRING
-	bmpstring        = 30
+	characterstring  = 29
 	// BMPString
+	bmpstring        = 30
 	date             = 0x1f
 	time_of_day      = 0x20
 	date_time        = 0x21
 	duration         = 0x22
-	i18_oid          = 0x23
 	// Internationalized OID
-	relative_i18_oid = 0x24
+	i18_oid          = 0x23
 	// Internationalized Relative OID
 	// Reserved 0x25 and above
+	relative_i18_oid = 0x24
 }
 
 fn (t TagType) str() string {
