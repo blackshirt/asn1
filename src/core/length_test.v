@@ -9,7 +9,7 @@ struct LengthPackTest {
 	err      IError
 }
 
-fn test_serialize_length() ! {
+fn test_length_pack_and_unpack_tofrom_asn() ! {
 	edata := [
 		LengthPackTest{0, [u8(0x00)], none},
 		LengthPackTest{10, [u8(0x0a)], none},
@@ -93,7 +93,6 @@ fn test_length_bytes_needed() {
 		LengthTest{16777215, 3},
 		LengthTest{16777216, 4},
 		LengthTest{2147483647, 4}, // math.max_i32
-		// LengthTest{4294967295, 4}, // math.max_u32, its silently overflow
 	]
 
 	for c in ldata {
@@ -105,7 +104,7 @@ fn test_length_bytes_needed() {
 }
 
 fn test_calc_length_of_length() {
-	ldata := [
+	data := [
 		LengthTest{1, 1},
 		LengthTest{128, 2},
 		LengthTest{255, 2},
@@ -116,10 +115,9 @@ fn test_calc_length_of_length() {
 		LengthTest{16777215, 4},
 		LengthTest{16777216, 5},
 		LengthTest{2147483647, 5}, // math.max_i32
-		// LengthTest{4294967295, 4}, // math.max_u32, its silently overflow
 	]
 
-	for c in ldata {
+	for c in data {
 		len := Length.from_int(c.value)
 		out := len.length()
 
