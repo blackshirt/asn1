@@ -7,9 +7,9 @@ module core
 //
 // The standard of X.690 ITU document defines two length types - definite and indefinite.
 // DER encoding only uses the definite length.
-// There are two forms of definite length octets: short (for lengths between 0 and 127),
-// and long definite (for lengths between 0 and 2^1008 -1).
-// Short form. One octet. Bit 8 has value "0" and bits 7-1 give the length.
+// There are two forms of definite length octets: short (for lengths value between 0 and 127),
+// and long definite (for lengths value between 0 and 2^1008 -1).
+// Short form. One octet. Bit 8 has value "0" and bits 7-1 give the length (length value from 0 to 127)
 // Long form. Two to 127 octets. Bit 8 of first octet has value "1" and bits 7-1 give
 // the number of additional length octets.
 // Second and following octets give the length, base 256, most significant digit first.

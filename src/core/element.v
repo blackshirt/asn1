@@ -57,7 +57,7 @@ fn (e Element) is_constructed() bool {
 }
 
 // encoding mode
-enum Mode {
+enum EncodingMode {
 	der = 0
 	ber = 1
 	cer = 2

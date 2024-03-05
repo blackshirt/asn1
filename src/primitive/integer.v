@@ -12,7 +12,7 @@ import math.big
 // The encoding of an integer value shall be primitive.
 // pub type AsnInteger = big.Integer | i64 | int
 
-// Universal class of arbitrary length of ASN.1 type integer
+// Universal class of arbitrary length type of ASN.1 integer
 type Integer = big.Integer
 
 fn Integer.from_int(v int) Integer {
@@ -47,15 +47,65 @@ fn (v Integer) packed_length() !int {
 	return n
 }
 
-fn (v Integer) pack_to_asn1(mut to []u8, mode Mode) ! {
+fn (v Integer) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 	match mode {
-		.der {}
+		.der {
+			v.tag().pack(mut to)
+			length := Length(v.bytes_needed())
+			length.pack(mut to)
+
+			to << v.bytes
+		}
 		else {
 			return error("unsupported mode")
 		}
 	}
 }
-		
+
+fn Integer.unpack_from_asn1(b []u8, loc int) !Integer {
+	
+}
+
+// read big.Integer from src bytes 
+fn read_bigint(src []u8) !big.Integer {
+	if !valid_integer(src, true) {
+		return error('big integer check return false')
+	}
+
+	if src.len > 0 && src[0] & 0x80 == 0x80 {
+		// This is negative number, do two complements rule
+		// FIXME: or we can use `big.integer_from_bytes(bytes, signum: -1)` ?
+		mut notbytes := []u8{len: src.len}
+		for i, _ in notbytes {
+			notbytes[i] = ~src[i]
+		}
+		mut ret := big.integer_from_bytes(notbytes)
+		ret += big.one_int
+		ret = ret.neg()
+		return ret
+	}
+	s := big.integer_from_bytes(src)
+	return s
+}
+
+fn valid_integer(src []u8, signed bool) bool {
+	if src.len == 0 {
+		return false
+	}
+
+	// check for minimaly encoded
+	if src.len > 1 && ((src[0] == 0 && src[1] & 0x80 == 0)
+		|| (src[0] == 0xff && src[1] & 0x80 == 0x80)) {
+		return false
+	}
+
+	// reject negative for unsigned type
+	if !signed && src[0] & 0x80 == 0x80 {
+		return false
+	}
+	return true
+}
+
 // new_integer creates asn.1 serializable integer object. Its supports
 // arbitrary integer value, with support from `math.big` module for
 // integer bigger than 64 bit number.
@@ -167,23 +217,6 @@ fn (n AsnInteger) str() string {
 	}
 }
 
-fn valid_integer(src []u8, signed bool) bool {
-	if src.len == 0 {
-		return false
-	}
-
-	// check for minimaly encoded
-	if src.len > 1 && ((src[0] == 0 && src[1] & 0x80 == 0)
-		|| (src[0] == 0xff && src[1] & 0x80 == 0x80)) {
-		return false
-	}
-
-	// reject negative for unsigned type
-	if !signed && src[0] & 0x80 == 0x80 {
-		return false
-	}
-	return true
-}
 
 // i64 handling
 
@@ -327,28 +360,6 @@ fn decode_i32(src []u8) !(Tag, i32) {
 }
 
 // big.Integer handling
-
-// read big.Integer
-fn read_bigint(src []u8) !big.Integer {
-	if !valid_integer(src, true) {
-		return error('big integer check return false')
-	}
-
-	if src.len > 0 && src[0] & 0x80 == 0x80 {
-		// this is negative number
-		// do two complements rule
-		mut notbytes := []u8{len: src.len}
-		for i, _ in notbytes {
-			notbytes[i] = ~src[i]
-		}
-		mut ret := big.integer_from_bytes(notbytes)
-		ret += big.one_int
-		ret = ret.neg()
-		return ret
-	}
-	s := big.integer_from_bytes(src)
-	return s
-}
 
 fn serialize_bigint(b big.Integer) ![]u8 {
 	tag := new_tag(.universal, false, int(TagType.integer))
