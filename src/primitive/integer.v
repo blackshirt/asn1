@@ -30,11 +30,13 @@ fn Integer.from_u64(v u64) Integer {
 fn (v Integer) tag() Tag {
 	return new_tag(.universal, false, 2)
 }
-	
+
 fn (v Integer) bytes_needed() int {
 	nbits := v.bit_len()
-	if nbits % 8 == 0 { return nbits/8 }
-	return nbits/8 + 1
+	if nbits % 8 == 0 {
+		return nbits / 8
+	}
+	return nbits / 8 + 1
 }
 
 fn (v Integer) packed_length() !int {
@@ -57,7 +59,7 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 			to << v.bytes
 		}
 		else {
-			return error("unsupported mode")
+			return error('unsupported mode')
 		}
 	}
 }
@@ -67,23 +69,22 @@ fn Integer.unpack_from_asn1(b []u8, loc int, mode EncodingMode) !(Integer, int) 
 		.der {
 			tag, pos := Tag.unpack(b, loc)!
 			if tag != new_tag(.universal, false, 2) {
-					return error("Integer: bad tag of universal class type")
+				return error('Integer: bad tag of universal class type')
 			}
-			// read the length part from current position pos 
+			// read the length part from current position pos
 			len, idx := Length.unpack(b, pos)!
-			// read the bytes part from current position idx to the length part 
-			bytes := unsafe { b[idx..idx+len]}
+			// read the bytes part from current position idx to the length part
+			bytes := unsafe { b[idx..idx + len] }
 			ret := read_bigint(bytes)!
 			return Integer(ret)
 		}
 		else {
-			return error("unsupported mode")
+			return error('unsupported mode')
 		}
 	}
-	
 }
 
-// read big.Integer from src bytes 
+// read big.Integer from src bytes
 fn read_bigint(src []u8) !big.Integer {
 	if !valid_integer(src, true) {
 		return error('big integer check return false')
@@ -233,7 +234,6 @@ fn (n AsnInteger) str() string {
 		}
 	}
 }
-
 
 // i64 handling
 

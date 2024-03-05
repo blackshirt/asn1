@@ -22,16 +22,15 @@ fn (n Null) tag() Tag {
 	return new_tag(.universal, false, 5)
 }
 
-
-fn (n Null) pack_to_asn1(mut to []u8, mode Mode=.der) ! {
+fn (n Null) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 	match mode {
 		.der {
 			out << n.tag().pack()!
-			// the length is 0 
+			// the length is 0
 			out << [u8(0x00)]
 		}
 		else {
-			return error("unsupported mode")
+			return error('unsupported mode')
 		}
 	}
 }
@@ -43,14 +42,17 @@ fn Null.unpack(b []u8, mode EncodingMode) !Null {
 				return error('Null: invalid args')
 			}
 			tag, pos := Tag.unpack(b, 0)!
-			if tag.value != 0x05 { return error("NullL bad tag=${tag}")}
+			if tag.value != 0x05 {
+				return error('NullL bad tag=${tag}')
+			}
 			len, idx := Length.unpack(b, pos)!
-			if len != 0 { return error("Null: len != 0")}
+			if len != 0 {
+				return error('Null: len != 0')
+			}
 			return Null{}
-
 		}
 		else {
-			return error("unsupported mode")
+			return error('unsupported mode')
 		}
 	}
 }
