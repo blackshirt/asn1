@@ -18,14 +18,14 @@ enum TaggedMode {
 
 // Tagged type element
 struct TaggedType {
-	// class of TaggedType element was default to .context_specifiv
+	// class of TaggedType element was default to .context_specific
 	tag      Tag
 	mode     TaggedMode = .explicit
 	inner_el Element
 }
 
-fn (tt TaggedType) pack_and_wrap(mut to []u8, em EncodingMode) ! {
-	match em {
+fn (tt TaggedType) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
+	match mode {
 		.der {
 			match tt.mode {
 				.explicit {
@@ -33,13 +33,13 @@ fn (tt TaggedType) pack_and_wrap(mut to []u8, em EncodingMode) ! {
 					tt.tag.pack_to_asn1(mut to)
 					length := tt.inner_el.element_length()
 					len := Length.from_int(length)
-					len.pack_to_asn1(mut to)!
-					tt.inner_el.pack_to_asn1(mut to, em)!
+					len.pack_to_asn1(mut to, mode)!
+					tt.inner_el.pack_to_asn1(mut to, mode)!
 				}
 				.implicit {
 					// replace the tag.of inner element with this tag
 					tt.tag.pack_to_asn1(mut to)
-					tt.inner_el.length.pack_to_asn1(mut to)!
+					tt.inner_el.length.pack_to_asn1(mut to, mode)!
 					to << tt.inner_el.content
 				}
 			}
@@ -70,7 +70,7 @@ fn (e Element) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 	match mode {
 		.der {
 			e.tag.pack_to_asn1(mut to)
-			e.length.pack_to_asn1(mut to)!
+			e.length.pack_to_asn1(mut to, .der)!
 			to << e.content
 		}
 		else {

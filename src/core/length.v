@@ -25,7 +25,7 @@ fn Length.from_int(v int) Length {
 	return Length(v)
 }
 
-// bytes_needed tells how many bytes to represent this length
+// bytes_needed tells how many bytes needed to represent this length
 fn (v Length) bytes_needed() int {
 	mut i := v
 	mut num := 1
@@ -40,7 +40,8 @@ fn (v Length) bytes_needed() int {
 fn (v Length) pack_and_append(mut to []u8) {
 	mut n := v.bytes_needed()
 	for ; n > 0; n-- {
-		to << u8(v >> (n - 1) * 8)
+		// pay attention to the brackets
+		to << u8(v >> ((n - 1) * 8))
 	}
 }
 
@@ -55,72 +56,89 @@ fn (v Length) length() int {
 }
 
 // pack serializes Length v into bytes and append it into `to`
-fn (v Length) pack_to_asn1(mut to []u8) ! {
-	// Long form
-	if v >= 128 {
-		length := v.bytes_needed()
-		// if the length overflow the limit, something bad happen
-		// return error instead
-		if length > core.max_definite_length {
-			return error('something bad in your length')
+fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
+	match mode {
+		.der {
+			// Long form
+			if v >= 128 {
+				length := v.bytes_needed()
+
+				// if the length overflow the limit, something bad happen
+				// return error instead
+				if length > core.max_definite_length {
+					return error('something bad in your length')
+				}
+				to << 0x80 | u8(length)
+				v.pack_and_append(mut to)
+			} else {
+				// short form
+				to << u8(v)
+			}
 		}
-		to << 0x80 | u8(length)
-		v.pack_and_append(mut to)
-	} else {
-		// short form
-		to << u8(v)
+		// Otherwise, its not supported
+		else {
+			return error('Unsupported')
+		}
 	}
 }
 
 // unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buf.
-// Its return Length and next offset in the buffer buf to process on, and return error if fail.
-fn Length.unpack_from_asn1(buf []u8, loc int) !(Length, int) {
-	mut pos := loc
-	if pos >= buf.len {
-		return error('Length: truncated length')
-	}
-	mut b := buf[pos]
-	pos += 1
-	mut length := 0
-	// check for the most bit is set or not
-	if b & 0x80 == 0 {
-		// for lengths between 0 and 127, the one-octet short form can be used.
-		// The bit 7 of the length octet is set to 0, and the length is encoded
-		// as an unsigned binary value in the octet's rightmost seven bits.
-		length = int(b & 0x7f)
-	} else {
-		// Otherwise, its a Long definite form or undefinite form
-		num_bytes := b & 0x7f
-		if num_bytes == 0 {
-			// TODO: add support for undefinite length
-			return error('Length: unsupported undefinite length')
-		}
-
-		for i := 0; i < num_bytes; i++ {
+// Its return Length and next offset in the buffer buf to process on, and return error on fail.
+fn Length.unpack_from_asn1(buf []u8, loc int, mode EncodingMode) !(Length, int) {
+	match mode {
+		.der {
+			mut pos := loc
 			if pos >= buf.len {
 				return error('Length: truncated length')
 			}
-			b = buf[pos]
+			mut b := buf[pos]
 			pos += 1
-			// currently, we're only support limited length.
-			// The length is in integer range
-			if length >= max_int - 1 {
-				return error('Length: integer overflow')
-			}
-			length <<= 8
-			length |= int(b)
-			if length == 0 {
-				// TODO: leading zeros is allowed in Long form of BER encoding, but
-				// not allowed in DER encoding
-				return error('Length: leading zeros')
-			}
-		}
+			mut length := 0
+			// check for the most bit is set or not
+			if b & 0x80 == 0 {
+				// for lengths between 0 and 127, the one-octet short form can be used.
+				// The bit 7 of the length octet is set to 0, and the length is encoded
+				// as an unsigned binary value in the octet's rightmost seven bits.
+				length = int(b & 0x7f)
+			} else {
+				// Otherwise, its a Long definite form or undefinite form
+				num_bytes := b & 0x7f
+				if num_bytes == 0 {
+					// TODO: add support for undefinite length
+					return error('Length: unsupported undefinite length')
+				}
 
-		// do not allow values < 0x80 to be encoded in long form
-		if length < 0x80 {
-			// TODO: allow in BER
-			return error('Length: dont needed in long form')
+				for i := 0; i < num_bytes; i++ {
+					if pos >= buf.len {
+						return error('Length: truncated length')
+					}
+					b = buf[pos]
+					pos += 1
+					// currently, we're only support limited length.
+					// The length is in integer range
+					if length >= max_int - 1 {
+						return error('Length: integer overflow')
+					}
+					length <<= 8
+					length |= int(b)
+					if length == 0 {
+						// TODO: leading zeros is allowed in Long form of BER encoding, but
+						// not allowed in DER encoding
+						return error('Length: leading zeros')
+					}
+				}
+
+				// do not allow values < 0x80 to be encoded in long form
+				if length < 0x80 {
+					// TODO: allow in BER
+					return error('Length: dont needed in long form')
+				}
+			}
+			return Length(length), pos
+		}
+		// Others encoding mode currently is not yet supported
+		else {
+			return error('Unsupported encoding mode')
 		}
 	}
-	return Length(length), pos
 }

@@ -9,7 +9,7 @@ import math.big
 //
 // ASN.1 Integer represented by `big.Integer`.
 // Its handles number arbitrary length of number with support of `math.big` module.
-// The encoding of an integer value shall be primitive.
+// The encoding of an integer number shall be primitive.
 
 // Universal class of arbitrary length type of ASN.1 integer
 type Integer = big.Integer
@@ -125,7 +125,7 @@ fn valid_integer(src []u8, signed bool) bool {
 }
 
 // new_integer creates asn.1 serializable integer object. Its supports
-// arbitrary integer value, with support from `math.big` module for
+// arbitrary integer number, with support from `math.big` module for
 // integer bigger than 64 bit number.
 pub fn new_integer(val AsnInteger) Encoder {
 	match val {

@@ -15,21 +15,15 @@ enum Class {
 // class_from_int creates Class from integer v
 fn class_from_int(v int) !Class {
 	match v {
-		0x00 {
-			return .universal
-		}
-		0x01 {
-			return .application
-		}
-		0x02 {
-			return .context_specific
-		}
-		0x03 {
-			return .private
-		}
+		// vfmt off
+		0x00 { return .universal }
+		0x01 { return .application }
+		0x02 { return .context_specific }
+		0x03 { return .private }
 		else {
 			return error('Bad class number')
 		}
+		// vfmt on
 	}
 }
 

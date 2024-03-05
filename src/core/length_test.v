@@ -1,57 +1,59 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module core
 
-struct LengthEncodeTest {
-	inp int
-	exp []u8
+struct LengthPackTest {
+	value    int
+	expected []u8
+	err      IError
 }
 
 fn test_serialize_length() ! {
 	edata := [
-		LengthEncodeTest{0, [u8(0x00)]},
-		LengthEncodeTest{10, [u8(0x0a)]},
-		LengthEncodeTest{127, [u8(0x7f)]},
-		LengthEncodeTest{255, [u8(0x81), 0xff]},
-		LengthEncodeTest{256, [u8(0x82), 0x01, 0x00]},
-		LengthEncodeTest{383, [u8(0x82), 0x01, 127]},
-		LengthEncodeTest{257, [u8(0x82), 0x01, 0x01]},
-		LengthEncodeTest{65535, [u8(0x82), 0xff, 0xff]},
-		LengthEncodeTest{65536, [u8(0x83), 0x01, 0x00, 0x00]},
-		LengthEncodeTest{16777215, [u8(0x83), 0xff, 0xff, 0xff]},
+		LengthPackTest{0, [u8(0x00)], none},
+		LengthPackTest{10, [u8(0x0a)], none},
+		LengthPackTest{127, [u8(0x7f)], none},
+		LengthPackTest{255, [u8(0x81), 0xff], none},
+		LengthPackTest{256, [u8(0x82), 0x01, 0x00], none},
+		LengthPackTest{383, [u8(0x82), 0x01, 127], none},
+		LengthPackTest{257, [u8(0x82), 0x01, 0x01], none},
+		LengthPackTest{65535, [u8(0x82), 0xff, 0xff], none},
+		LengthPackTest{65536, [u8(0x83), 0x01, 0x00, 0x00], none},
+		LengthPackTest{16777215, [u8(0x83), 0xff, 0xff, 0xff], none},
 	]
-	for c in edata {
+	for i, c in edata {
 		mut dst := []u8{}
-		dst = serialize_length(mut dst, c.inp)
-		assert dst == c.exp
+		s := Length.from_int(c.value)
+		s.pack_to_asn1(mut dst, .der)!
+		assert dst == c.expected
 
-		length, idx := decode_length(dst, 0)!
+		length, idx := Length.unpack_from_asn1(dst, 0, .der)!
 
-		assert length == c.inp
-		assert idx == c.exp.len
+		assert length == c.value
+		assert idx == c.expected.len
 	}
 }
 
 struct ByteLengthTest {
-	inp int
-	exp []u8
+	value    int
+	expected []u8
 }
 
-fn test_decode_length() {
+fn test_basic_simple_length_unpack() {
 	data := [u8(0x82), 0x01, 0x7F]
+	n, pos := Length.unpack_from_asn1(data, 0, .der)!
 
-	n, pos := decode_length(data, 0)!
 	assert n == 383
 	assert pos == 3
 
 	data2 := [u8(0x82), 0x01, 0x31]
-	n2, pos2 := decode_length(data2, 0)!
+	n2, pos2 := Length.unpack_from_asn1(data2, 0, .der)!
 	assert n2 == 305
 	assert pos2 == 3
 }
 
-fn test_append_length() {
+fn test_length_pack_and_append() {
 	bdata := [
 		ByteLengthTest{1, [u8(1)]},
 		ByteLengthTest{127, [u8(0x7f)]},
@@ -65,20 +67,21 @@ fn test_append_length() {
 		ByteLengthTest{16777215, [u8(0xff), 0xff, 0xff]},
 	]
 
-	for i in bdata {
+	for v in bdata {
 		mut dst := []u8{}
-		out := append_length(mut dst, i.inp)
+		ln := Length.from_int(v.value)
+		ln.pack_and_append(mut dst)
 
-		assert out == i.exp
+		assert dst == v.expected
 	}
 }
 
 struct LengthTest {
-	inp int
-	exp int
+	value    int
+	expected int
 }
 
-fn test_calc_length() {
+fn test_length_bytes_needed() {
 	ldata := [
 		LengthTest{1, 1},
 		LengthTest{128, 1},
@@ -94,9 +97,10 @@ fn test_calc_length() {
 	]
 
 	for c in ldata {
-		out := calc_length(c.inp)
+		len := Length.from_int(c.value)
+		out := len.bytes_needed()
 
-		assert out == c.exp
+		assert out == c.expected
 	}
 }
 
@@ -116,10 +120,10 @@ fn test_calc_length_of_length() {
 	]
 
 	for c in ldata {
-		// dump(i)
-		out := calc_length_of_length(c.inp)
+		len := Length.from_int(c.value)
+		out := len.length()
 
-		assert out == c.exp
+		assert out == c.expected
 	}
 }
 
@@ -127,24 +131,23 @@ fn test_calc_length_of_length() {
 fn test_tc3_absence_standard_length_block() ! {
 	value := []u8{}
 
-	_, _ := decode_length(value, 1) or {
-		assert err == error('truncated tag or length')
+	_, _ := Length.unpack_from_asn1(value, 0, .der) or {
+		assert err == error('Length: truncated length')
 		return
 	}
 }
 
 fn test_tc5_unnecessary_usage_long_of_length_form() ! {
-	// this tag above 5 bytes.
-	value := [u8(0x9f), 0xff, 0xff, 0xff, 0x7f, 0x81, 0x01, 0x40]
+	value := [u8(0x9f), 0xff, 0x7f, 0x81, 0x01, 0x40]
 
-	tag, pos := read_tag(value, 0)!
+	tag, pos := Tag.unpack_from_asn1(value, 0)!
 	// 0x9f == 10011111
-	assert tag.class == .context
-	assert tag.constructed == false
-	assert pos == 5
+	assert tag.cls == .context_specific
+	assert tag.compound == false
+	assert pos == 3
 	// the length bytes, [0x81, 0x01] dont needed in long form.
-	_, _ := decode_length(value, pos) or {
-		assert err == error('dont needed in long form')
+	_, _ := Length.unpack_from_asn1(value, pos, .der) or {
+		assert err == error('Length: dont needed in long form')
 		return
 	}
 }
