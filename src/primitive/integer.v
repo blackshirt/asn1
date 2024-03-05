@@ -12,43 +12,50 @@ import math.big
 // The encoding of an integer value shall be primitive.
 // pub type AsnInteger = big.Integer | i64 | int
 
-struct Integer {
-	tag 	Tag = new_tag(.universal, false, 2)!
-	value 	big.Integer
-}
+// Universal class of arbitrary length of ASN.1 type integer
+type Integer = big.Integer
 
 fn Integer.from_int(v int) Integer {
-	val := big.integer_from_int(v)
-	return Integer{value: val}
+	return big.integer_from_int(v)
 }
 
 fn Integer.from_int64(v i64) Integer {
-	val := big.integer_from_i64(v)
-	return Integer{value: val}
+	return big.integer_from_i64(v)
 }
 
 fn Integer.from_u64(v u64) Integer {
-	val := big.integer_from_u64(v)
-	return Integer{value: val}
+	return big.integer_from_u64(v)
 }
 
+fn (v Integer) tag() Tag {
+	return new_tag(.universal, false, 2)
+}
+	
 fn (v Integer) bytes_needed() int {
-	nbits := v.value.bit_len()
+	nbits := v.bit_len()
 	if nbits % 8 == 0 { return nbits/8 }
 	return nbits/8 + 1
 }
 
 fn (v Integer) packed_length() !int {
 	mut n := 0
-	n += v.tag.tag_length()
+	n += v.tag().tag_length()
 	x := Length(v.bytes_needed())
 	n += x.length()
 	n += v.bytes_needed()
 
 	return n
-    
 }
 
+fn (v Integer) pack_to_asn1(mut to []u8, mode Mode) ! {
+	match mode {
+		.der {}
+		else {
+			return error("unsupported mode")
+		}
+	}
+}
+		
 // new_integer creates asn.1 serializable integer object. Its supports
 // arbitrary integer value, with support from `math.big` module for
 // integer bigger than 64 bit number.
