@@ -21,6 +21,10 @@ const max_definite_length = 4
 // Length represent ASN.1 length
 type Length = int
 
+fn Length.from_int(v int) Length {
+	return Length(v)
+}
+
 // bytes_needed tells how many bytes to represent this length
 fn (v Length) bytes_needed() int {
 	mut i := v
@@ -51,7 +55,7 @@ fn (v Length) length() int {
 }
 
 // pack serializes Length v into bytes and append it into `to`
-fn (v Length) pack(mut to []u8) ! {
+fn (v Length) pack_to_asn1(mut to []u8) ! {
 	// Long form
 	if v >= 128 {
 		length := v.bytes_needed()
@@ -68,9 +72,9 @@ fn (v Length) pack(mut to []u8) ! {
 	}
 }
 
-// unpack deserializes back of buffer into Length form, start from offset loc in the buf.
+// unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buf.
 // Its return Length and next offset in the buffer buf to process on, and return error if fail.
-fn Length.unpack(buf []u8, loc int) !(Length, int) {
+fn Length.unpack_from_asn1(buf []u8, loc int) !(Length, int) {
 	mut pos := loc
 	if pos >= buf.len {
 		return error('Length: truncated length')
@@ -100,7 +104,7 @@ fn Length.unpack(buf []u8, loc int) !(Length, int) {
 			pos += 1
 			// currently, we're only support limited length.
 			// The length is in integer range
-			if length >= max_int-1 {
+			if length >= max_int - 1 {
 				return error('Length: integer overflow')
 			}
 			length <<= 8

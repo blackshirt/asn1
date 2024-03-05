@@ -2,7 +2,7 @@ module core
 
 interface ElementBase {
 	type_class() Class
-	is_constructed() bool
+	is_compound() bool
 	// Otherwise is primitive
 	tag() Tag
 	is_type(t Tag) bool
@@ -23,37 +23,64 @@ struct TaggedType {
 	mode     TaggedMode = .explicit
 	inner_el Element
 }
-	
-fn (tt TaggedType) pack_and_wrap(mut to []u8) ! {
-	match tt mode {
-		.explicit {
-			// wraps the inner element with this tag and length
-			tt.tag.pack(mut to)!
-			length:= tt.inner_el.packed_length()!
-			len := Length.from_int(length)!
-			len.pack(mut to)!
-			tt.inner_el.pack(mut to)!
+
+fn (tt TaggedType) pack_and_wrap(mut to []u8, em EncodingMode) ! {
+	match em {
+		.der {
+			match tt.mode {
+				.explicit {
+					// wraps the inner element with this tag and length
+					tt.tag.pack_to_asn1(mut to)
+					length := tt.inner_el.element_length()
+					len := Length.from_int(length)
+					len.pack_to_asn1(mut to)!
+					tt.inner_el.pack_to_asn1(mut to, em)!
+				}
+				.implicit {
+					// replace the tag.of inner element with this tag
+					tt.tag.pack_to_asn1(mut to)
+					tt.inner_el.length.pack_to_asn1(mut to)!
+					to << tt.inner_el.content
+				}
+			}
 		}
-		.implicit {
-			// replace the tag.of inner element with this tag
-			tt.tag.pack(mut to)!
-			tt.inner_el.length.pack(mut to)!
-			to << tt.inner_el.content
+		else {
+			return error('unsupported mode')
 		}
 	}
 }
-	
+
 struct Element {
-	cls        Class
-	compound   bool
-	tag_number TagNumber
-	length     Length
+	tag    Tag
+	length Length
 	// raw payload of this element
-	content    []u8
+	content []u8
 }
 
-fn (e Element) is_constructed() bool {
-	return e.compound
+fn (e Element) element_length() int {
+	mut n := 0
+	n += e.tag.tag_length()
+	n += e.length.length()
+	n += e.content.len
+
+	return n
+}
+
+fn (e Element) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
+	match mode {
+		.der {
+			e.tag.pack_to_asn1(mut to)
+			e.length.pack_to_asn1(mut to)!
+			to << e.content
+		}
+		else {
+			return error('unsupported mode')
+		}
+	}
+}
+
+fn (e Element) is_compound() bool {
+	return e.tag.compound
 }
 
 // encoding mode

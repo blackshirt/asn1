@@ -298,7 +298,7 @@ fn (mut enc []Encoder) add_multi(es []Encoder) {
 // to support other class of der encoded ASN.1 object
 // other than universal class supported in this module.
 struct ASN1Object {
-	tag    Tag
+	tag Tag
 	// tag of the ASN.1 object
 	values []u8
 	// unencoded values of the object.

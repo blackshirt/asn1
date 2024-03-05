@@ -55,8 +55,8 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 			v.tag().pack(mut to)
 			length := Length(v.bytes_needed())
 			length.pack(mut to)
-
-			to << v.bytes
+			bytes, _ := v.bytes()
+			to << bytes
 		}
 		else {
 			return error('unsupported mode')

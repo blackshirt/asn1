@@ -31,8 +31,8 @@ fn new_tag(c Class, compound bool, value int) !Tag {
 	}
 }
 
-// pack serializes tag t into bytes array and appended into dst
-fn (t Tag) pack(mut dst []u8) {
+// pack_to_asn1 serializes tag t into bytes array and appended into dst
+fn (t Tag) pack_to_asn1(mut dst []u8) {
 	mut b := u8(t.cls) << 6
 	if t.compound {
 		b |= compound_mask
@@ -48,9 +48,9 @@ fn (t Tag) pack(mut dst []u8) {
 	}
 }
 
-// unpack deserializes bytes of data to Tag structure, start from offset loc position.
+// unpack_from_asn1 deserializes bytes of data to Tag structure, start from offset loc position.
 // Its return Tag and next offset to operate on, and return error if fail to unpack.
-fn Tag.unpack(data []u8, loc int) !(Tag, int) {
+fn Tag.unpack_from_asn1(data []u8, loc int) !(Tag, int) {
 	if data.len < 1 {
 		return error('get ${data.len} bytes for reading tag, its not enough')
 	}
@@ -173,7 +173,7 @@ fn (v TagNumber) pack_base128(mut to []u8) {
 	}
 }
 
-// unpack deserializes bytes into TagNumber from offset loc in base 128.
+// unpack_from_asn1 deserializes bytes into TagNumber from offset loc in base 128.
 fn TagNumber.unpack_base128(bytes []u8, loc int) !(TagNumber, int) {
 	mut pos := loc
 	mut ret := 0
@@ -207,114 +207,44 @@ fn (v TagNumber) universal_tag_type() !TagType {
 		return error('TagNumber: unknown TagType value=${v}')
 	}
 	match v {
-		0 {
-			return .reserved
-		} //        = 0 //	reserved for BER
-		1 {
-			return .boolean
-		} //     = 1 // BOOLEAN
-		2 {
-			return .integer
-		} //       = 2 // INTEGER
-		3 {
-			return .bitstring
-		} //      = 3 // BIT STRING
-		4 {
-			return .octetstring
-		} //    = 4 // OCTET STRING
-		5 {
-			return .null
-		} //            = 5 // NULL
-		6 {
-			return .oid
-		} //            = 6 // OBJECT IDENTIFIER
-		7 {
-			return .objdesc
-		} //        = 7 // ObjectDescriptor
-		8 {
-			return .external
-		} //        = 8 //	INSTANCE OF, EXTERNAL
-		9 {
-			return .real
-		} //           = 9 // REAL
-		10 {
-			return .enumerated
-		} //    = 10 // ENUMERATED
-		11 {
-			return .embedded
-		} //        = 11 // EMBEDDED PDV
-		12 {
-			return .utf8string
-		} //      = 12 // UTF8String
-		13 {
-			return .relativeoid
-		} //     = 13 // RELATIVE-OID
-		14 {
-			return .time
-		} //            = 14
-		16 {
-			return .sequence
-		} //      = 16 // SEQUENCE, SEQUENCE OF, Constructed
-		17 {
-			return .set
-		} //            = 17 ///SET, SET OF, Constructed
-		18 {
-			return .numericstring
-		} //   = 18 // NumericString
-		19 {
-			return .printablestring
-		} // = 19 // PrintableString
-		20 {
-			return .t61string
-		} //     = 20 // eletexString, T61String
-		21 {
-			return .videotexstring
-		} // = 21 // VideotexString
-		22 {
-			return .ia5string
-		} //     = 22 // IA5String
-		23 {
-			return .utctime
-		} //       = 23 // UTCTime
-		24 {
-			return .generalizedtime
-		} // = 24 // GeneralizedTime
-		25 {
-			return .graphicstring
-		} //   = 25 // GraphicString
-		26 {
-			return .visiblestring
-		} //   = 26 // VisibleString, ISO646String
-		27 {
-			return .generalstring
-		} //  = 27 // GeneralString
-		28 {
-			return .universalstring
-		} //= 28 // UniversalString
-		29 {
-			return .characterstring
-		} //= 29 // CHARACTER STRING
-		30 {
-			return .bmpstring
-		} //      = 30 // BMPString
-		31 {
-			return .date
-		} //           = 0x1f,
-		32 {
-			return .time_of_day
-		} //    = 0x20,
-		33 {
-			return .date_time
-		} //       = 0x21,
-		34 {
-			return .duration
-		} //      = 0x22,
-		35 {
-			return .i18_oid
-		} //         = 0x23,  // Internationalized OID
-		36 {
-			return .relative_i18_oid
-		} // = 0x24  // Internationalized Relative OID
+		// vfmt off
+		0 { return .reserved } 
+		1 {	return .boolean } 
+		2 { return .integer	} 
+		3 { return .bitstring } 
+		4 { return .octetstring } 
+		5 { return .null } 
+		6 { return .oid } 
+		7 { return .objdesc } 
+		8 { return .external } 
+		9 { return .real } 
+		10 { return .enumerated } 
+		11 { return .embedded } 
+		12 { return .utf8string } 
+		13 { return .relativeoid } 
+		14 { return .time } 
+		16 { return .sequence } 
+		17 { return .set } 
+		18 { return .numericstring } 
+		19 { return .printablestring } 
+		20 { return .t61string } 
+		21 { return .videotexstring } 
+		22 { return .ia5string } 
+		23 { return .utctime } 
+		24 { return .generalizedtime } 
+		25 { return .graphicstring } 
+		26 { return .visiblestring } 
+		27 { return .generalstring } 
+		28 { return .universalstring } 
+		29 { return .characterstring } 
+		30 { return .bmpstring } 
+		31 { return .date } 
+		32 { return .time_of_day } 
+		33 { return .date_time } 
+		34 { return .duration } 
+		35 { return .i18_oid } 
+		36 { return .relative_i18_oid } 
+		// vfmt on
 		else {
 			return error('reserved or unknonw value')
 		}
@@ -326,7 +256,7 @@ fn (v TagNumber) universal_tag_type() !TagType {
 enum TagType {
 	//	reserved for BER
 	reserved         = 0
-	// BOOLEAN type 
+	// BOOLEAN type
 	boolean          = 1
 	// INTEGER type
 	integer          = 2
