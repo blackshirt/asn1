@@ -10,7 +10,6 @@ import math.big
 // ASN.1 Integer represented by `big.Integer`.
 // Its handles number arbitrary length of number with support of `math.big` module.
 // The encoding of an integer value shall be primitive.
-// pub type AsnInteger = big.Integer | i64 | int
 
 // Universal class of arbitrary length type of ASN.1 integer
 type Integer = big.Integer
@@ -27,6 +26,7 @@ fn Integer.from_u64(v u64) Integer {
 	return big.integer_from_u64(v)
 }
 
+// tag returns the tag of Universal class of this Integer type.
 fn (v Integer) tag() Tag {
 	return new_tag(.universal, false, 2)
 }
@@ -62,7 +62,24 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 	}
 }
 
-fn Integer.unpack_from_asn1(b []u8, loc int) !Integer {
+fn Integer.unpack_from_asn1(b []u8, loc int, mode EncodingMode) !(Integer, int) {
+	match mode {
+		.der {
+			tag, pos := Tag.unpack(b, loc)!
+			if tag != new_tag(.universal, false, 2) {
+					return error("Integer: bad tag of universal class type")
+			}
+			// read the length part from current position pos 
+			len, idx := Length.unpack(b, pos)!
+			// read the bytes part from current position idx to the length part 
+			bytes := unsafe { b[idx..idx+len]}
+			ret := read_bigint(bytes)!
+			return Integer(ret)
+		}
+		else {
+			return error("unsupported mode")
+		}
+	}
 	
 }
 
