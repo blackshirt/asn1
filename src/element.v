@@ -1,4 +1,4 @@
-module core
+module asn1
 
 interface ElementBase {
 	type_class() Class
@@ -84,7 +84,7 @@ fn (e Element) is_compound() bool {
 }
 
 // encoding mode
-enum EncodingMode {
+pub enum EncodingMode {
 	der = 0
 	ber = 1
 	cer = 2

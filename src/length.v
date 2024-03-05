@@ -1,7 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module core
+module asn1
 
 // ASN.1 length handling routines.
 //
@@ -46,7 +46,7 @@ fn (v Length) pack_and_append(mut to []u8) {
 }
 
 // length calculates the length of bytes length
-fn (v Length) length() int {
+pub fn (v Length) length() int {
 	mut len := 1
 	if v >= 128 {
 		n := v.bytes_needed()
@@ -56,7 +56,7 @@ fn (v Length) length() int {
 }
 
 // pack serializes Length v into bytes and append it into `to`
-fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
+pub fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 	match mode {
 		.der {
 			// Long form
@@ -65,7 +65,7 @@ fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 
 				// if the length overflow the limit, something bad happen
 				// return error instead
-				if length > core.max_definite_length {
+				if length > asn1.max_definite_length {
 					return error('something bad in your length')
 				}
 				to << 0x80 | u8(length)
@@ -84,7 +84,7 @@ fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 
 // unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buf.
 // Its return Length and next offset in the buffer buf to process on, and return error on fail.
-fn Length.unpack_from_asn1(buf []u8, loc int, mode EncodingMode) !(Length, int) {
+pub fn Length.unpack_from_asn1(buf []u8, loc int, mode EncodingMode) !(Length, int) {
 	match mode {
 		.der {
 			mut pos := loc

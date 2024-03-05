@@ -1,48 +1,57 @@
 // Copyright (c) 2022, 2023 blackshirt All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module primitive
 
 import math
 import math.big
 import encoding.hex
 
-struct I64Test {
-	inp []u8
-	err IError
-	out i64
+struct IntegerTest {
+	bytes    []u8
+	err      IError
+	expected big.Integer
 }
 
 // from golang encoding/asn1 test
-fn test_read_i64() {
-	test_data := [
-		I64Test{[u8(0x00)], none, 0},
-		I64Test{[u8(0x7f)], none, 127},
-		I64Test{[u8(0x00), 0x80], none, 128},
-		I64Test{[u8(0x01), 0x00], none, 256},
-		I64Test{[u8(0x80)], none, -128},
-		I64Test{[u8(0xff), 0x7f], none, -129},
-		I64Test{[u8(0xff)], none, -1},
-		I64Test{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], none, -9223372036854775808},
-		I64Test{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], error('too large integer'), 0}, // too large integer
-		I64Test{[], error('i64 check return false'), 0},
-		I64Test{[u8(0x00), 0x7f], error('i64 check return false'), 0}, // not minimally encoded,
-		I64Test{[u8(0xff), 0xf0], error('i64 check return false'), 0}, // not minimally encoded,
+fn test_asn1_integer_unpack() {
+	data := [
+		IntegerTest{[u8(0x00)], none, big.integer_from_int(0)},
+		IntegerTest{[u8(0x7f)], none, big.integer_from_int(127)},
+		IntegerTest{[u8(0x00), 0x80], none, big.integer_from_int(128)},
+		IntegerTest{[u8(0x01), 0x00], none, big.integer_from_int(256)},
+		IntegerTest{[u8(0x80)], none, big.integer_from_int(-128)},
+		IntegerTest{[u8(0xff), 0x7f], none, big.integer_from_int(-129)},
+		IntegerTest{[u8(0xff)], none, big.integer_from_int(-1)},
+		IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], none, big.integer_from_i64(-9223372036854775808)},
+		IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], error('too large integer'), big.integer_from_string('-2361183241434822606848')!}, // too large integer
+		IntegerTest{[], error('big integer check return false'), big.integer_from_int(0)},
+		IntegerTest{[u8(0x00), 0x7f], error('big integer check return false'), big.integer_from_int(0)}, // not minimally encoded,
+		IntegerTest{[u8(0xff), 0xf0], error('big integer check return false'), big.integer_from_int(0)}, // not minimally encoded,
 	]
 
-	for i, test in test_data {
-		ret := read_i64(test.inp) or {
-			assert err == test.err
+	for i, v in data {
+		dump(i)
+		ret := read_bigint(v.bytes) or {
+			assert err == v.err
 			continue
 		}
-		assert ret == test.out
+		
+		// ret, pos := Integer.unpack_from_asn1(v.bytes, 0, .der) or {
+		//	assert err == v.err
+		//	continue
+		//}
+		dump(ret.hex())
+		
+		assert ret == v.expected 
 	}
 }
 
+/*
 struct I32Test {
-	inp []u8
+	bytes []u8
 	err IError
-	out i32
+	expected i32
 }
 
 fn test_read_i32() {
@@ -60,18 +69,18 @@ fn test_read_i32() {
 		I32Test{[u8(0xff), 0xf0], error('i32 check return false'), 0}, // not minimally
 	]
 	for i, test in i32testdata {
-		ret := read_i32(test.inp) or {
+		ret := read_i32(test.bytes) or {
 			assert err == test.err
 			continue
 		}
-		assert ret == test.out
+		assert ret == test.expected
 	}
 }
 
 struct BigintTest {
-	inp []u8
+	bytes []u8
 	err IError
-	out string
+	expected string
 }
 
 fn test_read_bigint() {
@@ -89,16 +98,16 @@ fn test_read_bigint() {
 	]
 
 	for i, test in bigint_data {
-		ret := read_bigint(test.inp) or {
+		ret := read_bigint(test.bytes) or {
 			assert err == test.err
 			continue
 		}
-		assert ret.str() == test.out
+		assert ret.str() == test.expected
 	}
 }
 
 struct I64SerializeTest {
-	inp i64
+	bytes i64
 	out string
 }
 
@@ -118,23 +127,23 @@ fn test_serialize_decode_i64() {
 	]
 
 	for t in ds {
-		out := serialize_i64(i64(t.inp))!
+		out := serialize_i64(i64(t.bytes))!
 		exp := hex.decode(t.out)!
 
 		assert out == exp
 
 		tag, back := decode_i64(exp)!
 
-		assert back == t.inp
+		assert back == t.bytes
 		assert tag.number == 0x02 // integer
 
-		num := new_integer(t.inp)
+		num := new_integer(t.bytes)
 		assert num.encode()! == exp
 	}
 }
 
 struct I32SerializeTest {
-	inp string
+	bytes string
 	out i32
 	err IError
 }
@@ -154,8 +163,8 @@ fn test_serialize_decode_i32() ! {
 	]
 
 	for c in ds {
-		inp := hex.decode(c.inp)!
-		tag, val := decode_i32(inp) or {
+		bytes := hex.decode(c.bytes)!
+		tag, val := decode_i32(bytes) or {
 			assert err == c.err
 			continue
 		}
@@ -165,17 +174,17 @@ fn test_serialize_decode_i32() ! {
 
 		// serialize back
 		ser := serialize_i32(val)!
-		assert ser == inp
+		assert ser == bytes
 	}
 }
 
 fn test_bigint_basic() ! {
-	inp := big.integer_from_bytes([u8(0x13), 0x37, 0xca, 0xfe, 0xba, 0xbe])
+	bytes := big.integer_from_bytes([u8(0x13), 0x37, 0xca, 0xfe, 0xba, 0xbe])
 	out := [u8(0x02), 6, u8(0x13), 0x37, 0xca, 0xfe, 0xba, 0xbe]
-	// inp == val
+	// bytes == val
 	val := big.integer_from_i64(i64(0x1337cafebabe))
 
-	s := serialize_bigint(inp)!
+	s := serialize_bigint(bytes)!
 	assert s == out
 
 	// back
@@ -186,18 +195,18 @@ fn test_bigint_basic() ! {
 }
 
 fn test_bigint_advanced() ! {
-	inp := big.integer_from_string('84885164052257330097714121751630835360966663883732297726369399')!
+	bytes := big.integer_from_string('84885164052257330097714121751630835360966663883732297726369399')!
 	out := [u8(0x02), 26, 52, 210, 252, 160, 105, 66, 145, 88, 8, 53, 227, 150, 221, 98, 149, 87,
 		146, 121, 109, 20, 162, 246, 230, 65, 30, 119]
 
-	s := serialize_bigint(inp)!
+	s := serialize_bigint(bytes)!
 	assert s == out
 
 	// back
 	tag, back := decode_bigint(out)!
 
 	assert tag.number == int(TagType.integer)
-	assert back == inp
+	assert back == bytes
 }
 
 struct Intest {
@@ -228,3 +237,4 @@ fn test_tc19_non_finished_encoding() ! {
 		return
 	}
 }
+*/

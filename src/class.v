@@ -1,11 +1,11 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module core
+module asn1
 
 // Class is ASN.1 tag class.
 // Currently most of universal class supported in this module, with limited support for other class.
-enum Class {
+pub enum Class {
 	universal        = 0x00 // 0b00
 	application      = 0x01 // 0b01
 	context_specific = 0x02 // 0b10

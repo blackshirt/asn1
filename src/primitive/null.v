@@ -1,7 +1,9 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module primitive
+
+import asn1
 
 // ASN.1 NULL TYPE
 struct Null {}
@@ -18,16 +20,16 @@ fn (n Null) packed_length() int {
 	return 2
 }
 
-fn (n Null) tag() Tag {
-	return new_tag(.universal, false, 5)
+fn (n Null) tag() !asn1.Tag {
+	return asn1.new_tag(.universal, false, 5)
 }
 
-fn (n Null) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
+fn (n Null) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	match mode {
 		.der {
-			out << n.tag().pack()!
+			n.tag()!.pack_to_asn1(mut to)
 			// the length is 0
-			out << [u8(0x00)]
+			to << [u8(0x00)]
 		}
 		else {
 			return error('unsupported mode')
@@ -35,21 +37,21 @@ fn (n Null) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 	}
 }
 
-fn Null.unpack(b []u8, mode EncodingMode) !Null {
+fn Null.unpack(b []u8, mode asn1.EncodingMode) !(Null, int) {
 	match mode {
 		.der {
-			if data.len != 2 || (data[0] != 0x05 && data[1] != 0x00) {
+			if b.len < 2 || (b[0] != 0x05 && b[1] != 0x00) {
 				return error('Null: invalid args')
 			}
-			tag, pos := Tag.unpack(b, 0)!
-			if tag.value != 0x05 {
+			tag, pos := asn1.Tag.unpack_from_asn1(b, 0)!
+			if tag.tag_number() != 0x05 {
 				return error('NullL bad tag=${tag}')
 			}
-			len, idx := Length.unpack(b, pos)!
+			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der)!
 			if len != 0 {
 				return error('Null: len != 0')
 			}
-			return Null{}
+			return Null{}, idx
 		}
 		else {
 			return error('unsupported mode')

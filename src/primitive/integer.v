@@ -1,9 +1,10 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module primitive
 
 import math.big
+import asn1
 
 // INTEGER.
 //
@@ -27,8 +28,8 @@ fn Integer.from_u64(v u64) Integer {
 }
 
 // tag returns the tag of Universal class of this Integer type.
-fn (v Integer) tag() Tag {
-	return new_tag(.universal, false, 2)
+fn (v Integer) tag() !asn1.Tag {
+	return asn1.new_tag(.universal, false, 2)
 }
 
 fn (v Integer) bytes_needed() int {
@@ -41,20 +42,20 @@ fn (v Integer) bytes_needed() int {
 
 fn (v Integer) packed_length() !int {
 	mut n := 0
-	n += v.tag().tag_length()
-	x := Length(v.bytes_needed())
+	n += v.tag()!.tag_length()
+	x := asn1.Length(v.bytes_needed())
 	n += x.length()
 	n += v.bytes_needed()
 
 	return n
 }
 
-fn (v Integer) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
+fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	match mode {
 		.der {
-			v.tag().pack(mut to)
-			length := Length(v.bytes_needed())
-			length.pack(mut to)
+			v.tag()!.pack_to_asn1(mut to)
+			length := asn1.Length(v.bytes_needed())
+			length.pack_to_asn1(mut to, .der)!
 			bytes, _ := v.bytes()
 			to << bytes
 		}
@@ -64,19 +65,19 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 	}
 }
 
-fn Integer.unpack_from_asn1(b []u8, loc int, mode EncodingMode) !(Integer, int) {
+fn Integer.unpack_from_asn1(b []u8, loc int, mode asn1.EncodingMode) !(Integer, int) {
 	match mode {
 		.der {
-			tag, pos := Tag.unpack(b, loc)!
-			if tag != new_tag(.universal, false, 2) {
+			tag, pos := asn1.Tag.unpack_from_asn1(b, loc)!
+			if tag.class() != .universal || tag.is_compound() || tag.tag_number() != 2 {
 				return error('Integer: bad tag of universal class type')
 			}
 			// read the length part from current position pos
-			len, idx := Length.unpack(b, pos)!
+			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der)!
 			// read the bytes part from current position idx to the length part
 			bytes := unsafe { b[idx..idx + len] }
 			ret := read_bigint(bytes)!
-			return Integer(ret)
+			return Integer(ret), idx+len 
 		}
 		else {
 			return error('unsupported mode')
@@ -124,6 +125,7 @@ fn valid_integer(src []u8, signed bool) bool {
 	return true
 }
 
+/*
 // new_integer creates asn.1 serializable integer object. Its supports
 // arbitrary integer number, with support from `math.big` module for
 // integer bigger than 64 bit number.
@@ -161,7 +163,7 @@ fn new_integer_from_bytes(src []u8) !Encoder {
 }
 
 pub fn (n AsnInteger) tag() Tag {
-	return new_tag(.universal, false, int(TagType.integer))
+	return asn1.new_tag(.universal, false, int(TagType.integer))
 }
 
 pub fn (n AsnInteger) length() int {
@@ -239,7 +241,7 @@ fn (n AsnInteger) str() string {
 
 // serialize i64
 fn serialize_i64(s i64) ![]u8 {
-	t := new_tag(.universal, false, int(TagType.integer))
+	t := asn1.new_tag(.universal, false, int(TagType.integer))
 	mut out := []u8{}
 
 	serialize_tag(mut out, t)
@@ -379,7 +381,7 @@ fn decode_i32(src []u8) !(Tag, i32) {
 // big.Integer handling
 
 fn serialize_bigint(b big.Integer) ![]u8 {
-	tag := new_tag(.universal, false, int(TagType.integer))
+	tag := asn1.new_tag(.universal, false, int(TagType.integer))
 	mut out := []u8{}
 
 	serialize_tag(mut out, tag)
@@ -412,3 +414,4 @@ fn decode_bigint(src []u8) !(Tag, big.Integer) {
 
 	return tag, val
 }
+*/

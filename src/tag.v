@@ -1,4 +1,4 @@
-module core
+module asn1
 
 // ASN1 identifier tag handling
 
@@ -14,7 +14,7 @@ const max_tag_number = 16383
 // ASN.1 tag number can be represented in two form, short form and long form.
 // The short form for tag number below <= 30 and stored enough in single byte,
 // where long form for tag number > 30, and stored in two or more bytes (see limit restriction above).
-struct Tag {
+pub struct Tag {
 mut:
 	cls      Class
 	compound bool
@@ -31,8 +31,20 @@ fn new_tag(c Class, compound bool, number int) !Tag {
 	}
 }
 
+pub fn (t Tag) class() Class {
+	return t.cls
+}
+
+pub fn (t Tag) is_compound() bool {
+	return t.compound
+}
+
+pub fn (t Tag) tag_number() int {
+	return t.number
+}
+
 // pack_to_asn1 serializes tag t into bytes array and appended into dst
-fn (t Tag) pack_to_asn1(mut dst []u8) {
+pub fn (t Tag) pack_to_asn1(mut dst []u8) {
 	mut b := u8(t.cls) << 6
 	if t.compound {
 		b |= compound_mask
@@ -50,7 +62,7 @@ fn (t Tag) pack_to_asn1(mut dst []u8) {
 
 // unpack_from_asn1 deserializes bytes of data to Tag structure, start from offset loc position.
 // Its return Tag and next offset to operate on, and return error if fail to unpack.
-fn Tag.unpack_from_asn1(data []u8, loc int) !(Tag, int) {
+pub fn Tag.unpack_from_asn1(data []u8, loc int) !(Tag, int) {
 	if data.len < 1 {
 		return error('get ${data.len} bytes for reading tag, its not enough')
 	}
@@ -73,7 +85,7 @@ fn Tag.unpack_from_asn1(data []u8, loc int) !(Tag, int) {
 		number, pos = TagNumber.unpack_from_asn1(data, pos)!
 
 		// pos is the next position to read next bytes, so check tag bytes length
-		if pos >= core.max_tag_length + loc + 1 {
+		if pos >= asn1.max_tag_length + loc + 1 {
 			return error('tag bytes is too big')
 		}
 		if number < 0x1f {
@@ -111,7 +123,7 @@ fn (mut t Tag) clone_with_tag(v int) !Tag {
 }
 
 // `tag_length` calculates length of bytes needed to store tag number.
-fn (t Tag) tag_length() int {
+pub fn (t Tag) tag_length() int {
 	n := if t.number < 0x1f { 1 } else { 1 + t.number.bytes_needed() }
 	return n
 }
@@ -126,8 +138,8 @@ fn TagNumber.from_int(v int) !TagNumber {
 	if v < 0 {
 		return error('TagNumber: negative number')
 	}
-	if v > core.max_tag_number {
-		return error('TagNumber: ${v} is too big, dont exceed ${core.max_tag_number}')
+	if v > asn1.max_tag_number {
+		return error('TagNumber: ${v} is too big, dont exceed ${asn1.max_tag_number}')
 	}
 	return TagNumber(v)
 }
@@ -189,7 +201,7 @@ fn TagNumber.unpack_from_asn1(bytes []u8, loc int) !(TagNumber, int) {
 		pos += 1
 
 		if b & 0x80 == 0 {
-			if ret > core.max_tag_number {
+			if ret > asn1.max_tag_number {
 				return error('base 128 integer too large')
 			}
 			val := TagNumber.from_int(ret)!

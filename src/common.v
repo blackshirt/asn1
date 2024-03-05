@@ -1,5 +1,6 @@
 module asn1
 
+/*
 // der_decode is main routine to do parsing of DER encoded data.
 // Its accepts bytes arrays encoded in DER in `src` params and returns `Encoder` interfaces object,
 // so, you should cast it to get underlying type.
@@ -354,3 +355,4 @@ fn serialize_asn_object(obj ASN1Object) ![]u8 {
 
 	return dst
 }
+*/
