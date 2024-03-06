@@ -13,24 +13,51 @@ import asn1
 // The encoding of an integer number shall be primitive.
 
 const big_127 = big.integer_from_int(127)
+const big_128 = big.integer_from_int(128)
 
+const big_zero = big.Integer{
+	digits: [u32(0)]
+	signum: 1
+}
 // Universal class of arbitrary length type of ASN.1 integer
 struct Integer {
 	value big.Integer
 }
 
-fn Integer.from_int(v int) Integer {
-	return Integer{
-		value: big.integer_from_int(v)
-	}
-}
-
 fn Integer.from_i64(v i64) Integer {
+	if v == 0 {
+		// Its little hackish, because `big.integer_from_i64(0)` does not work expected
+		val := Integer{
+			value: big.Integer{
+				digits: [u32(0)]
+				signum: 1
+			}
+		}
+		return val
+	}
 	return Integer{big.integer_from_i64(v)}
 }
 
 fn Integer.from_u64(v u64) Integer {
+	if v == 0 {
+		// Its little hackish, because `big.integer_from_i64(0)` does not work expected
+		val := Integer{
+			value: big.Integer{
+				digits: [u32(0)]
+				signum: 1
+			}
+		}
+		return val
+	}
 	return Integer{big.integer_from_u64(v)}
+}
+
+fn (v Integer) the_bytes() []u8 {
+	if v.value == primitive.big_zero {
+		return [u8(0)]
+	}
+	bytes, _ := v.value.bytes()
+	return bytes
 }
 
 // tag returns the tag of Universal class of this Integer type.
@@ -39,6 +66,9 @@ fn (v Integer) tag() !asn1.Tag {
 }
 
 fn (v Integer) bytes_needed() int {
+	if v.value == primitive.big_zero {
+		return 1
+	}
 	nbits := v.value.bit_len()
 	if nbits % 8 == 0 {
 		return nbits / 8
@@ -46,13 +76,45 @@ fn (v Integer) bytes_needed() int {
 	return nbits / 8 + 1
 }
 
-fn (v Integer) bytes_length() int {
-	mut len := 1
-	dump(v.value.bytes())
-	if v.value > primitive.big_127 {
-		len += v.bytes_needed()
+// pack_integer serialize Integer in two complement way.
+// The Integer value contains the encoded integer if it is positive,
+// or its two's complement if it is negative.
+// If the integer is positive but the high order bit is set to 1,
+// a leading 0x00 is added to the content to indicate that the number is not negative.
+fn (v Integer) pack_integer() ([]u8, int) {
+	mut n := v.bytes_needed()
+	mut bytes := v.the_bytes()
+	dump(bytes)
+	dump(v.value.signum)
+	// check if the high order bit of the first octet is set to 1
+	if v.value.signum == 1 {
+		if bytes[0] & 0x80 == 0x80 {
+			// append one null byte before firts octet
+			bytes.prepend(u8(0x00))
+			n += 1
+			return bytes, n
+		}
 	}
-	return len
+	// two complements rule
+	if v.value.signum == -1 {
+		mut notbytes := []u8{len: bytes.len}
+		for i, _ in notbytes {
+			notbytes[i] = ~bytes[i]
+		}
+		mut ret := big.integer_from_bytes(notbytes)
+		ret += big.one_int
+		ret = ret.neg()
+		mut newbytes, _ := ret.bytes()
+		// For any negative number encoded as BER (or DER) 
+		// you could prefix it with 11111111 and get the same number
+		if newbytes[0] & 0x80 == 0x80 {
+			newbytes.prepend(u8(0xff))
+			n += 1
+		}
+		dump(newbytes)
+		return newbytes, n
+	}
+	return bytes, n
 }
 
 fn (v Integer) packed_length() !int {
@@ -69,9 +131,9 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	match mode {
 		.der {
 			v.tag()!.pack_to_asn1(mut to)
-			length := asn1.Length(v.bytes_length())
+			bytes, n := v.pack_integer()
+			length := asn1.Length.from_int(n)
 			length.pack_to_asn1(mut to, .der)!
-			bytes, _ := v.value.bytes()
 			to << bytes
 		}
 		else {
