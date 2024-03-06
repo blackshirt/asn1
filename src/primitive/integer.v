@@ -12,19 +12,25 @@ import asn1
 // Its handles number arbitrary length of number with support of `math.big` module.
 // The encoding of an integer number shall be primitive.
 
-// Universal class of arbitrary length type of ASN.1 integer
-type Integer = big.Integer
+const big_127 = big.integer_from_int(127)
 
-fn Integer.from_int(v int) Integer {
-	return big.integer_from_int(v)
+// Universal class of arbitrary length type of ASN.1 integer
+struct Integer {
+	value big.Integer
 }
 
-fn Integer.from_int64(v i64) Integer {
-	return big.integer_from_i64(v)
+fn Integer.from_int(v int) Integer {
+	return Integer{
+		value: big.integer_from_int(v)
+	}
+}
+
+fn Integer.from_i64(v i64) Integer {
+	return Integer{big.integer_from_i64(v)}
 }
 
 fn Integer.from_u64(v u64) Integer {
-	return big.integer_from_u64(v)
+	return Integer{big.integer_from_u64(v)}
 }
 
 // tag returns the tag of Universal class of this Integer type.
@@ -33,11 +39,20 @@ fn (v Integer) tag() !asn1.Tag {
 }
 
 fn (v Integer) bytes_needed() int {
-	nbits := v.bit_len()
+	nbits := v.value.bit_len()
 	if nbits % 8 == 0 {
 		return nbits / 8
 	}
 	return nbits / 8 + 1
+}
+
+fn (v Integer) bytes_length() int {
+	mut len := 1
+	dump(v.value.bytes())
+	if v.value > primitive.big_127 {
+		len += v.bytes_needed()
+	}
+	return len
 }
 
 fn (v Integer) packed_length() !int {
@@ -54,9 +69,9 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	match mode {
 		.der {
 			v.tag()!.pack_to_asn1(mut to)
-			length := asn1.Length(v.bytes_needed())
+			length := asn1.Length(v.bytes_length())
 			length.pack_to_asn1(mut to, .der)!
-			bytes, _ := v.bytes()
+			bytes, _ := v.value.bytes()
 			to << bytes
 		}
 		else {
@@ -77,7 +92,9 @@ fn Integer.unpack_from_asn1(b []u8, loc int, mode asn1.EncodingMode) !(Integer, 
 			// read the bytes part from current position idx to the length part
 			bytes := unsafe { b[idx..idx + len] }
 			ret := read_bigint(bytes)!
-			return Integer(ret), idx+len 
+			return Integer{
+				value: ret
+			}, idx + len
 		}
 		else {
 			return error('unsupported mode')

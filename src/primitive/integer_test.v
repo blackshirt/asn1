@@ -7,6 +7,34 @@ import math
 import math.big
 import encoding.hex
 
+struct UnpackTest {
+	val i64
+	out []u8
+}
+
+// from python asn1tools
+const unpack_data = [UnpackTest{32768, [u8(0x02), 0x03, 0x00, 0x80, 0x00]},
+	UnpackTest{32767, [u8(0x02), 0x02, 0x7f, 0xff]}, UnpackTest{256, [u8(0x02), 0x02, 0x01, 0x00]},
+	UnpackTest{255, [u8(0x02), 0x02, 0x00, 0xff]}, UnpackTest{128, [u8(0x02), 0x02, 0x00, 0x80]},
+	UnpackTest{127, [u8(0x02), 0x01, 0x7f]}, UnpackTest{1, [u8(0x02), 0x01, 0x01]},
+	UnpackTest{0, [u8(0x02), 0x01, 0x00]}, UnpackTest{-1, [u8(0x02), 0x01, 0xff]},
+	UnpackTest{-128, [u8(0x02), 0x01, 0x80]}, UnpackTest{-129, [u8(0x02), 0x02, 0xff, 0x7f]},
+	UnpackTest{-256, [u8(0x02), 0x02, 0xff, 0x00]}, UnpackTest{-32768, [u8(0x02), 0x02, 0x80, 0x00]},
+	UnpackTest{-32769, [u8(0x02), 0x03, 0xff, 0x7f, 0xff]}]
+
+fn test_asn1_integer_unpack_to_asn1() ! {
+	for i, c in primitive.unpack_data {
+		dump(i)
+		n := Integer.from_i64(c.val)
+		dump(n)
+		mut to := []u8{}
+		n.pack_to_asn1(mut to, .der)!
+		assert to == c.out
+	}
+}
+
+// (1 << 2048, [u8(0x02),0x82,0x01,0x01,0x01' + 256 * b',0x00')
+
 struct IntegerTest {
 	bytes    []u8
 	err      IError
@@ -16,7 +44,10 @@ struct IntegerTest {
 // from golang encoding/asn1 test
 fn test_asn1_integer_unpack() {
 	data := [
-		IntegerTest{[u8(0x00)], none, big.integer_from_int(0)},
+		IntegerTest{[u8(0x00)], none, big.Integer{
+			digits: [u32(0)]
+			signum: 1
+		}},
 		IntegerTest{[u8(0x7f)], none, big.integer_from_int(127)},
 		IntegerTest{[u8(0x00), 0x80], none, big.integer_from_int(128)},
 		IntegerTest{[u8(0x01), 0x00], none, big.integer_from_int(256)},
@@ -31,19 +62,16 @@ fn test_asn1_integer_unpack() {
 	]
 
 	for i, v in data {
-		dump(i)
 		ret := read_bigint(v.bytes) or {
 			assert err == v.err
 			continue
 		}
-		
+
 		// ret, pos := Integer.unpack_from_asn1(v.bytes, 0, .der) or {
 		//	assert err == v.err
 		//	continue
 		//}
-		dump(ret.hex())
-		
-		assert ret == v.expected 
+		assert ret == v.expected
 	}
 }
 
