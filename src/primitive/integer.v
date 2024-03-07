@@ -153,6 +153,14 @@ fn Integer.unpack_from_twocomplement_bytes(b []u8) !Integer {
 	}
 }
 
+fn Integer.unpack_and_validate(b []u8) !Integer {
+	if !valid_bytes(b, true) {
+		return error('Integer: check return false')
+	}
+	ret := Integer.unpack_from_twocomplement_bytes(b)!
+	return ret
+}
+
 fn (v Integer) packed_length() !int {
 	mut n := 0
 	n += v.tag().tag_length()
@@ -202,8 +210,8 @@ fn Integer.unpack_from_asn1(b []u8, loc int, mode asn1.EncodingMode) !(Integer, 
 
 // read big.Integer from src bytes
 fn read_bigint(src []u8) !big.Integer {
-	if !valid_integer(src, true) {
-		return error('big integer check return false')
+	if !valid_bytes(src, true) {
+		return error('Integer: check return false')
 	}
 
 	if src.len > 0 && src[0] & 0x80 == 0x80 {
@@ -222,7 +230,7 @@ fn read_bigint(src []u8) !big.Integer {
 	return s
 }
 
-fn valid_integer(src []u8, signed bool) bool {
+fn valid_bytes(src []u8, signed bool) bool {
 	if src.len == 0 {
 		return false
 	}
@@ -397,7 +405,7 @@ fn decode_i64(src []u8) !(Tag, i64) {
 
 // read_i64 read src as signed i64
 fn read_i64(src []u8) !i64 {
-	if !valid_integer(src, true) {
+	if !valid_bytes(src, true) {
 		return error('i64 check return false')
 	}
 	mut ret := i64(0)
@@ -454,7 +462,7 @@ fn i64_to_bytes(mut dst []u8, i i64) {
 //
 // read_i32 readt  from bytes
 fn read_i32(src []u8) !int {
-	if !valid_integer(src, true) {
+	if !valid_bytes(src, true) {
 		return error('i32 check return false')
 	}
 

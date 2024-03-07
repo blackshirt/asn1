@@ -101,9 +101,9 @@ const integer_test_data = [
 	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], error('too large integer'), big.integer_from_string('-2361183241434822606848') or {
 		panic(err)
 	}},
-	IntegerTest{[], error('big integer check return false'), zero_integer},
-	IntegerTest{[u8(0x00), 0x7f], error('big integer check return false'), big.integer_from_int(127)}, // non-minimal form
-	IntegerTest{[u8(0xff), 0xf0], error('big integer check return false'), big.integer_from_int(-16)}, // non-minimal form
+	IntegerTest{[], error('Integer: check return false'), zero_integer},
+	IntegerTest{[u8(0x00), 0x7f], error('Integer: check return false'), big.integer_from_int(127)}, // non-minimal form
+	IntegerTest{[u8(0xff), 0xf0], error('Integer: check return false'), big.integer_from_int(-16)}, // non-minimal form
 ]
 
 // from golang encoding/asn1 test
@@ -117,6 +117,18 @@ fn test_asn1_integer_read_bigint() {
 		assert ret == v.expected
 	}
 }
+
+fn test_asn1_unpack_and_validate() {
+	for i, v in primitive.integer_test_data {
+		ret := Integer.unpack_and_validate(v.bytes) or {
+			assert err == v.err
+			continue
+		}
+
+		assert ret.value == v.expected
+	}
+}
+
 
 /*
 struct I32Test {
