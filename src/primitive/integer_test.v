@@ -7,6 +7,43 @@ import math
 import math.big
 import encoding.hex
 
+struct FromString {
+	value    string
+	expected string
+}
+
+const string_data = [
+	FromString{'0', '\x00'},
+	FromString{'25', '\x19'},
+	FromString{'100', '\x64'},
+	FromString{'-1042342234234123423435647768234', '\xF2\xD8\x02\xB6R\x7F\x99\xEE\x98#\x99\xA9V'},
+	FromString{'-12095473475870063', '\xD5\a;\x20\x14\xA2\x91'},
+	FromString{'12095473475870063', '*\xF8\xC4\xDF\xEB]o'},
+	FromString{'12438789579431234124191998', '\nJ\x04"^\x91\x04\x8a\xb1\x18\xfe'},
+	FromString{'-112233441191', '\xe5\xde]\x98Y'},
+	FromString{'64206', '\x00\xfa\xce'},
+	FromString{'-100', '\x9C'},
+	FromString{'100', '\x64'},
+	FromString{'255', '\x00\xFF'},
+	FromString{'0', '\x00'},
+	FromString{'-2', '\xfe'},
+	FromString{'-1', '\xff'},
+	FromString{'-256', '\xff\x00'},
+	FromString{'-255', '\xff\x01'},
+	FromString{'-32768', '\x80\x00'},
+	FromString{'-128', '\x80'},
+	FromString{'-129', '\xff\x7f'},
+]
+
+fn test_pack_to_integer_from_string_data() ! {
+	for i, c in primitive.string_data {
+		v := Integer.from_string(c.value)!
+		out, _ := v.pack_integer()!
+
+		assert out == c.expected.bytes()
+	}
+}
+
 struct UnpackTest {
 	val i64
 	out []u8
@@ -33,15 +70,12 @@ const unpack_data = [
 
 fn test_asn1_integer_unpack_to_asn1() ! {
 	for i, c in primitive.unpack_data {
-		dump(i)
 		n := Integer.from_i64(c.val)
 		mut to := []u8{}
 		n.pack_to_asn1(mut to, .der)!
 		assert to == c.out
 	}
 }
-
-// (1 << 2048, [u8(0x02),0x82,0x01,0x01,0x01' + 256 * b',0x00')
 
 struct IntegerTest {
 	bytes    []u8

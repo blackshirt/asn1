@@ -24,9 +24,20 @@ struct Integer {
 	value big.Integer
 }
 
+fn Integer.new(v big.Integer) Integer {
+	return Integer{v}
+}
+
+fn Integer.from_string(s string) !Integer {
+	if s == '0' {
+		// Its little hackish, because `big.integer_from_i64(0)` does not work expected
+		return Integer{primitive.zero_integer}
+	}
+	return Integer{big.integer_from_string(s)!}
+}
+
 fn Integer.from_i64(v i64) Integer {
 	if v == 0 {
-		// Its little hackish, because `big.integer_from_i64(0)` does not work expected
 		return Integer{primitive.zero_integer}
 	}
 	return Integer{big.integer_from_i64(v)}
@@ -34,7 +45,6 @@ fn Integer.from_i64(v i64) Integer {
 
 fn Integer.from_u64(v u64) Integer {
 	if v == 0 {
-		// Its little hackish, because `big.integer_from_i64(0)` does not work expected
 		return Integer{primitive.zero_integer}
 	}
 	return Integer{big.integer_from_u64(v)}
@@ -69,43 +79,34 @@ fn (v Integer) bytes_needed() int {
 // or its two's complement if it is negative.
 // If the integer is positive but the high order bit is set to 1,
 // a leading 0x00 is added to the content to indicate that the number is not negative.
-fn (v Integer) pack_integer() ([]u8, int) {
-	mut n := v.bytes_needed()
-	mut bytes := v.bytes()
-
-	// check if the high order bit of the first octet is set to 1
-	if v.value.signum == 1 {
-		if bytes[0] & 0x80 == 0x80 {
-			// append one null byte before firts octet
-			bytes.prepend(u8(0x00))
-			n += 1
-			return bytes, n
+fn (v Integer) pack_integer() !([]u8, int) {
+	match v.value.signum {
+		0 {
+			return [u8(0x00)], 1
+		}
+		1 {
+			mut b := v.bytes()
+			if b[0] & 0x80 > 0 {
+				b.prepend(u8(0))
+			}
+			return b, b.len
+		}
+		-1 {
+			length := u32(v.value.bit_len() / 8 + 1) * 8
+			num := v.value + big.one_int.left_shift(length)
+			mut b, _ := num.bytes()
+			// When the most significant bit is on a byte
+			// boundary, we can get some extra significant
+			// bits, so strip them off when that happens.
+			if b.len >= 2 && b[0] == 0xff && b[1] & 0x80 != 0 {
+				b = b[1..]
+			}
+			return b, b.len
+		}
+		else {
+			return error('should unreachable')
 		}
 	}
-	// two complements rule
-	if v.value.signum == -1 {
-		if bytes[0] & 0x80 == 0x80 {
-			bytes.prepend(u8(0x00))
-			n += 1
-		}
-		// big-endian binary representation of the absolute value for the desired negative number.
-		mut notbytes := []u8{len: bytes.len}
-		// Flip all of the bits in the value
-		for i, _ in notbytes {
-			notbytes[i] = ~bytes[i]
-		}
-		// Add one to the resulting value
-		mut ret := big.integer_from_bytes(notbytes)
-		dump(notbytes)
-		ret += big.one_int
-		
-		mut newbytes, _ := ret.bytes()
-		// For any negative number encoded as BER (or DER)
-		// you could prefix it with 11111111 and get the same number
-
-		return newbytes, n
-	}
-	return bytes, n
 }
 
 fn (v Integer) packed_length() !int {
@@ -122,7 +123,7 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	match mode {
 		.der {
 			v.tag()!.pack_to_asn1(mut to)
-			bytes, n := v.pack_integer()
+			bytes, n := v.pack_integer()!
 			length := asn1.Length.from_int(n)
 			length.pack_to_asn1(mut to, .der)!
 			to << bytes
