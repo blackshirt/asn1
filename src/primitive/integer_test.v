@@ -28,11 +28,13 @@ const string_data = [
 	FromString{'0', '\x00'},
 	FromString{'-2', '\xfe'},
 	FromString{'-1', '\xff'},
+	FromString{'-16', '\xf0'},
 	FromString{'-256', '\xff\x00'},
 	FromString{'-255', '\xff\x01'},
 	FromString{'-32768', '\x80\x00'},
 	FromString{'-128', '\x80'},
 	FromString{'-129', '\xff\x7f'},
+	FromString{'-127', '\x81'},
 ]
 
 fn test_pack_integer_into_2form_from_string_data() ! {
@@ -100,8 +102,8 @@ const integer_test_data = [
 		panic(err)
 	}},
 	IntegerTest{[], error('big integer check return false'), zero_integer},
-	IntegerTest{[u8(0x00), 0x7f], error('big integer check return false'), big.integer_from_int(0)},
-	IntegerTest{[u8(0xff), 0xf0], error('big integer check return false'), big.integer_from_int(0)},
+	IntegerTest{[u8(0x00), 0x7f], error('big integer check return false'), big.integer_from_int(127)}, // non-minimal form
+	IntegerTest{[u8(0xff), 0xf0], error('big integer check return false'), big.integer_from_int(-16)}, // non-minimal form
 ]
 
 // from golang encoding/asn1 test
@@ -116,18 +118,6 @@ fn test_asn1_integer_read_bigint() {
 	}
 }
 
-fn test_asn1_integer_unpack_from_twocomplement_bytes() {
-	for i, v in primitive.integer_test_data {
-		dump(i)
-		ret := Integer.unpack_from_twocomplement_bytes(v.bytes) or {
-			
-			assert err == v.err
-			continue
-		}
-		dump(ret)
-		assert ret.value == v.expected
-	}
-}
 /*
 struct I32Test {
 	bytes []u8
