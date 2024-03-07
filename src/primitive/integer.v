@@ -32,7 +32,8 @@ struct Integer {
 	tag   asn1.Tag = asn1.new_tag(.universal, false, 2)!
 	value big.Integer
 }
-
+	
+// from_string creates a new Integer from string s.
 fn Integer.from_string(s string) !Integer {
 	if s == '0' {
 		// Its little hackish, because `big.integer_string(0)` returns unexpected values.
@@ -174,7 +175,10 @@ fn (v Integer) packed_length() !int {
 
 	return n
 }
-
+		
+// pack_to_asn1 packs and serializes Integer v into ASN 1 serialized bytes into `to`.
+// Its accepts encoding mode params, where its currently only suppport `.der` DER mode.
+// If `to.len != 0`, it act as append semantic, otherwise the `to` bytes stores the result.
 fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	match mode {
 		.der {
