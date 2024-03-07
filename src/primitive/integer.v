@@ -45,7 +45,8 @@ fn Integer.from_string(s string) !Integer {
 		value: big.integer_from_string(s)!
 	}
 }
-
+				
+// from_i64 creates new Integer from i64 v
 fn Integer.from_i64(v i64) Integer {
 	// same issue as above
 	if v == 0 {
@@ -58,6 +59,7 @@ fn Integer.from_i64(v i64) Integer {
 	}
 }
 
+// from_u64 creates new Integer from u64 v
 fn Integer.from_u64(v u64) Integer {
 	if v == 0 {
 		return Integer{
@@ -194,6 +196,12 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	}
 }
 
+// unpack_from_asn1 deserializes bytes b into ASN.1 Integer.
+// Its accepts two params:
+// `loc` params, the location (offset) sithin bytes b where the unpack
+// process start form, if not sure set to 0.
+// `mode` params, the encoding mode to drive unpack operation.
+// see `EncodingMode` for availables values. Currently only support`.der`.
 fn Integer.unpack_from_asn1(b []u8, loc int, mode asn1.EncodingMode) !(Integer, int) {
 	match mode {
 		.der {
