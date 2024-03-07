@@ -8,9 +8,16 @@ import asn1
 
 // INTEGER.
 //
-// ASN.1 Integer represented by `big.Integer`.
+// ASN.1 INTEGER type represented by `big.Integer`.
+// The INTEGER type value can be a positive or negative number. 
+// There are no limits imposed on the magnitude of INTEGER values in the ASN.1 standard.
 // Its handles number arbitrary length of number with support of `math.big` module.
+// But, for sake of safety, we limit the INTEGER limit to follow allowed length in
+// definite form of Length part, ie, 1008 bit, or 126 bytes
 // The encoding of an integer number shall be primitive.
+
+// Limit of length of INTEGER type, in bytes
+const max_integer_limit = 126 
 
 // This is hackish way to achieve the desired specific issues on 'big.Integer' null or zero handling.
 // `big.Integer.zero_int` or `big.integer_from_int(0)` has set a empty bytes with signum = 0
@@ -23,10 +30,6 @@ const zero_integer = big.Integer{
 // Universal class of arbitrary length type of ASN.1 integer
 struct Integer {
 	value big.Integer
-}
-
-fn Integer.new(v big.Integer) Integer {
-	return Integer{v}
 }
 
 fn Integer.from_string(s string) !Integer {
@@ -76,22 +79,22 @@ fn (v Integer) bytes_needed() int {
 	return nbits / 8 + 1
 }
 
-// pack_integer serialize Integer in two's-complement way.
+// pack_to_twoforms serialize Integer in two's-complement way.
 // The Integer value contains the encoded integer if it is positive,
 // or its two's complement if it is negative.
-// If the integer is positive but the high order bit is set to 1, 
+// If the integer is positive but the high order bit is set to 1,
 // a leading 0x00 is added to the content to indicate that the number is not negative.
-fn (v Integer) pack_integer() !([]u8, int) {
+fn (v Integer) pack_to_twoforms() ![]u8 {
 	match v.value.signum {
 		0 {
-			return [u8(0x00)], 1
+			return [u8(0x00)]
 		}
 		1 {
 			mut b := v.bytes()
 			if b[0] & 0x80 > 0 {
 				b.prepend(u8(0))
 			}
-			return b, b.len
+			return b
 		}
 		-1 {
 			// A negative number has to be converted to two's-complement form.
@@ -108,7 +111,7 @@ fn (v Integer) pack_integer() !([]u8, int) {
 			if bytes.len == 0 || bytes[0] & 0x80 == 0 {
 				bytes.prepend(u8(0xff))
 			}
-			return bytes, bytes.len
+			return bytes
 		}
 		else {
 			return error('should unreachable')
@@ -130,8 +133,8 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	match mode {
 		.der {
 			v.tag()!.pack_to_asn1(mut to)
-			bytes, n := v.pack_integer()!
-			length := asn1.Length.from_int(n)
+			bytes := v.pack_to_twoforms()!
+			length := asn1.Length.from_int(bytes.len)
 			length.pack_to_asn1(mut to, .der)!
 			to << bytes
 		}

@@ -38,7 +38,7 @@ const string_data = [
 fn test_pack_to_integer_from_string_data() ! {
 	for i, c in primitive.string_data {
 		v := Integer.from_string(c.value)!
-		out, _ := v.pack_integer()!
+		out := v.pack_to_twoforms()!
 
 		assert out == c.expected.bytes()
 	}
@@ -86,10 +86,7 @@ struct IntegerTest {
 // from golang encoding/asn1 test
 fn test_asn1_integer_unpack() {
 	data := [
-		IntegerTest{[u8(0x00)], none, big.Integer{
-			digits: [u32(0)]
-			signum: 1
-		}},
+		IntegerTest{[u8(0x00)], none, zero_integer},
 		IntegerTest{[u8(0x7f)], none, big.integer_from_int(127)},
 		IntegerTest{[u8(0x00), 0x80], none, big.integer_from_int(128)},
 		IntegerTest{[u8(0x01), 0x00], none, big.integer_from_int(256)},
@@ -109,10 +106,6 @@ fn test_asn1_integer_unpack() {
 			continue
 		}
 
-		// ret, pos := Integer.unpack_from_asn1(v.bytes, 0, .der) or {
-		//	assert err == v.err
-		//	continue
-		//}
 		assert ret == v.expected
 	}
 }
