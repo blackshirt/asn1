@@ -40,12 +40,12 @@ const string_data = [
 fn test_pack_integer_into_2form_from_string_data() ! {
 	for i, c in primitive.string_data {
 		v := Integer.from_string(c.value)!
-		out := v.pack_into_twocomplement_form()!
+		out, _ := v.pack_into_twoscomplement_form()!
 
 		assert out == c.expected.bytes()
 
 		// back
-		b := Integer.unpack_from_twocomplement_bytes(c.expected.bytes())!
+		b := Integer.unpack_from_twoscomplement_bytes(c.expected.bytes())!
 		assert b.value.str() == c.value
 	}
 }

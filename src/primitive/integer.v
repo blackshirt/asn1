@@ -17,7 +17,7 @@ import asn1
 // The encoding of an integer number shall be primitive.
 
 // Limit of length of INTEGER type, in bytes
-const max_integer_limit = 126
+const max_integer_length = 126
 
 // This is hackish way to achieve the desired specific issues on 'big.Integer' null or zero handling.
 // `big.Integer.zero_int` or `big.integer_from_int(0)` has set a empty bytes with signum = 0
@@ -92,22 +92,22 @@ fn (v Integer) bytes_needed() int {
 	return nbits / 8 + 1
 }
 
-// pack_into_twocomplement_form serialize Integer in two's-complement way.
+// pack_into_twoscomplement_form serialize Integer in two's-complement way.
 // The integer value contains the encoded integer if it is positive,
 // or its two's complement if it is negative.
 // If the integer is positive but the high order bit is set to 1,
 // a leading 0x00 is added to the content to indicate that the number is not negative.
-fn (v Integer) pack_into_twocomplement_form() ![]u8 {
+fn (v Integer) pack_into_twoscomplement_form() !([]u8, int) {
 	match v.value.signum {
 		0 {
-			return [u8(0x00)]
+			return [u8(0x00)], 1
 		}
 		1 {
 			mut b := v.bytes()
 			if b[0] & 0x80 > 0 {
 				b.prepend(u8(0))
 			}
-			return b
+			return b, b.len
 		}
 		-1 {
 			// A negative number has to be converted to two's-complement form.
@@ -124,7 +124,7 @@ fn (v Integer) pack_into_twocomplement_form() ![]u8 {
 			if bytes.len == 0 || bytes[0] & 0x80 == 0 {
 				bytes.prepend(u8(0xff))
 			}
-			return bytes
+			return bytes, bytes.len
 		}
 		else {
 			return error('should unreachable')
@@ -132,10 +132,10 @@ fn (v Integer) pack_into_twocomplement_form() ![]u8 {
 	}
 }
 
-// unpack_from_twocomplement_bytes parses the bytes in b into the Integer
+// unpack_from_twoscomplement_bytes parses the bytes in b into the Integer
 // value in the big-endian two's complement way. If b[0]&80 != 0, the number
 // is negative. If b is empty, the result will be zero_integer.
-fn Integer.unpack_from_twocomplement_bytes(b []u8) !Integer {
+fn Integer.unpack_from_twoscomplement_bytes(b []u8) !Integer {
 	// FIXME: should we return error instead ?
 	if b.len == 0 {
 		return Integer{
@@ -153,17 +153,21 @@ fn Integer.unpack_from_twocomplement_bytes(b []u8) !Integer {
 	}
 }
 
+// Integer.unpack_and_validate deserializes bytes in b into Integer
+// in two's complement way and perform validation on this bytes to
+// meet der requirement.
 fn Integer.unpack_and_validate(b []u8) !Integer {
 	if !valid_bytes(b, true) {
 		return error('Integer: check return false')
 	}
-	ret := Integer.unpack_from_twocomplement_bytes(b)!
+	ret := Integer.unpack_from_twoscomplement_bytes(b)!
 	return ret
 }
 
 fn (v Integer) packed_length() !int {
 	mut n := 0
 	n += v.tag().tag_length()
+
 	x := asn1.Length.from_int(v.bytes_needed())
 	n += x.length()
 	n += v.bytes_needed()
@@ -175,8 +179,8 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	match mode {
 		.der {
 			v.tag().pack_to_asn1(mut to)
-			bytes := v.pack_into_twocomplement_form()!
-			length := asn1.Length.from_int(bytes.len)
+			bytes, n := v.pack_into_twoscomplement_form()!
+			length := asn1.Length.from_int(n)
 			length.pack_to_asn1(mut to, .der)!
 			to << bytes
 		}
