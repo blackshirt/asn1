@@ -12,13 +12,14 @@ import asn1
 // Its handles number arbitrary length of number with support of `math.big` module.
 // The encoding of an integer number shall be primitive.
 
-const big_127 = big.integer_from_int(127)
-const big_128 = big.integer_from_int(128)
-
+// This is hackish way to achieve the desired specific issues on 'big.Integer' null or zero handling.
+// `big.Integer.zero_int` or `big.integer_from_int(0)` has set a empty bytes with signum = 0
+// Its make an issue where der encoding treated '0' as single byte `0x00`
 const zero_integer = big.Integer{
 	digits: [u32(0)]
 	signum: 1
 }
+
 // Universal class of arbitrary length type of ASN.1 integer
 struct Integer {
 	value big.Integer
@@ -37,6 +38,7 @@ fn Integer.from_string(s string) !Integer {
 }
 
 fn Integer.from_i64(v i64) Integer {
+	// same issue as above
 	if v == 0 {
 		return Integer{primitive.zero_integer}
 	}
@@ -52,7 +54,7 @@ fn Integer.from_u64(v u64) Integer {
 
 fn (v Integer) bytes() []u8 {
 	if v.value == primitive.zero_integer {
-		return [u8(0)]
+		return [u8(0x00)]
 	}
 	bytes, _ := v.value.bytes()
 	return bytes
@@ -74,10 +76,10 @@ fn (v Integer) bytes_needed() int {
 	return nbits / 8 + 1
 }
 
-// pack_integer serialize Integer in two complement way.
+// pack_integer serialize Integer in two's-complement way.
 // The Integer value contains the encoded integer if it is positive,
 // or its two's complement if it is negative.
-// If the integer is positive but the high order bit is set to 1,
+// If the integer is positive but the high order bit is set to 1, 
 // a leading 0x00 is added to the content to indicate that the number is not negative.
 fn (v Integer) pack_integer() !([]u8, int) {
 	match v.value.signum {
@@ -92,16 +94,21 @@ fn (v Integer) pack_integer() !([]u8, int) {
 			return b, b.len
 		}
 		-1 {
-			length := u32(v.value.bit_len() / 8 + 1) * 8
-			num := v.value + big.one_int.left_shift(length)
-			mut b, _ := num.bytes()
-			// When the most significant bit is on a byte
-			// boundary, we can get some extra significant
-			// bits, so strip them off when that happens.
-			if b.len >= 2 && b[0] == 0xff && b[1] & 0x80 != 0 {
-				b = b[1..]
+			// A negative number has to be converted to two's-complement form.
+			// Invert the number and and then subtract it with big(1), or with other mean
+			// Flip all of the bits in the value and then add one to the resulting value.
+			// If the most-significant-bit isn't set then we'll need to pad the
+			// beginning with 0xff in order to keep the number negative.
+			negv := v.value.neg()
+			negvminus1 := negv - big.one_int
+			mut bytes, _ := negvminus1.bytes()
+			for i, _ in bytes {
+				bytes[i] ^= 0xff
 			}
-			return b, b.len
+			if bytes.len == 0 || bytes[0] & 0x80 == 0 {
+				bytes.prepend(u8(0xff))
+			}
+			return bytes, bytes.len
 		}
 		else {
 			return error('should unreachable')
