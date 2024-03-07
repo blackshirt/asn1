@@ -35,12 +35,16 @@ const string_data = [
 	FromString{'-129', '\xff\x7f'},
 ]
 
-fn test_pack_to_integer_from_string_data() ! {
+fn test_pack_integer_into_2form_from_string_data() ! {
 	for i, c in primitive.string_data {
 		v := Integer.from_string(c.value)!
-		out := v.pack_to_twoforms()!
+		out := v.pack_into_twocomplement_form()!
 
 		assert out == c.expected.bytes()
+
+		// back
+		b := Integer.unpack_from_twocomplement_bytes(c.expected.bytes())!
+		assert b.value.str() == c.value
 	}
 }
 
@@ -83,24 +87,26 @@ struct IntegerTest {
 	expected big.Integer
 }
 
-// from golang encoding/asn1 test
-fn test_asn1_integer_unpack() {
-	data := [
-		IntegerTest{[u8(0x00)], none, zero_integer},
-		IntegerTest{[u8(0x7f)], none, big.integer_from_int(127)},
-		IntegerTest{[u8(0x00), 0x80], none, big.integer_from_int(128)},
-		IntegerTest{[u8(0x01), 0x00], none, big.integer_from_int(256)},
-		IntegerTest{[u8(0x80)], none, big.integer_from_int(-128)},
-		IntegerTest{[u8(0xff), 0x7f], none, big.integer_from_int(-129)},
-		IntegerTest{[u8(0xff)], none, big.integer_from_int(-1)},
-		IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], none, big.integer_from_i64(-9223372036854775808)},
-		IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], error('too large integer'), big.integer_from_string('-2361183241434822606848')!}, // too large integer
-		IntegerTest{[], error('big integer check return false'), big.integer_from_int(0)},
-		IntegerTest{[u8(0x00), 0x7f], error('big integer check return false'), big.integer_from_int(0)}, // not minimally encoded,
-		IntegerTest{[u8(0xff), 0xf0], error('big integer check return false'), big.integer_from_int(0)}, // not minimally encoded,
-	]
+const integer_test_data = [
+	IntegerTest{[u8(0x00)], none, zero_integer},
+	IntegerTest{[u8(0x7f)], none, big.integer_from_int(127)},
+	IntegerTest{[u8(0x00), 0x80], none, big.integer_from_int(128)},
+	IntegerTest{[u8(0x01), 0x00], none, big.integer_from_int(256)},
+	IntegerTest{[u8(0x80)], none, big.integer_from_int(-128)},
+	IntegerTest{[u8(0xff), 0x7f], none, big.integer_from_int(-129)},
+	IntegerTest{[u8(0xff)], none, big.integer_from_int(-1)},
+	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], none, big.integer_from_i64(-9223372036854775808)},
+	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], error('too large integer'), big.integer_from_string('-2361183241434822606848') or {
+		panic(err)
+	}},
+	IntegerTest{[], error('big integer check return false'), zero_integer},
+	IntegerTest{[u8(0x00), 0x7f], error('big integer check return false'), big.integer_from_int(0)},
+	IntegerTest{[u8(0xff), 0xf0], error('big integer check return false'), big.integer_from_int(0)},
+]
 
-	for i, v in data {
+// from golang encoding/asn1 test
+fn test_asn1_integer_read_bigint() {
+	for i, v in primitive.integer_test_data {
 		ret := read_bigint(v.bytes) or {
 			assert err == v.err
 			continue
@@ -110,6 +116,18 @@ fn test_asn1_integer_unpack() {
 	}
 }
 
+fn test_asn1_integer_unpack_from_twocomplement_bytes() {
+	for i, v in primitive.integer_test_data {
+		dump(i)
+		ret := Integer.unpack_from_twocomplement_bytes(v.bytes) or {
+			
+			assert err == v.err
+			continue
+		}
+		dump(ret)
+		assert ret.value == v.expected
+	}
+}
 /*
 struct I32Test {
 	bytes []u8

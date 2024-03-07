@@ -9,7 +9,7 @@ import asn1
 // INTEGER.
 //
 // ASN.1 INTEGER type represented by `big.Integer`.
-// The INTEGER type value can be a positive or negative number. 
+// The INTEGER type value can be a positive or negative number.
 // There are no limits imposed on the magnitude of INTEGER values in the ASN.1 standard.
 // Its handles number arbitrary length of number with support of `math.big` module.
 // But, for sake of safety, we limit the INTEGER limit to follow allowed length in
@@ -17,7 +17,7 @@ import asn1
 // The encoding of an integer number shall be primitive.
 
 // Limit of length of INTEGER type, in bytes
-const max_integer_limit = 126 
+const max_integer_limit = 126
 
 // This is hackish way to achieve the desired specific issues on 'big.Integer' null or zero handling.
 // `big.Integer.zero_int` or `big.integer_from_int(0)` has set a empty bytes with signum = 0
@@ -27,32 +27,45 @@ const zero_integer = big.Integer{
 	signum: 1
 }
 
-// Universal class of arbitrary length type of ASN.1 integer
+// Universal class of arbitrary length type of ASN.1 INTEGER
 struct Integer {
+	tag   asn1.Tag = asn1.new_tag(.universal, false, 2)!
 	value big.Integer
 }
 
 fn Integer.from_string(s string) !Integer {
 	if s == '0' {
-		// Its little hackish, because `big.integer_from_i64(0)` does not work expected
-		return Integer{primitive.zero_integer}
+		// Its little hackish, because `big.integer_string(0)` returns unexpected values.
+		return Integer{
+			value: primitive.zero_integer
+		}
 	}
-	return Integer{big.integer_from_string(s)!}
+	return Integer{
+		value: big.integer_from_string(s)!
+	}
 }
 
 fn Integer.from_i64(v i64) Integer {
 	// same issue as above
 	if v == 0 {
-		return Integer{primitive.zero_integer}
+		return Integer{
+			value: primitive.zero_integer
+		}
 	}
-	return Integer{big.integer_from_i64(v)}
+	return Integer{
+		value: big.integer_from_i64(v)
+	}
 }
 
 fn Integer.from_u64(v u64) Integer {
 	if v == 0 {
-		return Integer{primitive.zero_integer}
+		return Integer{
+			value: primitive.zero_integer
+		}
 	}
-	return Integer{big.integer_from_u64(v)}
+	return Integer{
+		value: big.integer_from_u64(v)
+	}
 }
 
 fn (v Integer) bytes() []u8 {
@@ -64,8 +77,8 @@ fn (v Integer) bytes() []u8 {
 }
 
 // tag returns the tag of Universal class of this Integer type.
-fn (v Integer) tag() !asn1.Tag {
-	return asn1.new_tag(.universal, false, 2)
+fn (v Integer) tag() asn1.Tag {
+	return v.tag
 }
 
 fn (v Integer) bytes_needed() int {
@@ -79,12 +92,12 @@ fn (v Integer) bytes_needed() int {
 	return nbits / 8 + 1
 }
 
-// pack_to_twoforms serialize Integer in two's-complement way.
-// The Integer value contains the encoded integer if it is positive,
+// pack_into_twocomplement_form serialize Integer in two's-complement way.
+// The integer value contains the encoded integer if it is positive,
 // or its two's complement if it is negative.
 // If the integer is positive but the high order bit is set to 1,
 // a leading 0x00 is added to the content to indicate that the number is not negative.
-fn (v Integer) pack_to_twoforms() ![]u8 {
+fn (v Integer) pack_into_twocomplement_form() ![]u8 {
 	match v.value.signum {
 		0 {
 			return [u8(0x00)]
@@ -98,7 +111,7 @@ fn (v Integer) pack_to_twoforms() ![]u8 {
 		}
 		-1 {
 			// A negative number has to be converted to two's-complement form.
-			// Invert the number and and then subtract it with big(1), or with other mean
+			// by invert the number and and then subtract it with big(1), or with other mean
 			// Flip all of the bits in the value and then add one to the resulting value.
 			// If the most-significant-bit isn't set then we'll need to pad the
 			// beginning with 0xff in order to keep the number negative.
@@ -119,9 +132,30 @@ fn (v Integer) pack_to_twoforms() ![]u8 {
 	}
 }
 
+// unpack_from_twocomplement_bytes parses the bytes in b into the Integer
+// value in the big-endian two's complement way. If b[0]&80 != 0, the number
+// is negative. If b is empty, the result will be zero_integer.
+fn Integer.unpack_from_twocomplement_bytes(b []u8) !Integer {
+	// FIXME: should we return error instead ?
+	if b.len == 0 {
+		return Integer{
+			value: primitive.zero_integer
+		}
+	}
+	mut num := big.integer_from_bytes(b)
+	if b.len > 0 && b[0] & 0x80 > 0 {
+		sub := big.one_int.left_shift(u32(b.len) * 8)
+		num -= sub
+	}
+
+	return Integer{
+		value: num
+	}
+}
+
 fn (v Integer) packed_length() !int {
 	mut n := 0
-	n += v.tag()!.tag_length()
+	n += v.tag().tag_length()
 	x := asn1.Length.from_int(v.bytes_needed())
 	n += x.length()
 	n += v.bytes_needed()
@@ -132,8 +166,8 @@ fn (v Integer) packed_length() !int {
 fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	match mode {
 		.der {
-			v.tag()!.pack_to_asn1(mut to)
-			bytes := v.pack_to_twoforms()!
+			v.tag().pack_to_asn1(mut to)
+			bytes := v.pack_into_twocomplement_form()!
 			length := asn1.Length.from_int(bytes.len)
 			length.pack_to_asn1(mut to, .der)!
 			to << bytes
