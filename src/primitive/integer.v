@@ -95,11 +95,12 @@ fn (v Integer) bytes_needed() int {
 	return nbits / 8 + 1
 }
 
-// pack_into_twoscomplement_form serialize Integer in two's-complement way.
-// The integer value contains the encoded integer if it is positive,
-// or its two's complement if it is negative.
-// If the integer is positive but the high order bit is set to 1,
-// a leading 0x00 is added to the content to indicate that the number is not negative.
+// pack_into_twoscomplement_form serialize Integer in two's-complement rules. The integer value contains 
+// the encoded integer if it is positive, or its two's complement if it is negative.
+// If the integer is positive but the high order bit is set to 1, a leading 0x00 is added to the content 
+// to indicate that the number is not negative. 
+// If the number is negative after applying two's-complement rules, and the the most-significant-bit of the 
+// the high order bit of the bytes results isn't set, pad it with 0xff in order to keep the number negative.
 fn (v Integer) pack_into_twoscomplement_form() !([]u8, int) {
 	match v.value.signum {
 		0 {
@@ -244,6 +245,7 @@ fn read_bigint(src []u8) !big.Integer {
 	return s
 }
 
+// valid_bytes validates bytes meets some requirement for DER encoding.
 fn valid_bytes(src []u8, signed bool) bool {
 	if src.len == 0 {
 		return false
