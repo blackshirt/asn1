@@ -17,20 +17,30 @@ module asn1
 // This module only support definite length, in short or long form. Its required for DER encoding
 // the length octets should in definite length.
 
-// max_definite_length_count is a limit how many bytes to represent this length.
-// Its limited to 8 bytes following when long definite form.
-const max_definite_length_count = 8
-const max_definite_length_value = 0xffff_ff7f
+// max_definite_length_count is a limit tells how many bytes to represent this length.
+// We're going to limi this to 6 bytes following when the length is in long-definite form.
+const max_definite_length_count = 6
+const max_definite_length_value = u64(0x0000_ffff_ffff_ffff)
 	
-// Length represent ASN.1 length
-type Length = int
+// Length represent ASN.1 length value
+type Length = u64
 
-fn Length.from_int(v int) Length {
+fn Length.from_int(v int) !Length {
+	if v < 0 {
+		return error("Length: supply with positive int")
+	}
+	return Length(u64(v))
+}
+
+fn Length.from_u64(v u64) !Length {
+	if v > max_definite_length_value {
+		return error("Length: ${v} is bigger than allowed value")
+	}
 	return Length(v)
 }
 
-// bytes_needed tells how many bytes needed to represent this length
-fn (v Length) bytes_needed() int {
+// bytes_len tells how many bytes needed to represent this length
+fn (v Length) bytes_len() int {
 	mut i := v
 	mut num := 1
 	for i > 255 {
