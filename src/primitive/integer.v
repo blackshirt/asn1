@@ -202,7 +202,7 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 // process start form, if not sure set to 0.
 // `mode` params, the encoding mode to drive unpack operation.
 // see `EncodingMode` for availables values. Currently only support`.der`.
-fn Integer.unpack_from_asn1(b []u8, loc int, mode asn1.EncodingMode) !(Integer, int) {
+fn Integer.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode) !(Integer, i64) {
 	match mode {
 		.der {
 			tag, pos := asn1.Tag.unpack_from_asn1(b, loc)!
@@ -212,13 +212,9 @@ fn Integer.unpack_from_asn1(b []u8, loc int, mode asn1.EncodingMode) !(Integer, 
 			// read the length part from current position pos
 			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der)!
 			// read the bytes part from current position idx to the length part
-			// FIXME: int is independent platform specific, its maybe lost precision this value
-			bytes := unsafe { b[idx..idx + i64(len)] }
-			ret := read_bigint(bytes)!
-			return Integer{
-				value: ret
-				// WARNING: cast to int can lead to lost precision, FIXME
-			}, idx + int(len)
+			bytes := unsafe { b[idx..idx + len] }
+			ret := Integer.unpack_and_validate(bytes)!
+			return ret, idx + len
 		}
 		else {
 			return error('unsupported mode')
@@ -267,117 +263,6 @@ fn valid_bytes(src []u8, signed bool) bool {
 }
 
 /*
-// new_integer creates asn.1 serializable integer object. Its supports
-// arbitrary integer number, with support from `math.big` module for
-// integer bigger than 64 bit number.
-pub fn new_integer(val AsnInteger) Encoder {
-	match val {
-		int {
-			res := val as int
-			return AsnInteger(res)
-		}
-		i64 {
-			res := val as i64
-			return AsnInteger(res)
-		}
-		big.Integer {
-			res := val as big.Integer
-			return AsnInteger(res)
-		}
-	}
-}
-
-// new_integer_from_bytes decodes integer from bytes array
-fn new_integer_from_bytes(src []u8) !Encoder {
-	x := src.len
-	if x <= 4 {
-		ret := read_i32(src)!
-		return AsnInteger(ret)
-	}
-	if x <= 8 {
-		ret := read_i64(src)!
-		return AsnInteger(ret)
-	}
-
-	ret := read_bigint(src)!
-	return AsnInteger(ret)
-}
-
-pub fn (n AsnInteger) tag() Tag {
-	return asn1.new_tag(.universal, false, int(TagType.integer))
-}
-
-pub fn (n AsnInteger) length() int {
-	match n {
-		int {
-			v := n as int
-			l := length_i64(v)
-			return l
-		}
-		i64 {
-			v := n as i64
-			l := length_i64(v)
-			return l
-		}
-		big.Integer {
-			v := n as big.Integer
-			l, _ := v.bytes()
-			return l.len
-		}
-	}
-}
-
-pub fn (n AsnInteger) size() int {
-	mut size := 0
-	tag := n.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	lol := calc_length_of_length(n.length())
-	size += int(lol)
-
-	size += n.length()
-
-	return size
-}
-
-pub fn (n AsnInteger) encode() ![]u8 {
-	match n {
-		int {
-			val := n as int
-			res := serialize_i32(val)!
-			return res
-		}
-		i64 {
-			val := n as i64
-			res := serialize_i64(val)!
-			return res
-		}
-		big.Integer {
-			val := n as big.Integer
-			res := serialize_bigint(val)!
-			return res
-		}
-	}
-}
-
-fn (n AsnInteger) str() string {
-	match n {
-		int {
-			val := n as int
-			return 'INTEGER ${val}'
-		}
-		i64 {
-			val := n as i64
-			return 'INTEGER(64) ${val}'
-		}
-		big.Integer {
-			val := n as big.Integer
-			return 'INTEGER(BIG) ${val}'
-		}
-	}
-}
-
 // i64 handling
 
 // serialize i64
@@ -474,85 +359,5 @@ fn i64_to_bytes(mut dst []u8, i i64) {
 	for j := 0; j < n; j++ {
 		dst[j] = u8(i >> u32(n - 1 - j) * 8)
 	}
-}
-
-// i32 handling
-//
-// read_i32 readt  from bytes
-fn read_i32(src []u8) !int {
-	if !valid_bytes(src, true) {
-		return error('i32 check return false')
-	}
-
-	ret := read_i64(src)!
-	if ret != i64(int(ret)) {
-		return error('integer too large')
-	}
-
-	return int(ret)
-}
-
-fn serialize_i32(s i32) ![]u8 {
-	out := serialize_i64(i64(s))!
-	return out
-}
-
-fn decode_i32(src []u8) !(Tag, i32) {
-	if src.len < 2 {
-		return error('decode: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	if tag.number != int(TagType.integer) {
-		return error('bad tag')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	out := read_bytes(src, next, length)!
-	val := read_i32(out)!
-
-	return tag, val
-}
-
-// big.Integer handling
-
-fn serialize_bigint(b big.Integer) ![]u8 {
-	tag := asn1.new_tag(.universal, false, int(TagType.integer))
-	mut out := []u8{}
-
-	serialize_tag(mut out, tag)
-
-	bs, _ := b.bytes()
-	serialize_length(mut out, bs.len)
-	out << bs
-
-	return out
-}
-
-fn decode_bigint(src []u8) !(Tag, big.Integer) {
-	if src.len < 2 {
-		return error('decode: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	if tag.number != int(TagType.integer) {
-		return error('bad tag')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	out := read_bytes(src, next, length)!
-	val := read_bigint(out)!
-
-	return tag, val
 }
 */

@@ -162,13 +162,9 @@ fn (v TagNumber) bytes_needed() int {
 }
 
 fn (v TagNumber) length() int {
-	mut len := 1
 	// when number is greater than 31 (0x1f), its more bytes
 	// to represent this number.
-	if v >= 0x1f {
-		n := v.bytes_needed()
-		len += n
-	}
+	len := if v < 0x1f { 1 } else { v.bytes_needed() + 1 }
 	return len
 }
 
@@ -187,6 +183,7 @@ fn (v TagNumber) pack_base128(mut to []u8) {
 }
 
 // unpack_from_asn1 deserializes bytes into TagNumber from offset loc in base 128.
+// Its return deserialized TagNumber and next offset to process on.
 fn TagNumber.unpack_from_asn1(bytes []u8, loc i64) !(TagNumber, i64) {
 	mut pos := loc
 	mut ret := 0

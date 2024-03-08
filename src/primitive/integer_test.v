@@ -98,28 +98,30 @@ const integer_test_data = [
 	IntegerTest{[u8(0xff), 0x7f], none, big.integer_from_int(-129)},
 	IntegerTest{[u8(0xff)], none, big.integer_from_int(-1)},
 	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], none, big.integer_from_i64(-9223372036854775808)},
-	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], error('too large integer'), big.integer_from_string('-2361183241434822606848') or {
+	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], none, big.integer_from_string('-2361183241434822606848') or {
 		panic(err)
 	}},
 	IntegerTest{[], error('Integer: check return false'), zero_integer},
 	IntegerTest{[u8(0x00), 0x7f], error('Integer: check return false'), big.integer_from_int(127)}, // non-minimal form
 	IntegerTest{[u8(0xff), 0xf0], error('Integer: check return false'), big.integer_from_int(-16)}, // non-minimal form
+	IntegerTest{[], error('Integer: check return false'), zero_integer}, // empty integer
+	IntegerTest{[u8(0x00)], none, zero_integer},
+	IntegerTest{[u8(0x7f)], none, big.integer_from_int(127)},
+	IntegerTest{[u8(0x00), 0x80], none, big.integer_from_int(128)},
+	IntegerTest{[u8(0x01), 0x00], none, big.integer_from_int(256)},
+	IntegerTest{[u8(0x80)], none, big.integer_from_int(-128)},
+	IntegerTest{[u8(0xff), 0x7f], none, big.integer_from_int(-129)},
+	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00], none, big.integer_from_i64(-2147483648)},
+	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00], none, big.integer_from_i64(-549755813888)},
+	IntegerTest{[u8(0x00), 0x7f], error('Integer: check return false'), zero_integer},
+	IntegerTest{[u8(0xff), 0xf0], error('Integer: check return false'), zero_integer}, // not minimally
 ]
 
 // from golang encoding/asn1 test
-fn test_asn1_integer_read_bigint() {
-	for i, v in primitive.integer_test_data {
-		ret := read_bigint(v.bytes) or {
-			assert err == v.err
-			continue
-		}
-
-		assert ret == v.expected
-	}
-}
-
 fn test_asn1_unpack_and_validate() {
 	for i, v in primitive.integer_test_data {
+		dump(i)
+		dump(v.bytes.hex())
 		ret := Integer.unpack_and_validate(v.bytes) or {
 			assert err == v.err
 			continue
@@ -130,7 +132,7 @@ fn test_asn1_unpack_and_validate() {
 }
 
 /*
-struct I32Test {
+struct IntegerTest {
 	bytes []u8
 	err IError
 	expected i32
@@ -138,17 +140,17 @@ struct I32Test {
 
 fn test_read_i32() {
 	i32testdata := [
-		I32Test{[], error('i32 check return false'), 0}, // empty integer
-		I32Test{[u8(0x00)], none, 0},
-		I32Test{[u8(0x7f)], none, 127},
-		I32Test{[u8(0x00), 0x80], none, 128},
-		I32Test{[u8(0x01), 0x00], none, 256},
-		I32Test{[u8(0x80)], none, -128},
-		I32Test{[u8(0xff), 0x7f], none, -129},
-		I32Test{[u8(0x80), 0x00, 0x00, 0x00], none, -2147483648},
-		I32Test{[u8(0x80), 0x00, 0x00, 0x00, 0x00], error('integer too large'), 0}, // overflow too big
-		I32Test{[u8(0x00), 0x7f], error('i32 check return false'), 0},
-		I32Test{[u8(0xff), 0xf0], error('i32 check return false'), 0}, // not minimally
+		IntegerTest{[], error('i32 check return false'), 0}, // empty integer
+		IntegerTest{[u8(0x00)], none, 0},
+		IntegerTest{[u8(0x7f)], none, 127},
+		IntegerTest{[u8(0x00), 0x80], none, 128},
+		IntegerTest{[u8(0x01), 0x00], none, 256},
+		IntegerTest{[u8(0x80)], none, -128},
+		IntegerTest{[u8(0xff), 0x7f], none, -129},
+		IntegerTest{[u8(0x80), 0x00, 0x00, 0x00], none, -2147483648},
+		IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00], error('integer too large'), 0}, // overflow too big
+		IntegerTest{[u8(0x00), 0x7f], error('i32 check return false'), 0},
+		IntegerTest{[u8(0xff), 0xf0], error('i32 check return false'), 0}, // not minimally
 	]
 	for i, test in i32testdata {
 		ret := read_i32(test.bytes) or {

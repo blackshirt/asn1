@@ -20,21 +20,14 @@ module asn1
 // max_definite_length_count is a limit tells how many bytes to represent this length.
 // We're going to limi this to 6 bytes following when the length is in long-definite form.
 const max_definite_length_count = 6
-const max_definite_length_value = u64(0x0000_ffff_ffff_ffff)
+const max_definite_length_value = i64(0x0000_ffff_ffff_ffff)
 
 // Length represent ASN.1 length value
-type Length = u64
+type Length = i64
 
 fn Length.from_i64(v i64) !Length {
 	if v < 0 {
 		return error('Length: supply with positive i64')
-	}
-	return Length(u64(v))
-}
-
-fn Length.from_u64(v u64) !Length {
-	if v > asn1.max_definite_length_value {
-		return error('Length: ${v} is bigger than allowed value')
 	}
 	return Length(v)
 }
@@ -143,7 +136,7 @@ pub fn Length.unpack_from_asn1(buf []u8, loc i64, mode EncodingMode) !(Length, i
 				}
 
 				// do not allow values < 0x80 to be encoded in long form
-				if length < u64(0x80) {
+				if length < i64(0x80) {
 					// TODO: allow in BER
 					return error('Length: dont needed in long form')
 				}

@@ -37,15 +37,15 @@ fn (n Null) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	}
 }
 
-fn Null.unpack(b []u8, mode asn1.EncodingMode) !(Null, int) {
+fn Null.unpack(b []u8, loc i64, mode asn1.EncodingMode) !(Null, i64) {
 	match mode {
 		.der {
-			if b.len < 2 || (b[0] != 0x05 && b[1] != 0x00) {
+			if b.len < 2 {
 				return error('Null: invalid args')
 			}
-			tag, pos := asn1.Tag.unpack_from_asn1(b, 0)!
+			tag, pos := asn1.Tag.unpack_from_asn1(b, loc)!
 			if tag.tag_number() != 0x05 {
-				return error('NullL bad tag=${tag}')
+				return error('Null: bad tag=${tag}')
 			}
 			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der)!
 			if len != 0 {
