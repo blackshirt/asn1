@@ -17,7 +17,11 @@ module asn1
 // This module only support definite length, in short or long form. Its required for DER encoding
 // the length octets should in definite length.
 
-const max_definite_length = 4
+// max_definite_length_count is a limit how many bytes to represent this length.
+// Its limited to 8 bytes following when long definite form.
+const max_definite_length_count = 8
+const max_definite_length_value = 0xffff_ff7f
+	
 // Length represent ASN.1 length
 type Length = int
 
