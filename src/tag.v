@@ -11,9 +11,10 @@ const max_tag_length = 3
 const max_tag_number = 16383
 
 // Tag represents identifier of the ASN1 element (object)
-// ASN.1 tag number can be represented in two form, short form and long form.
+// ASN.1 Tag number can be represented in two form, short form and long form.
 // The short form for tag number below <= 30 and stored enough in single byte,
-// where long form for tag number > 30, and stored in two or more bytes (see limit restriction above).
+// where long form for tag number > 30, and stored in two or more bytes.
+// Ssee limit restriction comment above.
 pub struct Tag {
 mut:
 	cls      Class
@@ -60,9 +61,9 @@ pub fn (t Tag) pack_to_asn1(mut dst []u8) {
 	}
 }
 
-// unpack_from_asn1 deserializes bytes of data to Tag structure, start from offset loc position.
+// unpack_from_asn1 deserializes bytes of data into Tag structure, start from offset loc.
 // Its return Tag and next offset to operate on, and return error if fail to unpack.
-pub fn Tag.unpack_from_asn1(data []u8, loc int) !(Tag, int) {
+pub fn Tag.unpack_from_asn1(data []u8, loc i64) !(Tag, i64) {
 	if data.len < 1 {
 		return error('get ${data.len} bytes for reading tag, its not enough')
 	}
@@ -186,7 +187,7 @@ fn (v TagNumber) pack_base128(mut to []u8) {
 }
 
 // unpack_from_asn1 deserializes bytes into TagNumber from offset loc in base 128.
-fn TagNumber.unpack_from_asn1(bytes []u8, loc int) !(TagNumber, int) {
+fn TagNumber.unpack_from_asn1(bytes []u8, loc i64) !(TagNumber, i64) {
 	mut pos := loc
 	mut ret := 0
 	for s := 0; pos < bytes.len; s++ {

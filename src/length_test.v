@@ -4,7 +4,7 @@
 module asn1
 
 struct LengthPackTest {
-	value    int
+	value    i64
 	expected []u8
 	err      IError
 }
@@ -24,7 +24,7 @@ fn test_length_pack_and_unpack_tofrom_asn() ! {
 	]
 	for i, c in edata {
 		mut dst := []u8{}
-		s := Length.from_int(c.value)
+		s := Length.from_i64(c.value)!
 		s.pack_to_asn1(mut dst, .der)!
 		assert dst == c.expected
 
@@ -36,7 +36,7 @@ fn test_length_pack_and_unpack_tofrom_asn() ! {
 }
 
 struct ByteLengthTest {
-	value    int
+	value    i64
 	expected []u8
 }
 
@@ -53,7 +53,7 @@ fn test_basic_simple_length_unpack() {
 	assert pos2 == 3
 }
 
-fn test_length_pack_and_append() {
+fn test_length_pack_and_append() ! {
 	bdata := [
 		ByteLengthTest{1, [u8(1)]},
 		ByteLengthTest{127, [u8(0x7f)]},
@@ -69,7 +69,7 @@ fn test_length_pack_and_append() {
 
 	for v in bdata {
 		mut dst := []u8{}
-		ln := Length.from_int(v.value)
+		ln := Length.from_i64(v.value)!
 		ln.pack_and_append(mut dst)
 
 		assert dst == v.expected
@@ -77,11 +77,11 @@ fn test_length_pack_and_append() {
 }
 
 struct LengthTest {
-	value    int
+	value    i64
 	expected int
 }
 
-fn test_length_bytes_needed() {
+fn test_length_bytes_len() ! {
 	ldata := [
 		LengthTest{1, 1},
 		LengthTest{128, 1},
@@ -96,14 +96,14 @@ fn test_length_bytes_needed() {
 	]
 
 	for c in ldata {
-		len := Length.from_int(c.value)
-		out := len.bytes_needed()
+		len := Length.from_i64(c.value)!
+		out := len.bytes_len()
 
 		assert out == c.expected
 	}
 }
 
-fn test_calc_length_of_length() {
+fn test_calc_length_of_length() ! {
 	data := [
 		LengthTest{1, 1},
 		LengthTest{128, 2},
@@ -118,7 +118,7 @@ fn test_calc_length_of_length() {
 	]
 
 	for c in data {
-		len := Length.from_int(c.value)
+		len := Length.from_i64(c.value)!
 		out := len.length()
 
 		assert out == c.expected

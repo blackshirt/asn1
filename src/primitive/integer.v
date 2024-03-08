@@ -32,7 +32,7 @@ struct Integer {
 	tag   asn1.Tag = asn1.new_tag(.universal, false, 2)!
 	value big.Integer
 }
-	
+
 // from_string creates a new Integer from string s.
 fn Integer.from_string(s string) !Integer {
 	if s == '0' {
@@ -45,7 +45,7 @@ fn Integer.from_string(s string) !Integer {
 		value: big.integer_from_string(s)!
 	}
 }
-				
+
 // from_i64 creates new Integer from i64 v
 fn Integer.from_i64(v i64) Integer {
 	// same issue as above
@@ -171,13 +171,13 @@ fn (v Integer) packed_length() !int {
 	mut n := 0
 	n += v.tag().tag_length()
 
-	x := asn1.Length.from_int(v.bytes_needed())
+	x := asn1.Length.from_i64(v.bytes_needed())!
 	n += x.length()
 	n += v.bytes_needed()
 
 	return n
 }
-		
+
 // pack_to_asn1 packs and serializes Integer v into ASN 1 serialized bytes into `to`.
 // Its accepts encoding mode params, where its currently only suppport `.der` DER mode.
 // If `to.len != 0`, it act as append semantic, otherwise the `to` bytes stores the result.
@@ -186,7 +186,7 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 		.der {
 			v.tag().pack_to_asn1(mut to)
 			bytes, n := v.pack_into_twoscomplement_form()!
-			length := asn1.Length.from_int(n)
+			length := asn1.Length.from_i64(n)!
 			length.pack_to_asn1(mut to, .der)!
 			to << bytes
 		}
@@ -212,11 +212,13 @@ fn Integer.unpack_from_asn1(b []u8, loc int, mode asn1.EncodingMode) !(Integer, 
 			// read the length part from current position pos
 			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der)!
 			// read the bytes part from current position idx to the length part
-			bytes := unsafe { b[idx..idx + len] }
+			// FIXME: int is independent platform specific, its maybe lost precision this value
+			bytes := unsafe { b[idx..idx + i64(len)] }
 			ret := read_bigint(bytes)!
 			return Integer{
 				value: ret
-			}, idx + len
+				// WARNING: cast to int can lead to lost precision, FIXME
+			}, idx + int(len)
 		}
 		else {
 			return error('unsupported mode')

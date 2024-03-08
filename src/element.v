@@ -32,7 +32,7 @@ fn (tt TaggedType) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 					// wraps the inner element with this tag and length
 					tt.tag.pack_to_asn1(mut to)
 					length := tt.inner_el.element_length()
-					len := Length.from_int(length)
+					len := Length.from_i64(length)!
 					len.pack_to_asn1(mut to, mode)!
 					tt.inner_el.pack_to_asn1(mut to, mode)!
 				}

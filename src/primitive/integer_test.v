@@ -129,7 +129,6 @@ fn test_asn1_unpack_and_validate() {
 	}
 }
 
-
 /*
 struct I32Test {
 	bytes []u8
