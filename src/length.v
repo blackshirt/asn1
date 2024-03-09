@@ -15,7 +15,7 @@ module asn1
 // Second and following octets give the length, base 256, most significant digit first.
 //
 // This module only support definite length, in short or long form. Its required for DER encoding
-// the length octets should in definite length.
+// the length octets should be in definite length.
 
 // max_definite_length_count is a limit tells how many bytes to represent this length.
 // We're going to limi this to 6 bytes following when the length is in long-definite form.
@@ -25,9 +25,14 @@ const max_definite_length_value = i64(0x0000_ffff_ffff_ffff)
 // Length represent ASN.1 length value
 type Length = i64
 
+// from_i64 creates Length from i64  value. Passing negative value (<0) for length 
+// is not make a sense, so just return error instead if it happen.
 fn Length.from_i64(v i64) !Length {
 	if v < 0 {
 		return error('Length: supply with positive i64')
+	}
+	if v > max_definite_length_value {
+		return error("Length: value provided exceed limit")
 	}
 	return Length(v)
 }
@@ -59,23 +64,25 @@ pub fn (v Length) length() int {
 	return n
 }
 
-// pack_to_asn1 serializes Length v into bytes and append it into `to`
+// pack_to_asn1 serializes Length v into bytes and append it into `to`. The`mode` params drives how 
+// this packing operation would be done, only `.,der` mode is supported.
 pub fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 	match mode {
 		.der {
 			// Long form
 			if v >= 128 {
-				length := v.bytes_len()
-
-				// if the length exceed the limit, something bad happen
-				// return error instead
-				if length > asn1.max_definite_length_count {
+				// First, we count how many bytes occupied by this length value.
+				// if the count exceed the limit, we return error.
+				count := v.bytes_len()
+				if count > asn1.max_definite_length_count {
 					return error('something bad in your length')
 				}
-				to << 0x80 | u8(length)
+				// In definite long form, msb bit of first byte is set to 1, and the remaining bits 
+				// of first byte tells exact count how many bytes following representing this length value.
+				to << 0x80 | u8(count)
 				v.pack_and_append(mut to)
 			} else {
-				// short form
+				// short form, already tells the length value.
 				to << u8(v)
 			}
 		}
