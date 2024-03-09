@@ -53,12 +53,13 @@ pub fn (t Tag) pack_to_asn1(mut dst []u8) {
 	if t.compound {
 		b |= compound_mask
 	}
-
+    // The tag in long form
 	if t.number >= 0x1f {
 		b |= tag_mask // 0x1f
 		dst << b
 		t.number.pack_base128(mut dst)
 	} else {
+		// short form
 		b |= u8(t.number)
 		dst << b
 	}
@@ -68,13 +69,14 @@ pub fn (t Tag) pack_to_asn1(mut dst []u8) {
 // Its return Tag and next offset to operate on, and return error if fail to unpack.
 pub fn Tag.unpack_from_asn1(data []u8, loc i64) !(Tag, i64) {
 	if data.len < 1 {
-		return error('get ${data.len} bytes for reading tag, its not enough')
+		return error('Tag: get ${data.len} bytes for reading tag, its not enough')
 	}
-	mut pos := loc
-	if pos > data.len {
+	if loc > data.len {
 		return error('invalid len')
 	}
-
+	mut pos := loc
+	
+    // first byte of tag bytes
 	b := data[pos]
 	pos += 1
 
