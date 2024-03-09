@@ -17,7 +17,8 @@ import asn1
 // The encoding of an integer number shall be primitive.
 
 // Limit of length of INTEGER type, in bytes
-const max_integer_length = 126
+// Known big RSA keys is 4096 bits, ie, 512 bytes
+const max_integer_length = 2048
 
 // This is hackish way to achieve the desired specific issues on 'big.Integer' null or zero handling.
 // `big.Integer.zero_int` or `big.integer_from_int(0)` has set a empty bytes with signum = 0
