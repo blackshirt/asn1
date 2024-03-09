@@ -34,19 +34,28 @@ struct Integer {
 	value big.Integer
 }
 
-// from_string creates a new Integer from string s.
+// from_string creates a new Integer from decimal string s.
 fn Integer.from_string(s string) !Integer {
-	if s == '0' {
-		// Its little hackish, because `big.integer_string(0)` returns unexpected values.
+	v := big.integer_from_string(s)!
+	if v == big.zero_int {
 		return Integer{
 			value: primitive.zero_integer
 		}
 	}
+	
 	return Integer{
-		value: big.integer_from_string(s)!
+		value: v
 	}
 }
 
+fn Integer.from_hex(x string) !Integer {
+	s := big.integer_from_radix(x, 16)!
+	if s == big.zero_int {
+		return Integer{value: zero_integer}
+	}
+	return Integer{value: s}
+}
+				
 // from_i64 creates new Integer from i64 v
 fn Integer.from_i64(v i64) Integer {
 	// same issue as above
