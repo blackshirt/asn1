@@ -31,15 +31,18 @@ fn new_tag(c Class, compound bool, number int) !Tag {
 		number: TagNumber.from_int(number)!
 	}
 }
-
+	
+// class return the ASN.1 class of this tag
 pub fn (t Tag) class() Class {
 	return t.cls
 }
-
+	
+// is_compound tells us whether this tag is constructed or not
 pub fn (t Tag) is_compound() bool {
 	return t.compound
 }
-
+	
+// tag_number return the tag nunber of this tag 
 pub fn (t Tag) tag_number() int {
 	return t.number
 }
@@ -123,7 +126,8 @@ fn (mut t Tag) clone_with_tag(v int) !Tag {
 	return new
 }
 
-// `tag_length` calculates length of bytes needed to store tag number.
+// `tag_length` calculates length of bytes needed to store tag number, include one byte 
+// marker that tells if the tag number is in long form (>= 0x1f)
 pub fn (t Tag) tag_length() int {
 	n := if t.number < 0x1f { 1 } else { 1 + t.number.bytes_needed() }
 	return n
@@ -135,6 +139,8 @@ pub fn (t Tag) tag_length() int {
 // see https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation
 type TagNumber = int
 
+// from_int creates TagNumber from integer v. Its does not support to pass
+// negative integer, its not make sense for now.
 fn TagNumber.from_int(v int) !TagNumber {
 	if v < 0 {
 		return error('TagNumber: negative number')
