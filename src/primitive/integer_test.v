@@ -167,8 +167,9 @@ fn test_integer_large_int() ! {
 		0xb1, 0x9c, 0xbc, 0x20, 0x55, 0xbf, 0x3a, 0x37, 0x42, 0x45, 0x75, 0xdc, 0x90, 0x65]
 	expected_integer := Integer.from_string('101038645214968213029489864879507742420925199145132483818978980455132582258676381289000109319204510275496178360219909358646064503513889573494768497419381751359787623037449375660247011308028102339473875820259375735204357343091558075960601364303443174344509161224592926325506446708043127306053676664799729848421')
 	out, pos := Integer.unpack_from_asn1(bytes, 0, .der)!
-	dump(out)
-	dump(pos)
+
 	assert pos == bytes.len
-	
+	// BUG?: there are some issues when compared out == expected directly, even internally its a same, 
+	// but it fails to assert, so we provide and use equality check
+	assert out.equal(expected_integer) == true
 }

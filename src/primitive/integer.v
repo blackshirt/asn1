@@ -35,6 +35,13 @@ mut:
 	value big.Integer
 }
 
+fn (n Integer) equal(m Integer) bool {
+	nb, ns := n.value.bytes()
+	mb, ms := m.value.bytes()
+
+	return n.tag == m.tag && nb == mb && ns == ms
+}
+
 // from_string creates a new ASN.1 Integer from decimal string s.
 fn Integer.from_string(s string) Integer {
 	v := big.integer_from_string(s) or { panic(err) }
@@ -125,8 +132,10 @@ fn (v Integer) pack_into_twoscomplement_form() !([]u8, int) {
 		}
 		1 {
 			mut b := v.bytes()
+			// If the integer is positive but the high order bit is set to 1, a leading 0x00 is added 
+			// to the content to indicate that the number is not negative
 			if b[0] & 0x80 > 0 {
-				b.prepend(u8(0))
+				b.prepend(u8(0x00))
 			}
 			return b, b.len
 		}
@@ -161,7 +170,13 @@ fn Integer.unpack_from_twoscomplement_bytes(b []u8) !Integer {
 	if b.len == 0 {
 		return error('Integer: null bytes')
 	}
-
+	mut num := big.integer_from_bytes(b)
+	// negative number
+	if b.len > 0 && b[0] & 0x80 > 0 {
+		sub := big.one_int.left_shift(u32(b.len) * 8)
+		num -= sub
+	}
+	/*
 	if b.len > 0 && b[0] & 0x80 == 0x80 {
 		// This is a negative number.
 		mut notbytes := []u8{len: b.len}
@@ -175,9 +190,9 @@ fn Integer.unpack_from_twoscomplement_bytes(b []u8) !Integer {
 			value: ret
 		}
 	}
-
+	*/
 	return Integer{
-		value: big.integer_from_bytes(b)
+		value: num
 	}
 }
 
