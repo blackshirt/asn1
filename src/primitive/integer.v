@@ -42,20 +42,25 @@ fn Integer.from_string(s string) !Integer {
 			value: primitive.zero_integer
 		}
 	}
-	
+
 	return Integer{
 		value: v
 	}
 }
 
+// from_hex creates ASN.1 Integer from hex string in x without `0x` prefixed hex string.
 fn Integer.from_hex(x string) !Integer {
 	s := big.integer_from_radix(x, 16)!
 	if s == big.zero_int {
-		return Integer{value: zero_integer}
+		return Integer{
+			value: primitive.zero_integer
+		}
 	}
-	return Integer{value: s}
+	return Integer{
+		value: s
+	}
 }
-				
+
 // from_i64 creates new Integer from i64 v
 fn Integer.from_i64(v i64) Integer {
 	// same issue as above
@@ -105,11 +110,11 @@ fn (v Integer) bytes_needed() int {
 	return nbits / 8 + 1
 }
 
-// pack_into_twoscomplement_form serialize Integer in two's-complement rules. The integer value contains 
+// pack_into_twoscomplement_form serialize Integer in two's-complement rules. The integer value contains
 // the encoded integer if it is positive, or its two's complement if it is negative.
-// If the integer is positive but the high order bit is set to 1, a leading 0x00 is added to the content 
-// to indicate that the number is not negative. 
-// If the number is negative after applying two's-complement rules, and the the most-significant-bit of the 
+// If the integer is positive but the high order bit is set to 1, a leading 0x00 is added to the content
+// to indicate that the number is not negative.
+// If the number is negative after applying two's-complement rules, and the the most-significant-bit of the
 // the high order bit of the bytes results isn't set, pad it with 0xff in order to keep the number negative.
 fn (v Integer) pack_into_twoscomplement_form() !([]u8, int) {
 	match v.value.signum {
@@ -192,13 +197,13 @@ fn (v Integer) packed_length() !int {
 // pack_to_asn1 packs and serializes Integer v into ASN 1 serialized bytes into `to`.
 // Its accepts encoding mode params, where its currently only suppport `.der` DER mode.
 // If `to.len != 0`, it act as append semantic, otherwise the `to` bytes stores the result.
-fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
+fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
 	match mode {
 		.der {
-			v.tag().pack_to_asn1(mut to)
+			v.tag().pack_to_asn1(mut to, .der, p)!
 			bytes, n := v.pack_into_twoscomplement_form()!
 			length := asn1.Length.from_i64(n)!
-			length.pack_to_asn1(mut to, .der)!
+			length.pack_to_asn1(mut to, .der, p)!
 			to << bytes
 		}
 		else {
@@ -213,15 +218,15 @@ fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 // process start form, if not sure set to 0.
 // `mode` params, the encoding mode to drive unpack operation.
 // see `EncodingMode` for availables values. Currently only support`.der`.
-fn Integer.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode) !(Integer, i64) {
+fn Integer.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Params) !(Integer, i64) {
 	match mode {
 		.der {
-			tag, pos := asn1.Tag.unpack_from_asn1(b, loc)!
+			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, .der, p)!
 			if tag.class() != .universal || tag.is_compound() || tag.tag_number() != 2 {
 				return error('Integer: bad tag of universal class type')
 			}
 			// read the length part from current position pos
-			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der)!
+			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der, p)!
 			// read the bytes part from current position idx to the length part
 			bytes := unsafe { b[idx..idx + len] }
 			ret := Integer.unpack_and_validate(bytes)!
@@ -264,8 +269,8 @@ fn valid_bytes(src []u8, signed bool) bool {
 	}
 
 	// check for minimaly encoded
-	// If the contents octets of an integer value encoding consist of more 
-	// than one octet, then the bits of the first octet and bit 8 of 
+	// If the contents octets of an integer value encoding consist of more
+	// than one octet, then the bits of the first octet and bit 8 of
 	// the second octets shall not all be ones; and shall not all be zero.
 	if src.len > 1 && ((src[0] == 0 && src[1] & 0x80 == 0)
 		|| (src[0] == 0xff && src[1] & 0x80 == 0x80)) {

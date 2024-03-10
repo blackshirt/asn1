@@ -24,10 +24,10 @@ fn (n Null) tag() !asn1.Tag {
 	return asn1.new_tag(.universal, false, 5)
 }
 
-fn (n Null) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
+fn (n Null) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
 	match mode {
 		.der {
-			n.tag()!.pack_to_asn1(mut to)
+			n.tag()!.pack_to_asn1(mut to, .der, p)!
 			// the length is 0
 			to << [u8(0x00)]
 		}
@@ -37,17 +37,17 @@ fn (n Null) pack_to_asn1(mut to []u8, mode asn1.EncodingMode) ! {
 	}
 }
 
-fn Null.unpack(b []u8, loc i64, mode asn1.EncodingMode) !(Null, i64) {
+fn Null.unpack(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Params) !(Null, i64) {
 	match mode {
 		.der {
 			if b.len < 2 {
 				return error('Null: invalid args')
 			}
-			tag, pos := asn1.Tag.unpack_from_asn1(b, loc)!
+			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, .der, p)!
 			if tag.tag_number() != 0x05 {
 				return error('Null: bad tag=${tag}')
 			}
-			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der)!
+			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der, p)!
 			if len != 0 {
 				return error('Null: len != 0')
 			}

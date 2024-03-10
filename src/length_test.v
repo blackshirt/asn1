@@ -138,7 +138,7 @@ fn test_tc3_absence_standard_length_block() ! {
 fn test_tc5_unnecessary_usage_long_of_length_form() ! {
 	value := [u8(0x9f), 0xff, 0x7f, 0x81, 0x01, 0x40]
 
-	tag, pos := Tag.unpack_from_asn1(value, 0)!
+	tag, pos := Tag.unpack_from_asn1(value, 0, .der)!
 	// 0x9f == 10011111
 	assert tag.cls == .context_specific
 	assert tag.compound == false

@@ -25,14 +25,14 @@ const max_definite_length_value = i64(0x0000_ffff_ffff_ffff)
 // Length represent ASN.1 length value
 type Length = i64
 
-// from_i64 creates Length from i64  value. Passing negative value (<0) for length 
+// from_i64 creates Length from i64  value. Passing negative value (<0) for length
 // is not make a sense, so just return error instead if it happen.
 fn Length.from_i64(v i64) !Length {
 	if v < 0 {
 		return error('Length: supply with positive i64')
 	}
-	if v > max_definite_length_value {
-		return error("Length: value provided exceed limit")
+	if v > asn1.max_definite_length_value {
+		return error('Length: value provided exceed limit')
 	}
 	return Length(v)
 }
@@ -64,9 +64,9 @@ pub fn (v Length) length() int {
 	return n
 }
 
-// pack_to_asn1 serializes Length v into bytes and append it into `to`. The`mode` params drives how 
+// pack_to_asn1 serializes Length v into bytes and append it into `to`. The`mode` params drives how
 // this packing operation would be done, only `.,der` mode is supported.
-pub fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
+pub fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
 	match mode {
 		.der {
 			// Long form
@@ -77,7 +77,7 @@ pub fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 				if count > asn1.max_definite_length_count {
 					return error('something bad in your length')
 				}
-				// In definite long form, msb bit of first byte is set to 1, and the remaining bits 
+				// In definite long form, msb bit of first byte is set to 1, and the remaining bits
 				// of first byte tells exact count how many bytes following representing this length value.
 				to << 0x80 | u8(count)
 				v.pack_and_append(mut to)
@@ -95,7 +95,7 @@ pub fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode) ! {
 
 // unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buf.
 // Its return Length and next offset in the buffer buf to process on, and return error on fail.
-pub fn Length.unpack_from_asn1(buf []u8, loc i64, mode EncodingMode) !(Length, i64) {
+pub fn Length.unpack_from_asn1(buf []u8, loc i64, mode EncodingMode, p Params) !(Length, i64) {
 	match mode {
 		.der {
 			mut pos := loc

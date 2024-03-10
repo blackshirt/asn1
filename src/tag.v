@@ -5,8 +5,8 @@ module asn1
 // Maximum number of bytes to represent tag number, includes the tag byte.
 // We impose limit on the tag number to be in range 0..16383. See comment on `TagNumber` type below.
 // Its big enough to accomodate and represent different of yours own tag number.
-// Its represents 2 bytes length, maximum bytes arrays to represent tag number is
-// [u8(0x1f), u8(0xff), 0x7f] or 16383 in base 128.
+// Its represents 2 bytes length where maximum bytes arrays to represent tag number
+// in multibyte (long) form is `[u8(0x1f), 0xff, 0x7f]` or 16383 in base 128.
 const max_tag_length = 3
 const max_tag_number = 16383
 
@@ -14,7 +14,7 @@ const max_tag_number = 16383
 // ASN.1 Tag number can be represented in two form, short form and long form.
 // The short form for tag number below <= 30 and stored enough in single byte,
 // where long form for tag number > 30, and stored in two or more bytes.
-// Ssee limit restriction comment above.
+// See limit restriction comment above.
 pub struct Tag {
 mut:
 	cls      Class
@@ -22,8 +22,8 @@ mut:
 	number   TagNumber
 }
 
-// `new_tag` creates new tag identifier. Its accepts params of Class `c`, constructed or primitive
-// form in `compound` boolean flag, and the tag `number`.
+// `new_tag` creates new ASN.1 tag identifier. Its accepts params of Class `c`,
+// constructed or primitive form in `compound` boolean flag, and the integer tag `number`.
 fn new_tag(c Class, compound bool, number int) !Tag {
 	return Tag{
 		cls: c
@@ -31,84 +31,98 @@ fn new_tag(c Class, compound bool, number int) !Tag {
 		number: TagNumber.from_int(number)!
 	}
 }
-	
+
 // class return the ASN.1 class of this tag
 pub fn (t Tag) class() Class {
 	return t.cls
 }
-	
+
 // is_compound tells us whether this tag is constructed or not
 pub fn (t Tag) is_compound() bool {
 	return t.compound
 }
-	
-// tag_number return the tag nunber of this tag 
+
+// tag_number return the tag nunber of this tag
 pub fn (t Tag) tag_number() int {
 	return t.number
 }
 
 // pack_to_asn1 serializes tag t into bytes array and appended into dst
-pub fn (t Tag) pack_to_asn1(mut dst []u8) {
-	mut b := u8(t.cls) << 6
-	if t.compound {
-		b |= compound_mask
-	}
-    // The tag in long form
-	if t.number >= 0x1f {
-		b |= tag_mask // 0x1f
-		dst << b
-		t.number.pack_base128(mut dst)
-	} else {
-		// short form
-		b |= u8(t.number)
-		dst << b
+pub fn (t Tag) pack_to_asn1(mut dst []u8, mode EncodingMode, p Params) ! {
+	match mode {
+		.der, .ber {
+			mut b := (u8(t.cls) << 6) & class_mask
+			if t.compound {
+				b |= compound_mask
+			}
+			// The tag in long form
+			if t.number >= 0x1f {
+				b |= tag_mask // 0x1f
+				dst << b
+				t.number.pack_base128(mut dst)
+			} else {
+				// short form
+				b |= u8(t.number)
+				dst << b
+			}
+		}
+		else {
+			return error('Not currently supported')
+		}
 	}
 }
 
-// unpack_from_asn1 deserializes bytes of data into Tag structure, start from offset loc.
+// unpack_from_asn1 deserializes bytes of bytes into Tag structure, start from offset loc.
 // Its return Tag and next offset to operate on, and return error if fail to unpack.
-pub fn Tag.unpack_from_asn1(data []u8, loc i64) !(Tag, i64) {
-	if data.len < 1 {
-		return error('Tag: get ${data.len} bytes for reading tag, its not enough')
+pub fn Tag.unpack_from_asn1(bytes []u8, loc i64, mode EncodingMode, p Params) !(Tag, i64) {
+	// preliminary check
+	if bytes.len < 1 {
+		return error('Tag: get ${bytes.len} bytes for reading tag, its not enough')
 	}
-	if loc > data.len {
+	if loc > bytes.len {
 		return error('invalid len')
 	}
 	mut pos := loc
-	
-    // first byte of tag bytes
-	b := data[pos]
-	pos += 1
+	match mode {
+		.ber, .der {
+			// first byte of tag bytes
+			b := bytes[pos]
+			pos += 1
 
-	cls := int((b & class_mask) >> 6)
-	compound := b & compound_mask == compound_mask
-	mut number := TagNumber.from_int(int(b & tag_mask))!
+			cls := int((b & class_mask) >> 6)
+			compound := b & compound_mask == compound_mask
+			mut number := TagNumber.from_int(int(b & tag_mask))!
 
-	// check if this `number` is a long (multibyte) form, and interpretes more bytes as a tag number.
-	if number == 0x1f {
-		// we mimic go version of tag handling, only allowed `max_tag_length` bytes following
-		// to represent tag number.
-		number, pos = TagNumber.unpack_from_asn1(data, pos)!
+			// check if this `number` is a long (multibyte) form, and interpretes more bytes as a tag number.
+			if number == 0x1f {
+				// we mimic go version of tag handling, only allowed `max_tag_length` bytes following
+				// to represent tag number.
+				number, pos = TagNumber.unpack_from_asn1(bytes, pos)!
 
-		// pos is the next position to read next bytes, so check tag bytes length
-		if pos >= asn1.max_tag_length + loc + 1 {
-			return error('tag bytes is too big')
+				// pos is the next position to read next bytes, so check tag bytes length
+				if pos >= asn1.max_tag_length + loc + 1 {
+					return error('tag bytes is too big')
+				}
+				if number < 0x1f {
+					// requirement for DER encoding.
+					// TODO: the other encoding may remove this restriction
+					return error('non-minimal tag')
+				}
+			}
+			tag := Tag{
+				cls: class_from_int(cls)!
+				compound: compound
+				number: number
+			}
+			return tag, pos
 		}
-		if number < 0x1f {
-			// requirement for DER encoding.
-			// TODO: the other encoding may remove this restriction
-			return error('non-minimal tag')
+		else {
+			return error('Not currently supported')
 		}
 	}
-	tag := Tag{
-		cls: class_from_int(cls)!
-		compound: compound
-		number: number
-	}
-	return tag, pos
 }
 
-// clone_with_class clones t to new Tag with class is set to c
+// clone_with_class clones teh tag t into new tag with class is set to c
 fn (mut t Tag) clone_with_class(c Class) Tag {
 	if t.cls == c {
 		return t
@@ -128,10 +142,10 @@ fn (mut t Tag) clone_with_tag(v int) !Tag {
 	return new
 }
 
-// `tag_length` calculates length of bytes needed to store tag number, include one byte 
+// `tag_length` calculates length of bytes needed to store tag number, include one byte
 // marker that tells if the tag number is in long form (>= 0x1f)
 pub fn (t Tag) tag_length() int {
-	n := if t.number < 0x1f { 1 } else { 1 + t.number.bytes_needed() }
+	n := if t.number < 0x1f { 1 } else { 1 + t.number.bytes_len() }
 	return n
 }
 
@@ -153,8 +167,8 @@ fn TagNumber.from_int(v int) !TagNumber {
 	return TagNumber(v)
 }
 
-// bytes_needed tells amount of bytes needed to store v in base 128
-fn (v TagNumber) bytes_needed() int {
+// bytes_len tells amount of bytes needed to store v in base 128
+fn (v TagNumber) bytes_len() int {
 	if v == 0 {
 		return 1
 	}
@@ -169,16 +183,16 @@ fn (v TagNumber) bytes_needed() int {
 	return ret
 }
 
-fn (v TagNumber) length() int {
+fn (v TagNumber) tag_number_length() int {
 	// when number is greater than 31 (0x1f), its more bytes
 	// to represent this number.
-	len := if v < 0x1f { 1 } else { v.bytes_needed() + 1 }
+	len := if v < 0x1f { 1 } else { v.bytes_len() + 1 }
 	return len
 }
 
 // pack_base128 serializes TagNumber v into bytes and append it into `to` in base 128
-fn (v TagNumber) pack_base128(mut to []u8) {
-	n := v.bytes_needed()
+fn (v TagNumber) pack_base128(mut to []u8, p Params) {
+	n := v.bytes_len()
 	for i := n - 1; i >= 0; i-- {
 		mut o := u8(v >> u32(i * 7))
 		o &= 0x7f
@@ -192,7 +206,7 @@ fn (v TagNumber) pack_base128(mut to []u8) {
 
 // unpack_from_asn1 deserializes bytes into TagNumber from offset loc in base 128.
 // Its return deserialized TagNumber and next offset to process on.
-fn TagNumber.unpack_from_asn1(bytes []u8, loc i64) !(TagNumber, i64) {
+fn TagNumber.unpack_from_asn1(bytes []u8, loc i64, p Params) !(TagNumber, i64) {
 	mut pos := loc
 	mut ret := 0
 	for s := 0; pos < bytes.len; s++ {

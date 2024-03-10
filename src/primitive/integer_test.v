@@ -131,6 +131,32 @@ fn test_asn1_unpack_and_validate() {
 	}
 }
 
+fn test_asn1_integer_simple_long_integer_pack_unpack() ! {
+	num := Integer.from_hex('0102030405060708090a0b0c0d0e0f')!
+	mut dst := []u8{}
+	num.pack_to_asn1(mut dst, .der)!
+
+	expected := '\x02\x0f\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'.bytes()
+	assert dst == expected
+
+	// unpack back
+	val, pos := Integer.unpack_from_asn1(expected, 0, .der)!
+	assert val == num
+	assert pos == 17
+
+	// test with negative value
+	negnum := Integer.from_hex('-0102030405060708090a0b0c0d0e0f')!
+	mut out := []u8{}
+	negnum.pack_to_asn1(mut out, .der)!
+	expneg := '\x02\x0f\xfe\xfd\xfc\xfb\xfa\xf9\xf8\xf7\xf6\xf5\xf4\xf3\xf2\xf1\xf1'.bytes()
+	assert out == expneg
+
+	// unpack back a negative number
+	val2, pos2 := Integer.unpack_from_asn1(expneg, 0, .der)!
+	assert val2 == negnum
+	assert pos2 == 17
+}
+
 /*
 struct IntegerTest {
 	bytes []u8

@@ -30,7 +30,7 @@ fn test_universal_class_tag_length_handling() ! {
 			assert err == c.err
 			continue
 		}
-		n := t.number.length()
+		n := t.number.tag_number_length()
 		assert n == c.explength
 	}
 }
@@ -63,7 +63,7 @@ fn test_tag_unpack() ! {
 
 	for i, c in data {
 		dump(i)
-		tag, pos := Tag.unpack_from_asn1(c.bytes, 0) or {
+		tag, pos := Tag.unpack_from_asn1(c.bytes, 0, .der) or {
 			assert err == c.err
 			continue
 		}
@@ -131,7 +131,7 @@ fn test_tagandlength_handling() ! {
 	for i, c in bs {
 		dump(i)
 		dump(c.bytes.hex())
-		tag, pos := Tag.unpack_from_asn1(c.bytes, 0) or {
+		tag, pos := Tag.unpack_from_asn1(c.bytes, 0, .der) or {
 			assert err == c.err
 			continue
 		}
@@ -179,7 +179,7 @@ fn test_serialize_tag() ! {
 			assert err == c.err
 			continue
 		}
-		tag.pack_to_asn1(mut dst)
+		tag.pack_to_asn1(mut dst, .der)!
 		assert dst == c.exp
 	}
 }
