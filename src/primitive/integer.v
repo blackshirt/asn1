@@ -30,13 +30,14 @@ const zero_integer = big.Integer{
 
 // Universal class of arbitrary length type of ASN.1 INTEGER
 struct Integer {
+mut:
 	tag   asn1.Tag = asn1.new_tag(.universal, false, 2)!
 	value big.Integer
 }
 
-// from_string creates a new Integer from decimal string s.
-fn Integer.from_string(s string) !Integer {
-	v := big.integer_from_string(s)!
+// from_string creates a new ASN.1 Integer from decimal string s.
+fn Integer.from_string(s string) Integer {
+	v := big.integer_from_string(s) or { panic(err) }
 	if v == big.zero_int {
 		return Integer{
 			value: primitive.zero_integer
@@ -48,7 +49,8 @@ fn Integer.from_string(s string) !Integer {
 	}
 }
 
-// from_hex creates ASN.1 Integer from hex string in x without `0x` prefixed hex string.
+// from_hex creates a new ASN.1 Integer from hex string in x
+// where x is a valid hex string without `0x` prefix.
 fn Integer.from_hex(x string) !Integer {
 	s := big.integer_from_radix(x, 16)!
 	if s == big.zero_int {
@@ -61,7 +63,7 @@ fn Integer.from_hex(x string) !Integer {
 	}
 }
 
-// from_i64 creates new Integer from i64 v
+// from_i64 creates new a ASN.1 Integer from i64 v
 fn Integer.from_i64(v i64) Integer {
 	// same issue as above
 	if v == 0 {
@@ -99,7 +101,7 @@ fn (v Integer) tag() asn1.Tag {
 	return v.tag
 }
 
-fn (v Integer) bytes_needed() int {
+fn (v Integer) bytes_len() int {
 	if v.value == primitive.zero_integer {
 		return 1
 	}
@@ -157,18 +159,25 @@ fn (v Integer) pack_into_twoscomplement_form() !([]u8, int) {
 fn Integer.unpack_from_twoscomplement_bytes(b []u8) !Integer {
 	// FIXME: should we return error instead ?
 	if b.len == 0 {
-		return Integer{
-			value: primitive.zero_integer
-		}
+		return error('Integer: null bytes')
 	}
-	mut num := big.integer_from_bytes(b)
-	if b.len > 0 && b[0] & 0x80 > 0 {
-		sub := big.one_int.left_shift(u32(b.len) * 8)
-		num -= sub
+
+	if b.len > 0 && b[0] & 0x80 == 0x80 {
+		// This is a negative number.
+		mut notbytes := []u8{len: b.len}
+		for i, _ in notbytes {
+			notbytes[i] = ~b[i]
+		}
+		mut ret := big.integer_from_bytes(notbytes)
+		ret += big.one_int
+		ret = ret.neg()
+		return Integer{
+			value: ret
+		}
 	}
 
 	return Integer{
-		value: num
+		value: big.integer_from_bytes(b)
 	}
 }
 
@@ -187,9 +196,9 @@ fn (v Integer) packed_length() !int {
 	mut n := 0
 	n += v.tag().tag_length()
 
-	x := asn1.Length.from_i64(v.bytes_needed())!
+	x := asn1.Length.from_i64(v.bytes_len())!
 	n += x.length()
-	n += v.bytes_needed()
+	n += v.bytes_len()
 
 	return n
 }
@@ -238,28 +247,6 @@ fn Integer.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Para
 	}
 }
 
-// read big.Integer from src bytes
-fn read_bigint(src []u8) !big.Integer {
-	if !valid_bytes(src, true) {
-		return error('Integer: check return false')
-	}
-
-	if src.len > 0 && src[0] & 0x80 == 0x80 {
-		// This is negative number, do two complements rule
-		// FIXME: or we can use `big.integer_from_bytes(bytes, signum: -1)` ?
-		mut notbytes := []u8{len: src.len}
-		for i, _ in notbytes {
-			notbytes[i] = ~src[i]
-		}
-		mut ret := big.integer_from_bytes(notbytes)
-		ret += big.one_int
-		ret = ret.neg()
-		return ret
-	}
-	s := big.integer_from_bytes(src)
-	return s
-}
-
 // valid_bytes validates bytes meets some requirement for DER encoding.
 fn valid_bytes(src []u8, signed bool) bool {
 	// Requirement for der encoding
@@ -283,103 +270,3 @@ fn valid_bytes(src []u8, signed bool) bool {
 	}
 	return true
 }
-
-/*
-// i64 handling
-
-// serialize i64
-fn serialize_i64(s i64) ![]u8 {
-	t := asn1.new_tag(.universal, false, int(TagType.integer))
-	mut out := []u8{}
-
-	serialize_tag(mut out, t)
-
-	n := length_i64(s)
-	mut src := []u8{len: n}
-
-	i64_to_bytes(mut src, s)
-	serialize_length(mut out, src.len)
-	out << src
-	return out
-}
-
-fn decode_i64(src []u8) !(Tag, i64) {
-	if src.len < 2 {
-		return error('decode: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	if tag.number != int(TagType.integer) {
-		return error('bad tag')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-
-	// mut length := 0
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	out := read_bytes(src, next, length)!
-
-	val := read_i64(out)!
-
-	return tag, val
-}
-
-// read_i64 read src as signed i64
-fn read_i64(src []u8) !i64 {
-	if !valid_bytes(src, true) {
-		return error('i64 check return false')
-	}
-	mut ret := i64(0)
-
-	if src.len > 8 {
-		return error('too large integer')
-	}
-	for i := 0; i < src.len; i++ {
-		ret <<= 8
-		ret |= i64(src[i])
-	}
-
-	ret <<= 64 - u8(src.len) * 8
-	ret >>= 64 - u8(src.len) * 8
-
-	// try to serialize back, and check its matching original one
-	// and gives a warning when its not match.
-	$if debug {
-		a := new_integer(ret)
-		c := a.contents()!
-		if c != src {
-			eprintln('maybe integer bytes not in shortest form')
-		}
-	}
-	return ret
-}
-
-fn length_i64(val i64) int {
-	mut i := val
-	mut n := 1
-
-	for i > 127 {
-		n++
-		i >>= 8
-	}
-
-	for i < -128 {
-		n++
-		i >>= 8
-	}
-
-	return n
-}
-
-fn i64_to_bytes(mut dst []u8, i i64) {
-	mut n := length_i64(i)
-
-	for j := 0; j < n; j++ {
-		dst[j] = u8(i >> u32(n - 1 - j) * 8)
-	}
-}
-*/

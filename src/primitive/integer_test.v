@@ -3,48 +3,46 @@
 // that can be found in the LICENSE file.
 module primitive
 
-import math
 import math.big
-import encoding.hex
 
-struct FromString {
+struct TwoFormTest {
 	value    string
 	expected string
 }
 
 const string_data = [
-	FromString{'0', '\x00'},
-	FromString{'25', '\x19'},
-	FromString{'100', '\x64'},
-	FromString{'-1042342234234123423435647768234', '\xF2\xD8\x02\xB6R\x7F\x99\xEE\x98#\x99\xA9V'},
-	FromString{'-12095473475870063', '\xD5\a;\x20\x14\xA2\x91'},
-	FromString{'12095473475870063', '*\xF8\xC4\xDF\xEB]o'},
-	FromString{'12438789579431234124191998', '\nJ\x04"^\x91\x04\x8a\xb1\x18\xfe'},
-	FromString{'-112233441191', '\xe5\xde]\x98Y'},
-	FromString{'64206', '\x00\xfa\xce'},
-	FromString{'-100', '\x9C'},
-	FromString{'100', '\x64'},
-	FromString{'255', '\x00\xFF'},
-	FromString{'0', '\x00'},
-	FromString{'-2', '\xfe'},
-	FromString{'-1', '\xff'},
-	FromString{'-16', '\xf0'},
-	FromString{'-256', '\xff\x00'},
-	FromString{'-255', '\xff\x01'},
-	FromString{'-32768', '\x80\x00'},
-	FromString{'-128', '\x80'},
-	FromString{'-129', '\xff\x7f'},
-	FromString{'-127', '\x81'},
+	TwoFormTest{'0', '\x00'},
+	TwoFormTest{'25', '\x19'},
+	TwoFormTest{'100', '\x64'},
+	TwoFormTest{'-1042342234234123423435647768234', '\xF2\xD8\x02\xB6R\x7F\x99\xEE\x98#\x99\xA9V'},
+	TwoFormTest{'-12095473475870063', '\xD5\a;\x20\x14\xA2\x91'},
+	TwoFormTest{'12095473475870063', '*\xF8\xC4\xDF\xEB]o'},
+	TwoFormTest{'12438789579431234124191998', '\nJ\x04"^\x91\x04\x8a\xb1\x18\xfe'},
+	TwoFormTest{'-112233441191', '\xe5\xde]\x98Y'},
+	TwoFormTest{'64206', '\x00\xfa\xce'},
+	TwoFormTest{'-100', '\x9C'},
+	TwoFormTest{'100', '\x64'},
+	TwoFormTest{'255', '\x00\xFF'},
+	TwoFormTest{'0', '\x00'},
+	TwoFormTest{'-2', '\xfe'},
+	TwoFormTest{'-1', '\xff'},
+	TwoFormTest{'-16', '\xf0'},
+	TwoFormTest{'-256', '\xff\x00'},
+	TwoFormTest{'-255', '\xff\x01'},
+	TwoFormTest{'-32768', '\x80\x00'},
+	TwoFormTest{'-128', '\x80'},
+	TwoFormTest{'-129', '\xff\x7f'},
+	TwoFormTest{'-127', '\x81'},
 ]
 
-fn test_pack_integer_into_2form_from_string_data() ! {
+fn test_integer_pack_n_unpack_from_n_into_2form() ! {
 	for i, c in primitive.string_data {
-		v := Integer.from_string(c.value)!
+		v := Integer.from_string(c.value)
 		out, _ := v.pack_into_twoscomplement_form()!
 
 		assert out == c.expected.bytes()
 
-		// back
+		// unpack back
 		b := Integer.unpack_from_twoscomplement_bytes(c.expected.bytes())!
 		assert b.value.str() == c.value
 	}
@@ -120,8 +118,6 @@ const integer_test_data = [
 // from golang encoding/asn1 test
 fn test_asn1_unpack_and_validate() {
 	for i, v in primitive.integer_test_data {
-		dump(i)
-		dump(v.bytes.hex())
 		ret := Integer.unpack_and_validate(v.bytes) or {
 			assert err == v.err
 			continue
@@ -157,194 +153,22 @@ fn test_asn1_integer_simple_long_integer_pack_unpack() ! {
 	assert pos2 == 17
 }
 
-/*
-struct IntegerTest {
-	bytes []u8
-	err IError
-	expected i32
+// from asnone test cases
+// FIXME: Its still need a fix, remove additional 0x00 before 0x8f in unpack operation
+fn test_integer_large_int() ! {
+	bytes := [u8(0x02), 0x81, 0x81, 0x00, 0x8f, 0xe2, 0x41, 0x2a, 0x08, 0xe8, 0x51, 0xa8, 0x8c,
+		0xb3, 0xe8, 0x53, 0xe7, 0xd5, 0x49, 0x50, 0xb3, 0x27, 0x8a, 0x2b, 0xcb, 0xea, 0xb5, 0x42,
+		0x73, 0xea, 0x02, 0x57, 0xcc, 0x65, 0x33, 0xee, 0x88, 0x20, 0x61, 0xa1, 0x17, 0x56, 0xc1,
+		0x24, 0x18, 0xe3, 0xa8, 0x08, 0xd3, 0xbe, 0xd9, 0x31, 0xf3, 0x37, 0x0b, 0x94, 0xb8, 0xcc,
+		0x43, 0x08, 0x0b, 0x70, 0x24, 0xf7, 0x9c, 0xb1, 0x8d, 0x5d, 0xd6, 0x6d, 0x82, 0xd0, 0x54,
+		0x09, 0x84, 0xf8, 0x9f, 0x97, 0x01, 0x75, 0x05, 0x9c, 0x89, 0xd4, 0xd5, 0xc9, 0x1e, 0xc9,
+		0x13, 0xd7, 0x2a, 0x6b, 0x30, 0x91, 0x19, 0xd6, 0xd4, 0x42, 0xe0, 0xc4, 0x9d, 0x7c, 0x92,
+		0x71, 0xe1, 0xb2, 0x2f, 0x5c, 0x8d, 0xee, 0xf0, 0xf1, 0x17, 0x1e, 0xd2, 0x5f, 0x31, 0x5b,
+		0xb1, 0x9c, 0xbc, 0x20, 0x55, 0xbf, 0x3a, 0x37, 0x42, 0x45, 0x75, 0xdc, 0x90, 0x65]
+	expected_integer := Integer.from_string('101038645214968213029489864879507742420925199145132483818978980455132582258676381289000109319204510275496178360219909358646064503513889573494768497419381751359787623037449375660247011308028102339473875820259375735204357343091558075960601364303443174344509161224592926325506446708043127306053676664799729848421')
+	out, pos := Integer.unpack_from_asn1(bytes, 0, .der)!
+	dump(out)
+	dump(pos)
+	assert pos == bytes.len
+	
 }
-
-fn test_read_i32() {
-	i32testdata := [
-		IntegerTest{[], error('i32 check return false'), 0}, // empty integer
-		IntegerTest{[u8(0x00)], none, 0},
-		IntegerTest{[u8(0x7f)], none, 127},
-		IntegerTest{[u8(0x00), 0x80], none, 128},
-		IntegerTest{[u8(0x01), 0x00], none, 256},
-		IntegerTest{[u8(0x80)], none, -128},
-		IntegerTest{[u8(0xff), 0x7f], none, -129},
-		IntegerTest{[u8(0x80), 0x00, 0x00, 0x00], none, -2147483648},
-		IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00], error('integer too large'), 0}, // overflow too big
-		IntegerTest{[u8(0x00), 0x7f], error('i32 check return false'), 0},
-		IntegerTest{[u8(0xff), 0xf0], error('i32 check return false'), 0}, // not minimally
-	]
-	for i, test in i32testdata {
-		ret := read_i32(test.bytes) or {
-			assert err == test.err
-			continue
-		}
-		assert ret == test.expected
-	}
-}
-
-struct BigintTest {
-	bytes []u8
-	err IError
-	expected string
-}
-
-fn test_read_bigint() {
-	bigint_data := [
-		BigintTest{[u8(0xff)], none, '-1'},
-		BigintTest{[u8(0x00)], none, '0'},
-		BigintTest{[u8(0x01)], none, '1'},
-		BigintTest{[u8(0x00), 0xff], none, '255'},
-		BigintTest{[u8(0xff), 0x00], none, '-256'},
-		BigintTest{[u8(0x01), 0x00], none, '256'},
-		BigintTest{[], error('big integer check return false'), '0'}, // empty
-		BigintTest{[u8(0x00), 0x7f], error('big integer check return false'), ''}, // not minimally encoded
-		BigintTest{[u8(0xff), 0xf0], error('big integer check return false'), ''}, // not minimally encoded
-		BigintTest{'\0xff\0x7f\0xff\0xff\0xff\0xff\0xff\0xff\0xff\0xff\0xff\0xff'.bytes(), error('big integer check return false'), ''},
-	]
-
-	for i, test in bigint_data {
-		ret := read_bigint(test.bytes) or {
-			assert err == test.err
-			continue
-		}
-		assert ret.str() == test.expected
-	}
-}
-
-struct I64SerializeTest {
-	bytes i64
-	out string
-}
-
-fn test_serialize_decode_i64() {
-	ds := [
-		I64SerializeTest{10, '02010a'},
-		I64SerializeTest{127, '02017f'},
-		I64SerializeTest{128, '02020080'},
-		I64SerializeTest{-128, '020180'},
-		I64SerializeTest{-129, '0202ff7f'},
-		I64SerializeTest{-256, '0202ff00'},
-		I64SerializeTest{666, '0202029a'},
-		I64SerializeTest{86424278346, '0205141f49d54a'},
-		I64SerializeTest{math.max_i64, '02087fffffffffffffff'},
-		// from rust-asn1
-		I64SerializeTest{-256, '0202ff00'},
-	]
-
-	for t in ds {
-		out := serialize_i64(i64(t.bytes))!
-		exp := hex.decode(t.out)!
-
-		assert out == exp
-
-		tag, back := decode_i64(exp)!
-
-		assert back == t.bytes
-		assert tag.number == 0x02 // integer
-
-		num := new_integer(t.bytes)
-		assert num.encode()! == exp
-	}
-}
-
-struct I32SerializeTest {
-	bytes string
-	out i32
-	err IError
-}
-
-fn test_serialize_decode_i32() ! {
-	ds := [
-		I32SerializeTest{'020100', 0, none},
-		I32SerializeTest{'02017f', 127, none},
-		I32SerializeTest{'02020080', 128, none},
-		I32SerializeTest{'02020100', 256, none},
-		I32SerializeTest{'020180', -128, none},
-		I32SerializeTest{'0202ff7f', -129, none},
-		I32SerializeTest{'0202ff00', -256, none},
-		I32SerializeTest{'02047fffffff', math.max_i32, none},
-		// bad tag
-		I32SerializeTest{'0300', 0, error('bad tag')}, // fall in check validity
-	]
-
-	for c in ds {
-		bytes := hex.decode(c.bytes)!
-		tag, val := decode_i32(bytes) or {
-			assert err == c.err
-			continue
-		}
-
-		assert val == c.out
-		assert tag.number == 0x02 // integer
-
-		// serialize back
-		ser := serialize_i32(val)!
-		assert ser == bytes
-	}
-}
-
-fn test_bigint_basic() ! {
-	bytes := big.integer_from_bytes([u8(0x13), 0x37, 0xca, 0xfe, 0xba, 0xbe])
-	out := [u8(0x02), 6, u8(0x13), 0x37, 0xca, 0xfe, 0xba, 0xbe]
-	// bytes == val
-	val := big.integer_from_i64(i64(0x1337cafebabe))
-
-	s := serialize_bigint(bytes)!
-	assert s == out
-
-	// back
-	tag, back := decode_bigint(out)!
-
-	assert tag.number == int(TagType.integer)
-	assert back == val
-}
-
-fn test_bigint_advanced() ! {
-	bytes := big.integer_from_string('84885164052257330097714121751630835360966663883732297726369399')!
-	out := [u8(0x02), 26, 52, 210, 252, 160, 105, 66, 145, 88, 8, 53, 227, 150, 221, 98, 149, 87,
-		146, 121, 109, 20, 162, 246, 230, 65, 30, 119]
-
-	s := serialize_bigint(bytes)!
-	assert s == out
-
-	// back
-	tag, back := decode_bigint(out)!
-
-	assert tag.number == int(TagType.integer)
-	assert back == bytes
-}
-
-struct Intest {
-	num int
-	out []u8
-}
-
-fn test_asn1_integer_serializing() ! {
-	data := [Intest{32768, [u8(0x02), 0x03, 0x00, 0x80, 0x00]},
-		Intest{32767, [u8(0x02), 0x02, 0x7f, 0xff]}, Intest{256, [u8(0x02), 0x02, 0x01, 0x00]},
-		Intest{255, [u8(0x02), 0x02, 0x00, 0xff]}, Intest{128, [u8(0x02), 0x02, 0x00, 0x80]},
-		Intest{127, [u8(0x02), 0x01, 0x7f]}, Intest{1, [u8(0x02), 0x01, 0x01]},
-		Intest{0, [u8(0x02), 0x01, 0x00]}, Intest{-1, [u8(0x02), 0x01, 0xff]},
-		Intest{-128, [u8(0x02), 0x01, 0x80]}, Intest{-129, [u8(0x02), 0x02, 0xff, 0x7f]},
-		Intest{-256, [u8(0x02), 0x02, 0xff, 0x00]}, Intest{-32768, [u8(0x02), 0x02, 0x80, 0x00]},
-		Intest{-32769, [u8(0x02), 0x03, 0xff, 0x7f, 0xff]}]
-	for c in data {
-		num := new_integer(c.num)
-		out := num.encode()!
-		assert out == c.out
-	}
-}
-
-fn test_tc19_non_finished_encoding() ! {
-	data := [u8(0x02), 0x001]
-	_, _ := decode_i32(data) or {
-		assert err == error('pos + size maybe getting overflow')
-		return
-	}
-}
-*/
