@@ -4,21 +4,23 @@
 module primitive
 
 import encoding.utf8
-import asn1 
+import asn1
 
 // UTF8String
 // UTF8 unicode charset
 //
 struct UTF8String {
-	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.utf8string))!
-	value string 
+	tag   asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.utf8string))!
+	value string
 }
 
 fn UTF8String.new(s string) !UTF8String {
 	if !utf8.validate_str(s) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
-	return UTF8String{value: s}
+	return UTF8String{
+		value: s
+	}
 }
 
 fn (u UTF8String) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
@@ -33,7 +35,33 @@ fn (u UTF8String) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Param
 			length.pack_to_asn1(mut to, mode, p)!
 			to << u.value.bytes()
 		}
-		else { return error("unsupported")}
+		else {
+			return error('unsupported')
+		}
+	}
+}
+
+fn UTF8String.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Params) !(UTF8String, i64) {
+	if b.len < 2 {
+		return error('UTF8String: b.len underflow')
+	}
+	match mode {
+		.ber, .der {
+			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, mode, p)!
+			if tag.class() != .universal || tag.is_compound()
+				|| tag.tag_number() != int(asn1.TagType.utf8string) {
+				return error('UTF8String: bad tag of universal class type')
+			}
+			len, idx := asn1.Length.unpack_from_asn1(b, pos, mode, p)!
+			// TODO: check the length, its safe to access bytes
+			bytes := unsafe { b[idx..idx + len] }
+
+			us := UTF8String.new(bytes.bytestr())!
+			return us, idx + len
+		}
+		else {
+			return error('Unsupported mode')
+		}
 	}
 }
 

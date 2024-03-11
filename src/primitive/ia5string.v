@@ -8,17 +8,17 @@ import asn1
 // IA5String handling routine
 // Standard ASCII characters
 struct IA5String {
+	value string
 mut:
-	tag asn1.Tag = asn1.new_tag(.universal, false, 22)!
-	s   string
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.ia5string))!
 }
 
-fn IA5String.new(s string) !IA5String {
-	if !s.is_ascii() {
+fn IA5String.new(value string) !IA5String {
+	if !value.is_ascii() {
 		return error('IA5String: contains non-ascii chars')
 	}
 	return IA5String{
-		s: s
+		value: value
 	}
 }
 
@@ -27,13 +27,13 @@ fn (v IA5String) tag() asn1.Tag {
 }
 
 fn (v IA5String) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
-	if !v.s.is_ascii() {
+	if !v.value.is_ascii() {
 		return error('IA5String: contains non-ascii char')
 	}
 	match mode {
 		.ber, .der {
 			v.tag().pack_to_asn1(mut to, mode, p)!
-			bytes := v.s.bytes()
+			bytes := v.value.bytes()
 			length := asn1.Length.from_i64(bytes.len)!
 			length.pack_to_asn1(mut to, mode, p)!
 			to << bytes
@@ -62,11 +62,11 @@ fn IA5String.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Pa
 			bytes := unsafe { b[idx..idx + len] }
 			// check for ASCII charset
 			if bytes.any(it < u8(` `) || it > u8(`~`)) {
-				return error('bytes contains non-ascii chars')
+				return error('IA5String: bytes contains non-ascii chars')
 			}
 			ret := IA5String{
 				tag: tag
-				s: bytes.bytestr()
+				value: bytes.bytestr()
 			}
 			return ret, idx + len
 		}
