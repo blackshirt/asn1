@@ -285,7 +285,7 @@ fn (v TagNumber) universal_tag_type() !TagType {
 
 // Standard universal tag number. Some of them was deprecated,
 // so its not going to be supported on this module.
-enum TagType {
+pub enum TagType {
 	//	reserved for BER
 	reserved         = 0
 	// BOOLEAN type

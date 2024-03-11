@@ -97,7 +97,7 @@ pub fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
 // Its return Length and next offset in the buffer buf to process on, and return error on fail.
 pub fn Length.unpack_from_asn1(buf []u8, loc i64, mode EncodingMode, p Params) !(Length, i64) {
 	match mode {
-		.der {
+		.der, .ber {
 			mut pos := loc
 			if pos >= buf.len {
 				return error('Length: truncated length')

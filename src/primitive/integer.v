@@ -36,13 +36,13 @@ mut:
 }
 
 // equal do checking if n equal to m.
-// BUG?: Its there are some issues when compared n == m directly,
+// ISSUE?: There are some issues when compared n == m directly,
 // its fails even internally its a same, so we provide and use equality check
 fn (n Integer) equal(m Integer) bool {
 	nbytes, nsignum := n.value.bytes()
 	mbytes, msignum := m.value.bytes()
 
-	return n.tag == m.tag && nbytes == nbytes && nsignum == msignum
+	return n.tag == m.tag && nbytes == mbytes && nsignum == msignum
 }
 
 // from_string creates a new ASN.1 Integer from decimal string s.
