@@ -35,11 +35,14 @@ mut:
 	value big.Integer
 }
 
+// equal do checking if n equal to m.
+// BUG?: Its there are some issues when compared n == m directly,
+// its fails even internally its a same, so we provide and use equality check
 fn (n Integer) equal(m Integer) bool {
-	nb, ns := n.value.bytes()
-	mb, ms := m.value.bytes()
+	nbytes, nsignum := n.value.bytes()
+	mbytes, msignum := m.value.bytes()
 
-	return n.tag == m.tag && nb == mb && ns == ms
+	return n.tag == m.tag && nbytes == nbytes && nsignum == msignum
 }
 
 // from_string creates a new ASN.1 Integer from decimal string s.
@@ -132,7 +135,7 @@ fn (v Integer) pack_into_twoscomplement_form() !([]u8, int) {
 		}
 		1 {
 			mut b := v.bytes()
-			// If the integer is positive but the high order bit is set to 1, a leading 0x00 is added 
+			// If the integer is positive but the high order bit is set to 1, a leading 0x00 is added
 			// to the content to indicate that the number is not negative
 			if b[0] & 0x80 > 0 {
 				b.prepend(u8(0x00))
@@ -170,13 +173,17 @@ fn Integer.unpack_from_twoscomplement_bytes(b []u8) !Integer {
 	if b.len == 0 {
 		return error('Integer: null bytes')
 	}
-	// TODO: removes prepended bytes when its meet criteria
 	mut num := big.integer_from_bytes(b)
 	// negative number
 	if b.len > 0 && b[0] & 0x80 > 0 {
 		sub := big.one_int.left_shift(u32(b.len) * 8)
 		num -= sub
 	}
+
+	return Integer{
+		value: num
+	}
+
 	/*
 	if b.len > 0 && b[0] & 0x80 == 0x80 {
 		// This is a negative number.
@@ -192,9 +199,6 @@ fn Integer.unpack_from_twoscomplement_bytes(b []u8) !Integer {
 		}
 	}
 	*/
-	return Integer{
-		value: num
-	}
 }
 
 // Integer.unpack_and_validate deserializes bytes in b into Integer
@@ -254,6 +258,7 @@ fn Integer.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Para
 			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der, p)!
 			// read the bytes part from current position idx to the length part
 			bytes := unsafe { b[idx..idx + len] }
+			// buf := trim_bytes(bytes)!
 			ret := Integer.unpack_and_validate(bytes)!
 			return ret, idx + len
 		}
@@ -285,4 +290,29 @@ fn valid_bytes(src []u8, signed bool) bool {
 		return false
 	}
 	return true
+}
+
+fn is_highest_bit_set(b []u8) bool {
+	if b.len > 0 {
+		return b[0] & 0x80 == 0
+	}
+	return false
+}
+
+fn trim_bytes(b []u8) ![]u8 {
+	if b.len == 0 {
+		return error('bad b')
+	}
+	// TODO: removes prepended bytes when its meet criteria
+	// positive value but its prepended with 0x00
+	if b.len > 1 && b[0] == 0x00 && b[1] & 0x80 > 0 {
+		bytes := b[1..]
+		return bytes
+	}
+	// TODO: how with multiples 0xff
+	if b.len > 1 && b[0] == 0xff && b[1] & 0x80 == 0 {
+		bytes := b[1..]
+		return bytes
+	}
+	return b
 }

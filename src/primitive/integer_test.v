@@ -169,16 +169,24 @@ fn test_integer_large_int() ! {
 	out, pos := Integer.unpack_from_asn1(bytes, 0, .der)!
 
 	assert pos == bytes.len
-	// BUG?: there are some issues when compared out == expected directly, even internally its a same, 
+
+	assert out.tag == expected_integer.tag // success
+	outbytes := out.bytes()
+	expbytes := expected_integer.bytes()
+	assert outbytes == expbytes // success
+	assert out.equal(expected_integer) == true // success
+
+	// this direct assert fails
+	// BUG?: there are some issues when compared out == expected directly, even internally its a same,
 	// but it fails to assert, so we provide and use equality check
-	assert out.equal(expected_integer) == true
+	// assert out == expected_integer
 
 	// pack back
 	mut dst := []u8{}
 	expected_integer.pack_to_asn1(mut dst, .der)!
-	assert dst == bytes 
+	assert dst == bytes
 
 	mut dst2 := []u8{}
 	out.pack_to_asn1(mut dst2, .der)!
-	assert dst2 == bytes 
+	assert dst2 == bytes
 }
