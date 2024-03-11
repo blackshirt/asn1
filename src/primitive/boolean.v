@@ -13,13 +13,13 @@ import asn1
 // The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.
 struct Boolean {
 mut:
-	tag asn1.Tag = asn1.new_tag(.universal, false, 1)!
-	b   bool
+	tag   asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.boolean))!
+	value bool
 }
 
-fn Boolean.new(val bool) Boolean {
+fn Boolean.new(value bool) Boolean {
 	return Boolean{
-		b: val
+		value: value
 	}
 }
 
@@ -34,7 +34,7 @@ fn (v Boolean) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) 
 			v.tag().pack_to_asn1(mut to, mode, p)!
 			length := asn1.Length.from_i64(1)!
 			length.pack_to_asn1(mut to, mode, p)!
-			if v.b {
+			if v.value {
 				to << u8(0xff)
 			} else {
 				to << u8(0x00)
@@ -70,14 +70,14 @@ fn Boolean.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Para
 				0x00 {
 					return Boolean{
 						tag: tag
-						b: false
+						value: false
 					}, idx + len
 				}
 				// 0xff packed to true value
 				0xff {
 					return Boolean{
 						tag: tag
-						b: true
+						value: true
 					}, idx + len
 				}
 				else {
@@ -87,7 +87,7 @@ fn Boolean.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Para
 					}
 					return Boolean{
 						tag: tag
-						b: true
+						value: true
 					}, idx + len
 				}
 			}

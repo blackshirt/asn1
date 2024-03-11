@@ -1,15 +1,43 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module primitive
 
 import encoding.utf8
+import asn1 
 
 // UTF8String
 // UTF8 unicode charset
 //
-type UTF8String = string
+struct UTF8String {
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.utf8string))!
+	value string 
+}
 
+fn UTF8String.new(s string) !UTF8String {
+	if !utf8.validate_str(s) {
+		return error('UTF8String: invalid UTF-8 string')
+	}
+	return UTF8String{value: s}
+}
+
+fn (u UTF8String) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
+	// recheck
+	if !utf8.validate_str(u.value) {
+		return error('UTF8String: invalid UTF-8 string')
+	}
+	match mode {
+		.ber, .der {
+			u.tag().pack_to_asn1(mut to, mode, p)!
+			length := asn1.Length.from_i64(u.value.bytes().len)!
+			length.pack_to_asn1(mut to, mode, p)!
+			to << u.value.bytes()
+		}
+		else { return error("unsupported")}
+	}
+}
+
+/*
 pub fn new_utf8string(s string) !Encoder {
 	if !utf8.validate_str(s) {
 		return error('invalid UTF-8 string')
@@ -17,8 +45,8 @@ pub fn new_utf8string(s string) !Encoder {
 	return UTF8String(s)
 }
 
-pub fn (ut UTF8String) tag() Tag {
-	return new_tag(.universal, false, int(TagType.utf8string))
+pub fn (u UTF8String) tag() asn1.Tag {
+	return u.tag
 }
 
 pub fn (ut UTF8String) length() int {
@@ -87,3 +115,4 @@ fn decode_utf8string(src []u8) !(Tag, string) {
 
 	return tag, out
 }
+*/

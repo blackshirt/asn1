@@ -25,16 +25,16 @@ fn test_new_bitstring() ! {
 		BSTest{[u8(0x03), 0x02, 0x05, 0x80], 5, BitString{[u8(0x03), 0x02, 0x05, 0x80], 5}, none},
 	]
 	for c in ds {
-		out := new_bitstring_with_pad(c.inp, c.pad) or {
+		out := BitString.new_with_pad(c.inp, c.pad) or {
 			assert err == c.err
 			continue
 		}
-		if out is BitString {
-			assert out == c.out
-		}
+
+		assert out == c.out
 	}
 }
 
+/*
 struct BSParse {
 	inp []u8
 	src []u8
@@ -97,3 +97,4 @@ fn test_bitstring_from_bytes() ! {
 	assert val.length() == 0x81
 	assert val.padbits == 0x00
 }
+*/
