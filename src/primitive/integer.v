@@ -170,6 +170,7 @@ fn Integer.unpack_from_twoscomplement_bytes(b []u8) !Integer {
 	if b.len == 0 {
 		return error('Integer: null bytes')
 	}
+	// TODO: removes prepended bytes when its meet criteria
 	mut num := big.integer_from_bytes(b)
 	// negative number
 	if b.len > 0 && b[0] & 0x80 > 0 {
