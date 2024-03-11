@@ -1,16 +1,20 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module primitive
 
 import math
+import asn1
 
 // TODO: doing check for limiting oid array length.
 const max_oid_length = 128
 
 // ObjectIdentifier
-pub type Oid = []int
-
+struct Oid {
+	value []int
+mut:
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.oid)) or {panic(err)}
+}
 // new_oid_from_bytes read bytes as ObjectIdentifier
 fn new_oid_from_bytes(src []u8) !Encoder {
 	oid := read_oid(src)!
