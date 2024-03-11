@@ -26,7 +26,7 @@ fn OctetString.from_bytes(b []u8) OctetString {
 	return OctetString.from_string(b.bytestr())
 }
 
-fn (os OctetString) tag() Tag {
+fn (os OctetString) tag() asn1.Tag {
 	return os.tag
 }
 
@@ -59,7 +59,7 @@ fn OctetString.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.
 			// TODO: check the length, its safe to access bytes
 			bytes := unsafe { b[idx..idx + len] }
 
-			os := OctetString.from_bytes(bytes)!
+			os := OctetString.from_bytes(bytes)
 			return os, idx + len
 		}
 		else {

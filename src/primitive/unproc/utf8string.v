@@ -10,11 +10,12 @@ import asn1
 // UTF8 unicode charset
 //
 struct UTF8String {
-	tag   asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.utf8string))!
 	value string
+mut:
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.utf8string))!
 }
 
-fn UTF8String.new(s string) !UTF8String {
+fn UTF8String.from_string(s string) !UTF8String {
 	if !utf8.validate_str(s) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
@@ -23,17 +24,30 @@ fn UTF8String.new(s string) !UTF8String {
 	}
 }
 
-fn (u UTF8String) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
+fn UTF8String.from_bytes(b []u8) !UTF8String {
+	if !utf8.validate_str(b.bytestr()) {
+		return error('UTF8String: invalid UTF-8 string')
+	}
+	return UTF8String{
+		value: b.bytestr()
+	}
+}
+
+fn (us UTF8String) tag() asn1.Tag {
+	return us.tag
+}
+
+fn (us UTF8String) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
 	// recheck
-	if !utf8.validate_str(u.value) {
+	if !utf8.validate_str(us.value) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
 	match mode {
 		.ber, .der {
-			u.tag().pack_to_asn1(mut to, mode, p)!
-			length := asn1.Length.from_i64(u.value.bytes().len)!
+			us.tag().pack_to_asn1(mut to, mode, p)!
+			length := asn1.Length.from_i64(us.value.bytes().len)!
 			length.pack_to_asn1(mut to, mode, p)!
-			to << u.value.bytes()
+			to << us.value.bytes()
 		}
 		else {
 			return error('unsupported')
@@ -56,7 +70,7 @@ fn UTF8String.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.P
 			// TODO: check the length, its safe to access bytes
 			bytes := unsafe { b[idx..idx + len] }
 
-			us := UTF8String.new(bytes.bytestr())!
+			us := UTF8String.from_bytes(bytes)!
 			return us, idx + len
 		}
 		else {
@@ -71,10 +85,6 @@ pub fn new_utf8string(s string) !Encoder {
 		return error('invalid UTF-8 string')
 	}
 	return UTF8String(s)
-}
-
-pub fn (u UTF8String) tag() asn1.Tag {
-	return u.tag
 }
 
 pub fn (ut UTF8String) length() int {

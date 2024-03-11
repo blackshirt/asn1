@@ -1,7 +1,9 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module primitive
+
+import asn1
 
 // VisibleString
 struct VisibleTest {
@@ -19,7 +21,9 @@ fn test_visible_string_handling() {
 	]
 
 	for c in vb {
-		out := serialize_visiblestring(c.inp) or {
+		vs := VisibleString.from_string(c.inp)!
+		mut out := []u8{}
+		vs.pack_to_asn1(mut out, .der) or {
 			assert err == c.err
 			continue
 		}
@@ -27,9 +31,9 @@ fn test_visible_string_handling() {
 		assert out == c.out
 
 		// back
-		tag, back := decode_visiblestring(out)!
+		vsback, idx := VisibleString.unpack_from_asn1(out, 0, .der)!
 
-		assert tag.number == int(TagType.visiblestring)
-		assert back == c.inp
+		assert vsback.tag.tag_number() == int(asn1.TagType.visiblestring)
+		assert vsback.value == c.inp
 	}
 }

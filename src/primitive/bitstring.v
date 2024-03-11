@@ -3,7 +3,6 @@
 // that can be found in the LICENSE file.
 module primitive
 
-import bitfield
 import asn1
 
 // BITSTRING
@@ -19,15 +18,11 @@ fn (b BitString) tag() asn1.Tag {
 	return b.tag
 }
 
-pub fn new_bitstring(s string) !Encoder {
-	return new_bitstring_with_pad(s.bytes(), 0x00)
+fn BitString.from_string(s string) !BitString {
+	return BitString.from_bytes(s.bytes())
 }
 
-fn BitString.new(s string) !BitString {
-	return BitString.new_from_bytes(s.bytes())
-}
-
-fn BitString.new_from_bytes(src []u8) !BitString {
+fn BitString.from_bytes(src []u8) !BitString {
 	return BitString.new_with_pad(src, u8(0x00))
 }
 
@@ -72,7 +67,7 @@ fn BitString.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Pa
 	match mode {
 		.ber, .der {
 			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, mode, p)!
-			if tag.class != .universal || tag.is_compound()
+			if tag.class() != .universal || tag.is_compound()
 				|| tag.tag_number() != int(asn1.TagType.bitstring) {
 				return error('BitString: bad tag check')
 			}

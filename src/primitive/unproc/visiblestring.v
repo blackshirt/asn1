@@ -11,10 +11,10 @@ import asn1
 struct VisibleString {
 	value string
 mut:
-	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.visiblestring))!
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.visiblestring))
 }
 
-fn VisibleString.new(s string) !VisibleString {
+fn VisibleString.from_string(s string) !VisibleString {
 	if contains_ctrl_chars(s.bytes()) {
 		return error('VisibleString: contains control chars')
 	}
@@ -23,7 +23,7 @@ fn VisibleString.new(s string) !VisibleString {
 	}
 }
 
-fn VisibleString.new_from_bytes(b []u8) !VisibleString {
+fn VisibleString.from_bytes(b []u8) !VisibleString {
 	if contains_ctrl_chars(b) {
 		return error('VisibleString: contains control chars')
 	}
@@ -69,7 +69,7 @@ fn VisibleString.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn
 			// TODO: check the length, its safe to access bytes
 			bytes := unsafe { b[idx..idx + len] }
 
-			vs := VisibleString.new_from_bytes(bytes)!
+			vs := VisibleString.from_bytes(bytes)!
 			return vs, idx + len
 		}
 		else {

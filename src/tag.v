@@ -24,7 +24,7 @@ mut:
 
 // `new_tag` creates new ASN.1 tag identifier. Its accepts params of Class `c`,
 // constructed or primitive form in `compound` boolean flag, and the integer tag `number`.
-fn new_tag(c Class, compound bool, number int) !Tag {
+pub fn new_tag(c Class, compound bool, number int) !Tag {
 	return Tag{
 		cls: c
 		compound: compound

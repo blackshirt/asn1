@@ -21,7 +21,7 @@ mut:
 	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.printablestring))!
 }
 
-fn PrintableString.new_from_string(s string) !PrintableString {
+fn PrintableString.from_string(s string) !PrintableString {
 	if !printable_chars(s.bytes()) {
 		return error('PrintableString: contains non-printable string')
 	}
@@ -30,13 +30,17 @@ fn PrintableString.new_from_string(s string) !PrintableString {
 	}
 }
 
-fn PrintableString.new_from_bytes(b []u8) !PrintableString {
+fn PrintableString.from_bytes(b []u8) !PrintableString {
 	if !printable_chars(b) {
 		return error('PrintableString: contains non-printable string')
 	}
 	return PrintableString{
 		value: b.bytestr()
 	}
+}
+
+fn (ps PrintableString) tag() asn1.Tag {
+	return ps.tag
 }
 
 fn (ps PrintableString) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
@@ -72,7 +76,7 @@ fn PrintableString.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p a
 			// TODO: check the length, its safe to access bytes
 			bytes := unsafe { b[idx..idx + len] }
 
-			ps := PrintableString.new_from_bytes(bytes)!
+			ps := PrintableString.from_bytes(bytes)!
 			return ps, idx + len
 		}
 		else {
@@ -87,7 +91,7 @@ fn printable_chars(bytes []u8) bool {
 }
 
 fn is_printablestring(c u8) bool {
-	return c.is_alnum() || c == u8(0x20) || c in asn1.printable_symbols
+	return c.is_alnum() || c == u8(0x20) || c in primitive.printable_symbols
 }
 
 /*
