@@ -11,7 +11,7 @@ import asn1
 struct VisibleString {
 	value string
 mut:
-	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.visiblestring))
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.visiblestring)) or { panic(err) }
 }
 
 fn VisibleString.from_string(s string) !VisibleString {
@@ -32,21 +32,17 @@ fn VisibleString.from_bytes(b []u8) !VisibleString {
 	}
 }
 
-fn (v VisibleString) tag() asn1.Tag {
-	return v.tag
+fn (vs VisibleString) tag() asn1.Tag {
+	return vs.tag
 }
 
-fn (v VisibleString) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
-	// recheck
-	if contains_ctrl_chars(v.value.bytes()) {
-		return error('VisibleString: contains control chars')
-	}
+fn (vs VisibleString) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
 	match mode {
 		.ber, .der {
-			v.tag().pack_to_asn1(mut to, mode, p)!
-			length := asn1.Length.from_i64(v.value.bytes().len)!
+			vs.tag().pack_to_asn1(mut to, mode, p)!
+			length := asn1.Length.from_i64(vs.value.bytes().len)!
 			length.pack_to_asn1(mut to, mode, p)!
-			to << v.value.bytes()
+			to << vs.value.bytes()
 		}
 		else {
 			return error('unsupported')
@@ -63,7 +59,7 @@ fn VisibleString.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn
 			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, mode, p)!
 			if tag.class() != .universal || tag.is_compound()
 				|| tag.tag_number() != int(asn1.TagType.visiblestring) {
-				return error('VisibleString: bad tag of universal class type')
+				return error('VisibleString: tag check failed')
 			}
 			len, idx := asn1.Length.unpack_from_asn1(b, pos, mode, p)!
 			// TODO: check the length, its safe to access bytes
@@ -84,8 +80,8 @@ fn is_ctrl_char(c u8) bool {
 	return (c >= 0 && c <= 0x1f) || c == 0x7f
 }
 
-fn contains_ctrl_chars(bytes []u8) bool {
-	return bytes.any(is_ctrl_char(it))
+fn contains_ctrl_chars(b []u8) bool {
+	return b.any(is_ctrl_char(it))
 }
 
 /*

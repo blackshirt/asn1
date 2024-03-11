@@ -1,7 +1,9 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module primitive
+
+import asn1
 
 // UTFString test
 struct UTF8StringTest {
@@ -20,19 +22,24 @@ fn test_uf8string_handling() ! {
 		UTF8StringTest{'\x13\x03ab\x00', [u8(12), 5, 19, 3, 97, 98, 0], none},
 		UTF8StringTest{'Test User 1', '\x0c\x0bTest User 1'.bytes(), none},
 		// invalid utf8 string, emoji with removed first and fifth byte
-		UTF8StringTest{'🐶🐶🐶🚀'.substr(0, 5), []u8{}, error('invalid UTF-8 string')},
+		UTF8StringTest{'🐶🐶🐶🚀'.substr(0, 5), []u8{}, error('UTF8String: invalid UTF-8 string')},
 	]
 
 	for c in data {
-		out := serialize_utf8string(c.s) or {
+		us := UTF8String.from_string(c.s) or {
+			assert err == c.err
+			continue
+		}
+		mut out := []u8{}
+		us.pack_to_asn1(mut out, .der) or {
 			assert err == c.err
 			continue
 		}
 		assert out == c.out
 
-		tag, back := decode_utf8string(out)!
+		uss, _ := UTF8String.unpack_from_asn1(out, 0, .der)!
 
-		assert tag.number == int(TagType.utf8string)
-		assert back == c.s
+		assert uss.tag.tag_number() == int(asn1.TagType.utf8string)
+		assert uss.value == c.s
 	}
 }

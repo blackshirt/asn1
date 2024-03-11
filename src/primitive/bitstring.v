@@ -8,10 +8,10 @@ import asn1
 // BITSTRING
 //
 struct BitString {
-mut:
-	tag  asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.bitstring))!
 	data []u8
 	pad  u8
+mut:
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.bitstring))!
 }
 
 fn (b BitString) tag() asn1.Tag {
@@ -72,8 +72,12 @@ fn BitString.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Pa
 				return error('BitString: bad tag check')
 			}
 			len, idx := asn1.Length.unpack_from_asn1(b, pos, mode, p)!
+			if len == 0 {
+				return error('BitString: zero length bit string')
+			}
 			// todo: check length
 			bytes := unsafe { b[idx..idx + len] }
+
 			bs := BitString.new_with_pad(bytes[1..], bytes[0])!
 			return bs, idx + len
 		}

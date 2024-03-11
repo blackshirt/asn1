@@ -12,7 +12,7 @@ import asn1
 struct OctetString {
 	value string
 mut:
-	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.octetstring))!
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.octetstring)) or { panic(err) }
 }
 
 // new_octetstring creates new octet string

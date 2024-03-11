@@ -12,7 +12,7 @@ import asn1
 struct UTF8String {
 	value string
 mut:
-	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.utf8string))!
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.utf8string)) or { panic(err) }
 }
 
 fn UTF8String.from_string(s string) !UTF8String {

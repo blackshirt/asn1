@@ -1,25 +1,29 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module primitive
+
+import asn1
 
 // Tests case for PrintableString
 fn test_encode_printablestring_basic() ! {
 	s := 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 	mut buf := []u8{}
-	buf << u8(0x13)
-	serialize_length(mut buf, s.len)
-	buf << s.bytes()
-	out := serialize_printablestring(s)!
+	ps := PrintableString.from_string(s)!
+	ps.pack_to_asn1(mut buf, .der)!
 
+	mut out := [u8(0x13)]
+	length := [u8(0x81), u8(s.len)]
+	out << length
+	out << s.bytes()
 	// dump(out)
 	assert out == buf
 
-	tag, str := decode_printablestring(out)!
-	assert tag.number == int(TagType.printablestring)
-	assert tag.class == .universal
+	psback, _ := PrintableString.unpack_from_asn1(buf, 0, .der)!
+	assert psback.tag.tag_number() == int(asn1.TagType.printablestring)
+	assert psback.tag.class() == .universal
 
-	assert str == s
+	assert psback.value == s
 }
 
 struct EncodingTest[T] {
@@ -37,14 +41,17 @@ fn test_encode_printablestring_generic() {
 	]
 
 	for t in data {
-		out := serialize_printablestring(string(t.input))!
+		ps := PrintableString.from_string(string(t.input))!
+		mut out := []u8{}
+		ps.pack_to_asn1(mut out, .der)!
+		// out := serialize_printablestring(string(t.input))!
 		assert out == t.exp
 
 		// decode back
-		tag, str := decode_printablestring(out)!
+		psback, _ := PrintableString.unpack_from_asn1(out, 0, .der)!
 
-		assert str == t.input
-		assert tag.number == int(TagType.printablestring)
-		assert tag.constructed == false
+		assert psback.value == t.input
+		assert psback.tag.tag_number() == int(asn1.TagType.printablestring)
+		assert psback.tag.is_compound() == false
 	}
 }

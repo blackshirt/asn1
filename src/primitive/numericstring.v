@@ -14,7 +14,7 @@ import asn1
 struct NumericString {
 	value string
 mut:
-	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.numericstring))!
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.numericstring)) or { panic(err) }
 }
 
 // new_numeric_string creates new numeric string

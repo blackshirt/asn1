@@ -1,22 +1,26 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module primitive
+
+import asn1
 
 fn test_encode_decode_numericstring_basic() {
 	str := '98'
 	exp := [u8(0x12), 0x02, 57, 56]
 
-	out := serialize_numericstring(str)!
+	ns := NumericString.from_string(str)!
+	mut out := []u8{}
+	ns.pack_to_asn1(mut out, .der)!
 	assert out == exp
 
 	// decode back
-	tag, sout := decode_numericstring(out)!
+	nsback, _ := NumericString.unpack_from_asn1(out, 0, .der)!
 
-	assert tag.class == .universal
-	assert tag.constructed == false
-	assert tag.number == int(TagType.numericstring)
-	assert str == sout
+	assert nsback.tag.class() == .universal
+	assert nsback.tag.is_compound() == false
+	assert nsback.tag.tag_number() == int(asn1.TagType.numericstring)
+	assert nsback.value == str
 }
 
 struct NumericalTest {
@@ -42,9 +46,9 @@ fn test_encode_decode_numericstring_advanced() ! {
 	for k, v in m {
 		s := k.repeat(v) // strings.repeat_string(k, v)
 		b := s.bytes()
-		l := b.len
+		ln := asn1.Length.from_i64(b.len)!
 		mut dst := []u8{}
-		serialize_length(mut dst, l)
+		ln.pack_to_asn1(mut dst, .der)!
 
 		d := NumericalTest{
 			inp: s
@@ -58,18 +62,20 @@ fn test_encode_decode_numericstring_advanced() ! {
 	}
 
 	for c in exp {
-		mut exp_out := [u8(TagType.numericstring)]
+		mut exp_out := [u8(asn1.TagType.numericstring)]
 		exp_out << c.exp_bytelength
 		exp_out << c.exp_values
-		out := serialize_numericstring(c.inp) or {
+		ns := NumericString.from_string(c.inp) or {
 			assert err == c.err
 			continue
 		}
+		mut out := []u8{}
+		ns.pack_to_asn1(mut out, .der)!
 		assert out == exp_out
 
 		// decode back
-		tag, back := decode_numericstring(out)!
+		back, _ := NumericString.unpack_from_asn1(out, 0, .der)!
 
-		assert back == c.inp
+		assert back.value == c.inp
 	}
 }

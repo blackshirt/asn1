@@ -52,7 +52,8 @@ fn IA5String.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Pa
 		.ber, .der {
 			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, mode, p)!
 			// TODO: checks tag for matching type
-			if tag.class() != .universal || tag.is_compound() || tag.tag_number() != 22 {
+			if tag.class() != .universal || tag.is_compound()
+				|| tag.tag_number() != int(asn1.TagType.ia5string) {
 				return error('IA5String: bad tag of universal class type')
 			}
 			// read the length part from current position pos
