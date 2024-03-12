@@ -6,22 +6,20 @@ module primitive
 import asn1
 
 // ASN.1 NULL TYPE
-struct Null {}
+struct Null {
+	tag asn1.Tag = asn1.Tag{.universal, false, int(asn1.TagType.null)}
+}
 
 fn Null.new() Null {
 	return Null{}
-}
-
-fn (n Null) length() int {
-	return 0
 }
 
 fn (n Null) packed_length() int {
 	return 2
 }
 
-fn (n Null) tag() !asn1.Tag {
-	return asn1.new_tag(.universal, false, 5)
+fn (n Null) tag() asn1.Tag {
+	return n.tag
 }
 
 fn (n Null) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
@@ -51,7 +49,9 @@ fn Null.unpack(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Params) !(Null, i
 			if len != 0 {
 				return error('Null: len != 0')
 			}
-			return Null{}, idx
+			return Null{
+				tag: tag
+			}, idx
 		}
 		else {
 			return error('unsupported mode')

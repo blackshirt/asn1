@@ -64,8 +64,8 @@ struct Element {
 
 fn (e Element) element_length() int {
 	mut n := 0
-	n += e.tag.tag_length()
-	n += e.length.length()
+	n += e.tag.packed_length()
+	n += e.length.packed_length()
 	n += e.content.len
 
 	return n

@@ -9,7 +9,7 @@ fn test_parse_der_match_length() ! {
 		0x79, 0x20, 0x74, 0x68, 0x65, 0x72, 0x65, 0x3f]
 
 	out := der_decode(data)!
-	assert out.length() == 19 // 0x13
+	assert out.packed_length() == 19 // 0x13
 	assert out.tag().class == .universal
 	assert out.tag().constructed == true
 	assert out.tag().number == 16
@@ -48,7 +48,7 @@ fn test_parse_der_contains_discarded_bytes() ! {
 		return
 	}
 
-	assert out.length() == 19 // 0x13
+	assert out.packed_length() == 19 // 0x13
 }
 
 fn test_parse_x509_ed25519_certificate() ! {
@@ -98,7 +98,7 @@ fn test_parse_x509_ed25519_certificate() ! {
 	assert el1.elements.len == 1
 
 	el2 := seq.elements[2].as_bitstring()!
-	assert el2.length() == 65
+	assert el2.packed_length() == 65
 }
 
 /*

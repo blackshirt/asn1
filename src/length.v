@@ -57,9 +57,9 @@ fn (v Length) pack_and_append(mut to []u8) {
 	}
 }
 
-// length calculates the length of bytes needed to store the Length value `v`
+// packed_length calculates the length of bytes needed to store the Length value `v`
 // includes one byte marker for long definite form of length value, for value >= 128
-pub fn (v Length) length() int {
+pub fn (v Length) packed_length() int {
 	n := if v < 128 { 1 } else { v.bytes_len() + 1 }
 	return n
 }
@@ -93,7 +93,7 @@ pub fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
 	}
 }
 
-// unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buf.
+// unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buffer.
 // Its return Length and next offset in the buffer buf to process on, and return error on fail.
 pub fn Length.unpack_from_asn1(buf []u8, loc i64, mode EncodingMode, p Params) !(Length, i64) {
 	match mode {
