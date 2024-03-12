@@ -1,7 +1,9 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module primitive
+
+import asn1
 
 // UTCTime
 // -------
@@ -23,82 +25,73 @@ module asn1
 // TODO:
 // - check for invalid representation of date and hhmmss part.
 // - represented UTCTime in time.Time
-pub type UtcTime = string
-
-// new_utctime creates new UtcTime from string s.
-pub fn new_utctime(s string) !Encoder {
-	valid := validate_utctime(s)!
-	if !valid {
-		return error('fail on validate utctime')
-	}
-	return UtcTime(s)
+struct UTCTime {
+	value string
+mut:
+	tag asn.Tag = asn1.Tag{.universal, false, int(asn1.TagType.utctime)}
 }
 
-pub fn (utc UtcTime) tag() Tag {
-	return new_tag(.universal, false, int(TagType.utctime))
+// new_utctime creates new UTCTime from string s.
+fn UTCTime.from_string(s string) !UTCTime {
+	if !validate_utctime(s) {
+		return error('UTCTime: fail on validate utctime')
+	}
+	return UTCTime{
+		value: s
+	}
 }
 
-pub fn (utc UtcTime) length() int {
-	return utc.len
+fn (t UTCTime) tag() asn1.Tag {
+	return t.tag
 }
 
-pub fn (utc UtcTime) size() int {
-	mut size := 0
-	tag := utc.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	l := calc_length_of_length(utc.length())
-	size += int(l)
-
-	size += utc.length()
-
-	return size
+fn (t UTCTime) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
+	if !validate_utctime(t) {
+		return error('UTCTime: fail on validate utctime')
+	}
+	match mode {
+		.ber, .der {
+			t.tag().pack_to_asn1(mut to, mode, p)!
+			bytes := t.value.bytes()
+			length := asn1.Length.from_i64(bytes.len)!
+			length.pack_to_asn1(mut to, mode, p)!
+			to << bytes
+		}
+		else {
+			return error('Unsupported')
+		}
+	}
 }
 
-pub fn (utc UtcTime) encode() ![]u8 {
-	return serialize_utctime(utc)
-}
-
-fn validate_utctime(s string) !bool {
-	if !basic_utctime_check(s) {
-		return error('fail basic utctime check')
+fn UTCTime.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Params) !(UTCTime, i64) {
+	if b.len < 2 {
+		return error('UTCTime: bad len')
 	}
-	// read contents
-	src := s.bytes()
-	mut pos := 0
-	mut year, mut month, mut day := u16(0), u8(0), u8(0)
-	mut hour, mut minute, mut second := u8(0), u8(0), u8(0)
-
-	// UTCTime only encodes times prior to 2050
-	year, pos = read_2_digits(src, pos)!
-	year = u16(year)
-	if year >= 50 {
-		year = 1900 + year
-	} else {
-		year = 2000 + year
+	match mode {
+		.ber, .der {
+			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, .der, p)!
+			if tag.class() != .universal || tag.is_compound()
+				|| tag.tag_number() != int(asn1.TagType.utctime) {
+				return error('UTCTime: bad tag of universal class type')
+			}
+			// read the length part from current position pos
+			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der, p)!
+			if len == 0 {
+				return error('UTCTime: len==0')
+			}
+			if idx + len > b.len {
+				return error('UTCTime: truncated input')
+			}
+			// read the bytes part from current position idx to the length part
+			bytes := unsafe { b[idx..idx + len] }
+			// buf := trim_bytes(bytes)!
+			ret := UTCTime.from_string(bytes.bytestr())!
+			return ret, idx + len
+		}
+		else {
+			return error('Unsupported')
+		}
 	}
-
-	month, pos = read_2_digits(src, pos)!
-	day, pos = read_2_digits(src, pos)!
-
-	if !validate_date(year, month, day) {
-		return false
-	}
-
-	// hhmmss parts
-	hour, pos = read_2_digits(src, pos)!
-	minute, pos = read_2_digits(src, pos)!
-	second, pos = read_2_digits(src, pos)!
-
-	if hour > 23 || minute > 59 || second > 59 {
-		return false
-	}
-	// assert pos == src.len - 1
-	if src[pos] != 0x5A {
-		return false
-	}
-	return true
 }
 
 fn serialize_utctime(s string) ![]u8 {
@@ -144,6 +137,49 @@ fn decode_utctime(src []u8) !(Tag, string) {
 	}
 
 	return tag, str
+}
+
+// utility function
+//
+fn validate_utctime(s string) bool {
+	if !basic_utctime_check(s) {
+		return false
+	}
+	// read contents
+	src := s.bytes()
+	mut pos := 0
+	mut year, mut month, mut day := u16(0), u8(0), u8(0)
+	mut hour, mut minute, mut second := u8(0), u8(0), u8(0)
+
+	// UTCTime only encodes times prior to 2050
+	year, pos = read_2_digits(src, pos)!
+	year = u16(year)
+	if year >= 50 {
+		year = 1900 + year
+	} else {
+		year = 2000 + year
+	}
+
+	month, pos = read_2_digits(src, pos)!
+	day, pos = read_2_digits(src, pos)!
+
+	if !validate_date(year, month, day) {
+		return false
+	}
+
+	// hhmmss parts
+	hour, pos = read_2_digits(src, pos)!
+	minute, pos = read_2_digits(src, pos)!
+	second, pos = read_2_digits(src, pos)!
+
+	if hour > 23 || minute > 59 || second > 59 {
+		return false
+	}
+	// assert pos == src.len - 1
+	if src[pos] != 0x5A {
+		return false
+	}
+	return true
 }
 
 fn basic_utctime_check(s string) bool {
