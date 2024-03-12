@@ -12,9 +12,9 @@ import asn1
 // and otherwise, encodes to zero (0x00) for false value.
 // The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.
 struct Boolean {
-mut:
-	tag   asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.boolean))!
 	value bool
+mut:
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.boolean))!
 }
 
 fn Boolean.new(value bool) Boolean {

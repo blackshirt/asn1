@@ -17,13 +17,12 @@ fn test_encode_decode_boolean_in_der_mode() {
 		BooleanTest{[u8(1), 0x02, 0x00], false, error('der encoding of boolean value represented in multibytes is not allowed')}, // bad length
 		BooleanTest{[u8(1), 0x01, 0x00], false, error('Boolean: bad tag of universal class type')}, // bad tag number
 	]
-	for i, c in bd {
-		dump(i)
+	for c in bd {
 		out, pos := Boolean.unpack_from_asn1(c.inp, 0, .der) or {
 			assert err == c.err
 			continue
 		}
 
-		assert out.b == c.out
+		assert out.value == c.out
 	}
 }

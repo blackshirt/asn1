@@ -76,31 +76,3 @@ fn IA5String.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Pa
 		}
 	}
 }
-
-/*
-fn decode_ia5string(src []u8) !(Tag, string) {
-	if src.len < 2 {
-		return error('decode numeric: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	if tag.number != int(TagType.ia5string) {
-		return error('bad tag')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-
-	// mut length := 0
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	out := read_bytes(src, next, length)!
-
-	if !is_ia5string(out.bytestr()) {
-		return error('contains invalid char')
-	}
-	return tag, out.bytestr()
-}
-*/
