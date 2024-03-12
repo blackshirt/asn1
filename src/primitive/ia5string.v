@@ -10,7 +10,7 @@ import asn1
 struct IA5String {
 	value string
 mut:
-	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.ia5string))!
+	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.ia5string)) or { panic(err) }
 }
 
 fn IA5String.new(value string) !IA5String {

@@ -257,10 +257,10 @@ fn Integer.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Para
 			// read the length part from current position pos
 			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der, p)!
 			if len == 0 {
-				return error("Integer: len==0")
+				return error('Integer: len==0')
 			}
-			if idx+len > b.len {
-				return error("Integer: truncated input")
+			if idx + len > b.len {
+				return error('Integer: truncated input')
 			}
 			// read the bytes part from current position idx to the length part
 			bytes := unsafe { b[idx..idx + len] }

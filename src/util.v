@@ -271,4 +271,163 @@ fn read_tag(data []u8, loc int) !(Tag, int) {
 	}
 	return tag, pos
 }
+
+fn valid_integer(src []u8, signed bool) bool {
+	if src.len == 0 {
+		return false
+	}
+
+	// check for minimaly encoded
+	if src.len > 1 && ((src[0] == 0 && src[1] & 0x80 == 0)
+		|| (src[0] == 0xff && src[1] & 0x80 == 0x80)) {
+		return false
+	}
+
+	// reject negative for unsigned type
+	if !signed && src[0] & 0x80 == 0x80 {
+		return false
+	}
+	return true
+}
+
+// i64 handling
+
+// serialize i64
+fn serialize_i64(s i64) ![]u8 {
+	t := new_tag(.universal, false, int(TagType.integer))
+	mut out := []u8{}
+
+	serialize_tag(mut out, t)
+
+	n := length_i64(s)
+	mut src := []u8{len: n}
+
+	i64_to_bytes(mut src, s)
+	serialize_length(mut out, src.len)
+	out << src
+	return out
+}
+
+fn decode_i64(src []u8) !(Tag, i64) {
+	if src.len < 2 {
+		return error('decode: bad payload len')
+	}
+	tag, pos := read_tag(src, 0)!
+	if tag.number != int(TagType.integer) {
+		return error('bad tag')
+	}
+	if pos > src.len {
+		return error('truncated input')
+	}
+
+	// mut length := 0
+	length, next := decode_length(src, pos)!
+
+	if next > src.len {
+		return error('truncated input')
+	}
+	out := read_bytes(src, next, length)!
+
+	val := read_i64(out)!
+
+	return tag, val
+}
+
+// read_i64 read src as signed i64
+fn read_i64(src []u8) !i64 {
+	if !valid_integer(src, true) {
+		return error('i64 check return false')
+	}
+	mut ret := i64(0)
+
+	if src.len > 8 {
+		return error('too large integer')
+	}
+	for i := 0; i < src.len; i++ {
+		ret <<= 8
+		ret |= i64(src[i])
+	}
+
+	ret <<= 64 - u8(src.len) * 8
+	ret >>= 64 - u8(src.len) * 8
+
+	// try to serialize back, and check its matching original one
+	// and gives a warning when its not match.
+	$if debug {
+		a := new_integer(ret)
+		c := a.contents()!
+		if c != src {
+			eprintln('maybe integer bytes not in shortest form')
+		}
+	}
+	return ret
+}
+
+fn length_i64(val i64) int {
+	mut i := val
+	mut n := 1
+
+	for i > 127 {
+		n++
+		i >>= 8
+	}
+
+	for i < -128 {
+		n++
+		i >>= 8
+	}
+
+	return n
+}
+
+fn i64_to_bytes(mut dst []u8, i i64) {
+	mut n := length_i64(i)
+
+	for j := 0; j < n; j++ {
+		dst[j] = u8(i >> u32(n - 1 - j) * 8)
+	}
+}
+
+// i32 handling
+//
+// read_i32 readt  from bytes
+fn read_i32(src []u8) !int {
+	if !valid_integer(src, true) {
+		return error('i32 check return false')
+	}
+
+	ret := read_i64(src)!
+	if ret != i64(int(ret)) {
+		return error('integer too large')
+	}
+
+	return int(ret)
+}
+
+fn serialize_i32(s i32) ![]u8 {
+	out := serialize_i64(i64(s))!
+	return out
+}
+
+fn decode_i32(src []u8) !(Tag, i32) {
+	if src.len < 2 {
+		return error('decode: bad payload len')
+	}
+	tag, pos := read_tag(src, 0)!
+	if tag.number != int(TagType.integer) {
+		return error('bad tag')
+	}
+	if pos > src.len {
+		return error('truncated input')
+	}
+	length, next := decode_length(src, pos)!
+
+	if next > src.len {
+		return error('truncated input')
+	}
+	out := read_bytes(src, next, length)!
+	val := read_i32(out)!
+
+	return tag, val
+}
 */
