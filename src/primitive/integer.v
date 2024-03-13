@@ -214,10 +214,10 @@ fn Integer.unpack_and_validate(b []u8) !Integer {
 
 fn (v Integer) packed_length() !int {
 	mut n := 0
-	n += v.tag().tag_length()
+	n += v.tag().packed_length()
 
-	x := asn1.Length.from_i64(v.bytes_len())!
-	n += x.length()
+	len := asn1.Length.from_i64(v.bytes_len())!
+	n += len.packed_length()
 	n += v.bytes_len()
 
 	return n
