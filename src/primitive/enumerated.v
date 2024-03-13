@@ -127,24 +127,3 @@ fn (e Enumerated) enumerated_len() int {
 
 	return n
 }
-
-/*
-pub fn (en Enumerated) size() int {
-	mut size := 0
-	tag := en.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	l := calc_length_of_length(en.length())
-	size += int(l)
-
-	size += en.length()
-
-	return size
-}
-
-pub fn (en Enumerated) encode() ![]u8 {
-	res := serialize_i32(en)!
-	return res
-}
-*/

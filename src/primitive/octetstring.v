@@ -41,6 +41,7 @@ fn (os OctetString) packed_length() !int {
 	return n
 }
 
+// The encoding of an octetstring value shall be either primitive or constructed
 fn (os OctetString) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
 	match mode {
 		.ber, .der {
