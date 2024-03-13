@@ -1,7 +1,9 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module asn1
+module compound
+
+import asn1
 
 // SEQUENCE and SEQUENCE OF handling
 //
@@ -14,9 +16,11 @@ module asn1
 // Sequence structure can represents both SEQUENCE and SEQUENCE OF type.
 // The encoding of a sequence value shall be constructed.
 struct Sequence {
-	tag Tag // should represents sequence tag
 mut:
-	elements []Encoder // elements of the sequence
+	// should represents sequence tag
+	tag Tag = asn1.Tag{.universal, true, int(asn1.TagType.sequence)}
+	// elements of the sequence
+	elements []asn1.Element
 }
 
 fn new_encoder_seq(seq Sequence) Encoder {
