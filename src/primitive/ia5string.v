@@ -26,6 +26,17 @@ fn (v IA5String) tag() asn1.Tag {
 	return v.tag
 }
 
+fn (v IA5String) packed_length() !int {
+	mut n := 0
+
+	n += v.tag().packed_length()
+	len := asn1.Length.from_i64(v.value.bytes().len)!
+	n += len.packed_length()
+	n += v.value.bytes().len
+
+	return n
+}
+
 fn (v IA5String) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
 	if !v.value.is_ascii() {
 		return error('IA5String: contains non-ascii char')
@@ -60,6 +71,16 @@ fn IA5String.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Pa
 			len, idx := asn1.Length.unpack_from_asn1(b, pos, mode, p)!
 			// read the bytes part from current position idx to the length part
 			// TODO: dont trust provided length, make sure to do checks
+			if idx > b.len || idx + len > b.len {
+				return error('IA5String: truncated input')
+			}
+			// no bytes
+			if len == 0 {
+				ret := IA5String{
+					tag: tag
+				}
+				return ret, idx
+			}
 			bytes := unsafe { b[idx..idx + len] }
 			// check for ASCII charset
 			if bytes.any(it < u8(` `) || it > u8(`~`)) {

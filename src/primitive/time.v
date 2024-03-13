@@ -46,7 +46,7 @@ fn (t UTCTime) tag() asn1.Tag {
 	return t.tag
 }
 
-fn (ut UTCTime) packed_length() int {
+fn (ut UTCTime) packed_length() !int {
 	mut n := 0
 	n += ut.tag.packed_length()
 	len := asn1.Length.from_i64(ut.value.bytes().len)!
@@ -191,7 +191,7 @@ fn (gt GeneralizedTime) tag() asn1.Tag {
 	return gt.tag
 }
 
-fn (gt GeneralizedTime) packed_length() int {
+fn (gt GeneralizedTime) packed_length() !int {
 	mut n := 0
 	n += gt.tag.packed_length()
 	len := asn1.Length.from_i64(gt.value.bytes().len)!

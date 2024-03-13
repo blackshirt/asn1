@@ -23,8 +23,25 @@ fn Boolean.new(value bool) Boolean {
 	}
 }
 
+fn Boolean.new_with_tag(value bool, tag asn1.Tag) Boolean {
+	return Boolean{
+		value: value
+		tag: tag
+	}
+}
+
 fn (v Boolean) tag() asn1.Tag {
 	return v.tag
+}
+
+fn (v Boolean) packed_length() int {
+	mut n := 0
+	n += v.tag().packed_length()
+	// boolean length should 1
+	n += 1
+	n += 1
+
+	return n
 }
 
 fn (v Boolean) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
@@ -62,7 +79,9 @@ fn Boolean.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Para
 			if len != 1 {
 				return error('der encoding of boolean value represented in multibytes is not allowed')
 			}
-
+			if idx > b.len {
+				return error('Boolean: truncated input')
+			}
 			bytes := unsafe { b[idx..idx + len] }
 			assert bytes.len == 1
 			b0 := bytes[0]

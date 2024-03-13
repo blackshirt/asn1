@@ -40,6 +40,17 @@ fn (ns NumericString) tag() asn1.Tag {
 	return ns.tag
 }
 
+fn (ns NumericString) packed_length() !int {
+	mut n := 0
+
+	n += ns.tag().packed_length()
+	len := asn1.Length.from_i64(ns.value.bytes().len)!
+	n += len.packed_length()
+	n += ns.value.bytes().len
+
+	return n
+}
+
 fn (ns NumericString) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
 	match mode {
 		.ber, .der {

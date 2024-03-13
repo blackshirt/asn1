@@ -30,6 +30,17 @@ fn (os OctetString) tag() asn1.Tag {
 	return os.tag
 }
 
+fn (os OctetString) packed_length() !int {
+	mut n := 0
+
+	n += os.tag().packed_length()
+	len := asn1.Length.from_i64(os.value.bytes().len)!
+	n += len.packed_length()
+	n += os.value.bytes().len
+
+	return n
+}
+
 fn (os OctetString) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
 	match mode {
 		.ber, .der {

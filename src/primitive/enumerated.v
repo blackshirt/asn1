@@ -25,6 +25,15 @@ fn (e Enumerated) tag() asn1.Tag {
 	return e.tag
 }
 
+fn (e Enumerated) packed_length() !int {
+	mut n := 0
+	n += e.tag().packed_length()
+	len := asn1.Length.from_i64(e.value)!
+	n += len.packed_length()
+	n += e.enumerated_len()
+	return n
+}
+
 fn (e Enumerated) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
 	match mode {
 		.ber, .der {

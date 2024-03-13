@@ -91,6 +91,30 @@ fn (oid Oid) tag() asn1.Tag {
 	return oid.tag
 }
 
+fn (oid Oid) packed_length() !int {
+	mut n := 0
+	n += oid.tag().packed_length()
+
+	b := oid.pack()!
+	len := asn1.Length.from_i64(b.len)!
+	n += len.packed_length()
+	n += b.len
+
+	return n
+}
+
+fn (oid Oid) pack() ![]u8 {
+	if !oid.validate() {
+		return error('Oid: failed to validate')
+	}
+	mut dst := []u8{}
+	asn1.encode_base128_int(mut dst, i64(oid.value[0] * 40 + oid.value[1]))
+	for i := 2; i < oid.value.len; i++ {
+		asn1.encode_base128_int(mut dst, i64(oid.value[i]))
+	}
+	return dst
+}
+
 fn (oid Oid) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
 	match mode {
 		.ber, .der {
@@ -131,18 +155,6 @@ fn Oid.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Params) 
 			return error('Unsupported mode')
 		}
 	}
-}
-
-fn (oid Oid) pack() ![]u8 {
-	if !oid.validate() {
-		return error('Oid: failed to validate')
-	}
-	mut dst := []u8{}
-	asn1.encode_base128_int(mut dst, i64(oid.value[0] * 40 + oid.value[1]))
-	for i := 2; i < oid.value.len; i++ {
-		asn1.encode_base128_int(mut dst, i64(oid.value[i]))
-	}
-	return dst
 }
 
 fn (oid Oid) equal(oth Oid) bool {
