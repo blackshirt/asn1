@@ -20,11 +20,21 @@ mut:
 	// should represents sequence tag
 	tag Tag = asn1.Tag{.universal, true, int(asn1.TagType.sequence)}
 	// elements of the sequence
-	elements []asn1.Element
+	items []asn1.Element
 }
 
-fn new_encoder_seq(seq Sequence) Encoder {
-	return seq
+fn Sequence.new(items []asn1.Element) Sequence {
+	return Sequence{
+		items: items
+	}
+}
+
+fn (s Sequence) tag() asn1.Tag {
+	return s.tag
+}
+
+fn (s Sequence) validate_sequence() bool {
+	return s.tag.is_compound() && s.tag.tag_number() == int(asn1.TagType.sequence)
 }
 
 // new_sequence creates empty universal class of sequence type.
@@ -64,9 +74,7 @@ fn new_sequenceof_from_bytes(src []u8) !Sequence {
 	return seq
 }
 
-fn (seq Sequence) tag() Tag {
-	return seq.tag
-}
+
 
 pub fn (seq Sequence) length() int {
 	mut length := 0

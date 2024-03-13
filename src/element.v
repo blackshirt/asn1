@@ -24,9 +24,9 @@ enum TaggedMode {
 // Tagged type element
 struct TaggedType {
 	// class of TaggedType element was default to .context_specific
-	tag      Tag
-	mode     TaggedMode = .explicit
-	inner_el Element
+	expected_tag Tag
+	mode         TaggedMode = .explicit
+	inner_el     Element
 }
 
 fn (tt TaggedType) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
@@ -35,7 +35,7 @@ fn (tt TaggedType) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
 			match tt.mode {
 				.explicit {
 					// wraps the inner element with this tag and length
-					tt.tag.pack_to_asn1(mut to, .der)!
+					tt.expected_tag.pack_to_asn1(mut to, .der)!
 					length := tt.inner_el.element_length()
 					len := Length.from_i64(length)!
 					len.pack_to_asn1(mut to, mode)!
@@ -43,7 +43,7 @@ fn (tt TaggedType) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
 				}
 				.implicit {
 					// replace the tag.of inner element with this tag
-					tt.tag.pack_to_asn1(mut to, .der)!
+					tt.expected_tag.pack_to_asn1(mut to, .der)!
 					tt.inner_el.length.pack_to_asn1(mut to, mode)!
 					to << tt.inner_el.content
 				}
@@ -58,11 +58,13 @@ fn (tt TaggedType) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
 struct Element {
 	tag    Tag
 	length Length
-	// raw payload of this element
-	content []u8
+	raw    []u8
+
+	is_tagged bool
+	inner_el  ?Element
 }
 
-fn (e Element) element_length() int {
+fn (e Element) packed_length() int {
 	mut n := 0
 	n += e.tag.packed_length()
 	n += e.length.packed_length()
@@ -82,10 +84,6 @@ fn (e Element) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
 			return error('unsupported mode')
 		}
 	}
-}
-
-fn (e Element) is_compound() bool {
-	return e.tag.compound
 }
 
 // encoding mode
