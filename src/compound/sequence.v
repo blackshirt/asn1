@@ -74,8 +74,6 @@ fn new_sequenceof_from_bytes(src []u8) !Sequence {
 	return seq
 }
 
-
-
 pub fn (seq Sequence) length() int {
 	mut length := 0
 	for obj in seq.elements {
