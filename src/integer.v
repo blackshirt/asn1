@@ -255,7 +255,7 @@ fn read_i32(src []u8) !int {
 	return int(ret)
 }
 
-fn serialize_i32(s i32) ![]u8 {
+fn serialize_i32(s int) ![]u8 {
 	out := serialize_i64(i64(s))!
 	return out
 }
