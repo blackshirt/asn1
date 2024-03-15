@@ -101,12 +101,12 @@ pub fn (seq Sequence) encode() ![]u8 {
 	return dst
 }
 
-fn (mut seq Sequence) add(obj Encoder) Sequence {
+pub fn (mut seq Sequence) add(obj Encoder) Sequence {
 	seq.elements.add(obj)
 	return seq
 }
 
-fn (mut seq Sequence) add_multi(elements []Encoder) Sequence {
+pub fn (mut seq Sequence) add_multi(elements []Encoder) Sequence {
 	seq.elements.add_multi(elements)
 	return seq
 }
