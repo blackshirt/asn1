@@ -19,6 +19,7 @@ mut:
 	inner_el     Element
 }
 
+// new creates a new TaggedType 
 fn TaggedType.new(tagmode TaggedMode, expected_tag Tag, el Element) !TaggedType {
 	// Tagged type should in constructed form
 	if !expected_tag.is_compound() {
@@ -31,10 +32,12 @@ fn TaggedType.new(tagmode TaggedMode, expected_tag Tag, el Element) !TaggedType 
 	}
 }
 
+// new_explicit creates a new TaggedType with .explicit tagged mode.
 fn TaggedType.new_explicit(expected_tag Tag, el Element) !TaggedType {
 	return TaggedType.new(.explicit, expected_tag, el)
 }
 
+// new_implicit creates a new TaggedType with .implicit tagged mode.
 fn TaggedType.new_implicit(expected_tag Tag, el Element) !TaggedType {
 	return TaggedType.new(.explicit, expected_tag, el)
 }
@@ -51,8 +54,6 @@ fn (tt TaggedType) packed_length() int {
 			tt_length := Length.from_i64(inner_length) or { panic(err) }
 			n += tt_length.packed_length()
 			n += inner_length
-
-			return n
 		}
 		.implicit {
 			// when in implicit mode, inner tag and length of inner element being replaced by outer tag and length
@@ -62,10 +63,9 @@ fn (tt TaggedType) packed_length() int {
 			tt_length := Length.from_i64(inner_length) or { panic(err) }
 			n += tt_length.packed_length()
 			n += inner_length
-
-			return n
 		}
 	}
+	return n
 }
 
 fn (tt TaggedType) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
@@ -154,6 +154,7 @@ fn TaggedType.unpack_from_asn1(b []u8, loc i64, mode EncodingMode, inner_tag Tag
 }
 
 struct Element {
+	// the tag of the Element
 	tag Tag
 	// the Length should matching with raw_data.len
 	length Length
@@ -161,6 +162,14 @@ struct Element {
 	// when the tag is primitive, its represents real value of this Element.
 	// otherwise, if its a compound, its contains another unparsed Element
 	raw_data []u8
+}
+
+fn Element.new(t Tag, payload []u8) Element{
+	el := Element{
+		tag: tag 
+		length: Length.from_i64(payload.len)!
+		raw_data: payload
+	}
 }
 
 fn (e Element) valid_length() bool {
