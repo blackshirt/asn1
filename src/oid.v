@@ -177,7 +177,7 @@ fn read_oid(src []u8) !Oid {
 		val, pos = decode_base128_int(src, pos)!
 		s[i] = val
 	}
-	s = s[0..i]
+	s = unsafe { s[0..i] }
 	return s
 }
 
