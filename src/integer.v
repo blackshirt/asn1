@@ -260,7 +260,7 @@ fn serialize_i32(s int) ![]u8 {
 	return out
 }
 
-fn decode_i32(src []u8) !(Tag, i32) {
+fn decode_i32(src []u8) !(Tag, int) {
 	if src.len < 2 {
 		return error('decode: bad payload len')
 	}
