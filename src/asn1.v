@@ -313,12 +313,12 @@ fn (enc []Encoder) encode() ![]u8 {
 }
 
 // add encoder to existing encoder arrays.
-fn (mut enc []Encoder) add(e Encoder) {
+pub fn (mut enc []Encoder) add(e Encoder) {
 	enc << e
 }
 
 // add multi encoder to existing encoder arrays.
-fn (mut enc []Encoder) add_multi(es []Encoder) {
+pub fn (mut enc []Encoder) add_multi(es []Encoder) {
 	enc << es
 }
 
