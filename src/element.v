@@ -251,6 +251,15 @@ fn Element.unpack(b []u8, loc i64, mode EncodingMode, p Params) !Element {
 	}
 }
 
+fn (els []Element) hold_thesame_tag() bool {
+	// if empty just true
+	if els.len == 0 { return true }
+	tag0 := els[0].tag()
+	return els.all(it.tag() == tag0)
+}
+
+fn (mut els []Element) add_element(el Element) {}
+
 // encoding mode
 pub enum EncodingMode {
 	// Distinguished Encoding Rules (DER)
