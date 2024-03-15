@@ -5,7 +5,7 @@ module asn1
 @[params]
 pub struct Params {}
 
-enum TaggedMode {
+pub enum TaggedMode {
 	implicit
 	explicit
 }
@@ -16,6 +16,7 @@ mut:
 	// class of TaggedType element was default to .context_specific
 	expected_tag Tag
 	mode         TaggedMode = .explicit
+	// Element being tagged 
 	inner_el     Element
 }
 
@@ -107,8 +108,9 @@ fn TaggedType.unpack_from_asn1(b []u8, loc i64, mode EncodingMode, inner_tag Tag
 			// external tag 
 			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, mode, p)!
 			// TODO: check the tag, do we need .class == .context_specific
-			if !tag.is_compound() {
-				return error('TaggedType: tag check failed, not compound')
+			// in explicit context, the tag should be in constructed form 
+			if tm == .explicit && !tag.is_compound() {
+				return error('TaggedType: tag check failed, .explicit should be constructed')
 			}
 			len, idx := asn1.Length.unpack_from_asn1(b, pos, mode, p)!
 			if len == 0 {
@@ -251,9 +253,14 @@ fn Element.unpack(b []u8, loc i64, mode EncodingMode, p Params) !Element {
 
 // encoding mode
 pub enum EncodingMode {
+	// Distinguished Encoding Rules (DER)
 	der = 0
+	// Basic Encoding Rules (BER)
 	ber = 1
+	// Octet Encoding Rules (OER)
 	oer = 2
+	// Packed Encoding Rules (PER)
 	per = 3
+	// XML Encoding Rules (XER)
 	xer = 4
 }
