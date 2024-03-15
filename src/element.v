@@ -12,6 +12,7 @@ enum TaggedMode {
 
 // Tagged type element
 struct TaggedType {
+mut:
 	// class of TaggedType element was default to .context_specific
 	expected_tag Tag
 	mode         TaggedMode = .explicit
@@ -119,14 +120,32 @@ fn TaggedType.unpack_from_asn1(b []u8, loc i64, mode EncodingMode, inner_tag Tag
 			}
 			// TODO: check the length, its safe to access bytes
 			bytes := unsafe { b[idx..idx + len] }
+			mut tt := TaggedType{}
 			match tm {
 				.explicit {
-					// when explicit, 
+					// when explicit, unpack element from bytes 
+					inner := Element.unpack(bytes, 0, mode, p)!
+					if inner.tag != inner_tag {
+						return error("unexpected inner tag")
+					}
+					tt.expected_tag = tag 
+					tt.mode = .explicit
+					tt.inner_el = inner
 				}
-				.implicit {}
+				.implicit {
+					// when in .implicit mode, inner tag is unknown, so we pass inner_tag as expected tag
+					// the bytes is the values of the element 
+					inner: Element{
+							tag: inner_tag
+							length: Length.from_i64(bytes.len)!
+							raw_data: bytes 
+					}
+					tt.expected_tag = tag 
+					tt.mode: = .implicit
+					tt.inner_el = inner 
+				}
 			}
-			vs := TaggedType.from_bytes(bytes)!
-			return vs, idx + len
+			return tt, idx + len
 		}
 		else {
 			return error("Unsupported mode")
