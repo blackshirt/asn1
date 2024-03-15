@@ -25,8 +25,19 @@ mut:
 	elements []asn1.Element
 }
 
+// new creates a new empty Sequence. If is_seqof is true, a new Sequence 
+// should be treated as a SequenceOf type, ie its an empty SequenceOf
+fn Sequence.new(tag asn1.Tag, is_seqof bool, els []Element) !Sequence {
+	if !tag.is_compound() && tag.tag_number() != int(asn1.TagType.sequence) {
+		return error("Not a valid sequence tag")
+	}
+	return Sequence{
+		is_seqof: is_seqof 
+	}
+}
+
 // new creates new ASN.1 Sequence, when passed elements is holds the same tag,
-// the sequenceof flag is set to true 
+// the Sequence.is_seqof flag is set to true 
 fn Sequence.new(elements []asn1.Element) Sequence {
 	mut seq := Sequence{
 		elements: elements
@@ -64,7 +75,7 @@ fn (mut seq Sequence) add_element(el Element) ! {
 		return 
 	}
 	// otherwise, sequence elements is not empty, so, lets performs check.
-	// get the first element tag, when this sequence is sequenceof type, to be added element 
+	// get the first element tag, when this sequence is SequenceOf type, to be added element 
 	// has to be have the same tag with element already availables in sequence.
 	tag0 := seq.elements[0].tag()
 	if seq.is_seqof {
@@ -75,7 +86,7 @@ fn (mut seq Sequence) add_element(el Element) ! {
 		seq.elements << el 
 		return 
 	}
-	// otherwise, we can just append to sequence elements
+	// otherwise, we can just append el into sequence elements
 	seq.elements << el 
 }
 
