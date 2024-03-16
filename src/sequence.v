@@ -13,8 +13,9 @@ module asn1
 // This is analogous to an array or a list in a programming language.
 // Sequence structure can represents both SEQUENCE and SEQUENCE OF type.
 // The encoding of a sequence value shall be constructed.
-struct Sequence {
-	tag Tag // should represents sequence tag
+pub struct Sequence {
+	// should represents sequence tag
+	tag Tag = new_tag(Class.universal, true, int(TagType.sequence))
 mut:
 	elements []Encoder // elements of the sequence
 }
