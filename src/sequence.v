@@ -113,20 +113,27 @@ pub fn (mut seq Sequence) add_multi(elements []Encoder) Sequence {
 }
 
 // is_sequence_of checks whether the sequence `seq` holds the same elements (its a SEQUENCE OF type).
-fn is_sequence_of(seq Sequence) bool {
-	tag := seq.tag.number
-	if tag != int(TagType.sequence) {
+pub fn is_sequence_of(seq Sequence) bool {
+	if !seq.tag.constructed {
+		// sequence should in constructed form
 		return false
 	}
-	// take the first obj's tag
-	tag0 := seq.elements[0].tag()
-	for obj in seq.elements {
-		if obj.tag() != tag0 {
-			return false
-		}
+	if seq.tag.number != int(TagType.sequence) {
+		return false
 	}
+	if seq.elements.len != 0 {
+		 // take the first obj's tag
+		tag0 := seq.elements[0].tag()
+		for obj in seq.elements {
+			if obj.tag() != tag0 {
+				return false
+			}
+		}
+		return true
+	}
+	
 	// return seq.elements.all(it.tag() == tag0)
-	return true
+	return false
 }
 
 fn decode_sequence(src []u8) !Sequence {
