@@ -16,15 +16,15 @@ mut:
 	// class of TaggedType element was default to .context_specific
 	expected_tag Tag
 	mode         TaggedMode = .explicit
-	// Element being tagged 
-	inner_el     Element
+	// Element being tagged
+	inner_el Element
 }
 
-// new creates a new TaggedType 
+// new creates a new TaggedType
 fn TaggedType.new(tagmode TaggedMode, expected_tag Tag, el Element) !TaggedType {
 	// Tagged type should in constructed form
 	if !expected_tag.is_compound() {
-		return error("TaggedType tag should in constructed form")
+		return error('TaggedType tag should in constructed form')
 	}
 	return TaggedType{
 		expected_tag: expected_tag
@@ -72,7 +72,7 @@ fn (tt TaggedType) packed_length() int {
 fn (tt TaggedType) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
 	// TaggedType tag should in constructed form
 	if !tt.expected_tag.is_compound() {
-		return error("TaggedType tag should in constructed form")
+		return error('TaggedType tag should in constructed form')
 	}
 	match mode {
 		.der {
@@ -101,21 +101,21 @@ fn (tt TaggedType) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
 
 fn TaggedType.unpack_from_asn1(b []u8, loc i64, mode EncodingMode, inner_tag Tag, tm TaggedMode, p Params) !TaggedType {
 	if b.len < 2 {
-		return error("TaggedType: bytes underflow")
+		return error('TaggedType: bytes underflow')
 	}
 	match mode {
 		.ber, .der {
-			// external tag 
-			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, mode, p)!
+			// external tag
+			tag, pos := Tag.unpack_from_asn1(b, loc, mode, p)!
 			// TODO: check the tag, do we need .class == .context_specific
-			// in explicit context, the tag should be in constructed form 
+			// in explicit context, the tag should be in constructed form
 			if tm == .explicit && !tag.is_compound() {
 				return error('TaggedType: tag check failed, .explicit should be constructed')
 			}
-			len, idx := asn1.Length.unpack_from_asn1(b, pos, mode, p)!
+			len, idx := Length.unpack_from_asn1(b, pos, mode, p)!
 			if len == 0 {
 				// its bad TaggedType with len==0, ie, without contents
-				return error("TaggedType: len==0")
+				return error('TaggedType: len==0')
 			}
 			if idx > b.len || idx + len > b.len {
 				return error('TaggedType: truncated bytes')
@@ -125,32 +125,33 @@ fn TaggedType.unpack_from_asn1(b []u8, loc i64, mode EncodingMode, inner_tag Tag
 			mut tt := TaggedType{}
 			match tm {
 				.explicit {
-					// when explicit, unpack element from bytes 
+					// when explicit, unpack element from bytes
 					inner := Element.unpack(bytes, 0, mode, p)!
 					if inner.tag != inner_tag {
-						return error("unexpected inner tag")
+						return error('unexpected inner tag')
 					}
-					tt.expected_tag = tag 
+					tt.expected_tag = tag
 					tt.mode = .explicit
 					tt.inner_el = inner
 				}
 				.implicit {
 					// when in .implicit mode, inner tag is unknown, so we pass inner_tag as expected tag
-					// the bytes is the values of the element 
-					inner: Element{
-							tag: inner_tag
-							length: Length.from_i64(bytes.len)!
-							raw_data: bytes 
+					// the bytes is the values of the element
+					inner:
+					Element{
+						tag: inner_tag
+						length: Length.from_i64(bytes.len)!
+						raw_data: bytes
 					}
-					tt.expected_tag = tag 
-					tt.mode: = .implicit
-					tt.inner_el = inner 
+					tt.expected_tag = tag
+					tt.mode = .implicit
+					tt.inner_el = inner
 				}
 			}
 			return tt, idx + len
 		}
 		else {
-			return error("Unsupported mode")
+			return error('Unsupported mode')
 		}
 	}
 }
@@ -166,9 +167,9 @@ struct Element {
 	raw_data []u8
 }
 
-fn Element.new(t Tag, payload []u8) Element{
+fn Element.new(t Tag, payload []u8) Element {
 	el := Element{
-		tag: tag 
+		tag: tag
 		length: Length.from_i64(payload.len)!
 		raw_data: payload
 	}
@@ -253,7 +254,9 @@ fn Element.unpack(b []u8, loc i64, mode EncodingMode, p Params) !Element {
 
 fn (els []Element) hold_thesame_tag() bool {
 	// if empty just true
-	if els.len == 0 { return true }
+	if els.len == 0 {
+		return true
+	}
 	tag0 := els[0].tag()
 	return els.all(it.tag() == tag0)
 }

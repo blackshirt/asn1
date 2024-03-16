@@ -19,96 +19,96 @@ struct Sequence {
 mut:
 	// The tag should represents sequence or sequenceof tag, ie, 0x30
 	tag Tag = asn1.Tag{.universal, true, int(asn1.TagType.sequence)}
-	// is_seqof should be set when this sequence is SequenceOf type 
-	is_seqof  bool 
+	// is_seqof should be set when this sequence is SequenceOf type
+	is_seqof bool
 	// elements of the sequence
 	elements []asn1.Element
 }
 
-// new creates a new empty Sequence. If is_seqof is true, a new Sequence 
+// new creates a new empty Sequence. If is_seqof is true, a new Sequence
 // should be treated as a SequenceOf type, or a sequence otherwise
 fn Sequence.new(tag asn1.Tag, is_seqof bool, els []Element) !Sequence {
 	if !tag.is_compound() && tag.tag_number() != int(asn1.TagType.sequence) {
-		return error("Not a valid sequence tag")
+		return error('Not a valid sequence tag')
 	}
 	// if this intended to build SEQUENCEOF checks the els passed meet the criteria
 	if is_seqof {
 		if !els.hold_thesame_tag() {
-			return error("is_seqof is true while elements not holds the same tags ")
+			return error('is_seqof is true while elements not holds the same tags ')
 		}
 		return Sequence{
-			tag: tag 
-			is_seqof: is_seqof 
-			elements: els 
+			tag: tag
+			is_seqof: is_seqof
+			elements: els
 		}
 	}
 	// Otherwise, its creates a regular sequence
 	return Sequence{
-		tag: tag 
-		is_seqof: is_seqof 
-		elements: els 
+		tag: tag
+		is_seqof: is_seqof
+		elements: els
 	}
 }
 
 // new creates new ASN.1 Sequence, when passed elements is holds the same tag,
-// the Sequence.is_seqof flag is set to true 
+// the Sequence.is_seqof flag is set to true
 fn Sequence.new(elements []asn1.Element) Sequence {
 	mut seq := Sequence{
 		elements: elements
 	}
 	// when this all elements is holds the same tag type, its a SequenceOf
 	if seq.is_sequenceof_type() {
-		seq.is_seqof = true 
+		seq.is_seqof = true
 	}
-	return seq 
+	return seq
 }
 
 fn (mut seq Sequence) set_to_sequenceof() ! {
 	if seq.elements.hold_thesame_tag() {
-		seq.is_seqof = true 
-		return 
+		seq.is_seqof = true
+		return
 	}
-	// non-sequenceof, just return error 
+	// non-sequenceof, just return error
 	return error("Not holds sequenceof elements, you can't set the flag")
 }
 
-// is_sequenceof_type checks whether this sequence is SequenceOf type 
+// is_sequenceof_type checks whether this sequence is SequenceOf type
 fn (seq Sequence) is_sequenceof_type() bool {
 	// we assume the tag is sequence type
-	// take the first obj's tag, and check if the all the element tags has the same type 
+	// take the first obj's tag, and check if the all the element tags has the same type
 	tag0 := seq.elements[0].tag()
 	return seq.elements.all(it.tag() == tag0) && seq.is_seqof
 }
 
-// add_element add the element el to this sequence. Its check whether its should be added when this 
-// sequence is SequenceOf type 
+// add_element add the element el to this sequence. Its check whether its should be added when this
+// sequence is SequenceOf type
 fn (mut seq Sequence) add_element(el Element) ! {
 	if seq.elements.len == 0 {
-		// sequence elements is still empty, just add the element  
+		// sequence elements is still empty, just add the element
 		seq.elements << el
-		return 
+		return
 	}
 	// otherwise, sequence elements is not empty, so, lets performs check.
-	// get the first element tag, when this sequence is SequenceOf type, to be added element 
+	// get the first element tag, when this sequence is SequenceOf type, to be added element
 	// has to be have the same tag with element already availables in sequence.
 	tag0 := seq.elements[0].tag()
 	if seq.is_seqof {
 		if el.tag() != tag0 {
-			return error("Sequence: adding different element to the SequenceOf element")
+			return error('Sequence: adding different element to the SequenceOf element')
 		}
-		// has the same tag 
-		seq.elements << el 
-		return 
+		// has the same tag
+		seq.elements << el
+		return
 	}
 	// otherwise, we can just append el into sequence elements
-	seq.elements << el 
+	seq.elements << el
 }
 
 fn (s Sequence) tag() asn1.Tag {
 	return s.tag
 }
 
-// valid_sequence_tag checks whether this sequence has a valid sequence tag and in constructed form 
+// valid_sequence_tag checks whether this sequence has a valid sequence tag and in constructed form
 fn (s Sequence) valid_sequence_tag() bool {
 	return s.tag.is_compound() && s.tag.tag_number() == int(asn1.TagType.sequence)
 }
@@ -129,7 +129,6 @@ fn is_sequenceof_type(seq Sequence) bool {
 	// return seq.elements.all(it.tag() == tag0)
 	return true
 }
-
 
 // new_sequence creates empty universal class of sequence type.
 // for other ASN.1 class, see `new_sequence_with_class`
@@ -214,7 +213,6 @@ fn (mut seq Sequence) add_multi(elements []Encoder) Sequence {
 	seq.elements.add_multi(elements)
 	return seq
 }
-
 
 fn decode_sequence(src []u8) !Sequence {
 	if src.len < 2 {
