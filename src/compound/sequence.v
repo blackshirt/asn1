@@ -26,13 +26,27 @@ mut:
 }
 
 // new creates a new empty Sequence. If is_seqof is true, a new Sequence 
-// should be treated as a SequenceOf type, ie its an empty SequenceOf
+// should be treated as a SequenceOf type, or a sequence otherwise
 fn Sequence.new(tag asn1.Tag, is_seqof bool, els []Element) !Sequence {
 	if !tag.is_compound() && tag.tag_number() != int(asn1.TagType.sequence) {
 		return error("Not a valid sequence tag")
 	}
+	// if this intended to build SEQUENCEOF checks the els passed meet the criteria
+	if is_seqof {
+		if !els.hold_thesame_tag() {
+			return error("is_seqof is true while elements not holds the same tags ")
+		}
+		return Sequence{
+			tag: tag 
+			is_seqof: is_seqof 
+			elements: els 
+		}
+	}
+	// Otherwise, its creates a regular sequence
 	return Sequence{
+		tag: tag 
 		is_seqof: is_seqof 
+		elements: els 
 	}
 }
 

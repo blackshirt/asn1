@@ -11,8 +11,9 @@ module asn1
 // Internal machinery of SET and SET OF was built using the same machinery with
 // SEQUENCE and SEQUENCE OF.
 struct Set {
-	tag Tag
+	tag Tag = tag Tag = asn1.Tag{.universal, true, int(asn1.TagType.set)}
 mut:
+	is_setof bool 
 	elements []Encoder
 }
 
