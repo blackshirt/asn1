@@ -125,7 +125,7 @@ fn (oid Oid) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << bytes
 }
 
-fn Oid.unpack_from_asn1(src []u8, loc i64, mode EncodingMode, p Params) !(Oid, i64) {
+fn Oid.unpack_from_asn1(src []u8, loc i64, p Params) !(Oid, i64) {
 	if src.len < 2 {
 		return error('Oid: bad payload len')
 	}

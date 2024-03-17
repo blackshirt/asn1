@@ -121,7 +121,7 @@ fn TaggedType.unpack_from_asn1(b []u8, loc i64, tm TaggedMode, inner_tag Tag, p 
 	match tm {
 		.explicit {
 			// when explicit, unpack element from bytes
-			inner, next := Element.unpack_from_asn1(bytes, 0, p)!
+			inner, _ := Element.unpack_from_asn1(bytes, 0, p)!
 			// TODO: parse nested element
 			if inner.tag != inner_tag {
 				return error('unexpected inner tag')
