@@ -1,9 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module primitive
-
-import asn1
+module asn1
 
 struct OctetStringTest {
 	inp string
@@ -20,7 +18,7 @@ fn test_octetstring_handling() ! {
 	for o in data {
 		os := OctetString.from_string(o.inp)
 		mut out := []u8{}
-		os.pack_to_asn1(mut out, .der) or {
+		os.pack_to_asn1(mut out) or {
 			assert err == o.err
 			continue
 		}

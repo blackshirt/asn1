@@ -1,7 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module primitive
+module asn1
 
 struct BooleanTest {
 	inp []u8
@@ -18,7 +18,7 @@ fn test_encode_decode_boolean_in_der_mode() {
 		BooleanTest{[u8(1), 0x01, 0x00], false, error('Boolean: bad tag of universal class type')}, // bad tag number
 	]
 	for c in bd {
-		out, pos := Boolean.unpack_from_asn1(c.inp, 0, .der) or {
+		out, pos := Boolean.unpack_from_asn1(c.inp, 0) or {
 			assert err == c.err
 			continue
 		}

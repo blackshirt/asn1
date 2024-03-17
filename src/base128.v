@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 module asn1
 
-pub fn base128_int_length(v i64) int {
+fn base128_int_length(v i64) int {
 	mut n := v
 	mut ret := 0
 
@@ -16,7 +16,7 @@ pub fn base128_int_length(v i64) int {
 }
 
 // encode_base128_int serialize integer to bytes in base 128 integer.
-pub fn encode_base128_int(mut dst []u8, n i64) []u8 {
+fn encode_base128_int(mut dst []u8, n i64) []u8 {
 	if n == 0 {
 		dst << u8(0x00)
 		return dst
@@ -38,7 +38,7 @@ pub fn encode_base128_int(mut dst []u8, n i64) []u8 {
 
 // decode_base128_int read bytes as base 128 integer for current position `loc`.
 // Its returns integer value and next offset to read from.
-pub fn decode_base128_int(bytes []u8, loc int) !(int, int) {
+fn decode_base128_int(bytes []u8, loc int) !(int, int) {
 	mut pos := loc
 	mut r64 := i64(0)
 	mut ret := 0

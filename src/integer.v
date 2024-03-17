@@ -1,10 +1,9 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module primitive
+module asn1
 
 import math.big
-import asn1
 
 // INTEGER.
 //
@@ -31,7 +30,7 @@ const zero_integer = big.Integer{
 // Universal class of arbitrary length type of ASN.1 INTEGER
 struct Integer {
 mut:
-	tag   asn1.Tag = asn1.new_tag(.universal, false, 2)!
+	tag   Tag = new_tag(.universal, false, 2)!
 	value big.Integer
 }
 
@@ -107,7 +106,7 @@ fn (v Integer) bytes() []u8 {
 }
 
 // tag returns the tag of Universal class of this Integer type.
-fn (v Integer) tag() asn1.Tag {
+fn (v Integer) tag() Tag {
 	return v.tag
 }
 
@@ -216,62 +215,60 @@ fn (v Integer) packed_length() !int {
 	mut n := 0
 	n += v.tag().packed_length()
 
-	len := asn1.Length.from_i64(v.bytes_len())!
+	len := Length.from_i64(v.bytes_len())!
 	n += len.packed_length()
 	n += v.bytes_len()
 
 	return n
 }
 
-// pack_to_asn1 packs and serializes Integer v into ASN 1 serialized bytes into `to`.
+// pack_to_asn1 packs and serializes Integer v into ASN 1 serialized bytes into `dst`.
 // Its accepts encoding mode params, where its currently only suppport `.der` DER mode.
-// If `to.len != 0`, it act as append semantic, otherwise the `to` bytes stores the result.
-fn (v Integer) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
-	match mode {
-		.der {
-			v.tag().pack_to_asn1(mut to, .der, p)!
-			bytes, n := v.pack_into_twoscomplement_form()!
-			length := asn1.Length.from_i64(n)!
-			length.pack_to_asn1(mut to, .der, p)!
-			to << bytes
-		}
-		else {
-			return error('unsupported mode')
-		}
+// If `dst.len != 0`, it act as append semantic, otherwise the `dst` bytes stores the result.
+fn (v Integer) pack_to_asn1(mut dst []u8, p Params) ! {
+	if p.mode != .der && p.mode != .ber {
+		return error('Integer: unsupported mode')
 	}
+
+	v.tag().pack_to_asn1(mut dst, p)!
+	bytes, n := v.pack_into_twoscomplement_form()!
+	length := Length.from_i64(n)!
+	length.pack_to_asn1(mut dst, p)!
+	dst << bytes
 }
 
-// unpack_from_asn1 deserializes bytes b into ASN.1 Integer.
-// Its accepts two params:
-// `loc` params, the location (offset) sithin bytes b where the unpack
-// process start form, if not sure set to 0.
-// `mode` params, the encoding mode to drive unpack operation.
+// unpack_from_asn1 deserializes bytes src into ASN.1 Integer.
+// Its accepts `loc` params, the location (offset) within bytes src where the unpack
+// process start form, if not sure set to 0 and optional mode in `Params` to drive unpacking.
 // see `EncodingMode` for availables values. Currently only support`.der`.
-fn Integer.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Params) !(Integer, i64) {
-	match mode {
-		.der {
-			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, .der, p)!
-			if tag.class() != .universal || tag.is_compound() || tag.tag_number() != 2 {
-				return error('Integer: bad tag of universal class type')
-			}
-			// read the length part from current position pos
-			len, idx := asn1.Length.unpack_from_asn1(b, pos, .der, p)!
-			if len == 0 {
-				return error('Integer: len==0')
-			}
-			if idx + len > b.len {
-				return error('Integer: truncated input')
-			}
-			// read the bytes part from current position idx to the length part
-			bytes := unsafe { b[idx..idx + len] }
-			// buf := trim_bytes(bytes)!
-			ret := Integer.unpack_and_validate(bytes)!
-			return ret, idx + len
-		}
-		else {
-			return error('unsupported mode')
-		}
+fn Integer.unpack_from_asn1(src []u8, loc i64, p Params) !(Integer, i64) {
+	if src.len < 3 {
+		return error('IA5String: bad ia5string bytes length')
 	}
+	if p.mode != .der && p.mode != .ber {
+		return error('Integer: unsupported mode')
+	}
+	if loc > src.len {
+		return error('Integer: bad position offset')
+	}
+
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	if tag.class() != .universal || tag.is_constructed() || tag.tag_number() != int(TagType.integer) {
+		return error('Integer: bad tag of universal class type')
+	}
+	// read the length part from current position pos
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	if len == 0 {
+		return error('Integer: len==0')
+	}
+	if idx > src.len || idx + len > src.len {
+		return error('Integer: truncated input')
+	}
+	// read the bytes part from current position idx to the length part
+	bytes := unsafe { src[idx..idx + len] }
+	// buf := trim_bytes(bytes)!
+	ret := Integer.unpack_and_validate(bytes)!
+	return ret, idx + len
 }
 
 // valid_bytes validates bytes meets some requirement for DER encoding.
@@ -298,27 +295,27 @@ fn valid_bytes(src []u8, signed bool) bool {
 	return true
 }
 
-fn is_highest_bit_set(b []u8) bool {
-	if b.len > 0 {
-		return b[0] & 0x80 == 0
+fn is_highest_bit_set(src []u8) bool {
+	if src.len > 0 {
+		return src[0] & 0x80 == 0
 	}
 	return false
 }
 
-fn trim_bytes(b []u8) ![]u8 {
-	if b.len == 0 {
-		return error('bad b')
+fn trim_bytes(src []u8) ![]u8 {
+	if src.len == 0 {
+		return error('bad src')
 	}
 	// TODO: removes prepended bytes when its meet criteria
 	// positive value but its prepended with 0x00
-	if b.len > 1 && b[0] == 0x00 && b[1] & 0x80 > 0 {
-		bytes := b[1..]
+	if src.len > 1 && src[0] == 0x00 && src[1] & 0x80 > 0 {
+		bytes := src[1..]
 		return bytes
 	}
 	// TODO: how with multiples 0xff
-	if b.len > 1 && b[0] == 0xff && b[1] & 0x80 == 0 {
-		bytes := b[1..]
+	if src.len > 1 && src[0] == 0xff && src[1] & 0x80 == 0 {
+		bytes := src[1..]
 		return bytes
 	}
-	return b
+	return src
 }

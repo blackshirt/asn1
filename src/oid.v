@@ -1,9 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module primitive
-
-import asn1
+module asn1
 
 // TODO: doing check for limiting oid array length.
 const max_oid_length = 128
@@ -12,7 +10,7 @@ const max_oid_length = 128
 struct Oid {
 	value []int
 mut:
-	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.oid)) or { panic(err) }
+	tag Tag = new_tag(.universal, false, int(TagType.oid)) or { panic(err) }
 }
 
 fn Oid.from_ints(src []int) !Oid {
@@ -37,14 +35,14 @@ fn Oid.from_ints(src []int) !Oid {
 	return oid
 }
 
-fn Oid.from_bytes(b []u8) !Oid {
+fn Oid.from_bytes(src []u8) !Oid {
 	// maybe two integer fits in 1 bytes
-	if b.len == 0 {
+	if src.len == 0 {
 		return error('Oid: bad string oid length')
 	}
-	mut s := []int{len: b.len + 1}
+	mut s := []int{len: src.len + 1}
 
-	mut val, mut pos := asn1.decode_base128_int(b, 0)!
+	mut val, mut pos := decode_base128_int(src, 0)!
 
 	if val < 80 {
 		s[0] = val / 40
@@ -54,8 +52,8 @@ fn Oid.from_bytes(b []u8) !Oid {
 		s[1] = val - 80
 	}
 	mut i := 2
-	for ; pos < b.len; i++ {
-		val, pos = asn1.decode_base128_int(b, pos)!
+	for ; pos < src.len; i++ {
+		val, pos = decode_base128_int(src, pos)!
 		s[i] = val
 	}
 	s = unsafe { s[0..i] }
@@ -87,7 +85,7 @@ fn Oid.from_string(s string) !Oid {
 	return oid
 }
 
-fn (oid Oid) tag() asn1.Tag {
+fn (oid Oid) tag() Tag {
 	return oid.tag
 }
 
@@ -95,10 +93,10 @@ fn (oid Oid) packed_length() !int {
 	mut n := 0
 	n += oid.tag().packed_length()
 
-	b := oid.pack()!
-	len := asn1.Length.from_i64(b.len)!
+	src := oid.pack()!
+	len := Length.from_i64(src.len)!
 	n += len.packed_length()
-	n += b.len
+	n += src.len
 
 	return n
 }
@@ -108,53 +106,56 @@ fn (oid Oid) pack() ![]u8 {
 		return error('Oid: failed to validate')
 	}
 	mut dst := []u8{}
-	asn1.encode_base128_int(mut dst, i64(oid.value[0] * 40 + oid.value[1]))
+	encode_base128_int(mut dst, i64(oid.value[0] * 40 + oid.value[1]))
 	for i := 2; i < oid.value.len; i++ {
-		asn1.encode_base128_int(mut dst, i64(oid.value[i]))
+		encode_base128_int(mut dst, i64(oid.value[i]))
 	}
 	return dst
 }
 
-fn (oid Oid) pack_to_asn1(mut to []u8, mode asn1.EncodingMode, p asn1.Params) ! {
-	match mode {
-		.ber, .der {
-			bytes := oid.pack()!
-			oid.tag().pack_to_asn1(mut to, mode, p)!
-			length := asn1.Length.from_i64(bytes.len)!
-			length.pack_to_asn1(mut to, mode, p)!
-			to << bytes
-		}
-		else {
-			return error('Unsupported mode')
-		}
+fn (oid Oid) pack_to_asn1(mut dst []u8, p Params) ! {
+	if p.mode != .der && p.mode != .ber {
+		return error('Oid: unsupported mode')
 	}
+	// packing in DER mode
+	bytes := oid.pack()!
+	oid.tag().pack_to_asn1(mut dst, p)!
+	length := Length.from_i64(bytes.len)!
+	length.pack_to_asn1(mut dst, p)!
+	dst << bytes
 }
 
-fn Oid.unpack_from_asn1(b []u8, loc i64, mode asn1.EncodingMode, p asn1.Params) !(Oid, i64) {
-	if b.len < 2 {
+fn Oid.unpack_from_asn1(src []u8, loc i64, mode EncodingMode, p Params) !(Oid, i64) {
+	if src.len < 2 {
 		return error('Oid: bad payload len')
 	}
-	match mode {
-		.ber, .der {
-			tag, pos := asn1.Tag.unpack_from_asn1(b, loc, mode, p)!
-			if tag.class() != .universal || tag.is_compound()
-				|| tag.tag_number() != int(asn1.TagType.oid) {
-				return error('Oid: bad tag of universal class type')
-			}
-			len, idx := asn1.Length.unpack_from_asn1(b, pos, mode, p)!
-			if idx + len > b.len {
-				return error('Oid: truncated input')
-			}
-			// TODO: check the length, its safe to access bytes
-			bytes := unsafe { b[idx..idx + len] }
-
-			oid := Oid.from_bytes(bytes)!
-			return oid, idx + len
-		}
-		else {
-			return error('Unsupported mode')
-		}
+	if p.mode != .der && p.mode != .ber {
+		return error('Oid: unsupported mode')
 	}
+	if loc > src.len {
+		return error('Oid: bad position offset')
+	}
+	// unpacking in DER mode
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	if tag.class() != .universal || tag.is_constructed() || tag.tag_number() != int(TagType.oid) {
+		return error('Oid: bad tag of universal class type')
+	}
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	// no bytes
+	if len == 0 {
+		ret := Oid{
+			tag: tag
+		}
+		return ret, idx
+	}
+	if idx > src.len || idx + len > src.len {
+		return error('Oid: truncated input')
+	}
+	// TODO: check the length, its safe to access bytes
+	bytes := unsafe { src[idx..idx + len] }
+
+	oid := Oid.from_bytes(bytes)!
+	return oid, idx + len
 }
 
 fn (oid Oid) equal(oth Oid) bool {
@@ -191,9 +192,9 @@ fn (oid Oid) validate() bool {
 }
 
 fn (oid Oid) oid_length() int {
-	mut n := asn1.base128_int_length(i64(oid.value[0] * 40 + oid.value[1]))
+	mut n := base128_int_length(i64(oid.value[0] * 40 + oid.value[1]))
 	for i := 2; i < oid.value.len; i++ {
-		n += asn1.base128_int_length(i64(oid.value[i]))
+		n += base128_int_length(i64(oid.value[i]))
 	}
 	return n
 }

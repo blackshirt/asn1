@@ -17,9 +17,9 @@ const max_tag_number = 16383
 // See limit restriction comment above.
 pub struct Tag {
 mut:
-	cls      Class
+	cls         Class = .universal
 	constructed bool
-	number   TagNumber
+	number      TagNumber
 }
 
 // `new_tag` creates new ASN.1 tag identifier. Its accepts params of Class `c`,
@@ -49,16 +49,16 @@ pub fn (t Tag) tag_number() int {
 
 // pack_to_asn1 serializes tag t into bytes array and appended into dst
 pub fn (t Tag) pack_to_asn1(mut dst []u8, p Params) ! {
-	// we currently only support .der or (stricter) .ber 
+	// we currently only support .der or (stricter) .ber
 	if p.mode != .der && p.mode != .ber {
-		return error("Tag: unsupported mode")
+		return error('Tag: unsupported mode')
 	}
-	// makes sure TagNumber is valid 
-	if t.number > max_tag_number {
-		return error("Tag: tag number exceed limit")
+	// makes sure TagNumber is valid
+	if t.number > asn1.max_tag_number {
+		return error('Tag: tag number exceed limit')
 	}
 	// get the class type and constructed bit and build the bytes tag.
-	// if the tag number > 0x1f, represented in long form required two or more bytes, 
+	// if the tag number > 0x1f, represented in long form required two or more bytes,
 	// otherwise, represented in short form, fit in single byte.
 	mut b := (u8(t.cls) << 6) & class_mask
 	if t.constructed {
@@ -85,12 +85,12 @@ pub fn Tag.unpack_from_asn1(bytes []u8, loc i64, p Params) !(Tag, i64) {
 		return error('Tag: bytes underflow')
 	}
 	if p.mode != .der && p.mode != .ber {
-		return error("Tag: unsupported mode")
+		return error('Tag: unsupported mode')
 	}
 	if loc > bytes.len {
 		return error('Tag: invalid pos')
 	}
-	mut pos := loc 
+	mut pos := loc
 	// first byte of tag bytes
 	b := bytes[pos]
 	pos += 1
@@ -117,14 +117,13 @@ pub fn Tag.unpack_from_asn1(bytes []u8, loc i64, p Params) !(Tag, i64) {
 			return error('Tag: non-minimal tag')
 		}
 	}
-	// build the tag 
+	// build the tag
 	tag := Tag{
 		cls: Class.from_int(cls)!
 		constructed: constructed
 		number: number
 	}
 	return tag, pos
-		
 }
 
 // clone_with_class clones teh tag t into new tag with class is set to c
@@ -217,14 +216,14 @@ fn TagNumber.unpack_from_asn1(bytes []u8, loc i64, p Params) !(TagNumber, i64) {
 	if loc > bytes.len {
 		return error('TagNumber: invalid pos')
 	}
-	mut pos := loc 
+	mut pos := loc
 	mut ret := 0
 	for s := 0; pos < bytes.len; s++ {
 		ret <<= 7
 		b := bytes[pos]
 
 		if s == 0 && b == 0x80 {
-			// requirement for DER encoding 
+			// requirement for DER encoding
 			return error('TagNumber: integer is not minimaly encoded')
 		}
 

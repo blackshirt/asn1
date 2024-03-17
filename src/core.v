@@ -41,13 +41,13 @@ fn (c Class) str() string {
 const class_mask 		= 0xc0 // 192, bits 8-7
 const constructed_mask 	= 0x20 //  32, bits 6
 const tag_numher_mask 	= 0x1f //  32, bits 1-5
-// vfmt on 
+// vfmt on
 
 // Params is optional params passed to pack or unpacking
 // of tag, length or ASN.1 element to drive how encoding works.
 @[params]
 pub struct Params {
-	mode 	EncodingMode = .der 
+	mode EncodingMode = .der
 }
 
 // encoding mode

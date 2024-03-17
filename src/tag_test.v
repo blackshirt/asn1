@@ -36,12 +36,12 @@ fn test_universal_class_tag_length_handling() ! {
 }
 
 struct TagUnpackTest {
-	bytes    []u8
-	cls      Class
+	bytes       []u8
+	cls         Class
 	constructed bool
-	number   int
-	lastpos  int
-	err      IError
+	number      int
+	lastpos     int
+	err         IError
 }
 
 fn test_tag_unpack() ! {
@@ -63,7 +63,7 @@ fn test_tag_unpack() ! {
 
 	for i, c in data {
 		dump(i)
-		tag, pos := Tag.unpack_from_asn1(c.bytes, 0, .der) or {
+		tag, pos := Tag.unpack_from_asn1(c.bytes, 0) or {
 			assert err == c.err
 			continue
 		}
@@ -131,13 +131,13 @@ fn test_tagandlength_handling() ! {
 	for i, c in bs {
 		dump(i)
 		dump(c.bytes.hex())
-		tag, pos := Tag.unpack_from_asn1(c.bytes, 0, .der) or {
+		tag, pos := Tag.unpack_from_asn1(c.bytes, 0) or {
 			assert err == c.err
 			continue
 		}
 		assert tag == c.tag
 
-		length, idx := Length.unpack_from_asn1(c.bytes, pos, .der) or {
+		length, idx := Length.unpack_from_asn1(c.bytes, pos) or {
 			assert err == c.err
 			continue
 		}
@@ -148,11 +148,11 @@ fn test_tagandlength_handling() ! {
 }
 
 struct TagNumberTest {
-	num      int
-	cls      Class
+	num         int
+	cls         Class
 	constructed bool
-	exp      []u8
-	err      IError
+	exp         []u8
+	err         IError
 }
 
 fn test_serialize_tag() ! {
@@ -179,7 +179,7 @@ fn test_serialize_tag() ! {
 			assert err == c.err
 			continue
 		}
-		tag.pack_to_asn1(mut dst, .der)!
+		tag.pack_to_asn1(mut dst)!
 		assert dst == c.exp
 	}
 }

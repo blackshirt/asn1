@@ -64,15 +64,15 @@ pub fn (v Length) packed_length() int {
 	return n
 }
 
-// pack_to_asn1 serializes Length v into bytes and append it into `dst`. if p `Params` is provided, 
+// pack_to_asn1 serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
 // it would use p.mode of `EncodingMode` to drive packing operation operation would be done.
 // By default the .der mode is only currently supported.
 pub fn (v Length) pack_to_asn1(mut dst []u8, p Params) ! {
-	// we currently only support .der and (stricter) .ber 
+	// we currently only support .der and (stricter) .ber
 	if p.mode != .der && p.mode != .ber {
-		return error("Length: unsupported mode")
+		return error('Length: unsupported mode')
 	}
-	// TODO: add supports for undefinite form 
+	// TODO: add supports for undefinite form
 	// Long form
 	if v >= 128 {
 		// First, we count how many bytes occupied by this length value.
@@ -94,19 +94,16 @@ pub fn (v Length) pack_to_asn1(mut dst []u8, p Params) ! {
 // unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buffer.
 // Its return Length and next offset in the buffer buf to process on, and return error on fail.
 pub fn Length.unpack_from_asn1(buf []u8, loc i64, p Params) !(Length, i64) {
-	// preliminary check 
+	// preliminary check
 	if p.mode != .der && p.mode != .ber {
-		return error("Length: unsupported mode")
+		return error('Length: unsupported mode')
 	}
-	if loc > bytes.len {
+	if loc > buf.len {
 		return error('Length: invalid pos')
 	}
-	
+
 	mut pos := loc
-	if pos >= buf.len {
-		return error('Length: truncated length')
-	}
-	
+
 	mut b := buf[pos]
 	pos += 1
 	mut length := i64(0)
@@ -153,5 +150,5 @@ pub fn Length.unpack_from_asn1(buf []u8, loc i64, p Params) !(Length, i64) {
 		}
 	}
 	ret := Length.from_i64(length)!
-	return ret, pos	
+	return ret, pos
 }

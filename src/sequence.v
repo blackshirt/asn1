@@ -1,9 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module compound
-
-import asn1
+module asn1
 
 // SEQUENCE and SEQUENCE OF handling
 //
@@ -18,17 +16,17 @@ import asn1
 struct Sequence {
 mut:
 	// The tag should represents sequence or sequenceof tag, ie, 0x30
-	tag Tag = asn1.Tag{.universal, true, int(asn1.TagType.sequence)}
+	tag Tag = Tag{.universal, true, int(TagType.sequence)}
 	// is_seqof should be set when this sequence is SequenceOf type
 	is_seqof bool
 	// elements of the sequence
-	elements []asn1.Element
+	elements []Element
 }
 
 // new creates a new empty Sequence. If is_seqof is true, a new Sequence
 // should be treated as a SequenceOf type, or a sequence otherwise
-fn Sequence.new(tag asn1.Tag, is_seqof bool, els []Element) !Sequence {
-	if !tag.is_compound() && tag.tag_number() != int(asn1.TagType.sequence) {
+fn Sequence.new(tag Tag, is_seqof bool, els []Element) !Sequence {
+	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
 		return error('Not a valid sequence tag')
 	}
 	// if this intended to build SEQUENCEOF checks the els passed meet the criteria
@@ -52,7 +50,7 @@ fn Sequence.new(tag asn1.Tag, is_seqof bool, els []Element) !Sequence {
 
 // new creates new ASN.1 Sequence, when passed elements is holds the same tag,
 // the Sequence.is_seqof flag is set to true
-fn Sequence.new(elements []asn1.Element) Sequence {
+fn Sequence.new(elements []Element) Sequence {
 	mut seq := Sequence{
 		elements: elements
 	}
@@ -104,13 +102,13 @@ fn (mut seq Sequence) add_element(el Element) ! {
 	seq.elements << el
 }
 
-fn (s Sequence) tag() asn1.Tag {
+fn (s Sequence) tag() Tag {
 	return s.tag
 }
 
 // valid_sequence_tag checks whether this sequence has a valid sequence tag and in constructed form
 fn (s Sequence) valid_sequence_tag() bool {
-	return s.tag.is_compound() && s.tag.tag_number() == int(asn1.TagType.sequence)
+	return s.tag.is_constructed() && s.tag.tag_number() == int(TagType.sequence)
 }
 
 // is_sequenceof_type checks whether the sequence `seq` holds the same elements (its a SEQUENCE OF type).

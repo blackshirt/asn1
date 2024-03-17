@@ -1,9 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module primitive
-
-import asn1
+module asn1
 
 struct IA5StringTest {
 	s   string
@@ -26,20 +24,20 @@ fn test_ia5string_handling() ! {
 			continue
 		}
 		mut out := []u8{}
-		s.pack_to_asn1(mut out, .der) or {
+		s.pack_to_asn1(mut out) or {
 			assert err == c.err
 			continue
 		}
 		assert out == c.out
 
 		// unpack back
-		ret, next := IA5String.unpack_from_asn1(out, 0, .der) or {
+		ret, next := IA5String.unpack_from_asn1(out, 0) or {
 			assert err == c.err
 			continue
 		}
 
 		assert ret.tag.tag_number() == 22
-		assert ret.tag.class() == asn1.Class.universal
+		assert ret.tag.class() == Class.universal
 		assert ret.tag.is_compound() == false
 		assert ret.value == c.s
 	}

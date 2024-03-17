@@ -1,7 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module primitive
+module asn1
 
 import math.big
 
@@ -76,7 +76,7 @@ fn test_asn1_integer_unpack_to_asn1() ! {
 	for i, c in primitive.unpack_data {
 		n := Integer.from_i64(c.val)
 		mut to := []u8{}
-		n.pack_to_asn1(mut to, .der)!
+		n.pack_to_asn1(mut to)!
 		assert to == c.out
 	}
 }
@@ -130,25 +130,25 @@ fn test_asn1_unpack_and_validate() {
 fn test_asn1_integer_simple_long_integer_pack_unpack() ! {
 	num := Integer.from_hex('0102030405060708090a0b0c0d0e0f')!
 	mut dst := []u8{}
-	num.pack_to_asn1(mut dst, .der)!
+	num.pack_to_asn1(mut dst)!
 
 	expected := '\x02\x0f\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'.bytes()
 	assert dst == expected
 
 	// unpack back
-	val, pos := Integer.unpack_from_asn1(expected, 0, .der)!
+	val, pos := Integer.unpack_from_asn1(expected, 0)!
 	assert val == num
 	assert pos == 17
 
 	// test with negative value
 	negnum := Integer.from_hex('-0102030405060708090a0b0c0d0e0f')!
 	mut out := []u8{}
-	negnum.pack_to_asn1(mut out, .der)!
+	negnum.pack_to_asn1(mut out)!
 	expneg := '\x02\x0f\xfe\xfd\xfc\xfb\xfa\xf9\xf8\xf7\xf6\xf5\xf4\xf3\xf2\xf1\xf1'.bytes()
 	assert out == expneg
 
 	// unpack back a negative number
-	val2, pos2 := Integer.unpack_from_asn1(expneg, 0, .der)!
+	val2, pos2 := Integer.unpack_from_asn1(expneg, 0)!
 	assert val2 == negnum
 	assert pos2 == 17
 }
@@ -166,7 +166,7 @@ fn test_integer_large_int() ! {
 		0x71, 0xe1, 0xb2, 0x2f, 0x5c, 0x8d, 0xee, 0xf0, 0xf1, 0x17, 0x1e, 0xd2, 0x5f, 0x31, 0x5b,
 		0xb1, 0x9c, 0xbc, 0x20, 0x55, 0xbf, 0x3a, 0x37, 0x42, 0x45, 0x75, 0xdc, 0x90, 0x65]
 	expected_integer := Integer.from_string('101038645214968213029489864879507742420925199145132483818978980455132582258676381289000109319204510275496178360219909358646064503513889573494768497419381751359787623037449375660247011308028102339473875820259375735204357343091558075960601364303443174344509161224592926325506446708043127306053676664799729848421')
-	out, pos := Integer.unpack_from_asn1(bytes, 0, .der)!
+	out, pos := Integer.unpack_from_asn1(bytes, 0)!
 
 	assert pos == bytes.len
 
@@ -183,10 +183,10 @@ fn test_integer_large_int() ! {
 
 	// pack back
 	mut dst := []u8{}
-	expected_integer.pack_to_asn1(mut dst, .der)!
+	expected_integer.pack_to_asn1(mut dst)!
 	assert dst == bytes
 
 	mut dst2 := []u8{}
-	out.pack_to_asn1(mut dst2, .der)!
+	out.pack_to_asn1(mut dst2)!
 	assert dst2 == bytes
 }
