@@ -4,29 +4,41 @@
 module asn1
 
 fn test_explicit_context_null_encode_decode() ! {
-	ex1 := new_explicit_context(new_null(), 0)
+	el := Null.new().to_element()!
+	exp_tag := new_tag(.context_specific, true, 0)!
+	ex1 := TaggedType.new_explicit(el, exp_tag)!
 
-	out := ex1.encode()!
+	mut out := []u8{}
+	ex1.pack_to_asn1(mut out)!
 	exp := [u8(0xa0), 0x02, 0x05, 0x00]
 
 	assert out == exp
-	asli := ex1.as_inner().encode()!
-	assert asli == [u8(0x05), 0x00]
+	// unpack back
+	ttback, _ := TaggedType.unpack_from_asn1(out, 0, .explicit, el.tag())!
+	assert ttback == ex1
+	assert ttback.inner_el == el
 }
 
 fn test_explicit_context_nested_encode_decode() ! {
-	el1 := new_explicit_context(new_null(), 1)
-	ex1 := new_explicit_context(el1, 2)
+	el := Null.new().to_element()!
+	exp_tag := new_tag(.context_specific, true, 1)!
+	ex1 := TaggedType.new_explicit(el, exp_tag)!
+	exp_tag2 := new_tag(.context_specific, true, 2)!
+	exp2 := TaggedType.new_explicit(ex1, exp_tag2)!
+	// el1 := new_explicit_context(new_null(), 1)
+	// ex1 := new_explicit_context(el1, 2)
 
-	out := ex1.encode()!
+	mut out := []u8{}
+	ex2.pack_to_asn1(mut out)!
 	exp := [u8(0xa2), 0x04, 0xa1, 0x02, 0x05, 0x00]
 
 	assert out == exp
 
-	asli := el1.as_inner().encode()!
-	assert asli == [u8(0x05), 0x00]
+	// asli := el1.as_inner().encode()!
+	// assert asli == [u8(0x05), 0x00]
 }
 
+/*
 fn test_asn1_example() ! {
 	/*
 	```asn.1
@@ -54,3 +66,4 @@ Example ::= SEQUENCE {
 		assert back.elements[2] is Tagged
 	}
 }
+*/

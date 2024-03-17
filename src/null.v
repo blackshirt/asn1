@@ -26,6 +26,13 @@ fn (n Null) tag() Tag {
 	return n.tag
 }
 
+fn (n Null) to_element() !Element {
+	el := Element{
+		tag: n.tag()
+	}
+	return el
+}
+
 fn (n Null) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
