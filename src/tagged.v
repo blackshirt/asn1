@@ -23,7 +23,7 @@ mut:
 }
 
 // new creates a new TaggedType
-fn TaggedType.new(el Element, tagmode TaggedMode, outer_tag Tag) !TaggedType {
+pub fn TaggedType.new(el Element, tagmode TaggedMode, outer_tag Tag) !TaggedType {
 	// Tagged type should in constructed form
 	if !outer_tag.is_constructed() {
 		return error('TaggedType tag should in constructed form')
@@ -35,14 +35,30 @@ fn TaggedType.new(el Element, tagmode TaggedMode, outer_tag Tag) !TaggedType {
 	}
 }
 
-// new_explicit creates a new TaggedType with .explicit tagged mode.
-fn TaggedType.new_explicit(el Element, outer_tag Tag) !TaggedType {
+// explicit creates a new TaggedType with .explicit tagged mode.
+pub fn TaggedType.explicit(el Element, outer_tag Tag) !TaggedType {
 	return TaggedType.new(el, .explicit, outer_tag)
 }
 
-// new_implicit creates a new TaggedType with .implicit tagged mode.
-fn TaggedType.new_implicit(el Element, outer_tag Tag) !TaggedType {
+// implicit creates a new TaggedType with .implicit tagged mode for inner element el 
+pub fn TaggedType.implicit(el Element, outer_tag Tag) !TaggedType {
 	return TaggedType.new(el, .implicit, outer_tag)
+}
+
+// explicit_context creates explicit mode of TaggedType for inner element el with tag has a .context_specific Class 
+// and expected (outer) tag number is set into tagnum
+pub fn TaggedType.explicit_context(el Element, tagnum int) !TaggedType {
+	tag := new_tag(.context_specific, true, tagnum)!
+	tt := TaggedType.explicit(el, tag)!
+	return tt 
+}
+
+// implicit_context creates implicit mode of TaggedType for inner element el with tag has a .context_specific Class 
+// and expected (outer) tag number is set into tagnum
+pub fn TaggedType.implicit_context(el Element, tagnum int) !TaggedType {
+	tag := new_tag(.context_specific, true, tagnum)!
+	tt := TaggedType.implicit(el, tag)!
+	return tt 
 }
 
 fn (tt TaggedType) packed_length() int {
@@ -71,7 +87,7 @@ fn (tt TaggedType) packed_length() int {
 	return n
 }
 
-fn (tt TaggedType) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (tt TaggedType) pack_to_asn1(mut dst []u8, p Params) ! {
 	// TaggedType tag should in constructed form
 	if !tt.outer_tag.is_constructed() {
 		return error('TaggedType tag should in constructed form')
@@ -97,7 +113,7 @@ fn (tt TaggedType) pack_to_asn1(mut dst []u8, p Params) ! {
 	}
 }
 
-fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Params) !(TaggedType, i64) {
+pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Params) !(TaggedType, i64) {
 	if src.len < 2 {
 		return error('TaggedType: bytes underflow')
 	}
