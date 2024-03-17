@@ -48,19 +48,6 @@ fn Sequence.new(tag Tag, is_seqof bool, els []Element) !Sequence {
 	}
 }
 
-// new creates new ASN.1 Sequence, when passed elements is holds the same tag,
-// the Sequence.is_seqof flag is set to true
-fn Sequence.new(elements []Element) Sequence {
-	mut seq := Sequence{
-		elements: elements
-	}
-	// when this all elements is holds the same tag type, its a SequenceOf
-	if seq.is_sequenceof_type() {
-		seq.is_seqof = true
-	}
-	return seq
-}
-
 fn (mut seq Sequence) set_to_sequenceof() ! {
 	if seq.elements.hold_thesame_tag() {
 		seq.is_seqof = true
@@ -111,6 +98,7 @@ fn (s Sequence) valid_sequence_tag() bool {
 	return s.tag.is_constructed() && s.tag.tag_number() == int(TagType.sequence)
 }
 
+/*
 // is_sequenceof_type checks whether the sequence `seq` holds the same elements (its a SEQUENCE OF type).
 fn is_sequenceof_type(seq Sequence) bool {
 	tag := seq.tag.number
@@ -257,3 +245,4 @@ fn parse_seq(tag Tag, contents []u8) !Sequence {
 	}
 	return seq
 }
+*/

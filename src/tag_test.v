@@ -37,7 +37,7 @@ fn test_universal_class_tag_length_handling() ! {
 
 struct TagUnpackTest {
 	bytes       []u8
-	cls         Class
+	class       Class
 	constructed bool
 	number      int
 	lastpos     int
@@ -46,17 +46,17 @@ struct TagUnpackTest {
 
 fn test_tag_unpack() ! {
 	data := [
-		TagUnpackTest{[u8(0x80), 0x01], .context_specific, false, 0, 1, error('integer is not minimaly encoded')},
+		TagUnpackTest{[u8(0x80), 0x01], .context_specific, false, 0, 1, error('TagNumber: integer is not minimally encoded')},
 		TagUnpackTest{[u8(0xa0), 0x01], .context_specific, true, 0, 1, none}, //{2, 0, 1, true}},
 		TagUnpackTest{[u8(0x02), 0x00], .universal, false, 2, 1, none},
 		TagUnpackTest{[u8(0xfe), 0x00], .private, true, 30, 1, none},
 		TagUnpackTest{[u8(0x1f), 0x1f, 0x00], .universal, false, 31, 2, none}, // high tag form
 		TagUnpackTest{[u8(0x1f), 0x81, 0x00, 0x00], .universal, false, 128, 3, none},
-		TagUnpackTest{[u8(0x1f), 0x81, 0x80, 0x01, 0x00], .universal, false, 16385, 4, error('base 128 integer too large')}, // 1x128^2 + 0x128^1 + 1x128*0
+		TagUnpackTest{[u8(0x1f), 0x81, 0x80, 0x01, 0x00], .universal, false, 16385, 4, error('TagNumber: base 128 integer too large')}, // 1x128^2 + 0x128^1 + 1x128*0
 		TagUnpackTest{[u8(0x00), 0x81, 0x80], .universal, false, 0, 1, none},
 		TagUnpackTest{[u8(0x00), 0x83, 0x01, 0x00], .universal, false, 0, 1, none},
-		TagUnpackTest{[u8(0x1f), 0x85], .universal, false, 0, 1, error('truncated base 128 integer')},
-		TagUnpackTest{[u8(0x1f), 0x85, 0x81], .universal, false, 0, 0, error('truncated base 128 integer')},
+		TagUnpackTest{[u8(0x1f), 0x85], .universal, false, 0, 1, error('TagNumber: truncated base 128 integer')},
+		TagUnpackTest{[u8(0x1f), 0x85, 0x81], .universal, false, 0, 0, error('TagNumber: truncated base 128 integer')},
 		TagUnpackTest{[u8(0x30), 0x80], .universal, true, 0x10, 1, none},
 		TagUnpackTest{[u8(0xa0), 0x82, 0x00, 0xff], .context_specific, true, 0, 1, none},
 	]
@@ -67,7 +67,7 @@ fn test_tag_unpack() ! {
 			assert err == c.err
 			continue
 		}
-		assert tag.cls == c.cls
+		assert tag.class == c.class
 		assert tag.constructed == c.constructed
 		assert tag.number == c.number
 		assert pos == c.lastpos
@@ -93,14 +93,14 @@ fn test_tagandlength_handling() ! {
 		TagAndLengthTest{[u8(0x1f), 0x81, 0x00, 0x01], Tag{.universal, false, 128}, 1, 4, none},
 		// the last byte tells its length in long form
 		TagAndLengthTest{[u8(0x1f), 0x81, 0x00, 0x81], Tag{.universal, false, 128}, 1, 4, error('Length: truncated length')},
-		TagAndLengthTest{[u8(0x1f), 0x81, 0x80, 0x01, 0x00], Tag{.universal, false, 16385}, 0, 5, error('base 128 integer too large')}, // 1x128^2 + 0x128^1 + 1x128*0
+		TagAndLengthTest{[u8(0x1f), 0x81, 0x80, 0x01, 0x00], Tag{.universal, false, 16385}, 0, 5, error('TagNumber: base 128 integer too large')}, // 1x128^2 + 0x128^1 + 1x128*0
 		TagAndLengthTest{[u8(0x00), 0x81, 0x80], Tag{.universal, false, 0}, 128, 3, none},
 		// need one byte length
 		TagAndLengthTest{[u8(0x00), 0x83, 0x01, 0x00], Tag{.universal, false, 0}, 2, 1, error('Length: truncated length')},
 		// normal version above
 		TagAndLengthTest{[u8(0x00), 0x83, 0x01, 0x01, 0x01], Tag{.universal, false, 0}, 65793, 5, none}, // length = 1x256^2 + 1x256^1 + 1x256^0
-		TagAndLengthTest{[u8(0x1f), 0x85], Tag{.universal, false, 0}, 0, 2, error('truncated base 128 integer')},
-		TagAndLengthTest{[u8(0x1f), 0x85, 0x81], Tag{.universal, false, 0}, 0, 0, error('truncated base 128 integer')},
+		TagAndLengthTest{[u8(0x1f), 0x85], Tag{.universal, false, 0}, 0, 2, error('TagNumber: truncated base 128 integer')},
+		TagAndLengthTest{[u8(0x1f), 0x85, 0x81], Tag{.universal, false, 0}, 0, 0, error('TagNumber: truncated base 128 integer')},
 		// this last bytes tell the length is in undefinite length, 0x80
 		TagAndLengthTest{[u8(0x30), 0x80], Tag{.universal, true, 0x10}, 0, 2, error('Length: unsupported undefinite length')},
 		// still truncated length part
@@ -123,9 +123,9 @@ fn test_tagandlength_handling() ! {
 		// Tag numbers which would overflow int32 are rejected. (The number below is 2^31.)
 		TagAndLengthTest{[u8(0x1f), 0x88, 0x80, 0x80, 0x80, 0x00, 0x00], Tag{.universal, false, 0}, 0, 0, error('TagNumber: negative number')}, //{}},
 		// Tag numbers that fit in an int32 are valid. (The number below is 2^31 - 1.) but its bigger than max_tag_bytes_length
-		TagAndLengthTest{[u8(0x1f), 0x87, 0xFF, 0xFF, 0xFF, 0x7F, 0x00], Tag{.universal, false, 2147483647}, 0, 7, error('base 128 integer too large')},
+		TagAndLengthTest{[u8(0x1f), 0x87, 0xFF, 0xFF, 0xFF, 0x7F, 0x00], Tag{.universal, false, 2147483647}, 0, 7, error('TagNumber: base 128 integer too large')},
 		// Long tag number form may not be used for tags that fit in short form.
-		TagAndLengthTest{[u8(0x1f), 0x1e, 0x00], Tag{.universal, false, 0}, 0, 0, error('non-minimal tag')}, //{}},
+		TagAndLengthTest{[u8(0x1f), 0x1e, 0x00], Tag{.universal, false, 0}, 0, 0, error('Tag: non-minimal tag')}, //{}},
 	]
 
 	for i, c in bs {
@@ -149,7 +149,7 @@ fn test_tagandlength_handling() ! {
 
 struct TagNumberTest {
 	num         int
-	cls         Class
+	class       Class
 	constructed bool
 	exp         []u8
 	err         IError
@@ -175,7 +175,7 @@ fn test_serialize_tag() ! {
 
 	for c in data {
 		mut dst := []u8{}
-		tag := new_tag(c.cls, c.constructed, c.num) or {
+		tag := new_tag(c.class, c.constructed, c.num) or {
 			assert err == c.err
 			continue
 		}

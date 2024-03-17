@@ -306,10 +306,10 @@ struct ASN1Object {
 }
 
 // `new_asn_object` creates new ASN.1 Object
-pub fn new_asn_object(cls Class, constructed bool, tagnum int, values []u8) ASN1Object {
+pub fn new_asn_object(class Class, constructed bool, tagnum int, values []u8) ASN1Object {
 	return ASN1Object{
 		tag: Tag{
-			class: cls
+			class: class
 			constructed: constructed
 			number: tagnum
 		}

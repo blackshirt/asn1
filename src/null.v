@@ -36,7 +36,7 @@ fn (n Null) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << [u8(0x00)]
 }
 
-fn Null.unpack(b []u8, loc i64, p Params) !(Null, i64) {
+fn Null.unpack(src []u8, loc i64, p Params) !(Null, i64) {
 	if src.len < 2 {
 		return error('Null: bad ia5string bytes length')
 	}
@@ -47,11 +47,11 @@ fn Null.unpack(b []u8, loc i64, p Params) !(Null, i64) {
 		return error('Null: bad position offset')
 	}
 
-	tag, pos := Tag.unpack_from_asn1(b, loc, p)!
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
 	if tag.tag_number() != int(TagType.null) {
 		return error('Null: bad tag=${tag}')
 	}
-	len, idx := Length.unpack_from_asn1(b, pos, p)!
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
 	if len != 0 {
 		return error('Null: len != 0')
 	}

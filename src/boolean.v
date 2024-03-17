@@ -69,11 +69,11 @@ fn Boolean.unpack_from_asn1(src []u8, loc i64, p Params) !(Boolean, i64) {
 		return error('Boolean: bad position offset')
 	}
 
-	tag, pos := Tag.unpack_from_asn1(src, loc, mode, p)!
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
 	if tag.class() != .universal || tag.is_constructed() || tag.tag_number() != int(TagType.boolean) {
 		return error('Boolean: bad tag of universal class type')
 	}
-	len, idx := Length.unpack_from_asn1(src, pos, mode, p)!
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
 	// boolean value should be encoded in single byte
 	if len != 1 {
 		return error('der encoding of boolean value represented in multibytes is not allowed')
@@ -96,8 +96,8 @@ fn Boolean.unpack_from_asn1(src []u8, loc i64, p Params) !(Boolean, i64) {
 		}
 		else {
 			// in der, other values is not allowed, but allowed in ber
-			if mode == .der {
-				return error('Boolean: not allowed for true value')
+			if p.mode == .der {
+				return error('Boolean: in DER, other than 0xff is not allowed for true value')
 			}
 			value = true
 		}

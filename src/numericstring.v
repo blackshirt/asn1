@@ -79,7 +79,7 @@ fn NumericString.unpack_from_asn1(src []u8, loc i64, p Params) !(NumericString, 
 	len, idx := Length.unpack_from_asn1(src, pos, p)!
 	// no bytes
 	if len == 0 {
-		ret := IA5String{
+		ret := NumericString{
 			tag: tag
 		}
 		return ret, idx

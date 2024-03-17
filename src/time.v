@@ -220,14 +220,14 @@ fn GeneralizedTime.unpack_from_asn1(src []u8, loc i64, p Params) !(GeneralizedTi
 	if loc > src.len {
 		return error('GeneralizedTime: bad position offset')
 	}
-	tag, pos := Tag.unpack_from_asn1(src, loc, .der, p)!
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
 	// its only for universal class, maybe present with different context/class
 	if tag.class() != .universal || tag.is_constructed()
 		|| tag.tag_number() != int(TagType.generalizedtime) {
 		return error('GeneralizedTime: bad tag of universal class type')
 	}
 	// read the length part from current position pos
-	len, idx := Length.unpack_from_asn1(src, pos, .der, p)!
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
 	if len == 0 {
 		// we dont allow null length
 		return error('GeneralizedTime: len==0')

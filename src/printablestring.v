@@ -50,9 +50,9 @@ fn (ps PrintableString) pack_to_asn1(mut dst []u8, p Params) ! {
 		return error('PrintableString: unsupported mode')
 	}
 	// pack in DER mode
-	ps.tag().pack_to_asn1(mut dst, mode, p)!
+	ps.tag().pack_to_asn1(mut dst, p)!
 	length := Length.from_i64(ps.value.bytes().len)!
-	length.pack_to_asn1(mut dst, mode, p)!
+	length.pack_to_asn1(mut dst, p)!
 	dst << ps.value.bytes()
 }
 
@@ -95,5 +95,5 @@ fn printable_chars(bytes []u8) bool {
 }
 
 fn is_printablestring(c u8) bool {
-	return c.is_alnum() || c == u8(0x20) || c in primitive.printable_symbols
+	return c.is_alnum() || c == u8(0x20) || c in asn1.printable_symbols
 }

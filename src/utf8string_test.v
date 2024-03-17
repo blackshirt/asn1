@@ -1,9 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module primitive
-
-import asn1
+module asn1
 
 // UTFString test
 struct UTF8StringTest {
@@ -39,7 +37,7 @@ fn test_uf8string_handling() ! {
 
 		uss, _ := UTF8String.unpack_from_asn1(out, 0, .der)!
 
-		assert uss.tag.tag_number() == int(asn1.TagType.utf8string)
+		assert uss.tag.tag_number() == int(TagType.utf8string)
 		assert uss.value == c.s
 	}
 }

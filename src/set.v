@@ -14,9 +14,10 @@ struct Set {
 	tag Tag = Tag{.universal, true, int(TagType.set)}
 mut:
 	is_setof bool
-	elements []Encoder
+	elements []Element
 }
 
+/*
 // new_set creates universal set.
 pub fn new_set() Set {
 	return new_set_with_class(.universal)
@@ -181,3 +182,4 @@ fn (set Set) is_set_of() bool {
 
 	return true
 }
+*/

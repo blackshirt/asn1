@@ -1,9 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module primitive
-
-import asn1
+module asn1
 
 // VisibleString
 // The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.
@@ -11,7 +9,7 @@ import asn1
 struct VisibleString {
 	value string
 mut:
-	tag asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.visiblestring)) or { panic(err) }
+	tag Tag = new_tag(.universal, false, int(TagType.visiblestring)) or { panic(err) }
 }
 
 fn VisibleString.from_string(s string) !VisibleString {
@@ -32,11 +30,11 @@ fn VisibleString.from_bytes(src []u8) !VisibleString {
 	}
 }
 
-fn (vs VisibleString) tag() asn1.Tag {
+fn (vs VisibleString) tag() Tag {
 	return vs.tag
 }
 
-fn (vs VisibleString) pack_to_asn1(mut dst []u8, p asn1.Params) ! {
+fn (vs VisibleString) pack_to_asn1(mut dst []u8, p Params) ! {
 	// recheck
 	if contains_ctrl_chars(vs.value.bytes()) {
 		return error('VisibleString: contains control chars')
@@ -45,12 +43,12 @@ fn (vs VisibleString) pack_to_asn1(mut dst []u8, p asn1.Params) ! {
 		return error('Integer: unsupported mode')
 	}
 	vs.tag().pack_to_asn1(mut dst, p)!
-	length := asn1.Length.from_i64(vs.value.bytes().len)!
+	length := Length.from_i64(vs.value.bytes().len)!
 	length.pack_to_asn1(mut dst, p)!
 	dst << vs.value.bytes()
 }
 
-fn VisibleString.unpack_from_asn1(src []u8, loc i64, p asn1.Params) !(VisibleString, i64) {
+fn VisibleString.unpack_from_asn1(src []u8, loc i64, p Params) !(VisibleString, i64) {
 	if src.len < 2 {
 		return error('VisibleString: bad src.len underflow')
 	}
@@ -63,13 +61,13 @@ fn VisibleString.unpack_from_asn1(src []u8, loc i64, p asn1.Params) !(VisibleStr
 
 	// unpacking in DER mode
 	// get the tag
-	tag, pos := asn1.Tag.unpack_from_asn1(src, loc, p)!
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
 	if tag.class() != .universal || tag.is_constructed()
-		|| tag.tag_number() != int(asn1.TagType.visiblestring) {
+		|| tag.tag_number() != int(TagType.visiblestring) {
 		return error('VisibleString: tag check failed')
 	}
 	// get the Length
-	len, idx := asn1.Length.unpack_from_asn1(src, pos, p)!
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
 	// no bytes
 	if len == 0 {
 		ret := VisibleString{

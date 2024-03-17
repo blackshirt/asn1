@@ -11,13 +11,17 @@ struct Element {
 	raw_data []u8
 }
 
-fn Element.new(t Tag, payload []u8) Element {
+fn Element.new(t Tag, payload []u8) !Element {
 	el := Element{
-		tag: tag
+		tag: t
 		length: Length.from_i64(payload.len)!
 		raw_data: payload
 	}
 	return el
+}
+
+fn (el Element) tag() Tag {
+	return el.tag
 }
 
 fn (e Element) valid_length() bool {
@@ -42,59 +46,52 @@ fn (e Element) packed_length() int {
 	panic('Should not here')
 }
 
-fn (e Element) pack(mut to []u8, mode EncodingMode, p Params) ! {
+fn (e Element) pack_to_asn1(mut dst []u8, p Params) ! {
 	if !e.valid_length() {
 		return error('Element: bad Length')
 	}
-	match mode {
-		.der, .ber {
-			e.tag.pack_to_asn1(mut to, .der, p)!
-			e.length.pack_to_asn1(mut to, .der, p)!
-			to << e.raw_data
-		}
-		else {
-			return error('unsupported mode')
-		}
+	if p.mode != .der && p.mode != .ber {
+		return error('Element: unsupported mode')
 	}
+	e.tag.pack_to_asn1(mut dst, p)!
+	e.length.pack_to_asn1(mut dst, p)!
+	dst << e.raw_data
 }
 
-fn Element.unpack(b []u8, loc i64, mode EncodingMode, p Params) !Element {
-	if b.len < 2 {
+fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
+	if src.len < 2 {
 		return error('Element: bytes underflow')
 	}
-	match mode {
-		.ber, .der {
-			tag, pos := Tag.unpack_from_asn1(b, loc, mode, p)!
-			len, idx := Length.unpack_from_asn1(b, pos, mode, p)!
-			// no contents
-			if len == 0 {
-				el := Element{
-					tag: tag
-					length: len
-					raw_data: []u8{}
-				}
-				return el, idx
-			}
-			if idx > b.len || idx + len > b.len {
-				return error('Element: truncated bytes contents')
-			}
-			// TODO: check the length, its safe to access bytes
-			bytes := unsafe { b[idx..idx + len] }
-
-			if len != bytes.len {
-				return error('Element: unmatching length')
-			}
-			el := Element{
-				tag: tag
-				length: len
-				raw_data: bytes
-			}
-			return el, idx + len
-		}
-		else {
-			return error('Unsupported mode')
-		}
+	if p.mode != .der && p.mode != .ber {
+		return error('Element: unsupported mode')
 	}
+	// todo : validate element
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	// no contents
+	if len == 0 {
+		el := Element{
+			tag: tag
+			length: len
+			raw_data: []u8{}
+		}
+		return el, idx
+	}
+	if idx > src.len || idx + len > src.len {
+		return error('Element: truncated bytes contents')
+	}
+	// TODO: check the length, its safe to access bytes
+	bytes := unsafe { src[idx..idx + len] }
+
+	if len != bytes.len {
+		return error('Element: unmatching length')
+	}
+	el := Element{
+		tag: tag
+		length: len
+		raw_data: bytes
+	}
+	return el, idx + len
 }
 
 fn (els []Element) hold_thesame_tag() bool {

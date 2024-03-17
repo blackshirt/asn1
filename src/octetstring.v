@@ -70,7 +70,7 @@ fn OctetString.unpack_from_asn1(src []u8, loc i64, p Params) !(OctetString, i64)
 	len, idx := Length.unpack_from_asn1(src, pos, p)!
 	// no bytes
 	if len == 0 {
-		ret := IA5String{
+		ret := OctetString{
 			tag: tag
 		}
 		return ret, idx

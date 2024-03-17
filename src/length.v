@@ -92,19 +92,22 @@ pub fn (v Length) pack_to_asn1(mut dst []u8, p Params) ! {
 }
 
 // unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buffer.
-// Its return Length and next offset in the buffer buf to process on, and return error on fail.
-pub fn Length.unpack_from_asn1(buf []u8, loc i64, p Params) !(Length, i64) {
+// Its return Length and next offset in the buffer src to process on, and return error on fail.
+pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
+	if src.len < 1 {
+		return error('Length: truncated length')
+	}
 	// preliminary check
 	if p.mode != .der && p.mode != .ber {
 		return error('Length: unsupported mode')
 	}
-	if loc > buf.len {
+	if loc > src.len {
 		return error('Length: invalid pos')
 	}
 
 	mut pos := loc
 
-	mut b := buf[pos]
+	mut b := src[pos]
 	pos += 1
 	mut length := i64(0)
 	// check for the most bit is set or not
@@ -125,10 +128,10 @@ pub fn Length.unpack_from_asn1(buf []u8, loc i64, p Params) !(Length, i64) {
 			return error('Length: count bytes exceed limit')
 		}
 		for i := 0; i < num_bytes; i++ {
-			if pos >= buf.len {
+			if pos >= src.len {
 				return error('Length: truncated length')
 			}
-			b = buf[pos]
+			b = src[pos]
 			pos += 1
 			// currently, we're only support limited length.
 			// The length is in integer range

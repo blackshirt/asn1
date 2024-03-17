@@ -17,7 +17,7 @@ const max_tag_number = 16383
 // See limit restriction comment above.
 pub struct Tag {
 mut:
-	cls         Class = .universal
+	class       Class = .universal
 	constructed bool
 	number      TagNumber
 }
@@ -26,7 +26,7 @@ mut:
 // constructed or primitive form in `constructed` boolean flag, and the integer tag `number`.
 pub fn new_tag(c Class, constructed bool, number int) !Tag {
 	return Tag{
-		cls: c
+		class: c
 		constructed: constructed
 		number: TagNumber.from_int(number)!
 	}
@@ -34,7 +34,7 @@ pub fn new_tag(c Class, constructed bool, number int) !Tag {
 
 // class return the ASN.1 class of this tag
 pub fn (t Tag) class() Class {
-	return t.cls
+	return t.class
 }
 
 // is_constructed tells us whether this tag is constructed or not
@@ -60,7 +60,7 @@ pub fn (t Tag) pack_to_asn1(mut dst []u8, p Params) ! {
 	// get the class type and constructed bit and build the bytes tag.
 	// if the tag number > 0x1f, represented in long form required two or more bytes,
 	// otherwise, represented in short form, fit in single byte.
-	mut b := (u8(t.cls) << 6) & class_mask
+	mut b := (u8(t.class) << 6) & class_mask
 	if t.constructed {
 		b |= constructed_mask
 	}
@@ -98,7 +98,7 @@ pub fn Tag.unpack_from_asn1(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	// First we get the first byte from the bytes, check and gets the class and constructed bits
 	// and the tag number marker. If this marker == 0x1f, it tells whether the tag number is represented
 	// in multibyte (long form), or short form otherwise.
-	cls := int((b & class_mask) >> 6)
+	class := int((b & class_mask) >> 6)
 	constructed := b & constructed_mask == constructed_mask
 	mut number := TagNumber.from_int(int(b & tag_numher_mask))!
 
@@ -108,7 +108,7 @@ pub fn Tag.unpack_from_asn1(bytes []u8, loc i64, p Params) !(Tag, i64) {
 		number, pos = TagNumber.unpack_from_asn1(bytes, pos)!
 
 		// pos is the next position to read next bytes, so check tag bytes length
-		if pos >= asn1.max_tag_length + start + 1 {
+		if pos >= asn1.max_tag_length + loc + 1 {
 			return error('Tag: tag bytes is too long')
 		}
 		if number < 0x1f {
@@ -119,7 +119,7 @@ pub fn Tag.unpack_from_asn1(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	}
 	// build the tag
 	tag := Tag{
-		cls: Class.from_int(cls)!
+		class: Class.from_int(class)!
 		constructed: constructed
 		number: number
 	}
@@ -128,11 +128,11 @@ pub fn Tag.unpack_from_asn1(bytes []u8, loc i64, p Params) !(Tag, i64) {
 
 // clone_with_class clones teh tag t into new tag with class is set to c
 fn (mut t Tag) clone_with_class(c Class) Tag {
-	if t.cls == c {
+	if t.class == c {
 		return t
 	}
 	mut new := t
-	new.cls = c
+	new.class = c
 	return new
 }
 
@@ -224,7 +224,7 @@ fn TagNumber.unpack_from_asn1(bytes []u8, loc i64, p Params) !(TagNumber, i64) {
 
 		if s == 0 && b == 0x80 {
 			// requirement for DER encoding
-			return error('TagNumber: integer is not minimaly encoded')
+			return error('TagNumber: integer is not minimally encoded')
 		}
 
 		ret |= b & 0x7f

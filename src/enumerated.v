@@ -33,10 +33,13 @@ fn (e Enumerated) packed_length() !int {
 }
 
 fn (e Enumerated) pack_to_asn1(mut dst []u8, p Params) ! {
-	e.tag().pack_to_asn1(mut dst, mode, p)!
+	if p.mode != .der && p.mode != .ber {
+		return error('Integer: unsupported mode')
+	}
+	e.tag().pack_to_asn1(mut dst, p)!
 	bytes := e.pack()!
 	length := Length.from_i64(bytes.len)!
-	length.pack_to_asn1(mut dst, mode, p)!
+	length.pack_to_asn1(mut dst, p)!
 	dst << bytes
 }
 
@@ -52,7 +55,8 @@ fn Enumerated.unpack_from_asn1(src []u8, loc i64, p Params) !(Enumerated, i64) {
 	}
 
 	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	if tag.class() != .universal || tag.is_compound() || tag.tag_number() != int(TagType.enumerated) {
+	if tag.class() != .universal || tag.is_constructed()
+		|| tag.tag_number() != int(TagType.enumerated) {
 		return error('Enumerated: bad tag of universal class type')
 	}
 	// read the length part from current position pos

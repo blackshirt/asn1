@@ -49,7 +49,7 @@ fn Integer.from_string(s string) Integer {
 	v := big.integer_from_string(s) or { panic(err) }
 	if v == big.zero_int {
 		return Integer{
-			value: primitive.zero_integer
+			value: asn1.zero_integer
 		}
 	}
 
@@ -64,7 +64,7 @@ fn Integer.from_hex(x string) !Integer {
 	s := big.integer_from_radix(x, 16)!
 	if s == big.zero_int {
 		return Integer{
-			value: primitive.zero_integer
+			value: asn1.zero_integer
 		}
 	}
 	return Integer{
@@ -77,7 +77,7 @@ fn Integer.from_i64(v i64) Integer {
 	// same issue as above
 	if v == 0 {
 		return Integer{
-			value: primitive.zero_integer
+			value: asn1.zero_integer
 		}
 	}
 	return Integer{
@@ -89,7 +89,7 @@ fn Integer.from_i64(v i64) Integer {
 fn Integer.from_u64(v u64) Integer {
 	if v == 0 {
 		return Integer{
-			value: primitive.zero_integer
+			value: asn1.zero_integer
 		}
 	}
 	return Integer{
@@ -98,7 +98,7 @@ fn Integer.from_u64(v u64) Integer {
 }
 
 fn (v Integer) bytes() []u8 {
-	if v.value == primitive.zero_integer {
+	if v.value == asn1.zero_integer {
 		return [u8(0x00)]
 	}
 	bytes, _ := v.value.bytes()
@@ -111,7 +111,7 @@ fn (v Integer) tag() Tag {
 }
 
 fn (v Integer) bytes_len() int {
-	if v.value == primitive.zero_integer {
+	if v.value == asn1.zero_integer {
 		return 1
 	}
 	nbits := v.value.bit_len()

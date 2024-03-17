@@ -1,9 +1,7 @@
 // Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
-module primitive
-
-import asn1
+module asn1
 
 // VisibleString
 struct VisibleTest {
@@ -40,7 +38,7 @@ fn test_visible_string_handling() {
 			continue
 		}
 
-		assert vsback.tag.tag_number() == int(asn1.TagType.visiblestring)
+		assert vsback.tag.tag_number() == int(TagType.visiblestring)
 		assert vsback.value == c.inp
 	}
 }

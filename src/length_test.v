@@ -25,10 +25,10 @@ fn test_length_pack_and_unpack_tofrom_asn() ! {
 	for i, c in edata {
 		mut dst := []u8{}
 		s := Length.from_i64(c.value)!
-		s.pack_to_asn1(mut dst, .der)!
+		s.pack_to_asn1(mut dst)!
 		assert dst == c.expected
 
-		length, idx := Length.unpack_from_asn1(dst, 0, .der)!
+		length, idx := Length.unpack_from_asn1(dst, 0)!
 
 		assert length == c.value
 		assert idx == c.expected.len
@@ -42,13 +42,13 @@ struct ByteLengthTest {
 
 fn test_basic_simple_length_unpack() {
 	data := [u8(0x82), 0x01, 0x7F]
-	n, pos := Length.unpack_from_asn1(data, 0, .der)!
+	n, pos := Length.unpack_from_asn1(data, 0)!
 
 	assert n == 383
 	assert pos == 3
 
 	data2 := [u8(0x82), 0x01, 0x31]
-	n2, pos2 := Length.unpack_from_asn1(data2, 0, .der)!
+	n2, pos2 := Length.unpack_from_asn1(data2, 0)!
 	assert n2 == 305
 	assert pos2 == 3
 }
@@ -129,7 +129,7 @@ fn test_calc_length_of_length() ! {
 fn test_tc3_absence_standard_length_block() ! {
 	value := []u8{}
 
-	_, _ := Length.unpack_from_asn1(value, 0, .der) or {
+	_, _ := Length.unpack_from_asn1(value, 0) or {
 		assert err == error('Length: truncated length')
 		return
 	}
@@ -138,13 +138,13 @@ fn test_tc3_absence_standard_length_block() ! {
 fn test_tc5_unnecessary_usage_long_of_length_form() ! {
 	value := [u8(0x9f), 0xff, 0x7f, 0x81, 0x01, 0x40]
 
-	tag, pos := Tag.unpack_from_asn1(value, 0, .der)!
+	tag, pos := Tag.unpack_from_asn1(value, 0)!
 	// 0x9f == 10011111
-	assert tag.cls == .context_specific
+	assert tag.class == .context_specific
 	assert tag.constructed == false
 	assert pos == 3
 	// the length bytes, [0x81, 0x01] dont needed in long form.
-	_, _ := Length.unpack_from_asn1(value, pos, .der) or {
+	_, _ := Length.unpack_from_asn1(value, pos) or {
 		assert err == error('Length: dont needed in long form')
 		return
 	}

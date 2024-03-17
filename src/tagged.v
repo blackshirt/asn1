@@ -71,7 +71,7 @@ fn (tt TaggedType) packed_length() int {
 	return n
 }
 
-fn (tt TaggedType) pack_to_asn1(mut to []u8, p Params) ! {
+fn (tt TaggedType) pack_to_asn1(mut dst []u8, p Params) ! {
 	// TaggedType tag should in constructed form
 	if !tt.expected_tag.is_constructed() {
 		return error('TaggedType tag should in constructed form')
@@ -80,34 +80,34 @@ fn (tt TaggedType) pack_to_asn1(mut to []u8, p Params) ! {
 	match tt.mode {
 		.explicit {
 			// wraps the inner element with this tag and length
-			tt.expected_tag.pack_to_asn1(mut to, .der)!
-			length := tt.inner_el.element_length()
+			tt.expected_tag.pack_to_asn1(mut dst, p)!
+			length := tt.inner_el.packed_length()
 			len := Length.from_i64(length)!
-			len.pack_to_asn1(mut to, mode)!
-			tt.inner_el.pack_to_asn1(mut to, mode)!
+			len.pack_to_asn1(mut dst, p)!
+			tt.inner_el.pack_to_asn1(mut dst, p)!
 		}
 		.implicit {
 			// replace the tag.of inner element with this tag
-			tt.expected_tag.pack_to_asn1(mut to, .der)!
-			tt.inner_el.length.pack_to_asn1(mut to, mode)!
-			to << tt.inner_el.content
+			tt.expected_tag.pack_to_asn1(mut dst)!
+			tt.inner_el.length.pack_to_asn1(mut dst, p)!
+			dst << tt.inner_el.raw_data
 		}
 	}
 }
 
-fn TaggedType.unpack_from_asn1(b []u8, loc i64, tm TaggedMode, inner_tag Tag, p Params) !TaggedType {
+fn TaggedType.unpack_from_asn1(b []u8, loc i64, tm TaggedMode, inner_tag Tag, p Params) !(TaggedType, i64) {
 	if b.len < 2 {
 		return error('TaggedType: bytes underflow')
 	}
 
 	// external tag
-	tag, pos := Tag.unpack_from_asn1(b, loc, mode, p)!
+	tag, pos := Tag.unpack_from_asn1(b, loc, p)!
 	// TODO: check the tag, do we need .class == .context_specific
 	// in explicit context, the tag should be in constructed form
 	if tm == .explicit && !tag.is_constructed() {
 		return error('TaggedType: tag check failed, .explicit should be constructed')
 	}
-	len, idx := Length.unpack_from_asn1(b, pos, mode, p)!
+	len, idx := Length.unpack_from_asn1(b, pos, p)!
 	if len == 0 {
 		// its bad TaggedType with len==0, ie, without contents
 		return error('TaggedType: len==0')
@@ -121,7 +121,8 @@ fn TaggedType.unpack_from_asn1(b []u8, loc i64, tm TaggedMode, inner_tag Tag, p 
 	match tm {
 		.explicit {
 			// when explicit, unpack element from bytes
-			inner := Element.unpack(bytes, 0, mode, p)!
+			inner, next := Element.unpack_from_asn1(bytes, 0, p)!
+			// TODO: parse nested element
 			if inner.tag != inner_tag {
 				return error('unexpected inner tag')
 			}
@@ -132,7 +133,6 @@ fn TaggedType.unpack_from_asn1(b []u8, loc i64, tm TaggedMode, inner_tag Tag, p 
 		.implicit {
 			// when in .implicit mode, inner tag is unknown, so we pass inner_tag as expected tag
 			// the bytes is the values of the element
-			inner:
 			inner := Element{
 				tag: inner_tag
 				length: Length.from_i64(bytes.len)!

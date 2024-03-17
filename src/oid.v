@@ -182,7 +182,7 @@ fn (oid Oid) str() string {
 }
 
 fn (oid Oid) validate() bool {
-	if oid.value.len > primitive.max_oid_length {
+	if oid.value.len > asn1.max_oid_length {
 		return false
 	}
 	if oid.value.len < 2 || oid.value[0] > 2 || (oid.value[0] < 2 && oid.value[1] >= 40) {
