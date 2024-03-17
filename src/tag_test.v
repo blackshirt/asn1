@@ -38,7 +38,7 @@ fn test_universal_class_tag_length_handling() ! {
 struct TagUnpackTest {
 	bytes    []u8
 	cls      Class
-	compound bool
+	constructed bool
 	number   int
 	lastpos  int
 	err      IError
@@ -68,7 +68,7 @@ fn test_tag_unpack() ! {
 			continue
 		}
 		assert tag.cls == c.cls
-		assert tag.compound == c.compound
+		assert tag.constructed == c.constructed
 		assert tag.number == c.number
 		assert pos == c.lastpos
 	}
@@ -150,7 +150,7 @@ fn test_tagandlength_handling() ! {
 struct TagNumberTest {
 	num      int
 	cls      Class
-	compound bool
+	constructed bool
 	exp      []u8
 	err      IError
 }
@@ -175,7 +175,7 @@ fn test_serialize_tag() ! {
 
 	for c in data {
 		mut dst := []u8{}
-		tag := new_tag(c.cls, c.compound, c.num) or {
+		tag := new_tag(c.cls, c.constructed, c.num) or {
 			assert err == c.err
 			continue
 		}

@@ -1,10 +1,5 @@
 module asn1
 
-// Params is optional params passed to pack or unpacking
-// of tag, length or ASN.1 element to drive how encoding works.
-@[params]
-pub struct Params {}
-
 pub enum TaggedMode {
 	implicit
 	explicit
@@ -23,7 +18,7 @@ mut:
 // new creates a new TaggedType
 fn TaggedType.new(tagmode TaggedMode, expected_tag Tag, el Element) !TaggedType {
 	// Tagged type should in constructed form
-	if !expected_tag.is_compound() {
+	if !expected_tag.is_constructed() {
 		return error('TaggedType tag should in constructed form')
 	}
 	return TaggedType{
@@ -71,7 +66,7 @@ fn (tt TaggedType) packed_length() int {
 
 fn (tt TaggedType) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
 	// TaggedType tag should in constructed form
-	if !tt.expected_tag.is_compound() {
+	if !tt.expected_tag.is_constructed() {
 		return error('TaggedType tag should in constructed form')
 	}
 	match mode {
@@ -109,7 +104,7 @@ fn TaggedType.unpack_from_asn1(b []u8, loc i64, mode EncodingMode, inner_tag Tag
 			tag, pos := Tag.unpack_from_asn1(b, loc, mode, p)!
 			// TODO: check the tag, do we need .class == .context_specific
 			// in explicit context, the tag should be in constructed form
-			if tm == .explicit && !tag.is_compound() {
+			if tm == .explicit && !tag.is_constructed() {
 				return error('TaggedType: tag check failed, .explicit should be constructed')
 			}
 			len, idx := Length.unpack_from_asn1(b, pos, mode, p)!
@@ -163,7 +158,7 @@ struct Element {
 	length Length
 	// data is the value of this Element, its depend how its would be interpreted.
 	// when the tag is primitive, its represents real value of this Element.
-	// otherwise, if its a compound, its contains another unparsed Element
+	// otherwise, if its a constructed, its contains another unparsed Element
 	raw_data []u8
 }
 
@@ -180,7 +175,7 @@ fn (e Element) valid_length() bool {
 }
 
 fn (e Element) need_parse_data() bool {
-	need := if e.tag.is_compound() { true } else { false }
+	need := if e.tag.is_constructed() { true } else { false }
 	return need
 }
 
@@ -263,16 +258,3 @@ fn (els []Element) hold_thesame_tag() bool {
 
 fn (mut els []Element) add_element(el Element) {}
 
-// encoding mode
-pub enum EncodingMode {
-	// Distinguished Encoding Rules (DER)
-	der = 0
-	// Basic Encoding Rules (BER)
-	ber = 1
-	// Octet Encoding Rules (OER)
-	oer = 2
-	// Packed Encoding Rules (PER)
-	per = 3
-	// XML Encoding Rules (XER)
-	xer = 4
-}

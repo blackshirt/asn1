@@ -13,7 +13,7 @@ pub enum Class {
 }
 
 // class_from_int creates Class from integer v
-fn class_from_int(v int) !Class {
+pub fn Class.from_int(v int) !Class {
 	match v {
 		// vfmt off
 		0x00 { return .universal }
@@ -36,19 +36,30 @@ fn (c Class) str() string {
 	}
 }
 
-const class_mask = 0xc0 // 192, bits 8-7
-const compound_mask = 0x20 //  32, bits 6
-const tag_mask = 0x1f //  32, bits 1-5
+// vfmt off
+// bit masking values for ASN.1 tag header
+const class_mask 		= 0xc0 // 192, bits 8-7
+const constructed_mask 	= 0x20 //  32, bits 6
+const tag_numher_mask 	= 0x1f //  32, bits 1-5
+// vfmt on 
 
-// Encoder is a main interrface that wraps ASN.1 encoding functionality.
-// Most of basic types in this module implements this interface.
-pub interface Encoder {
-	// tag of the underlying ASN.1 object
-	tag() Tag
-	// length of ASN.1 object (without tag and length part)
-	length() int
-	// length of encoded bytes of the object (included tag and length part)
-	size() int
-	// Serializes object to bytes array with DER encoding
-	encode() ![]u8
+// Params is optional params passed to pack or unpacking
+// of tag, length or ASN.1 element to drive how encoding works.
+@[params]
+pub struct Params {
+	mode 	EncodingMode = .der 
+}
+
+// encoding mode
+pub enum EncodingMode {
+	// Distinguished Encoding Rules (DER)
+	der = 0
+	// Basic Encoding Rules (BER)
+	ber = 1
+	// Octet Encoding Rules (OER)
+	oer = 2
+	// Packed Encoding Rules (PER)
+	per = 3
+	// XML Encoding Rules (XER)
+	xer = 4
 }

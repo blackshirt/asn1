@@ -64,96 +64,94 @@ pub fn (v Length) packed_length() int {
 	return n
 }
 
-// pack_to_asn1 serializes Length v into bytes and append it into `to`. The`mode` params drives how
-// this packing operation would be done, only `.,der` mode is supported.
-pub fn (v Length) pack_to_asn1(mut to []u8, mode EncodingMode, p Params) ! {
-	match mode {
-		.der {
-			// Long form
-			if v >= 128 {
-				// First, we count how many bytes occupied by this length value.
-				// if the count exceed the limit, we return error.
-				count := v.bytes_len()
-				if count > asn1.max_definite_length_count {
-					return error('something bad in your length')
-				}
-				// In definite long form, msb bit of first byte is set to 1, and the remaining bits
-				// of first byte tells exact count how many bytes following representing this length value.
-				to << 0x80 | u8(count)
-				v.pack_and_append(mut to)
-			} else {
-				// short form, already tells the length value.
-				to << u8(v)
-			}
+// pack_to_asn1 serializes Length v into bytes and append it into `dst`. if p `Params` is provided, 
+// it would use p.mode of `EncodingMode` to drive packing operation operation would be done.
+// By default the .der mode is only currently supported.
+pub fn (v Length) pack_to_asn1(mut dst []u8, p Params) ! {
+	// we currently only support .der and (stricter) .ber 
+	if p.mode != .der && p.mode != .ber {
+		return error("Length: unsupported mode")
+	}
+	// TODO: add supports for undefinite form 
+	// Long form
+	if v >= 128 {
+		// First, we count how many bytes occupied by this length value.
+		// if the count exceed the limit, we return error.
+		count := v.bytes_len()
+		if count > asn1.max_definite_length_count {
+			return error('something bad in your length')
 		}
-		// Otherwise, its not supported
-		else {
-			return error('Unsupported mode')
-		}
+		// In definite long form, msb bit of first byte is set into 1, and the remaining bits
+		// of first byte tells exact count how many bytes following representing this length value.
+		dst << 0x80 | u8(count)
+		v.pack_and_append(mut dst)
+	} else {
+		// short form, already tells the length value.
+		dst << u8(v)
 	}
 }
 
 // unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buffer.
 // Its return Length and next offset in the buffer buf to process on, and return error on fail.
-pub fn Length.unpack_from_asn1(buf []u8, loc i64, mode EncodingMode, p Params) !(Length, i64) {
-	match mode {
-		.der, .ber {
-			mut pos := loc
+pub fn Length.unpack_from_asn1(buf []u8, loc i64, p Params) !(Length, i64) {
+	// preliminary check 
+	if p.mode != .der && p.mode != .ber {
+		return error("Length: unsupported mode")
+	}
+	if loc > bytes.len {
+		return error('Length: invalid pos')
+	}
+	
+	mut pos := loc
+	if pos >= buf.len {
+		return error('Length: truncated length')
+	}
+	
+	mut b := buf[pos]
+	pos += 1
+	mut length := i64(0)
+	// check for the most bit is set or not
+	if b & 0x80 == 0 {
+		// for lengths between 0 and 127, the one-octet short form can be used.
+		// The bit 7 of the length octet is set to 0, and the length is encoded
+		// as an unsigned binary value in the octet's rightmost seven bits.
+		length = b & 0x7f
+	} else {
+		// Otherwise, its a Long definite form or undefinite form
+		num_bytes := b & 0x7f
+		if num_bytes == 0 {
+			// TODO: add support for undefinite length
+			return error('Length: unsupported undefinite length')
+		}
+		// we limit the bytes count for length definite form to `max_definite_length_count`
+		if num_bytes > asn1.max_definite_length_count {
+			return error('Length: count bytes exceed limit')
+		}
+		for i := 0; i < num_bytes; i++ {
 			if pos >= buf.len {
 				return error('Length: truncated length')
 			}
-			mut b := buf[pos]
+			b = buf[pos]
 			pos += 1
-			mut length := i64(0)
-			// check for the most bit is set or not
-			if b & 0x80 == 0 {
-				// for lengths between 0 and 127, the one-octet short form can be used.
-				// The bit 7 of the length octet is set to 0, and the length is encoded
-				// as an unsigned binary value in the octet's rightmost seven bits.
-				length = b & 0x7f
-			} else {
-				// Otherwise, its a Long definite form or undefinite form
-				num_bytes := b & 0x7f
-				if num_bytes == 0 {
-					// TODO: add support for undefinite length
-					return error('Length: unsupported undefinite length')
-				}
-				// we limit the bytes count for length definite form to `max_definite_length_count`
-				if num_bytes > asn1.max_definite_length_count {
-					return error('Length: count bytes exceed limit')
-				}
-				for i := 0; i < num_bytes; i++ {
-					if pos >= buf.len {
-						return error('Length: truncated length')
-					}
-					b = buf[pos]
-					pos += 1
-					// currently, we're only support limited length.
-					// The length is in integer range
-					if length > asn1.max_definite_length_value {
-						return error('Length: length exceed limit value')
-					}
-					length <<= 8
-					length |= b
-					if length == 0 {
-						// TODO: leading zeros is allowed in Long form of BER encoding, but
-						// not allowed in DER encoding
-						return error('Length: leading zeros')
-					}
-				}
-
-				// do not allow values < 0x80 to be encoded in long form
-				if length < i64(0x80) {
-					// TODO: allow in BER
-					return error('Length: dont needed in long form')
-				}
+			// currently, we're only support limited length.
+			// The length is in integer range
+			if length > asn1.max_definite_length_value {
+				return error('Length: length exceed limit value')
 			}
-			ret := Length.from_i64(length)!
-			return ret, pos
+			length <<= 8
+			length |= b
+			if length == 0 {
+				// TODO: leading zeros is allowed in Long form of BER encoding, but
+				// not allowed in DER encoding
+				return error('Length: leading zeros')
+			}
 		}
-		// Others encoding mode currently is not yet supported
-		else {
-			return error('Unsupported encoding mode')
+		// do not allow values < 0x80 to be encoded in long form
+		if length < i64(0x80) {
+			// TODO: allow in BER
+			return error('Length: dont needed in long form')
 		}
 	}
+	ret := Length.from_i64(length)!
+	return ret, pos	
 }

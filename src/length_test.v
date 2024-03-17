@@ -141,7 +141,7 @@ fn test_tc5_unnecessary_usage_long_of_length_form() ! {
 	tag, pos := Tag.unpack_from_asn1(value, 0, .der)!
 	// 0x9f == 10011111
 	assert tag.cls == .context_specific
-	assert tag.compound == false
+	assert tag.constructed == false
 	assert pos == 3
 	// the length bytes, [0x81, 0x01] dont needed in long form.
 	_, _ := Length.unpack_from_asn1(value, pos, .der) or {
