@@ -371,6 +371,28 @@ pub fn (obj ASN1Object) encode() ![]u8 {
 	return serialize_asn_object(obj)
 }
 
+pub fn ASN1Object.decode(src []u8) !ASN1Object {
+	if src.len < 2 {
+		return error("ASN1Object: underflow")
+	}
+	// raw tag 
+	tag, pos := read_tag(src, 0)!
+	if pos > src.len {
+		return error('truncated input')
+	}
+
+	length, next := decode_length(src, pos)!
+	if next > src.len || next + length > src.len {
+		return error('truncated input')
+	}
+	bytes := read_bytes(src, next, length)!
+
+	return ASN1Object{
+		tag: tag 
+		values: bytes 
+	}
+}
+
 fn serialize_asn_object(obj ASN1Object) ![]u8 {
 	mut dst := []u8{}
 
