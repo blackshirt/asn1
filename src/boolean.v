@@ -46,7 +46,7 @@ fn validate_boolean_contents(src []u8) bool {
 }
 
 // decode_boolean checks whether bytes arrays was ASN.1 boolean.
-fn decode_boolean(src []u8) !Boolean {
+fn decode_boolean(src []u8) !Encoder {
 	if !validate_boolean_contents(src) {
 		return error('bad boolean contents argument')
 	}
@@ -93,7 +93,21 @@ pub fn (b Boolean) encode() ![]u8 {
 }
 
 pub fn Boolean.decode(src []u8) !Boolean {
-	return decode_boolean(src)
+	if !validate_boolean_contents(src) {
+		return error('bad boolean contents argument')
+	}
+	tag, pos := read_tag(src, 0)!
+	if tag.number != int(TagType.boolean) {
+		return error('tag.number=${tag.number} is not boolean type (${TagType.boolean})')
+	}
+	length, idx := decode_length(src, pos)!
+	if length != 1 {
+		return error('boolean length ${length} != 1')
+	}
+	contents := read_bytes(src, idx, length)!
+	ret := read_boolean(contents)!
+
+	return ret
 }
 
 fn encode_boolean(val bool) []u8 {

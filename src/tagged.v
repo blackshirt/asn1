@@ -203,7 +203,7 @@ pub fn Tagged.decode(src []u8, m Mode, inner_tag Tag) !Tagged {
 	}
 	length, idx := decode_length(src, pos)!
 	contents := read_bytes(src, idx, length)!
-	match mode {
+	match m {
 		.explicit {
 			// when explicit, the contents is an asn1 structure 
 			etag, epos := read_tag(contents, 0)!

@@ -279,9 +279,9 @@ pub fn (e Encoder) as_visiblestring() !VisibleString {
 	return error('not visiblestring type')
 }
 
-// as_utctime cast encoder to ASN.1 UtcTime.
-pub fn (e Encoder) as_utctime() !UtcTime {
-	if e is UtcTime {
+// as_utctime cast encoder to ASN.1 UTCTime.
+pub fn (e Encoder) as_utctime() !UTCTime {
+	if e is UTCTime {
 		return *e
 	}
 	return error('not utctime type')
