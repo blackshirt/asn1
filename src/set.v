@@ -165,7 +165,7 @@ pub fn (set Set) encode() ![]u8 {
 
 pub fn Set.decode(src []u8) !Set {
 	if src.len < 2 {
-		return error("Set: underflow")
+		return error('Set: underflow')
 	}
 	tag, pos := read_tag(src, 0)!
 	if !tag.is_set_tag() {

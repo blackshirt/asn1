@@ -9,35 +9,35 @@ module asn1
 // Standard universal tag number. some of them was
 // deprecated, so its not going to be supported in this module.
 pub enum TagType {
-	reserved = 0 //	reserved for BER
-	boolean = 1 // BOOLEAN
-	integer = 2 // INTEGER
-	bitstring = 3 // BIT STRING
-	octetstring = 4 // OCTET STRING
-	null = 5 // NULL
-	oid = 6 // OBJECT IDENTIFIER
-	objdesc = 7 // ObjectDescriptor
-	external = 8 //	INSTANCE OF, EXTERNAL
-	real = 9 // REAL
-	enumerated = 10 // ENUMERATED
-	embedded = 11 // EMBEDDED PDV
-	utf8string = 12 // UTF8String
-	relativeoid = 13 // RELATIVE-OID
-	sequence = 16 // SEQUENCE, SEQUENCE OF, Constructed
-	set = 17 ///SET, SET OF, Constructed
-	numericstring = 18 // NumericString
+	reserved        = 0 //	reserved for BER
+	boolean         = 1 // BOOLEAN
+	integer         = 2 // INTEGER
+	bitstring       = 3 // BIT STRING
+	octetstring     = 4 // OCTET STRING
+	null            = 5 // NULL
+	oid             = 6 // OBJECT IDENTIFIER
+	objdesc         = 7 // ObjectDescriptor
+	external        = 8 //	INSTANCE OF, EXTERNAL
+	real            = 9 // REAL
+	enumerated      = 10 // ENUMERATED
+	embedded        = 11 // EMBEDDED PDV
+	utf8string      = 12 // UTF8String
+	relativeoid     = 13 // RELATIVE-OID
+	sequence        = 16 // SEQUENCE, SEQUENCE OF, Constructed
+	set             = 17 ///SET, SET OF, Constructed
+	numericstring   = 18 // NumericString
 	printablestring = 19 // PrintableString
-	t61string = 20 // eletexString, T61String
-	videotexstring = 21 // VideotexString
-	ia5string = 22 // IA5String
-	utctime = 23 // UTCTime
+	t61string       = 20 // eletexString, T61String
+	videotexstring  = 21 // VideotexString
+	ia5string       = 22 // IA5String
+	utctime         = 23 // UTCTime
 	generalizedtime = 24 // GeneralizedTime
-	graphicstring = 25 // GraphicString
-	visiblestring = 26 // VisibleString, ISO646String
-	generalstring = 27 // GeneralString
+	graphicstring   = 25 // GraphicString
+	visiblestring   = 26 // VisibleString, ISO646String
+	generalstring   = 27 // GeneralString
 	universalstring = 28 // UniversalString
 	characterstring = 29 // CHARACTER STRING
-	bmpstring = 30 // BMPString
+	bmpstring       = 30 // BMPString
 }
 
 fn (t TagType) str() string {
@@ -62,13 +62,11 @@ fn (t TagType) str() string {
 	}
 }
 
-const (
-	// Maximum number of bytes to represent tag number, includes tag byte.
-	// For 5 bytes length, maximum bytes arrays to represent tag number is
-	// [u8(0x1f), 0xff, 0xff, 0xff, 0x7f] or 268435455 in base 128, so, its
-	// big enough to hold and represent different of tag number or type.
-	max_tag_bytes_length = 5
-)
+// Maximum number of bytes to represent tag number, includes tag byte.
+// For 5 bytes length, maximum bytes arrays to represent tag number is
+// [u8(0x1f), 0xff, 0xff, 0xff, 0x7f] or 268435455 in base 128, so, its
+// big enough to hold and represent different of tag number or type.
+const max_tag_bytes_length = 5
 
 // `new_tag` creates new tag with class `c`, with constructed or primitive form
 // through `constructed` boolean flag, and tag `number`.

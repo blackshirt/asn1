@@ -125,7 +125,7 @@ pub fn AsnInteger.decode(src []u8) !AsnInteger {
 		return error('truncated input')
 	}
 	out := read_bytes(src, next, length)!
-	
+
 	if out.len <= 4 {
 		ret := read_i32(out)!
 		return AsnInteger(ret)

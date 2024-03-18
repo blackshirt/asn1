@@ -11,9 +11,7 @@ module asn1
 // Digits 0, 1, ... 9
 // symbols:  (space) ' ( ) + , - . / : = ?
 //
-const (
-	printable_symbols = r"(')+,-./:=?".bytes()
-)
+const printable_symbols = r"(')+,-./:=?".bytes()
 
 type PrintableString = string
 

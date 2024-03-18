@@ -104,7 +104,7 @@ pub fn (seq Sequence) encode() ![]u8 {
 
 pub fn Sequence.decode(src []u8) !Sequence {
 	seq := decode_sequence(src)!
-	return seq 
+	return seq
 }
 
 pub fn (mut seq Sequence) add(obj Encoder) Sequence {
@@ -127,7 +127,7 @@ pub fn is_sequence_of(seq Sequence) bool {
 		return false
 	}
 	if seq.elements.len != 0 {
-		 // take the first obj's tag
+		// take the first obj's tag
 		tag0 := seq.elements[0].tag()
 		for obj in seq.elements {
 			if obj.tag() != tag0 {
@@ -136,7 +136,7 @@ pub fn is_sequence_of(seq Sequence) bool {
 		}
 		return true
 	}
-	
+
 	// return seq.elements.all(it.tag() == tag0)
 	return false
 }

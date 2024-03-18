@@ -6,17 +6,17 @@ module asn1
 // Class is ASN.1 tag class.
 // Currently most of universal class supported in this module, with limited support for other class.
 pub enum Class {
-	universal = 0x00
+	universal   = 0x00
 	application = 0x01
-	context = 0x02
-	private = 0x03
+	context     = 0x02
+	private     = 0x03
 }
 
-const (
-	class_mask     = 0xc0 // 192, bits 7-8
-	compound_mask  = 0x20 //  32, bits 6
-	tagnumber_mask = 0x1f //  32, bits 1-5
-)
+const class_mask = 0xc0 // 192, bits 7-8
+
+const compound_mask = 0x20 //  32, bits 6
+
+const tagnumber_mask = 0x1f //  32, bits 1-5
 
 // Encoder is a main interrface that wraps ASN.1 encoding functionality.
 // Most of basic types in this module implements this interface.
@@ -75,7 +75,7 @@ fn parse_primitive_element(tag Tag, contents []u8) !Encoder {
 
 	match tag.number {
 		int(TagType.boolean) {
-			return read_boolean(contents)
+			return new_boolean_from_bytes(contents)
 		}
 		int(TagType.integer) {
 			return new_integer_from_bytes(contents)
@@ -115,7 +115,7 @@ fn parse_primitive_element(tag Tag, contents []u8) !Encoder {
 		//   - relaxed parsing by return raw asn1 object.
 		else {
 			return ASN1Object{
-				tag: tag 
+				tag: tag
 				values: contents
 			}
 		}
@@ -376,9 +376,9 @@ pub fn (obj ASN1Object) encode() ![]u8 {
 
 pub fn ASN1Object.decode(src []u8) !ASN1Object {
 	if src.len < 2 {
-		return error("ASN1Object: underflow")
+		return error('ASN1Object: underflow')
 	}
-	// raw tag 
+	// raw tag
 	tag, pos := read_tag(src, 0)!
 	if pos > src.len {
 		return error('truncated input')
@@ -391,8 +391,8 @@ pub fn ASN1Object.decode(src []u8) !ASN1Object {
 	bytes := read_bytes(src, next, length)!
 
 	return ASN1Object{
-		tag: tag 
-		values: bytes 
+		tag: tag
+		values: bytes
 	}
 }
 

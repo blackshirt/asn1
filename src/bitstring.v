@@ -70,7 +70,7 @@ pub fn (bs BitString) encode() ![]u8 {
 
 pub fn BitString.decode(src []u8) !BitString {
 	_, v := decode_bitstring(src)!
-	return v 
+	return v
 }
 
 fn length_bitstring(b BitString) int {

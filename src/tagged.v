@@ -199,36 +199,38 @@ pub fn (ctx Tagged) encode() ![]u8 {
 pub fn Tagged.decode(src []u8, m Mode, inner_tag Tag) !Tagged {
 	tag, pos := read_tag(src, 0)!
 	if !tag.constructed {
-		return error("Tagged should be constructed")
+		return error('Tagged should be constructed')
 	}
 	length, idx := decode_length(src, pos)!
 	contents := read_bytes(src, idx, length)!
 	match m {
 		.explicit {
-			// when explicit, the contents is an asn1 structure 
+			// when explicit, the contents is an asn1 structure
 			etag, epos := read_tag(contents, 0)!
 			if etag != inner_tag {
-				return error("unmatching explicit tag")
+				return error('unmatching explicit tag')
 			}
 			elength, eidx := decode_length(contents, epos)!
 			bytes := read_bytes(contents, eidx, elength)!
-			inner := new_asn_object(inner_tag.class, inner_tag.constructed, inner_tag.number, bytes)
+			inner := new_asn_object(inner_tag.class, inner_tag.constructed, inner_tag.number,
+				bytes)
 			tt := Tagged{
-				expected: tag 
+				expected: tag
 				mode: .explicit
 				inner: inner
 			}
-			return tt 
+			return tt
 		}
 		.implicit {
 			// when implicit, contents is the real inner contents
-			inner := new_asn_object(inner_tag.class, inner_tag.constructed, inner_tag.number, contents)
+			inner := new_asn_object(inner_tag.class, inner_tag.constructed, inner_tag.number,
+				contents)
 			tt := Tagged{
-				expected: tag 
+				expected: tag
 				mode: .implicit
 				inner: inner
 			}
-			return tt 
+			return tt
 		}
 	}
 }
