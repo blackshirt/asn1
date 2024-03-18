@@ -41,7 +41,7 @@ fn append_length(mut dst []u8, i int) []u8 {
 }
 
 // calculates length of length bytes
-fn calc_length_of_length(value int) int {
+pub fn calc_length_of_length(value int) int {
 	mut length := 1
 	if value >= 128 {
 		s := calc_length(value)
@@ -52,7 +52,7 @@ fn calc_length_of_length(value int) int {
 }
 
 // serialize_length encodes value to dst
-fn serialize_length(mut dst []u8, value int) []u8 {
+pub fn serialize_length(mut dst []u8, value int) []u8 {
 	// mut dst := []u8{}
 	// long form
 	if value >= 128 {
@@ -69,7 +69,7 @@ fn serialize_length(mut dst []u8, value int) []u8 {
 
 // decode_length decodes bytes from positon `loc` and returns integer length value and
 // next offset to read bytes data from.
-fn decode_length(buf []u8, loc int) !(int, int) {
+pub fn decode_length(buf []u8, loc int) !(int, int) {
 	mut pos := loc
 	if pos >= buf.len {
 		return error('truncated tag or length')

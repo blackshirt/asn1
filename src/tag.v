@@ -124,14 +124,14 @@ fn (t Tag) is_set_tag() bool {
 }
 
 // `calc_tag_length` calculates number or length of bytes needed to store tag number.
-fn calc_tag_length(t Tag) int {
+pub fn calc_tag_length(t Tag) int {
 	n := if t.number < 0x1f { 1 } else { 1 + base128_int_length(i64(t.number)) }
 	return n
 }
 
 // `serialize_tag` return bytes of serialized tag.
 // This routine supports multi byte tag form to represents tag number that bigger than 31 (0x1f).
-fn serialize_tag(mut dst []u8, tag Tag) []u8 {
+pub fn serialize_tag(mut dst []u8, tag Tag) []u8 {
 	mut b := u8(tag.class) << 6
 	if tag.constructed {
 		b |= compound_mask
@@ -151,7 +151,7 @@ fn serialize_tag(mut dst []u8, tag Tag) []u8 {
 
 // `read_tag` reading bytes of data from location (offset) `loc` to tag.
 // It's return the tag structure and the next position (offset) `pos` for reading the length part.
-fn read_tag(data []u8, loc int) !(Tag, int) {
+pub fn read_tag(data []u8, loc int) !(Tag, int) {
 	if data.len < 1 {
 		return error('get ${data.len} bytes for reading tag, its not enough')
 	}
