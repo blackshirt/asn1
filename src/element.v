@@ -1,26 +1,31 @@
 module asn1
 
-struct Element {
+// raw ASN.1 Element
+struct RawElemwnt {
+	tag    Tag
+	values []u8
+}
+
+// generic ASN.1 Element
+struct Element[T] {
 	// the tag of the Element
-	tag Tag
-	// the Length should matching with raw_data.len
-	length Length
+	tag    Tag
 	// data is the value of this Element, its depend how its would be interpreted.
 	// when the tag is primitive, its represents real value of this Element.
 	// otherwise, if its a constructed, its contains another unparsed Element
-	raw_data []u8
+	payload []u8
 }
 
-fn Element.new(t Tag, payload []u8) !Element {
-	el := Element{
+fn Element.new[T](t Tag, payload []u8) !Element[T] {
+	el := Element[T]{
 		tag: t
 		length: Length.from_i64(payload.len)!
-		raw_data: payload
+		payload: payload
 	}
 	return el
 }
 
-fn (el Element) tag() Tag {
+fn (el Element[T]) tag() Tag {
 	return el.tag
 }
 
