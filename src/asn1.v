@@ -114,7 +114,10 @@ fn parse_primitive_element(tag Tag, contents []u8) !Encoder {
 		//   - add other type
 		//   - relaxed parsing by return raw asn1 object.
 		else {
-			return error('unsupported tag type')
+			return ASN1Object{
+				tag: tag 
+				values: contents
+			}
 		}
 	}
 }
