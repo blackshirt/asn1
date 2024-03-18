@@ -39,6 +39,11 @@ pub fn (os OctetString) encode() ![]u8 {
 	return serialize_octetstring(os)
 }
 
+pub fn OctetString.decode(src []u8) !OctetString {
+	_, v := decode_octetstring(src)!
+	return OctetString(v)
+}
+
 fn serialize_octetstring(s string) ![]u8 {
 	tag := new_tag(.universal, false, int(TagType.octetstring))
 	mut out := []u8{}

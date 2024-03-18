@@ -23,26 +23,26 @@ module asn1
 // TODO:
 // - check for invalid representation of date and hhmmss part.
 // - represented UTCTime in time.Time
-pub type UtcTime = string
+pub type UTCTime = string
 
-// new_utctime creates new UtcTime from string s.
+// new_utctime creates new UTCTime from string s.
 pub fn new_utctime(s string) !Encoder {
 	valid := validate_utctime(s)!
 	if !valid {
 		return error('fail on validate utctime')
 	}
-	return UtcTime(s)
+	return UTCTime(s)
 }
 
-pub fn (utc UtcTime) tag() Tag {
+pub fn (utc UTCTime) tag() Tag {
 	return new_tag(.universal, false, int(TagType.utctime))
 }
 
-pub fn (utc UtcTime) length() int {
+pub fn (utc UTCTime) length() int {
 	return utc.len
 }
 
-pub fn (utc UtcTime) size() int {
+pub fn (utc UTCTime) size() int {
 	mut size := 0
 	tag := utc.tag()
 	t := calc_tag_length(tag)
@@ -56,8 +56,13 @@ pub fn (utc UtcTime) size() int {
 	return size
 }
 
-pub fn (utc UtcTime) encode() ![]u8 {
+pub fn (utc UTCTime) encode() ![]u8 {
 	return serialize_utctime(utc)
+}
+
+pub fn UTCTime.decode(src []u8) !UTCTime {
+	_, s := decode_utctime(src)!
+	return UTCTime(s)
 }
 
 fn validate_utctime(s string) !bool {
@@ -201,6 +206,11 @@ pub fn (gt GeneralizedTime) size() int {
 
 pub fn (gt GeneralizedTime) encode() ![]u8 {
 	return serialize_generalizedtime(gt)
+}
+
+pub fn GeneralizedTime.decode(src []u8) !GeneralizedTime {
+	_, s := decode_generalizedtime(src)!
+	return GeneralizedTime(s)
 }
 
 fn min_generalizedtime_length(s string) bool {

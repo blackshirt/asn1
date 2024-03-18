@@ -102,6 +102,11 @@ pub fn (seq Sequence) encode() ![]u8 {
 	return dst
 }
 
+pub fn Sequence.decode(src []u8) !Sequence {
+	seq := decode_sequence(src)!
+	return seq 
+}
+
 pub fn (mut seq Sequence) add(obj Encoder) Sequence {
 	seq.elements.add(obj)
 	return seq

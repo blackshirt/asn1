@@ -107,6 +107,11 @@ pub fn (oid Oid) encode() ![]u8 {
 	return serialize_oid(oid)
 }
 
+fn Oid.decode(src []u8) !Oid {
+	_, oid := decode_oid(src)!
+	return oid
+}
+
 fn oid_length(oid Oid) int {
 	mut n := base128_int_length(i64(oid[0] * 40 + oid[1]))
 	for i := 2; i < oid.len; i++ {

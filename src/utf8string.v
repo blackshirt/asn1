@@ -43,6 +43,11 @@ pub fn (ut UTF8String) encode() ![]u8 {
 	return serialize_utf8string(ut)
 }
 
+pub fn UTF8String.decode(src []u8) !UTF8String {
+	_, s := decode_utf8string(src)!
+	return UTF8String(s)
+}
+
 fn serialize_utf8string(s string) ![]u8 {
 	if !utf8.validate_str(s) {
 		return error('invalid UTF-8 string')

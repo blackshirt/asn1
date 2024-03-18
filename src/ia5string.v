@@ -40,6 +40,11 @@ pub fn (a5 IA5String) encode() ![]u8 {
 	return serialize_ia5string(a5)
 }
 
+pub fn IA5String.decode(src []u8) !IA5String {
+	_, val := decode_ia5string(src)!
+	return IA5String(val)
+}
+
 fn (a5 IA5String) str() string {
 	return 'IA5STRING ${string(a5)}'
 }

@@ -46,7 +46,7 @@ fn validate_boolean_contents(src []u8) bool {
 }
 
 // decode_boolean checks whether bytes arrays was ASN.1 boolean.
-fn decode_boolean(src []u8) !Encoder {
+fn decode_boolean(src []u8) !Boolean {
 	if !validate_boolean_contents(src) {
 		return error('bad boolean contents argument')
 	}
@@ -90,6 +90,10 @@ pub fn (b Boolean) size() int {
 pub fn (b Boolean) encode() ![]u8 {
 	res := encode_boolean(b)
 	return res
+}
+
+pub fn Boolean.decode(src []u8) !Boolean {
+	return decode_boolean(src)
 }
 
 fn encode_boolean(val bool) []u8 {

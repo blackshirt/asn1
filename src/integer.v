@@ -106,6 +106,39 @@ pub fn (n AsnInteger) encode() ![]u8 {
 	}
 }
 
+pub fn AsnInteger.decode(src []u8) !AsnInteger {
+	if src.len < 3 {
+		return error('AsnInteger: bad payload len')
+	}
+	tag, pos := read_tag(src, 0)!
+	if tag.number != int(TagType.integer) {
+		return error('bad tag')
+	}
+	if pos > src.len {
+		return error('truncated input')
+	}
+
+	// mut length := 0
+	length, next := decode_length(src, pos)!
+
+	if next > src.len {
+		return error('truncated input')
+	}
+	out := read_bytes(src, next, length)!
+	
+	if out.len <= 4 {
+		ret := read_i32(out)!
+		return AsnInteger(ret)
+	}
+	if out.len <= 8 {
+		ret := read_i64(out)!
+		return AsnInteger(ret)
+	}
+
+	ret := read_bigint(src)!
+	return AsnInteger(ret)
+}
+
 fn (n AsnInteger) str() string {
 	match n {
 		int {

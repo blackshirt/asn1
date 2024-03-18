@@ -40,6 +40,11 @@ pub fn (vs VisibleString) encode() ![]u8 {
 	return serialize_visiblestring(vs)
 }
 
+pub fn VisibleString.decode(src []u8) !VisibleString {
+	_, s := decode_visiblestring(src)!
+	return VisibleString(s)
+}
+
 fn is_ctrl_char(c u8) bool {
 	return (c >= 0 && c <= 0x1f) || c == 0x7f
 }

@@ -48,6 +48,11 @@ pub fn (ns NumericString) encode() ![]u8 {
 	return out
 }
 
+pub fn NumericString.decode(src []u8) !NumericString {
+	_, val := decode_numericstring(src)!
+	return NumericString(val)
+}
+
 fn is_numericstring(c u8) bool {
 	return c.is_digit() || c == u8(0x20)
 }

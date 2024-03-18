@@ -68,6 +68,11 @@ pub fn (bs BitString) encode() ![]u8 {
 	return serialize_bitstring(bs)
 }
 
+pub fn BitString.decode(src []u8) !BitString {
+	_, v := decode_bitstring(src)!
+	return v 
+}
+
 fn length_bitstring(b BitString) int {
 	return b.data.len + 1
 }

@@ -53,6 +53,12 @@ pub fn (ps PrintableString) encode() ![]u8 {
 	return serialize_printablestring(ps)
 }
 
+pub fn PrintableString.decode(src []u8) !PrintableString {
+	_, v := decode_printablestring(src)!
+
+	return PrintableString(v)
+}
+
 fn (ps PrintableString) str() string {
 	return 'PRINTABLESTRING ${string(ps)}'
 }
