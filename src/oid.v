@@ -3,8 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-import math
-
 // TODO: doing check for limiting oid array length.
 const max_oid_length = 128
 
@@ -58,7 +56,7 @@ fn oid_from_ints(src []int) !Oid {
 	}
 	// doing check for overflow
 	for k in src {
-		if k > math.max_i32 {
+		if k > max_i32 {
 			return error('overflow parse_int result')
 		}
 	}

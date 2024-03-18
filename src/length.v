@@ -3,8 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-import math
-
 // ASN.1 length handling routines.
 //
 // The standard of X.690 ITU dokument defines two length types - definite and indefinite.
@@ -91,7 +89,7 @@ pub fn decode_length(buf []u8, loc int) !(int, int) {
 			}
 			b = buf[pos]
 			pos += 1
-			if length > (math.max_i32 >> 8) {
+			if length > (max_i32 >> 8) {
 				return error('integer overflow')
 			}
 			length <<= 8
