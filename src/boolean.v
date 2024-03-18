@@ -15,11 +15,11 @@ const (
 	allowed_boolean_value = [u8(0x00), 0xff]
 )
 
-pub fn new_boolean(value bool) Encoder {
+pub fn new_boolean(value bool) Boolean {
 	return Boolean(value)
 }
 
-fn new_boolean_from_bytes(src []u8) !Encoder {
+fn new_boolean_from_bytes(src []u8) !Boolean {
 	ret := decode_boolean(src)!
 	return ret
 }
@@ -29,7 +29,7 @@ fn validate_boolean(content []u8) bool {
 }
 
 // read_boolean read boolean content without tag and length parts
-fn read_boolean(content []u8) !Encoder {
+fn read_boolean(content []u8) !Boolean {
 	if !validate_boolean(content) {
 		return error('bad boolean content')
 	}
@@ -46,7 +46,7 @@ fn validate_boolean_contents(src []u8) bool {
 }
 
 // decode_boolean checks whether bytes arrays was ASN.1 boolean.
-fn decode_boolean(src []u8) !Encoder {
+fn decode_boolean(src []u8) !Boolean {
 	if !validate_boolean_contents(src) {
 		return error('bad boolean contents argument')
 	}
