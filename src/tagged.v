@@ -214,7 +214,7 @@ pub fn Tagged.decode(src []u8, m Mode, inner_tag Tag) !Tagged {
 			bytes := read_bytes(contents, eidx, elength)!
 			inner := new_asn_object(inner_tag.class, inner_tag.constructed, inner_tag.number, bytes)
 			tt := Tagged{
-				expected_tag: tag 
+				expected: tag 
 				mode: .explicit
 				inner: inner
 			}
@@ -224,7 +224,7 @@ pub fn Tagged.decode(src []u8, m Mode, inner_tag Tag) !Tagged {
 			// when implicit, contents is the real inner contents
 			inner := new_asn_object(inner_tag.class, inner_tag.constructed, inner_tag.number, contents)
 			tt := Tagged{
-				expected_tag: tag 
+				expected: tag 
 				mode: .implicit
 				inner: inner
 			}
