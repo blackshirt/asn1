@@ -144,7 +144,7 @@ fn valid_integer(src []u8, signed bool) bool {
 // i64 handling
 
 // serialize i64
-fn serialize_i64(s i64) ![]u8 {
+pub fn serialize_i64(s i64) ![]u8 {
 	t := new_tag(.universal, false, int(TagType.integer))
 	mut out := []u8{}
 
@@ -159,7 +159,7 @@ fn serialize_i64(s i64) ![]u8 {
 	return out
 }
 
-fn decode_i64(src []u8) !(Tag, i64) {
+pub fn decode_i64(src []u8) !(Tag, i64) {
 	if src.len < 2 {
 		return error('decode: bad payload len')
 	}
@@ -255,12 +255,12 @@ fn read_i32(src []u8) !int {
 	return int(ret)
 }
 
-fn serialize_i32(s int) ![]u8 {
+pub fn serialize_i32(s int) ![]u8 {
 	out := serialize_i64(i64(s))!
 	return out
 }
 
-fn decode_i32(src []u8) !(Tag, int) {
+pub fn decode_i32(src []u8) !(Tag, int) {
 	if src.len < 2 {
 		return error('decode: bad payload len')
 	}
@@ -306,7 +306,7 @@ fn read_bigint(src []u8) !big.Integer {
 	return s
 }
 
-fn serialize_bigint(b big.Integer) ![]u8 {
+pub fn serialize_bigint(b big.Integer) ![]u8 {
 	tag := new_tag(.universal, false, int(TagType.integer))
 	mut out := []u8{}
 
@@ -319,7 +319,7 @@ fn serialize_bigint(b big.Integer) ![]u8 {
 	return out
 }
 
-fn decode_bigint(src []u8) !(Tag, big.Integer) {
+pub fn decode_bigint(src []u8) !(Tag, big.Integer) {
 	if src.len < 2 {
 		return error('decode: bad payload len')
 	}
