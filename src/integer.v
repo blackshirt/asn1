@@ -30,7 +30,7 @@ const zero_integer = big.Integer{
 // Universal class of arbitrary length type of ASN.1 INTEGER
 struct Integer {
 mut:
-	tag   Tag = new_tag(.universal, false, 2)!
+	tag   Tag = new_tag(.universal, false, int(TagType.integer))!
 	value big.Integer
 }
 
@@ -235,6 +235,11 @@ fn (v Integer) pack_to_asn1(mut dst []u8, p Params) ! {
 	length := Length.from_i64(n)!
 	length.pack_to_asn1(mut dst, p)!
 	dst << bytes
+}
+
+fn (v Integer) to_element() !Element {
+	values, n  := v.pack_into_twoscomplement_form()!
+	return Element.new(v.tag(), values)
 }
 
 // unpack_from_asn1 deserializes bytes src into ASN.1 Integer.

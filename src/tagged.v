@@ -40,25 +40,25 @@ pub fn TaggedType.explicit(el Element, outer_tag Tag) !TaggedType {
 	return TaggedType.new(el, .explicit, outer_tag)
 }
 
-// implicit creates a new TaggedType with .implicit tagged mode for inner element el 
+// implicit creates a new TaggedType with .implicit tagged mode for inner element el
 pub fn TaggedType.implicit(el Element, outer_tag Tag) !TaggedType {
 	return TaggedType.new(el, .implicit, outer_tag)
 }
 
-// explicit_context creates explicit mode of TaggedType for inner element el with tag has a .context_specific Class 
+// explicit_context creates explicit mode of TaggedType for inner element el with tag has a .context_specific Class
 // and expected (outer) tag number is set into tagnum
 pub fn TaggedType.explicit_context(el Element, tagnum int) !TaggedType {
 	tag := new_tag(.context_specific, true, tagnum)!
 	tt := TaggedType.explicit(el, tag)!
-	return tt 
+	return tt
 }
 
-// implicit_context creates implicit mode of TaggedType for inner element el with tag has a .context_specific Class 
+// implicit_context creates implicit mode of TaggedType for inner element el with tag has a .context_specific Class
 // and expected (outer) tag number is set into tagnum
 pub fn TaggedType.implicit_context(el Element, tagnum int) !TaggedType {
 	tag := new_tag(.context_specific, true, tagnum)!
 	tt := TaggedType.implicit(el, tag)!
-	return tt 
+	return tt
 }
 
 fn (tt TaggedType) packed_length() int {

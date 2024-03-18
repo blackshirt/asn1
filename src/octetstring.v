@@ -51,6 +51,10 @@ fn (os OctetString) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << os.value.bytes()
 }
 
+fn (os OctetString) to_element() !Element {
+	ret := Element.new(os.tag(), os.value.bytes())
+}
+
 fn OctetString.unpack_from_asn1(src []u8, loc i64, p Params) !(OctetString, i64) {
 	if src.len < 2 {
 		return error('OctetString: src.len underflow')
