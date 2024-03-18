@@ -3,8 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-import math
-
 fn base128_int_length(v i64) int {
 	if v == 0 {
 		return 1
@@ -57,7 +55,7 @@ fn decode_base128_int(bytes []u8, loc int) !(int, int) {
 
 		if b & 0x80 == 0 {
 			ret = int(r64)
-			if r64 > math.max_i32 {
+			if r64 > max_i32 {
 				return error('base 128 integer too large')
 			}
 			return ret, pos
