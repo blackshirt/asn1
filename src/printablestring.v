@@ -41,6 +41,28 @@ fn (ps PrintableString) tag() Tag {
 	return ps.tag
 }
 
+fn (ps PrintableString) payload() ![]u8 {
+	if !printable_chars(ps.value.bytes()) {
+		return error('PrintableString: contains non-printable string')
+	}
+	return ps.value.bytes()
+}
+
+fn (ps PrintableString) payload_length() int {
+	return ps.value.len
+}
+
+fn (ps PrintableString) packed_length() int {
+	mut n := 0
+	n += ps.tag().packed_length()
+	len := ps.payload_length()
+	pslen := Length.from_i64(len) or { panic(err) }
+	n += pslen.packed_length()
+	n += len
+
+	return n
+}
+
 fn (ps PrintableString) pack_to_asn1(mut dst []u8, p Params) ! {
 	// recheck
 	if !printable_chars(ps.value.bytes()) {

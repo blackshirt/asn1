@@ -11,7 +11,7 @@ mut:
 	tag Tag = new_tag(.universal, false, int(TagType.ia5string)) or { panic(err) }
 }
 
-fn IA5String.new(value string) !IA5String {
+fn IA5String.from_string(value string) !IA5String {
 	if !value.is_ascii() {
 		return error('IA5String: contains non-ascii chars')
 	}
@@ -33,11 +33,22 @@ fn (v IA5String) tag() Tag {
 	return v.tag
 }
 
-fn (v IA5String) packed_length() !int {
+fn (v IA5String) payload() ![]u8 {
+	if !v.value.is_ascii() {
+		return error('IA5String: contains non-ascii chars')
+	}
+	return v.value.bytes()
+}
+
+fn (v IA5String) payload_length() int {
+	return v.value.len
+}
+
+fn (v IA5String) packed_length() int {
 	mut n := 0
 
 	n += v.tag().packed_length()
-	len := Length.from_i64(v.value.bytes().len)!
+	len := Length.from_i64(v.value.bytes().len) or { panic(err) }
 	n += len.packed_length()
 	n += v.value.bytes().len
 

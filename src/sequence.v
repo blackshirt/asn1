@@ -17,32 +17,32 @@ pub struct Sequence {
 mut:
 	// The tag should represents sequence or sequenceof tag, ie, 0x30
 	tag Tag = Tag{.universal, true, int(TagType.sequence)}
-	// is_seqof should be set when this sequence is SequenceOf type
-	is_seqof bool
+	// seqof should be set when this sequence is SequenceOf type
+	seqof bool
 	// elements of the sequence
 	elements []Element
 }
 
-fn Sequence.new(is_seqof bool) !Sequence {
+fn Sequence.new(seqof bool) !Sequence {
 	tag := new_tag(.universal, true, int(TagType.sequence))!
-	return Sequence.new_with_tag(tag, is_seqof, els)
+	return Sequence.new_with_tag(tag, seqof)
 }
 
-// new_with_tag creates a new empty Sequence with tag `tag`. If is_seqof is true, a new Sequence
+// new_with_tag creates a new empty Sequence with tag `tag`. If seqof is true, a new Sequence
 // should be treated as a SequenceOf type, or a sequence otherwise
-fn Sequence.new_with_tag(tag Tag, is_seqof bool) !Sequence {
+fn Sequence.new_with_tag(tag Tag, seqof bool) !Sequence {
 	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
 		return error('Not a valid sequence tag')
 	}
 	return Sequence{
 		tag: tag
-		is_seqof: is_seqof
+		seqof: seqof
 	}
 }
 
 fn (mut seq Sequence) set_to_sequenceof() ! {
-	if seq.elements.hold_thesame_tag() {
-		seq.is_seqof = true
+	if !seq.elements.hold_different_tag() {
+		seq.seqof = true
 		return
 	}
 	// non-sequenceof, just return error
@@ -54,7 +54,7 @@ fn (seq Sequence) is_sequenceof_type() bool {
 	// we assume the tag is sequence type
 	// take the first obj's tag, and check if the all the element tags has the same type
 	tag0 := seq.elements[0].tag()
-	return seq.elements.all(it.tag() == tag0) && seq.is_seqof
+	return seq.elements.all(it.tag() == tag0) && seq.seqof
 }
 
 // add_element add the element el to this sequence. Its check whether its should be added when this
@@ -69,7 +69,7 @@ fn (mut seq Sequence) add_element(el Element) ! {
 	// get the first element tag, when this sequence is SequenceOf type, to be added element
 	// has to be have the same tag with element already availables in sequence.
 	tag0 := seq.elements[0].tag()
-	if seq.is_seqof {
+	if seq.seqof {
 		if el.tag() != tag0 {
 			return error('Sequence: adding different element to the SequenceOf element')
 		}
@@ -138,10 +138,10 @@ fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
 		return error('Sequence: bytes underflow')
 	}
 	if p.mode != .der && p.mode != .ber {
-		return error('OctetString: unsupported mode')
+		return error('Sequence: unsupported mode')
 	}
 	if loc > src.len {
-		return error('OctetString: bad position offset')
+		return error('Sequence: bad position offset')
 	}
 	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
 	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
@@ -150,7 +150,7 @@ fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
 	len, idx := Length.unpack_from_asn1(src, pos, p)!
 	if len == 0 {
 		// empty sequence
-		seq := Sequence.new(p.is_seqof)!
+		seq := Sequence.new(false)!
 		return seq, idx
 	}
 	if idx > src.len || idx + len > src.len {
@@ -158,25 +158,33 @@ fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
 	}
 	// TODO: check the length, its safe to access bytes
 	contents := unsafe { src[idx..idx + len] }
+	mut seq := Sequence.parse_contents(tag, contents)!
+	// check for hold_different_tag
+	if !seq.elements.hold_different_tag() {
+		// set sequence into sequenceof type
+		seq.seqof = true
+	}
+	return seq, idx + len
 }
 
 // Utility function
 //
-fn Sequence.parse_contents(tag Tag, contents []u8) !Sequence {
+fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: not sequence tag')
 	}
 	mut i := 0
 	// by default, we create regular sequence type
-	// if you wish SEQUENCE OF type, call `.set_to_sequenceof()` 
-	// on this seqence to have SEQUENCE OF behavior, 
+	// if you wish SEQUENCE OF type, call `.set_to_sequenceof()`
+	// on this seqence to have SEQUENCE OF behavior,
 	// or you can call it later.
 	mut seq := Sequence.new(false)!
 	for i < contents.len {
 		t, idx := Tag.unpack_from_asn1(contents, i, p)!
 		ln, next := Length.unpack_from_asn1(contents, idx, p)!
 
-		sub := read_bytes(contents, next, ln)!
+		// todo : check boundary
+		sub := unsafe { contents[next..next + ln] }
 		match t.is_constructed() {
 			true {
 				obj := parse_constructed_element(t, sub)!
@@ -195,52 +203,51 @@ fn Sequence.parse_contents(tag Tag, contents []u8) !Sequence {
 
 fn parse_primitive_element(tag Tag, contents []u8) !Element {
 	if tag.is_constructed() {
-		return error('not primitive tag ')
+		return error('not primitive tag')
 	}
 	// for other class, just return raw element
 	if tag.class() != .universal {
-		return RawElement.new(tag, contents)!
+		return RawElement.new(tag, contents)
 	}
-	tn := TagNumber.from_int(tag.tag_number())!
-	tt := tn.universal_tag_type()!
-	match tt {
-		.boolean {
+	// parse as an universal class primitive type
+	match tag.tag_number() {
+		int(TagType.boolean) {
 			return Boolean.from_bytes(contents)!
 		}
-		.integer {
+		int(TagType.integer) {
 			return Integer.from_bytes(contents)!
 		}
-		.bitstring {
-			return BitString.from_bytes(contents)
+		int(TagType.bitstring) {
+			return BitString.from_bytes(contents)!
 		}
-		.octetstring {
-			return OctetString.from_bytes()
+		int(TagType.octetstring) {
+			return OctetString.from_bytes(contents)!
 		}
-		.null {
+		int(TagType.null) {
 			return Null.from_bytes(contents)!
 		}
-		.oid {
+		int(TagType.oid) {
 			return Oid.from_bytes(contents)!
 		}
-		.numericstring {
+		int(TagType.numericstring) {
 			return NumericString.from_bytes(contents)!
 		}
-		.printablestring {
+		int(TagType.printablestring) {
 			return PrintableString.from_bytes(contents)!
 		}
-		.ia5string {
+		int(TagType.ia5string) {
 			return IA5String.from_bytes(contents)!
 		}
-		.utf8string {
-			return UTF8string.from_bytes(contents)!
+		int(TagType.utf8string) {
+			return UTF8String.from_bytes(contents)!
 		}
-		.visiblestring {
+		int(TagType.visiblestring) {
 			return VisibleString.from_bytes(contents)!
 		}
-		.utctime {
+		int(TagType.utctime) {
 			return UTCTime.from_bytes(contents)!
 		}
-		.generalizedtime {
+		int(TagType.generalizedtime) {
 			return GeneralizedTime.from_bytes(contents)!
 		}
 		// TODO:
@@ -260,15 +267,19 @@ fn parse_constructed_element(tag Tag, contents []u8) !Element {
 		return error('not constructed tag')
 	}
 	// we only parse sequence(of) and or set(of). type
-	// for other constructed type, like TaggedType, you should 
+	// for other constructed type, like TaggedType, you should
 	// parse manually from RawElement result.
-	if tag.tag_number() == int(TagType.sequence) {
-		return Sequence.parse_contents(tag, contents)!
+	match tag.tag_number() {
+		int(TagType.sequence) {
+			return Sequence.parse_contents(tag, contents)!
+		}
+		int(TagType.set) {
+			return Set.parse_contents(tag, contents)!
+		}
+		else {
+			return RawElement.new(tag, contents)
+		}
 	}
-	if tag.tag_number() == int(TagType.set) {
-		return Set.parse_contents(tag, contents)!
-	}
-	return RawElement.new(tag, contents)
 }
 
 /*

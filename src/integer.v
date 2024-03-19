@@ -34,14 +34,15 @@ mut:
 	value big.Integer
 }
 
-// equal do checking if n equal to m.
-// ISSUE?: There are some issues when compared n == m directly,
-// its fails even internally its a same, so we provide and use equality check
-fn (n Integer) equal(m Integer) bool {
-	nbytes, nsignum := n.value.bytes()
-	mbytes, msignum := m.value.bytes()
-
-	return n.tag == m.tag && nbytes == mbytes && nsignum == msignum
+fn Integer.from_bigint(b big.Integer) !Integer {
+	if b == big.zero_int {
+		return Integer{
+			value: asn1.zero_integer
+		}
+	}
+	return Integer{
+		value: b
+	}
 }
 
 // from_string creates a new ASN.1 Integer from decimal string s.
@@ -101,6 +102,16 @@ fn Integer.from_u64(v u64) Integer {
 	}
 }
 
+// equal do checking if n equal to m.
+// ISSUE?: There are some issues when compared n == m directly,
+// its fails even internally its a same, so we provide and use equality check
+fn (n Integer) equal(m Integer) bool {
+	nbytes, nsignum := n.value.bytes()
+	mbytes, msignum := m.value.bytes()
+
+	return n.tag == m.tag && nbytes == mbytes && nsignum == msignum
+}
+
 fn (v Integer) bytes() []u8 {
 	if v.value == asn1.zero_integer {
 		return [u8(0x00)]
@@ -110,9 +121,6 @@ fn (v Integer) bytes() []u8 {
 }
 
 // tag returns the tag of Universal class of this Integer type.
-fn (v Integer) tag() Tag {
-	return v.tag
-}
 
 fn (v Integer) bytes_len() int {
 	if v.value == asn1.zero_integer {
@@ -215,15 +223,28 @@ fn Integer.unpack_and_validate(b []u8) !Integer {
 	return ret
 }
 
-fn (v Integer) packed_length() !int {
+fn (v Integer) packed_length() int {
 	mut n := 0
 	n += v.tag().packed_length()
 
-	len := Length.from_i64(v.bytes_len())!
+	len := Length.from_i64(v.bytes_len()) or { panic(err) }
 	n += len.packed_length()
 	n += v.bytes_len()
 
 	return n
+}
+
+fn (v Integer) tag() Tag {
+	return v.tag
+}
+
+fn (v Integer) payload() ![]u8 {
+	bytes, _ := v.pack_into_twoscomplement_form()!
+	return bytes
+}
+
+fn (v Integer) payload_length() int {
+	return v.bytes_len()
 }
 
 // pack_to_asn1 packs and serializes Integer v into ASN 1 serialized bytes into `dst`.

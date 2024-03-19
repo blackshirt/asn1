@@ -78,7 +78,7 @@ fn (tt TaggedType) packed_length() int {
 			// when in implicit mode, inner tag and length of inner element being replaced by outer tag and length
 			n += tt.outer_tag.packed_length()
 			// in implicit mode, inner_length only contains inner_el.payload.len length (without tag and length)
-			inner := tt.inner_el.bytes_content() or { panic(err) }
+			inner := tt.inner_el.payload() or { panic(err) }
 			inner_length := inner.len
 			tt_length := Length.from_i64(inner_length) or { panic(err) }
 			n += tt_length.packed_length()
@@ -108,7 +108,7 @@ pub fn (tt TaggedType) pack_to_asn1(mut dst []u8, p Params) ! {
 		.implicit {
 			// replace the tag.of inner element with this tag
 			tt.outer_tag.pack_to_asn1(mut dst)!
-			payload := tt.inner_el.bytes_content()!
+			payload := tt.inner_el.payload()!
 			length := Length.from_i64(payload.len)!
 			length.pack_to_asn1(mut dst, p)!
 			dst << payload
@@ -175,26 +175,26 @@ pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag T
 		}
 	}
 }
-				
+
 // from_raw_element treats this RawElement as TaggedType with mode m and inner element
 fn TaggedType.from_raw_element(r RawElement, m TaggedMode, inner Element, p Params) !TaggedType {
 	if !r.tag.is_constructed() {
-		return error("the tag of provided RawElement is not constructed")
+		return error('the tag of provided RawElement is not constructed')
 	}
 	match m {
 		// treats r.payload as an explicit type
 		.explicit {
 			tag, pos := Tag.unpack_from_asn1(r.payload, 0, p)!
 			if tag != inner.tag() {
-				return error("gets different tag")
+				return error('gets different tag')
 			}
 			len, idx := Length.unpack_from_asn1(r.payload, pos, p)!
 			if idx != r.payload.len {
-				return error("gets different length")
+				return error('gets different length')
 			}
-			bytes := unsafe { r.payload[idx..idx+len] }
+			bytes := unsafe { r.payload[idx..idx + len] }
 			if bytes != inner.payload()! {
-				return error("differs in content")
+				return error('differs in content')
 			}
 			tt := TaggedType{
 				outer_tag: r.tag
@@ -203,10 +203,22 @@ fn TaggedType.from_raw_element(r RawElement, m TaggedMode, inner Element, p Para
 			}
 			return tt
 		}
-		.implicit {}
+		// treats r.payload as contents
+		.implicit {
+			// payload := inner.payload()!
+			if inner.payload()! != r.payload {
+				return error('implicit differs in content')
+			}
+			tt := TaggedType{
+				outer_tag: r.tag
+				mode: .implicit
+				inner_el: inner
+			}
+			return tt
+		}
 	}
 }
-				
+
 /*
 enum Mode {
 	explicit = 0

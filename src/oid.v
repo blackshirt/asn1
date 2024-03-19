@@ -89,12 +89,21 @@ fn (oid Oid) tag() Tag {
 	return oid.tag
 }
 
-fn (oid Oid) packed_length() !int {
+fn (oid Oid) payload() ![]u8 {
+	return oid.pack()!
+}
+
+fn (oid Oid) payload_length() int {
+	bytes := oid.pack() or { panic(err) }
+	return bytes.len
+}
+
+fn (oid Oid) packed_length() int {
 	mut n := 0
 	n += oid.tag().packed_length()
 
-	src := oid.pack()!
-	len := Length.from_i64(src.len)!
+	src := oid.pack() or { panic(err) }
+	len := Length.from_i64(src.len) or { panic(err) }
 	n += len.packed_length()
 	n += src.len
 

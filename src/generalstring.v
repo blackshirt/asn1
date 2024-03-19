@@ -12,7 +12,7 @@ module asn1
 struct GeneralString {
 	value string
 mut:
-	tag Tag = new_tag(.universal, false, int(TagType.generalstring))
+	tag Tag = Tag{.universal, false, int(TagType.generalstring)}
 }
 
 // TODO: proper check GeneralString validation
@@ -53,7 +53,7 @@ fn (g GeneralString) packed_length() int {
 	mut n := 0
 
 	n += g.tag().packed_length()
-	len := Length.from_i64(g.value.bytes().len)!
+	len := Length.from_i64(g.value.bytes().len) or { panic(err) }
 	n += len.packed_length()
 	n += g.value.bytes().len
 
@@ -75,9 +75,9 @@ fn (g GeneralString) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << bytes
 }
 
-fn GeneralString.unpack_from_asn1(src []u8, loc i64, p Params) !(IA5String, i64) {
+fn GeneralString.unpack_from_asn1(src []u8, loc i64, p Params) !(GeneralString, i64) {
 	if src.len < 2 {
-		return error('GeneralString: bad ia5string bytes length')
+		return error('GeneralString: bad bytes length')
 	}
 	if p.mode != .der && p.mode != .ber {
 		return error('GeneralString: unsupported mode')

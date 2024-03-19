@@ -44,14 +44,22 @@ fn UTCTime.from_bytes(b []u8) !UTCTime {
 	return UTCTime.from_string(b.bytestr())!
 }
 
-fn (t UTCTime) tag() Tag {
-	return t.tag
+fn (ut UTCTime) tag() Tag {
+	return ut.tag
 }
 
-fn (ut UTCTime) packed_length() !int {
+fn (ut UTCTime) payload() ![]u8 {
+	return ut.value.bytes()
+}
+
+fn (ut UTCTime) payload_length() int {
+	return ut.value.len
+}
+
+fn (ut UTCTime) packed_length() int {
 	mut n := 0
 	n += ut.tag.packed_length()
-	len := Length.from_i64(ut.value.bytes().len)!
+	len := Length.from_i64(ut.value.bytes().len) or { panic(err) }
 	n += len.packed_length()
 
 	n += ut.value.bytes().len
@@ -191,15 +199,23 @@ fn (gt GeneralizedTime) tag() Tag {
 	return gt.tag
 }
 
-fn (gt GeneralizedTime) packed_length() !int {
+fn (gt GeneralizedTime) packed_length() int {
 	mut n := 0
 	n += gt.tag.packed_length()
-	len := Length.from_i64(gt.value.bytes().len)!
+	len := Length.from_i64(gt.value.bytes().len) or { panic(err) }
 	n += len.packed_length()
 
 	n += gt.value.bytes().len
 
 	return n
+}
+
+fn (gt GeneralizedTime) payload() ![]u8 {
+	return gt.value.bytes()
+}
+
+fn (gt GeneralizedTime) payload_length() int {
+	return gt.value.len
 }
 
 fn (gt GeneralizedTime) pack_to_asn1(mut dst []u8, p Params) ! {

@@ -12,10 +12,6 @@ mut:
 	tag Tag = new_tag(.universal, false, int(TagType.bitstring))!
 }
 
-fn (b BitString) tag() Tag {
-	return b.tag
-}
-
 // from_string creates new BitString from sring s
 pub fn BitString.from_string(s string) !BitString {
 	return BitString.from_bytes(s.bytes())
@@ -40,6 +36,33 @@ fn BitString.new_with_pad(src []u8, pad u8) !BitString {
 
 fn (bs BitString) bytes_len() int {
 	return bs.data.len + 1
+}
+
+fn (b BitString) tag() Tag {
+	return b.tag
+}
+
+fn (bs BitString) payload() ![]u8 {
+	mut out := []u8{}
+	out << bs.pad
+	out << bs.data
+	return out
+}
+
+fn (bs BitString) payload_length() int {
+	return bs.bytes_len()
+}
+
+fn (bs BitString) packed_length() int {
+	mut n := 0
+
+	n += bs.tag().packed_length()
+	len := bs.payload_length()
+	bslen := Length.from_i64(len) or { panic(err) }
+	n += bslen.packed_length()
+	n += len
+
+	return n
 }
 
 fn (bs BitString) pack_to_asn1(mut dst []u8, p Params) ! {

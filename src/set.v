@@ -13,14 +13,59 @@ module asn1
 struct Set {
 	tag Tag = Tag{.universal, true, int(TagType.set)}
 mut:
-	is_setof bool
+	setof    bool
 	elements []Element
 }
 
 fn Set.new(setof bool) Set {
 	return Set{
-		is_setof: setof
+		setof: setof
 	}
+}
+
+fn (mut s Set) set_into_setof() ! {
+	if !s.elements.hold_different_tag() {
+		s.setof = true
+		return
+	}
+	// non-setof, just return error
+	return error('Not holds setof elements, you cant set the flag')
+}
+
+// is_setof_type checks whether this set is setof type
+fn (s Set) is_setof_type() bool {
+	// we assume the tag is set type
+	// take the first obj's tag, and check if the all the element tags has the same type
+	tag0 := s.elements[0].tag()
+	return s.elements.all(it.tag() == tag0) && s.setof
+}
+
+// add_element add the element el to this set. Its check whether its should be added when this
+// set is setof type
+fn (mut s Set) add_element(el Element) ! {
+	if s.elements.len == 0 {
+		// set elements is still empty, just add the element
+		s.elements << el
+		return
+	}
+	// otherwise, set elements is not empty, so, lets performs check.
+	// get the first element tag, when this set is setof type, to be added element
+	// has to be have the same tag with element already availables in set.
+	tag0 := s.elements[0].tag()
+	if s.setof {
+		if el.tag() != tag0 {
+			return error('set: adding different element to the setof element')
+		}
+		// has the same tag
+		s.elements << el
+		return
+	}
+	// otherwise, we can just append el into set elements
+	s.elements << el
+}
+
+fn (s Set) elements() ![]Element {
+	return s.elements
 }
 
 fn (s Set) tag() Tag {
@@ -43,10 +88,67 @@ fn (s Set) payload_length() int {
 	return n
 }
 
-fn (s Set) pack_to_asn1(mut dst []u8, p Params) ! {
-	
+fn (s Set) packed_length() int {
+	mut n := 0
+	n += s.tag().packed_length()
+	ln := s.payload_length()
+	length := Length.from_i64(ln) or { panic(err) }
+	n += length.packed_length()
+	n += ln
+
+	return n
 }
-		
+
+fn (s Set) pack_to_asn1(mut dst []u8, p Params) ! {
+	if p.mode != .der && p.mode != .ber {
+		return error('set: unsupported mode')
+	}
+	// recheck
+	if !s.tag().is_constructed() && s.tag().tag_number() != int(TagType.set) {
+		return error('Not a valid set tag')
+	}
+	// pack in DER mode
+	s.tag().pack_to_asn1(mut dst, p)!
+	payload := s.payload()!
+	length := Length.from_i64(payload.len)!
+	length.pack_to_asn1(mut dst, p)!
+	dst << payload
+}
+
+// Utility function
+//
+fn Set.parse_contents(tag Tag, contents []u8, p Params) !Set {
+	if !tag.is_constructed() && tag.tag_number() != int(TagType.set) {
+		return error('Set: not set tag')
+	}
+	mut i := 0
+	// by default, we create regular Set type
+	// if you wish SET OF type, call `.set_into_setof()`
+	// on this set to have SET OF behavior,
+	// or you can call it later.
+	mut set := Set.new(false)
+	for i < contents.len {
+		t, idx := Tag.unpack_from_asn1(contents, i, p)!
+		ln, next := Length.unpack_from_asn1(contents, idx, p)!
+
+		// todo : check boundary
+		sub := unsafe { contents[next..next + ln] }
+		match t.is_constructed() {
+			true {
+				obj := parse_constructed_element(t, sub)!
+				set.add_element(obj)!
+				i += obj.packed_length()
+			}
+			false {
+				obj := parse_primitive_element(t, sub)!
+				set.add_element(obj)!
+				i += obj.packed_length()
+			}
+		}
+	}
+	return set
+}
+
 /*
 // new_set creates universal set.
 pub fn new_set() Set {

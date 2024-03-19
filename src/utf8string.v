@@ -36,6 +36,28 @@ fn (us UTF8String) tag() Tag {
 	return us.tag
 }
 
+fn (us UTF8String) payload() ![]u8 {
+	if !utf8.validate_str(us.value) {
+		return error('UTF8String: invalid UTF-8 string')
+	}
+	return us.value.bytes()
+}
+
+fn (us UTF8String) payload_length() int {
+	return us.value.len
+}
+
+fn (us UTF8String) packed_length() int {
+	mut n := 0
+	n += us.tag().packed_length()
+	uslen := us.payload_length()
+	len := Length.from_i64(uslen) or { panic(err) }
+	n += len.packed_length()
+	n += uslen
+
+	return n
+}
+
 fn (us UTF8String) pack_to_asn1(mut dst []u8, p Params) ! {
 	// recheck
 	if !utf8.validate_str(us.value) {

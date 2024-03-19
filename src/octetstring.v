@@ -14,14 +14,22 @@ mut:
 }
 
 // new_octetstring creates new octet string
-fn OctetString.from_string(s string) OctetString {
+fn OctetString.from_string(s string) !OctetString {
+	if !valid_octet_string(s) {
+		return error('not valid octet string')
+	}
 	return OctetString{
 		value: s
 	}
 }
 
-fn OctetString.from_bytes(src []u8) OctetString {
-	return OctetString.from_string(src.bytestr())
+fn OctetString.from_bytes(src []u8) !OctetString {
+	return OctetString.from_string(src.bytestr())!
+}
+
+fn valid_octet_string(s string) bool {
+	// just return true
+	return true
 }
 
 fn (os OctetString) tag() Tag {
@@ -36,11 +44,11 @@ fn (os OctetString) payload_length() int {
 	return os.value.bytes().len
 }
 
-fn (os OctetString) packed_length() !int {
+fn (os OctetString) packed_length() int {
 	mut n := 0
 
 	n += os.tag().packed_length()
-	len := Length.from_i64(os.value.bytes().len)!
+	len := Length.from_i64(os.value.bytes().len) or { panic(err) }
 	n += len.packed_length()
 	n += os.value.bytes().len
 
@@ -90,6 +98,6 @@ fn OctetString.unpack_from_asn1(src []u8, loc i64, p Params) !(OctetString, i64)
 	// TODO: check the length, its safe to access bytes
 	bytes := unsafe { src[idx..idx + len] }
 
-	os := OctetString.from_bytes(bytes)
+	os := OctetString.from_bytes(bytes)!
 	return os, idx + len
 }
