@@ -19,10 +19,22 @@ fn Enumerated.from_int(val int) Enumerated {
 	}
 }
 
+fn Enumerated.from_bytes(b []u8) !Enumerated {
+	return Enumerated.unpack(b)!
+}
+	
 fn (e Enumerated) tag() Tag {
 	return e.tag
 }
 
+fn (e Enumerated) payload() ![]u8 {
+	return e.pack()!
+}
+
+fn (e Enumerated) payload_length() int {
+	return e.enumerated_len()
+}
+	
 fn (e Enumerated) packed_length() !int {
 	mut n := 0
 	n += e.tag().packed_length()
