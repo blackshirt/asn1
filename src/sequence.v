@@ -200,7 +200,7 @@ fn parse_primitive_element(tag Tag, contents []u8) !Element {
 			return Boolean.from_bytes(contents)!
 		}
 		.integer {
-			return new_integer_from_bytes(contents)
+			return Integer.from_bytes(contents)!
 		}
 		.bitstring {
 			return BitString.from_bytes(contents)
