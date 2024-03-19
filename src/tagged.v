@@ -175,7 +175,38 @@ pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag T
 		}
 	}
 }
-
+				
+// from_raw_element treats this RawElement as TaggedType with mode m and inner element
+fn TaggedType.from_raw_element(r RawElement, m TaggedMode, inner Element, p Params) !TaggedType {
+	if !r.tag.is_constructed() {
+		return error("the tag of provided RawElement is not constructed")
+	}
+	match m {
+		// treats r.payload as an explicit type
+		.explicit {
+			tag, pos := Tag.unpack_from_asn1(r.payload, 0, p)!
+			if tag != inner.tag() {
+				return error("gets different tag")
+			}
+			len, idx := Length.unpack_from_asn1(r.payload, pos, p)!
+			if idx != r.payload.len {
+				return error("gets different length")
+			}
+			bytes := unsafe { r.payload[idx..idx+len] }
+			if bytes != inner.payload()! {
+				return error("differs in content")
+			}
+			tt := TaggedType{
+				outer_tag: r.tag
+				mode: .explicit
+				inner_el: inner
+			}
+			return tt
+		}
+		.implicit {}
+	}
+}
+				
 /*
 enum Mode {
 	explicit = 0
