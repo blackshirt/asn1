@@ -160,6 +160,8 @@ fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
 	contents := unsafe { src[idx..idx + len] }
 }
 
+// Utility function
+//
 fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: not sequence tag')
@@ -185,6 +187,82 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 		}
 	}
 	return seq
+}
+
+fn parse_primitive_element(tag Tag, contents []u8) !Element {
+	if tag.is_constructed() || tag.class != .universal {
+		return error('not primitive tag ')
+	}
+	tn := TagNumber.from_int(tag.tag_number())!
+	tt := tn.universal_tag_type()!
+	match tt {
+		.boolean {
+			return Boolean.from_bytes(contents)!
+		}
+		.integer {
+			return new_integer_from_bytes(contents)
+		}
+		.bitstring {
+			return new_bitstring_from_bytes(contents)
+		}
+		.octetstring {
+			return new_octetstring(contents.bytestr())
+		}
+		.null {
+			return Null.from_bytes(contents)!
+		}
+		.oid {
+			return new_oid_from_bytes(contents)!
+		}
+		.numericstring {
+			return new_numeric_string(contents.bytestr())
+		}
+		.printablestring {
+			return new_printable_string(contents.bytestr())
+		}
+		.ia5string {
+			return new_ia5string(contents.bytestr())
+		}
+		.utf8string {
+			return new_utf8string(contents.bytestr())
+		}
+		.visiblestring {
+			return new_visiblestring(contents.bytestr())
+		}
+		.utctime {
+			return new_utctime(contents.bytestr())
+		}
+		// TODO:
+		//   - add other type
+		//   - relaxed parsing by return raw asn1 object.
+		else {
+			return RawElement{
+				tag: t
+				payload: contents
+			}
+		}
+	}
+}
+
+fn parse_compound_element(tag Tag, contents []u8) !Element {
+	if !tag.is_constructed() {
+		return error('not constructed tag')
+	}
+
+	match true {
+		tag.is_sequence_tag() {
+			return parse_seq(tag, contents)!
+		}
+		tag.is_set_tag() {
+			return parse_set(tag, contents)!
+		}
+		tag.is_context() {
+			return read_explicit_context(tag, contents)!
+		}
+		else {
+			return new_asn_object(tag.class, tag.constructed, tag.number, contents)
+		}
+	}
 }
 
 /*

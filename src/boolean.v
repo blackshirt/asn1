@@ -21,15 +21,33 @@ fn Boolean.new(value bool) Boolean {
 	}
 }
 
-fn Boolean.new_with_tag(value bool, tag Tag) Boolean {
-	return Boolean{
-		value: value
-		tag: tag
+fn Boolean.from_bytes(b []u8) !Boolean {
+	if b.len != 1 {
+		return error('Boolean: bad bytes')
 	}
+	if b[0] == u8(0x00) {
+		return Boolean.new(false)
+	}
+	if b[0] == u8(0xff) {
+		return Boolean.new(true)
+	}
+	// other values is not supported
+	return error('Boolean: unsupported value')
 }
 
 fn (v Boolean) tag() Tag {
 	return v.tag
+}
+
+fn (v Boolean) payload_length() int {
+	return 1
+}
+
+fn (v Boolean) payload() ![]u8 {
+	if v.value {
+		return [u8(0xff)]
+	}
+	return [u8(0x00)]
 }
 
 fn (v Boolean) packed_length() int {

@@ -18,6 +18,13 @@ fn Null.new_with_tag(t Tag) Null {
 	}
 }
 
+fn Null.from_bytes(b []u8) !Null {
+	if b.len != 0 {
+		return error('Null: bad bytes')
+	}
+	return Null{}
+}
+
 fn (n Null) tag() Tag {
 	return n.tag
 }
