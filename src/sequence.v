@@ -203,34 +203,37 @@ fn parse_primitive_element(tag Tag, contents []u8) !Element {
 			return new_integer_from_bytes(contents)
 		}
 		.bitstring {
-			return new_bitstring_from_bytes(contents)
+			return BitString.from_bytes(contents)
 		}
 		.octetstring {
-			return new_octetstring(contents.bytestr())
+			return OctetString.from_bytes()
 		}
 		.null {
 			return Null.from_bytes(contents)!
 		}
 		.oid {
-			return new_oid_from_bytes(contents)!
+			return Oid.from_bytes(contents)!
 		}
 		.numericstring {
-			return new_numeric_string(contents.bytestr())
+			return NumericString.from_bytes(contents)!
 		}
 		.printablestring {
-			return new_printable_string(contents.bytestr())
+			return PrintableString.from_bytes(contents)!
 		}
 		.ia5string {
-			return new_ia5string(contents.bytestr())
+			return IA5String(contents)!
 		}
 		.utf8string {
-			return new_utf8string(contents.bytestr())
+			return UTF8string.from_bytes(contents)!
 		}
 		.visiblestring {
-			return new_visiblestring(contents.bytestr())
+			return VisibleString.from_bytes(contents)!
 		}
 		.utctime {
-			return new_utctime(contents.bytestr())
+			return UTCTime.from_bytes(contents)!
+		}
+		.generalizedtime {
+			return GeneralizedTime.from_bytes(contents))!
 		}
 		// TODO:
 		//   - add other type
