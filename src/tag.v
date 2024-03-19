@@ -78,7 +78,7 @@ pub fn new_tag(c Class, constructed bool, number int) Tag {
 	}
 }
 
-struct Tag {
+pub struct Tag {
 mut:
 	class       Class
 	constructed bool
@@ -89,35 +89,43 @@ fn (t Tag) equal(o Tag) bool {
 	return t == o
 }
 
-fn (t Tag) is_constructed() bool {
+pub fn (t Tag) class() Class {
+	return t.class 
+}
+
+pub fn (t Tag) tag_number() int {
+	return t.number 
+}
+
+pub fn (t Tag) is_constructed() bool {
 	return t.constructed
 }
 
-fn (t Tag) is_primitive() bool {
+pub fn (t Tag) is_primitive() bool {
 	return !t.is_constructed()
 }
 
-fn (t Tag) is_universal() bool {
+pub fn (t Tag) is_universal() bool {
 	return t.class == .universal
 }
 
-fn (t Tag) is_application() bool {
+pub fn (t Tag) is_application() bool {
 	return t.class == .application
 }
 
-fn (t Tag) is_context() bool {
+pub fn (t Tag) is_context() bool {
 	return t.class == .context
 }
 
-fn (t Tag) is_private() bool {
+pub fn (t Tag) is_private() bool {
 	return t.class == .private
 }
 
-fn (t Tag) is_sequence_tag() bool {
+pub fn (t Tag) is_sequence_tag() bool {
 	return t.is_constructed() && t.number == int(TagType.sequence)
 }
 
-fn (t Tag) is_set_tag() bool {
+pub fn (t Tag) is_set_tag() bool {
 	return t.is_constructed() && t.number == int(TagType.set)
 }
 
