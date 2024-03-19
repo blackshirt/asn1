@@ -46,14 +46,21 @@ fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
 		payload: bytes
 	}, idx + len
 }
-
-fn (els []Element) hold_thesame_tag() bool {
-	// if empty just true
+		
+// hold_different_tag checks whether this array of Element
+// contains any different tag, benefit for checking whether the type
+// with this elements is sequence or sequence of type.
+fn (els []Element) hold_different_tag() bool {
+	// if els has empty length we return false, so we can treat 
+	// it as a regular sequence or set.
 	if els.len == 0 {
-		return true
+		return false
 	}
+	// when this return true, there is nothing in elements
+    // has same tag for all items, ie, there are some item
+	// in the elements hold the different tag.
 	tag0 := els[0].tag()
-	return els.all(it.tag() == tag0)
+	return els.any(it.tag() != tag0)
 }
 
 // Raw ASN.1 Element
@@ -143,13 +150,4 @@ fn RawElement.unpack_from_asn1(src []u8, loc i64, p Params) !(RawElement, i64) {
 fn (e RawElement) need_parse_data() bool {
 	need := if e.tag.is_constructed() { true } else { false }
 	return need
-}
-
-fn (els []RawElement) hold_thesame_tag() bool {
-	// if empty just true
-	if els.len == 0 {
-		return true
-	}
-	tag0 := els[0].tag()
-	return els.all(it.tag() == tag0)
 }
