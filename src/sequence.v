@@ -13,7 +13,7 @@ module asn1
 // This is analogous to an array or a list in a programming language.
 // Sequence structure can represents both SEQUENCE and SEQUENCE OF type.
 // The encoding of a sequence value shall be constructed.
-struct Sequence {
+pub struct Sequence {
 mut:
 	// The tag should represents sequence or sequenceof tag, ie, 0x30
 	tag Tag = Tag{.universal, true, int(TagType.sequence)}
@@ -23,28 +23,20 @@ mut:
 	elements []Element
 }
 
-// new creates a new empty Sequence. If is_seqof is true, a new Sequence
+fn Sequence.new(is_seqof bool) !Sequence {
+	tag := new_tag(.universal, true, int(TagType.sequence))!
+	return Sequence.new_with_tag(tag, is_seqof, els)
+}
+
+// new_with_tag creates a new empty Sequence with tag `tag`. If is_seqof is true, a new Sequence
 // should be treated as a SequenceOf type, or a sequence otherwise
-fn Sequence.new(tag Tag, is_seqof bool, els []Element) !Sequence {
+fn Sequence.new_with_tag(tag Tag, is_seqof bool) !Sequence {
 	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
 		return error('Not a valid sequence tag')
 	}
-	// if this intended to build SEQUENCEOF checks the els passed meet the criteria
-	if is_seqof {
-		if !els.hold_thesame_tag() {
-			return error('is_seqof is true while elements not holds the same tags ')
-		}
-		return Sequence{
-			tag: tag
-			is_seqof: is_seqof
-			elements: els
-		}
-	}
-	// Otherwise, its creates a regular sequence
 	return Sequence{
 		tag: tag
 		is_seqof: is_seqof
-		elements: els
 	}
 }
 
@@ -89,13 +81,110 @@ fn (mut seq Sequence) add_element(el Element) ! {
 	seq.elements << el
 }
 
+fn (s Sequence) elements() ![]Element {
+	return s.elements
+}
+
 fn (s Sequence) tag() Tag {
 	return s.tag
 }
 
-// valid_sequence_tag checks whether this sequence has a valid sequence tag and in constructed form
-fn (s Sequence) valid_sequence_tag() bool {
-	return s.tag.is_constructed() && s.tag.tag_number() == int(TagType.sequence)
+fn (s Sequence) payload_length() int {
+	mut n := 0
+	for e in s.elements {
+		n += e.packed_length()
+	}
+	return n
+}
+
+fn (s Sequence) payload() ![]u8 {
+	mut out := []u8{}
+	p := Params{}
+	for e in s.elements {
+		e.pack_to_asn1(mut out, p)!
+	}
+	return out
+}
+
+fn (s Sequence) packed_length() int {
+	mut n := 0
+	n += s.tag().packed_length()
+	ln := s.payload_length()
+	length := Length.from_i64(ln) or { panic(err) }
+	n += length.packed_length()
+	n += ln
+
+	return n
+}
+
+fn (s Sequence) pack_to_asn1(mut dst []u8, p Params) ! {
+	if p.mode != .der && p.mode != .ber {
+		return error('Sequence: unsupported mode')
+	}
+	// recheck
+	if !s.tag().is_constructed() && s.tag().tag_number() != int(TagType.sequence) {
+		return error('Not a valid sequence tag')
+	}
+	// pack in DER mode
+	s.tag().pack_to_asn1(mut dst, p)!
+	payload := s.payload()!
+	length := Length.from_i64(payload.len)!
+	length.pack_to_asn1(mut dst, p)!
+	dst << payload
+}
+
+fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
+	if src.len < 2 {
+		return error('Sequence: bytes underflow')
+	}
+	if p.mode != .der && p.mode != .ber {
+		return error('OctetString: unsupported mode')
+	}
+	if loc > src.len {
+		return error('OctetString: bad position offset')
+	}
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
+		return error('Sequence: bad sequence tag')
+	}
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	if len == 0 {
+		// empty sequence
+		seq := Sequence.new(p.is_seqof)!
+		return seq, idx
+	}
+	if idx > src.len || idx + len > src.len {
+		return error('Sequence: truncated input')
+	}
+	// TODO: check the length, its safe to access bytes
+	contents := unsafe { src[idx..idx + len] }
+}
+
+fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
+	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
+		return error('Sequence: not sequence tag')
+	}
+	mut i := 0
+	mut seq := Sequence.new(p.is_seqof)!
+	for i < contents.len {
+		t, idx := Tag.unpack_from_asn1(contents, i, p)!
+		ln, next := Length.unpack_from_asn1(contents, idx, p)!
+
+		sub := read_bytes(contents, next, ln)!
+		match t.is_constructed() {
+			true {
+				obj := parse_compound_element(t, sub)!
+				seq.add_element(obj)!
+				i += obj.packed_length()
+			}
+			false {
+				obj := parse_primitive_element(t, sub)!
+				seq.add_element(obj)!
+				i += obj.packed_length()
+			}
+		}
+	}
+	return seq
 }
 
 /*

@@ -47,7 +47,9 @@ const tag_numher_mask 	= 0x1f //  32, bits 1-5
 // of tag, length or ASN.1 element to drive how encoding works.
 @[params]
 pub struct Params {
-	mode EncodingMode = .der
+pub mut:
+	mode     EncodingMode = .der
+	is_seqof bool
 }
 
 // encoding mode

@@ -45,9 +45,9 @@ fn (p PaData) tag() asn1.Tag {
 
 fn (p PaData) packed_length() int {
 	mut n := 0
-	
+
 	n += p.tag().packed_length()
-	
+
 	return n
 }
 
@@ -59,18 +59,17 @@ fn (p PaData) pack(mut out []u8) ! {
 	tt1 := TaggedType.explicit_context(p.pd_value, 2)!
 	el0 := tt0.to_element()!
 	el1 := tt1.to_element()!
-	
+
 	mut els := []Element{}
-	mut seq := Sequence.new(new_tag(.universal, true, int(TagType.sequence)!, false, els)!
-	
+	mut seq := Sequence.new(new_tag(.universal, true, int(TagType.sequence))!, false,
+		els)!
+
 	seq.add_element(el0)!
 	seq.add_element(el1)!
-	
+
 	mut pa_length := 0
 	pa_length += el0.packed_length()
 	pa_length += el1.packed_length()
-	
-	
 }
 
 fn PaData.unpack(src []u8) !PaData {
@@ -103,7 +102,7 @@ fn PaData.unpack(src []u8) !PaData {
 	ttag1, tpos1 := asn1.read_tag(remaining_bytes, 0)!
 	tlength1, tnext1 := asn1.decode_length(remaining_bytes, tpos1)!
 	sub2 := asn1.read_bytes(remaining_bytes, tnext1, tlength1)!
-	// as octet string 
+	// as octet string
 	pvalue := OctetString.decode(sub2)
 
 	ret := PaData{
@@ -223,7 +222,7 @@ fn KerberosString.unpack(src []u8, loc i64) !(KerberosString, i64) {
 	if !ks.valid() {
 		return error('not valid KerberosString')
 	}
-	return ks, next+length 
+	return ks, next + length
 }
 
 // KerberosFlags   ::= BIT STRING (SIZE (32..MAX))

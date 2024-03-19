@@ -77,8 +77,9 @@ fn (tt TaggedType) packed_length() int {
 		.implicit {
 			// when in implicit mode, inner tag and length of inner element being replaced by outer tag and length
 			n += tt.outer_tag.packed_length()
-			// in implicit mode, inner_length only contains inner_el.raw_data.len length (without tag and length)
-			inner_length := tt.inner_el.raw_data.len
+			// in implicit mode, inner_length only contains inner_el.payload.len length (without tag and length)
+			inner := tt.inner_el.bytes_content() or { panic(err) }
+			inner_length := inner.len
 			tt_length := Length.from_i64(inner_length) or { panic(err) }
 			n += tt_length.packed_length()
 			n += inner_length
@@ -107,8 +108,10 @@ pub fn (tt TaggedType) pack_to_asn1(mut dst []u8, p Params) ! {
 		.implicit {
 			// replace the tag.of inner element with this tag
 			tt.outer_tag.pack_to_asn1(mut dst)!
-			tt.inner_el.length.pack_to_asn1(mut dst, p)!
-			dst << tt.inner_el.raw_data
+			payload := tt.inner_el.bytes_content()!
+			length := Length.from_i64(payload.len)!
+			length.pack_to_asn1(mut dst, p)!
+			dst << payload
 		}
 	}
 }
@@ -140,33 +143,37 @@ pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag T
 	}
 	// TODO: check the length, its safe to access bytes
 	bytes := unsafe { src[idx..idx + len] }
-	mut tt := TaggedType{}
 	match tm {
 		.explicit {
 			// when explicit, unpack element from bytes
-			inner, _ := Element.unpack_from_asn1(bytes, 0, p)!
+			inner, _ := RawElement.unpack_from_asn1(bytes, 0, p)!
 			// TODO: parse nested element
-			if inner.tag != inner_tag {
+			if inner.tag() != inner_tag {
 				return error('unexpected inner tag')
 			}
-			tt.outer_tag = tag
-			tt.mode = .explicit
-			tt.inner_el = inner
+
+			tt := TaggedType{
+				outer_tag: tag
+				mode: .explicit
+				inner_el: inner
+			}
+			return tt, idx + len
 		}
 		.implicit {
 			// when in .implicit mode, inner tag is unknown, so we pass inner_tag as expected tag
 			// the bytes is the values of the element
-			inner := Element{
+			inner := RawElement{
 				tag: inner_tag
-				length: Length.from_i64(bytes.len)!
-				raw_data: bytes
+				payload: bytes
 			}
-			tt.outer_tag = tag
-			tt.mode = .implicit
-			tt.inner_el = inner
+			tt := TaggedType{
+				outer_tag: tag
+				mode: .implicit
+				inner_el: inner
+			}
+			return tt, idx + len
 		}
 	}
-	return tt, idx + len
 }
 
 /*

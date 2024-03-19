@@ -237,11 +237,6 @@ fn (v Integer) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << bytes
 }
 
-fn (v Integer) to_element() !Element {
-	values, n  := v.pack_into_twoscomplement_form()!
-	return Element.new(v.tag(), values)
-}
-
 // unpack_from_asn1 deserializes bytes src into ASN.1 Integer.
 // Its accepts `loc` params, the location (offset) within bytes src where the unpack
 // process start form, if not sure set to 0 and optional mode in `Params` to drive unpacking.

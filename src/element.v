@@ -1,102 +1,50 @@
 module asn1
 
-// raw ASN.1 Element
-struct RawElemwnt {
-	tag    Tag
-	values []u8
+// ASN.1 Element
+interface Element {
+	// tag tells the tag of this Element
+	tag() Tag
+	// payload_length is the length of Element's paylaod, without
+	// the tag length and length itself.
+	payload_length() int
+	// payload tells the raw payload (values) of this Element
+	payload() ![]u8
+	// packed_length tells total length of serialized Element
+	// included tag length and the length itself
+	packed_length() int
+	// pack_to_asn1 serializes Element to dst
+	pack_to_asn1(mut dst []u8, p Params) !
 }
 
-// generic ASN.1 Element
-struct Element[T] {
-	// the tag of the Element
-	tag    Tag
-	// data is the value of this Element, its depend how its would be interpreted.
-	// when the tag is primitive, its represents real value of this Element.
-	// otherwise, if its a constructed, its contains another unparsed Element
-	payload []u8
-}
-
-fn Element.new[T](t Tag, payload []u8) !Element[T] {
-	el := Element[T]{
-		tag: t
-		length: Length.from_i64(payload.len)!
+fn Element.new(tag Tag, payload []u8) !Element {
+	return RawElement{
+		tag: tag
 		payload: payload
 	}
-	return el
-}
-
-fn (el Element[T]) tag() Tag {
-	return el.tag
-}
-
-fn (e Element) valid_length() bool {
-	return e.length == e.raw_data.len
-}
-
-fn (e Element) need_parse_data() bool {
-	need := if e.tag.is_constructed() { true } else { false }
-	return need
-}
-
-fn (e Element) packed_length() int {
-	if e.valid_length() {
-		mut n := 0
-		n += e.tag.packed_length()
-		n += e.length.packed_length()
-		n += e.raw_data.len
-
-		return n
-	}
-	// something bad if e.Length != e.raw_data.len
-	panic('Should not here')
-}
-
-fn (e Element) pack_to_asn1(mut dst []u8, p Params) ! {
-	if !e.valid_length() {
-		return error('Element: bad Length')
-	}
-	if p.mode != .der && p.mode != .ber {
-		return error('Element: unsupported mode')
-	}
-	e.tag.pack_to_asn1(mut dst, p)!
-	e.length.pack_to_asn1(mut dst, p)!
-	dst << e.raw_data
 }
 
 fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
 	if src.len < 2 {
-		return error('Element: bytes underflow')
+		return error('Element: bad length bytes')
 	}
 	if p.mode != .der && p.mode != .ber {
 		return error('Element: unsupported mode')
 	}
-	// todo : validate element
+	if loc > src.len {
+		return error('Element: bad position offset')
+	}
+	// TODO: still no check, add check
 	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
 	len, idx := Length.unpack_from_asn1(src, pos, p)!
-	// no contents
-	if len == 0 {
-		el := Element{
-			tag: tag
-			length: len
-			raw_data: []u8{}
-		}
-		return el, idx
-	}
 	if idx > src.len || idx + len > src.len {
-		return error('Element: truncated bytes contents')
+		return error('Element: truncated input')
 	}
-	// TODO: check the length, its safe to access bytes
 	bytes := unsafe { src[idx..idx + len] }
 
-	if len != bytes.len {
-		return error('Element: unmatching length')
-	}
-	el := Element{
+	return RawElement{
 		tag: tag
-		length: len
-		raw_data: bytes
-	}
-	return el, idx + len
+		payload: bytes
+	}, idx + len
 }
 
 fn (els []Element) hold_thesame_tag() bool {
@@ -108,4 +56,100 @@ fn (els []Element) hold_thesame_tag() bool {
 	return els.all(it.tag() == tag0)
 }
 
-fn (mut els []Element) add_element(el Element) {}
+// Raw ASN.1 Element
+struct RawElement {
+	// the tag of the RawElement
+	tag Tag
+	// payload is the value of this RawElement, its depend how its would be interpreted.
+	// when the tag is primitive, its represents real value of this RawElement.
+	// otherwise, if its a constructed, its contains another unparsed RawElement
+	payload []u8
+}
+
+fn RawElement.new(t Tag, payload []u8) !RawElement {
+	el := RawElement{
+		tag: t
+		payload: payload
+	}
+	return el
+}
+
+fn (el RawElement) tag() Tag {
+	return el.tag
+}
+
+fn (el RawElement) payload() ![]u8 {
+	return el.payload
+}
+
+fn (el RawElement) payload_length() int {
+	return el.payload.len
+}
+
+fn (e RawElement) packed_length() int {
+	mut n := 0
+	n += e.tag.packed_length()
+	length := Length.from_i64(e.payload.len) or { panic(err) }
+	n += length.packed_length()
+	n += e.payload.len
+
+	return n
+}
+
+fn (e RawElement) pack_to_asn1(mut dst []u8, p Params) ! {
+	if p.mode != .der && p.mode != .ber {
+		return error('RawElement: unsupported mode')
+	}
+	e.tag.pack_to_asn1(mut dst, p)!
+	length := Length.from_i64(e.payload.len) or { panic(err) }
+	length.pack_to_asn1(mut dst, p)!
+	dst << e.payload
+}
+
+fn RawElement.unpack_from_asn1(src []u8, loc i64, p Params) !(RawElement, i64) {
+	if src.len < 2 {
+		return error('RawElement: bytes underflow')
+	}
+	if p.mode != .der && p.mode != .ber {
+		return error('RawElement: unsupported mode')
+	}
+	// todo : validate element
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	// no contents
+	if len == 0 {
+		el := RawElement{
+			tag: tag
+			payload: []u8{}
+		}
+		return el, idx
+	}
+	if idx > src.len || idx + len > src.len {
+		return error('RawElement: truncated bytes contents')
+	}
+	// TODO: check the length, its safe to access bytes
+	bytes := unsafe { src[idx..idx + len] }
+
+	if len != bytes.len {
+		return error('RawElement: unmatching length')
+	}
+	el := RawElement{
+		tag: tag
+		payload: bytes
+	}
+	return el, idx + len
+}
+
+fn (e RawElement) need_parse_data() bool {
+	need := if e.tag.is_constructed() { true } else { false }
+	return need
+}
+
+fn (els []RawElement) hold_thesame_tag() bool {
+	// if empty just true
+	if els.len == 0 {
+		return true
+	}
+	tag0 := els[0].tag()
+	return els.all(it.tag() == tag0)
+}

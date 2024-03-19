@@ -18,19 +18,20 @@ fn Null.new_with_tag(t Tag) Null {
 	}
 }
 
-fn (n Null) packed_length() int {
-	return 2
-}
-
 fn (n Null) tag() Tag {
 	return n.tag
 }
 
-fn (n Null) to_element() !Element {
-	el := Element{
-		tag: n.tag()
-	}
-	return el
+fn (n Null) payload_length() int {
+	return 0
+}
+
+fn (n Null) payload() ![]u8 {
+	return []u8{}
+}
+
+fn (n Null) packed_length() int {
+	return 2
 }
 
 fn (n Null) pack_to_asn1(mut dst []u8, p Params) ! {
