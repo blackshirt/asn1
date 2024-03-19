@@ -147,7 +147,50 @@ fn RawElement.unpack_from_asn1(src []u8, loc i64, p Params) !(RawElement, i64) {
 	return el, idx + len
 }
 
-fn (e RawElement) need_parse_data() bool {
+fn (e RawElement) has_inner() bool {
 	need := if e.tag.is_constructed() { true } else { false }
 	return need
 }
+
+// as_tagged treats and parse the RawElement r as TaggedType element.
+fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag) !TaggedType {
+	// make sure tag is in constructed form.
+	// when it true, the r.payload is a element if mode is explicit
+	// or bytes content if mode is implocit.
+	if r.has_inner() {
+		if r.payload.len == 0 {
+			return error("constructed but no payload")
+		}
+		if mode == .explicit {
+			tag, pos := Tag.unpack_from_asn1(r.payload, 0)!
+			if tag != inner_tag {
+				return error("expected inner_tag != parsed tag")
+			}
+			// if tag is constructed, its make possible to do
+			// recursive thing that we currently dont want support
+			// so, return an error instead
+			if tag.is_constructed() {
+				return error("nested constructed element for TaggedType is not supported")
+			}
+			if pos > r.payload.len {
+				return error("bad pos")
+			}
+			// otherwise are okey
+			len, idx := Length.unpack_from_asn1(r.payload, pos)!
+			// Todo: check len n idx
+			sub := unsafe { r.payload[idx..idx+len] }
+			inner := RawElement{
+				tag: inner_tag
+				payload: sub
+			}
+			tt := TaggedType{
+				expected: r.tag
+				mode: .explicit
+				inner_el: inner
+			}
+			return tt
+		} else {}
+	}
+	return error("This RawElement can not be treated as TaggedType")
+}
+		
