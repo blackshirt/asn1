@@ -17,6 +17,36 @@ mut:
 	elements []Element
 }
 
+fn Set.new(setof bool) Set {
+	return Set{
+		is_setof: setof
+	}
+}
+
+fn (s Set) tag() Tag {
+	return s.tag
+}
+
+fn (s Set) payload() ![]u8 {
+	mut out := []u8{}
+	for el in s.elements {
+		el.pack_to_asn1(mut out)!
+	}
+	return out
+}
+
+fn (s Set) payload_length() int {
+	mut n := 0
+	for el in s.elements {
+		n += el.packed_length()
+	}
+	return n
+}
+
+fn (s Set) pack_to_asn1(mut dst []u8, p Params) ! {
+	
+}
+		
 /*
 // new_set creates universal set.
 pub fn new_set() Set {
