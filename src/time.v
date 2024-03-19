@@ -40,6 +40,10 @@ fn UTCTime.from_string(s string) !UTCTime {
 	}
 }
 
+fn UTCTime.from_bytes(b []u8) !UTCTime {
+	return UTCTime.from_string(b.bytestr())!
+}
+
 fn (t UTCTime) tag() Tag {
 	return t.tag
 }
@@ -177,6 +181,10 @@ fn GeneralizedTime.from_string(s string) !GeneralizedTime {
 	return GeneralizedTime{
 		value: s
 	}
+}
+
+fn GeneralizedTime.from_bytes(b []u8) !GeneralizedTime {
+	return GeneralizedTime.from_string(b.bytestr())!
 }
 
 fn (gt GeneralizedTime) tag() Tag {

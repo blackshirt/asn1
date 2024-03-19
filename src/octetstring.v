@@ -27,7 +27,7 @@ fn OctetString.from_bytes(src []u8) OctetString {
 fn (os OctetString) tag() Tag {
 	return os.tag
 }
-	
+
 fn (os OctetString) payload() ![]u8 {
 	return os.value.bytes()
 }
@@ -35,7 +35,7 @@ fn (os OctetString) payload() ![]u8 {
 fn (os OctetString) payload_length() int {
 	return os.value.bytes().len
 }
-	
+
 fn (os OctetString) packed_length() !int {
 	mut n := 0
 

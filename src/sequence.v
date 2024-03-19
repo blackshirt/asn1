@@ -162,12 +162,12 @@ fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
 
 // Utility function
 //
-fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
+fn Sequence.parse_contents(tag Tag, contents []u8, seqof bool) !Sequence {
 	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: not sequence tag')
 	}
 	mut i := 0
-	mut seq := Sequence.new(p.is_seqof)!
+	mut seq := Sequence.new(seqof)!
 	for i < contents.len {
 		t, idx := Tag.unpack_from_asn1(contents, i, p)!
 		ln, next := Length.unpack_from_asn1(contents, idx, p)!
@@ -175,7 +175,7 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 		sub := read_bytes(contents, next, ln)!
 		match t.is_constructed() {
 			true {
-				obj := parse_compound_element(t, sub)!
+				obj := parse_constructed_element(t, sub)!
 				seq.add_element(obj)!
 				i += obj.packed_length()
 			}
@@ -190,8 +190,12 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 }
 
 fn parse_primitive_element(tag Tag, contents []u8) !Element {
-	if tag.is_constructed() || tag.class != .universal {
+	if tag.is_constructed() {
 		return error('not primitive tag ')
+	}
+	// for other class, just return raw element
+	if tag.class() != .universal {
+		return RawElement.new(tag, contents)!
 	}
 	tn := TagNumber.from_int(tag.tag_number())!
 	tt := tn.universal_tag_type()!
@@ -221,7 +225,7 @@ fn parse_primitive_element(tag Tag, contents []u8) !Element {
 			return PrintableString.from_bytes(contents)!
 		}
 		.ia5string {
-			return IA5String(contents)!
+			return IA5String.from_bytes(contents)!
 		}
 		.utf8string {
 			return UTF8string.from_bytes(contents)!
@@ -233,7 +237,7 @@ fn parse_primitive_element(tag Tag, contents []u8) !Element {
 			return UTCTime.from_bytes(contents)!
 		}
 		.generalizedtime {
-			return GeneralizedTime.from_bytes(contents))!
+			return GeneralizedTime.from_bytes(contents)!
 		}
 		// TODO:
 		//   - add other type
@@ -247,23 +251,23 @@ fn parse_primitive_element(tag Tag, contents []u8) !Element {
 	}
 }
 
-fn parse_compound_element(tag Tag, contents []u8) !Element {
+fn parse_constructed_element(tag Tag, contents []u8) !Element {
 	if !tag.is_constructed() {
 		return error('not constructed tag')
 	}
 
 	match true {
-		tag.is_sequence_tag() {
-			return parse_seq(tag, contents)!
+		tag.is_constructed() && tag.tag_number() == int(TagType.sequence) {
+			return Sequence.parse_contents(tag, contents)!
 		}
-		tag.is_set_tag() {
+		tag.is_constructed() && tag.tag_number() == int(TagType.set) {
 			return parse_set(tag, contents)!
 		}
-		tag.is_context() {
+		tag.class() == .context_specific {
 			return read_explicit_context(tag, contents)!
 		}
 		else {
-			return new_asn_object(tag.class, tag.constructed, tag.number, contents)
+			return RawElement.new(tag, contents)
 		}
 	}
 }
@@ -402,7 +406,7 @@ fn parse_seq(tag Tag, contents []u8) !Sequence {
 		sub := read_bytes(contents, next, ln)!
 		match t.constructed {
 			true {
-				obj := parse_compound_element(t, sub)!
+				obj := parse_constructed_element(t, sub)!
 				seq.add(obj)
 				i += obj.size()
 			}

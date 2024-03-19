@@ -58,6 +58,10 @@ fn Integer.from_string(s string) Integer {
 	}
 }
 
+fn Integer.from_bytes(b []u8) !Integer {
+	return Integer.unpack_from_twoscomplement_bytes(b)!
+}
+
 // from_hex creates a new ASN.1 Integer from hex string in x
 // where x is a valid hex string without `0x` prefix.
 fn Integer.from_hex(x string) !Integer {

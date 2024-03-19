@@ -20,6 +20,15 @@ fn IA5String.new(value string) !IA5String {
 	}
 }
 
+fn IA5String.from_bytes(b []u8) !IA5String {
+	if b.any(it < u8(` `) || it > u8(`~`)) {
+		return error('IA5String: bytes contains non-ascii chars')
+	}
+	return IA5String{
+		value: b.bytestr()
+	}
+}
+
 fn (v IA5String) tag() Tag {
 	return v.tag
 }
@@ -55,10 +64,10 @@ fn IA5String.unpack_from_asn1(src []u8, loc i64, p Params) !(IA5String, i64) {
 		return error('IA5String: bad ia5string bytes length')
 	}
 	if p.mode != .der && p.mode != .ber {
-		return error('Enumerated: unsupported mode')
+		return error('IA5String: unsupported mode')
 	}
 	if loc > src.len {
-		return error('Enumerated: bad position offset')
+		return error('IA5String: bad position offset')
 	}
 
 	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
