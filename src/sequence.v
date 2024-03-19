@@ -162,12 +162,16 @@ fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
 
 // Utility function
 //
-fn Sequence.parse_contents(tag Tag, contents []u8, seqof bool) !Sequence {
+fn Sequence.parse_contents(tag Tag, contents []u8) !Sequence {
 	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: not sequence tag')
 	}
 	mut i := 0
-	mut seq := Sequence.new(seqof)!
+	// by default, we create regular sequence type
+	// if you wish SEQUENCE OF type, call `.set_to_sequenceof()` 
+	// on this seqence to have SEQUENCE OF behavior, 
+	// or you can call it later.
+	mut seq := Sequence.new(false)!
 	for i < contents.len {
 		t, idx := Tag.unpack_from_asn1(contents, i, p)!
 		ln, next := Length.unpack_from_asn1(contents, idx, p)!
@@ -257,12 +261,15 @@ fn parse_constructed_element(tag Tag, contents []u8) !Element {
 	}
 
 	match true {
-		tag.is_constructed() && tag.tag_number() == int(TagType.sequence) {
+		tag.tag_number() == int(TagType.sequence) {
 			return Sequence.parse_contents(tag, contents)!
 		}
-		tag.is_constructed() && tag.tag_number() == int(TagType.set) {
-			return parse_set(tag, contents)!
+		tag.tag_number() == int(TagType.set) {
+			return Set.parse_contents(tag, contents)!
 		}
+		// maybe its a implicit tagged, have different behaviour.
+		// maybe would have subtle of undetected bogus parsing.
+		// TODO: more better handling
 		tag.class() == .context_specific {
 			return read_explicit_context(tag, contents)!
 		}
