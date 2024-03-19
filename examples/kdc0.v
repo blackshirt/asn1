@@ -29,8 +29,7 @@ struct KdcReq {
 // }
 
 struct PaData {
-	Sequence
-	pd_type  asn1.AsnInteger
+	pd_type  asn1.Integer
 	pd_value asn1.OctetString
 }
 
@@ -76,43 +75,8 @@ fn PaData.unpack(src []u8) !PaData {
 	if src.len < 2 {
 		return error('src underflow')
 	}
-	tag, pos := asn1.read_tag(src, 0)!
-	if tag.number != int(asn1.TagType.sequence) {
-		return error('bad tag')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-
-	length, next := asn1.decode_length(src, pos)!
-	if next > src.len || next + length > src.len {
-		return error('truncated input')
-	}
-	bytes := unsafe { src[next..next + length] }
-	// parse bytes contents
-	// read first content, explicit integer
-	// the all result process should be validated
-	ttag, tpos := asn1.read_tag(bytes, 0)!
-	tlength, tnext := asn1.decode_length(bytes, tpos)!
-	sub1 := asn1.read_bytes(bytes, tnext, tlength)!
-	// interpretes this as an integer
-	ptype := AsnInteger.decode(sub1)!
-
-	remaining_bytes := unsafe { bytes[tnext + tlength..bytes.len] }
-	ttag1, tpos1 := asn1.read_tag(remaining_bytes, 0)!
-	tlength1, tnext1 := asn1.decode_length(remaining_bytes, tpos1)!
-	sub2 := asn1.read_bytes(remaining_bytes, tnext1, tlength1)!
-	// as octet string
-	pvalue := OctetString.decode(sub2)
-
-	ret := PaData{
-		pd_type: ptype
-		pd_value: pvalue
-	}
-	if !ret.valid() {
-		return error('not valid PaData')
-	}
-	return ret
+	seq, n := Sequence.unpack_from_asn1(src, 0)!
+	assert seq.elements.len == 2
 }
 
 struct KdcReqBody {
@@ -137,6 +101,34 @@ struct KdcReqBody {
 struct HostAddress {
 	addr_type int
 	address   asn1.OctetString
+}
+
+fn (ha HostAddress) pack_to_asn1(mut out []u8) ! {
+	mut seq := Sequence.new(false)!
+	el1 := asn1.Integer.from_i64(ha.addr_type)!
+	ctx1 := TaggedType.explicit_context(el1, 0)!
+	ctx2 := TaggedType.explicit_context(ha.address, 1)!
+
+	seq.add_element(ctx1)!
+	seq.add_element(ctx2)!
+
+	seq.pack_to_asn1(mut out)!
+}
+
+fn HostAddress.unpack_from_asn1(src []u8) !(HostAddress, i64) {
+	seq, n := Sequence.unpack_from_asn1(src, 0)!
+	els := seq.elements()!
+
+	// el0 is rawelement of tagged type
+	el0 := els[0] as RawElement
+	el1 := els[1] as RawElement
+	// should integer
+	expected_inner0, _ := Integer.unpack_from_asn1(el0.payload)!
+	expected_inner1, _ := OctetString.unpack_from_asn1(el1.payload)!
+	return HostAddress{
+		addr_type: expected_inner0.int()
+		address: expected_inner1
+	}, n
 }
 
 // EncryptedData   ::= SEQUENCE {

@@ -149,6 +149,39 @@ fn Set.parse_contents(tag Tag, contents []u8, p Params) !Set {
 	return set
 }
 
+fn (mut els []Element) sort_the_set() []Element {
+	// without &, its return an error: sort_with_compare callback function parameter
+	// `a` with type `asn1.Element` should be `&asn1.Element`
+	els.sort_with_compare(fn (a &Element, b &Element) int {
+		if a.tag().class != b.tag().class {
+			s := if int(a.tag().class) < int(b.tag().class) { -1 } else { 1 }
+			return s
+		}
+		if a.tag() == b.tag() {
+			// compare by contents instead just return 0
+			mut aa := []u8{}
+			a.pack_to_asn1(mut aa) or { panic(err) }
+			mut bb := []u8{}
+			b.pack_to_asn1(mut bb) or { panic(err) }
+			return aa.bytestr().compare(bb.bytestr())
+		}
+		q := if a.tag().number < b.tag().number { -1 } else { 1 }
+		return q
+	})
+	return els
+}
+
+fn (mut els []Element) sort_the_setof() ![]Element {
+	els.sort_with_compare(fn (a &Element, b &Element) int {
+		mut aa := []u8{}
+		a.pack_to_asn1(mut aa) or { panic(err) }
+		mut bb := []u8{}
+		b.pack_to_asn1(mut bb) or { panic(err) }
+		return aa.bytestr().compare(bb.bytestr())
+	})
+	return els
+}
+
 /*
 // new_set creates universal set.
 pub fn new_set() Set {
