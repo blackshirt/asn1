@@ -48,7 +48,7 @@ fn read_implicit_context(tag Tag, contents []u8) !Tagged {
 	if !tag.is_context() {
 		return error('not context class')
 	}
-	if tag.is_constructed() {
+	if !tag.is_constructed() {
 		return error('read in constructed tag')
 	}
 	element := der_decode(contents)!
