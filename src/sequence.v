@@ -248,7 +248,7 @@ fn parse_primitive_element(tag Tag, contents []u8) !Element {
 		//   - relaxed parsing by return raw asn1 object.
 		else {
 			return RawElement{
-				tag: t
+				tag: tag
 				payload: contents
 			}
 		}
@@ -259,24 +259,16 @@ fn parse_constructed_element(tag Tag, contents []u8) !Element {
 	if !tag.is_constructed() {
 		return error('not constructed tag')
 	}
-
-	match true {
-		tag.tag_number() == int(TagType.sequence) {
-			return Sequence.parse_contents(tag, contents)!
-		}
-		tag.tag_number() == int(TagType.set) {
-			return Set.parse_contents(tag, contents)!
-		}
-		// maybe its a implicit tagged, have different behaviour.
-		// maybe would have subtle of undetected bogus parsing.
-		// TODO: more better handling
-		tag.class() == .context_specific {
-			return read_explicit_context(tag, contents)!
-		}
-		else {
-			return RawElement.new(tag, contents)
-		}
+	// we only parse sequence(of) and or set(of). type
+	// for other constructed type, like TaggedType, you should 
+	// parse manually from RawElement result.
+	if tag.tag_number() == int(TagType.sequence) {
+		return Sequence.parse_contents(tag, contents)!
 	}
+	if tag.tag_number() == int(TagType.set) {
+		return Set.parse_contents(tag, contents)!
+	}
+	return RawElement.new(tag, contents)
 }
 
 /*
