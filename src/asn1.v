@@ -183,6 +183,20 @@ pub fn (e Encoder) as_set() !Set {
 	return error('not set type')
 }
 
+pub fn (e Encoder) as_tagged() !Tagged {
+	if e is Tagged {
+		return *e
+	}
+	return error('not Tagged type')
+}
+
+pub fn (e Encoder) as_asn1object() !ASN1Object {
+	if e is ASN1Object {
+		return *e
+	}
+	return error('not ASN1Object type')
+}
+
 // as_boolean cast encoder to ASN.1 boolean
 pub fn (e Encoder) as_boolean() !Boolean {
 	if e is Boolean {

@@ -111,7 +111,7 @@ pub fn Sequence.decode(src []u8) !Sequence {
 pub fn (seq Sequence) elements() []Encoder {
 	return seq.elements
 }
-		
+
 pub fn (mut seq Sequence) add(obj Encoder) Sequence {
 	seq.elements.add(obj)
 	return seq

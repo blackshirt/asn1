@@ -90,17 +90,11 @@ const data = [u8(0x30), 0x82, 0x05, 0x4c, 0xa0, 0x03, 0x02, 0x01, 0x05, 0xa1, 0x
 	0xad, 0x63, 0x20]
 
 fn main() {
-	out := asn1.der_decode(data) or {
-		println(err)
-		return
-	}
+	seq := asn1.Sequence.decode(data)!
+	els := seq.elements()
 
-	seq := out.as_sequence() or {
-		println(err)
-		return
-	}
-
-	dump(seq)
+	tt0 := els[0].as_tagged()
+	dump(tt0)
 }
 
 /* Output dump(seq)

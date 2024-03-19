@@ -87,8 +87,8 @@ fn test_parse_x509_ed25519_certificate() ! {
 	assert length == 383
 	assert next == 4
 
-	out := der_decode(data)!
-	seq := out.as_sequence()!
+	// out := der_decode(data)!
+	seq := Sequence.decode(data)! // out.as_sequence()!
 
 	assert seq.elements.len == 3
 	el0 := seq.elements[0].as_sequence()!
@@ -407,9 +407,9 @@ fn test_x509_certificate_extensions() ! {
 
 fn test_encoder_casted_as_seq_and_boolean() ! {
 	data := [u8(0x30), 0x06, 0x01, 0x01, 0x00, 0x01, 0x01, 0xff]
-	out := der_decode(data)!
+	// out := der_decode(data)!
 
-	seq := out.as_sequence()!
+	seq := Sequence.decode(data)! // out.as_sequence()!
 	assert typeof(seq).name == '${@MOD}.Sequence'
 	assert seq.elements.len == 2
 
@@ -420,10 +420,4 @@ fn test_encoder_casted_as_seq_and_boolean() ! {
 	el2 := seq.elements[1].as_boolean()!
 	assert el2 == Boolean(true)
 	assert typeof(el2).name == '${@MOD}.Boolean'
-
-	// should error not bitstring type
-	c := out.as_bitstring() or {
-		assert err == error('not bitstring type')
-		return
-	}
 }
