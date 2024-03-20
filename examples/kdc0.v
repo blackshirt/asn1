@@ -165,6 +165,11 @@ type KerberosTime = asn1.GeneralizedTime // without fractional seconds
 
 type Realm = KerberosString
 
+fn Realm.from_string(s string) !Realm {
+	ret := KerberosString.from_string(s)
+	return Realm(s)
+}
+		
 fn (r Realm) tag() asn1.Tag {
 	return asn1.new_tag(.universal, false, int(asn1.TagType.generalstring)) or { panic(err) }
 }
@@ -299,8 +304,18 @@ struct PrincipalName {
 	name_type   int
 	name_string []KerberosString
 }
+		
+fn (pn PrincipalName) tag() asn1.Tag {
+	return pn.tag
+}
 
-fn (pn PrincipalName) pack(mut dst []u8, p asn1.Params) ! {
+fn (pn PrincipalName) payload(p asn1.Params) ![]u8 {}
+		
+fn (pn PrincipalName) payload_length(p asn1.Params) int {}
+		
+fn (pn PrincipalName) packed_length(p asn1.Params) int {}
+		
+fn (pn PrincipalName) pack_to_asn1(mut dst []u8, p asn1.Params) ! {
 	mut seq1 := asn1.new_sequence()
 	int1 := asn1.new_integer(pn.name_type)
 	// explicit context of integer content
