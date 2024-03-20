@@ -27,7 +27,7 @@ fn (e Enumerated) tag() Tag {
 	return e.tag
 }
 
-fn (e Enumerated) payload() ![]u8 {
+fn (e Enumerated) payload(p Params) ![]u8 {
 	return e.pack()!
 }
 
@@ -35,11 +35,11 @@ fn (e Enumerated) payload_length() int {
 	return e.enumerated_len()
 }
 
-fn (e Enumerated) packed_length() !int {
+fn (e Enumerated) packed_length(p Params) !int {
 	mut n := 0
-	n += e.tag().packed_length()
+	n += e.tag().packed_length(p)
 	len := Length.from_i64(e.value)!
-	n += len.packed_length()
+	n += len.packed_length(p)
 	n += e.enumerated_len()
 	return n
 }

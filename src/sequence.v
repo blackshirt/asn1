@@ -89,29 +89,28 @@ fn (s Sequence) tag() Tag {
 	return s.tag
 }
 
-fn (s Sequence) payload_length() int {
+fn (s Sequence) payload_length(p Params) int {
 	mut n := 0
 	for e in s.elements {
-		n += e.packed_length()
+		n += e.packed_length(p)
 	}
 	return n
 }
 
-fn (s Sequence) payload() ![]u8 {
+fn (s Sequence) payload(p Params) ![]u8 {
 	mut out := []u8{}
-	p := Params{}
 	for e in s.elements {
 		e.pack_to_asn1(mut out, p)!
 	}
 	return out
 }
 
-fn (s Sequence) packed_length() int {
+fn (s Sequence) packed_length(p Params) int {
 	mut n := 0
-	n += s.tag().packed_length()
+	n += s.tag().packed_length(p)
 	ln := s.payload_length()
 	length := Length.from_i64(ln) or { panic(err) }
-	n += length.packed_length()
+	n += length.packed_length(p)
 	n += ln
 
 	return n
@@ -127,7 +126,7 @@ fn (s Sequence) pack_to_asn1(mut dst []u8, p Params) ! {
 	}
 	// pack in DER mode
 	s.tag().pack_to_asn1(mut dst, p)!
-	payload := s.payload()!
+	payload := s.payload(p)!
 	length := Length.from_i64(payload.len)!
 	length.pack_to_asn1(mut dst, p)!
 	dst << payload
@@ -189,12 +188,12 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 			true {
 				obj := parse_constructed_element(t, sub)!
 				seq.add_element(obj)!
-				i += obj.packed_length()
+				i += obj.packed_length(p)
 			}
 			false {
 				obj := parse_primitive_element(t, sub)!
 				seq.add_element(obj)!
-				i += obj.packed_length()
+				i += obj.packed_length(p)
 			}
 		}
 	}
@@ -266,6 +265,10 @@ fn parse_constructed_element(tag Tag, contents []u8) !Element {
 	if !tag.is_constructed() {
 		return error('not constructed tag')
 	}
+	// when its not universal class, just return RawElement
+	if tag.class() != .universal {
+		return RawElement.new(tag, contents)
+	}
 	// we only parse sequence(of) and or set(of). type
 	// for other constructed type, like TaggedType, you should
 	// parse manually from RawElement result.
@@ -276,6 +279,8 @@ fn parse_constructed_element(tag Tag, contents []u8) !Element {
 		int(TagType.set) {
 			return Set.parse_contents(tag, contents)!
 		}
+		// Its maybe Explict or Implicit TaggedType, but at here we have no enought
+		// information to parse on, so we just return RawElement instead.
 		else {
 			return RawElement.new(tag, contents)
 		}

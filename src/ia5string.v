@@ -33,7 +33,7 @@ fn (v IA5String) tag() Tag {
 	return v.tag
 }
 
-fn (v IA5String) payload() ![]u8 {
+fn (v IA5String) payload(p Params) ![]u8 {
 	if !v.value.is_ascii() {
 		return error('IA5String: contains non-ascii chars')
 	}
@@ -44,12 +44,12 @@ fn (v IA5String) payload_length() int {
 	return v.value.len
 }
 
-fn (v IA5String) packed_length() int {
+fn (v IA5String) packed_length(p Params) int {
 	mut n := 0
 
-	n += v.tag().packed_length()
+	n += v.tag().packed_length(p)
 	len := Length.from_i64(v.value.bytes().len) or { panic(err) }
-	n += len.packed_length()
+	n += len.packed_length(p)
 	n += v.value.bytes().len
 
 	return n

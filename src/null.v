@@ -33,11 +33,11 @@ fn (n Null) payload_length() int {
 	return 0
 }
 
-fn (n Null) payload() ![]u8 {
+fn (n Null) payload(p Params) ![]u8 {
 	return []u8{}
 }
 
-fn (n Null) packed_length() int {
+fn (n Null) packed_length(p Params) int {
 	return 2
 }
 

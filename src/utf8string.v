@@ -36,23 +36,23 @@ fn (us UTF8String) tag() Tag {
 	return us.tag
 }
 
-fn (us UTF8String) payload() ![]u8 {
+fn (us UTF8String) payload(p Params) ![]u8 {
 	if !utf8.validate_str(us.value) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
 	return us.value.bytes()
 }
 
-fn (us UTF8String) payload_length() int {
+fn (us UTF8String) payload_length(p Params) int {
 	return us.value.len
 }
 
-fn (us UTF8String) packed_length() int {
+fn (us UTF8String) packed_length(p Params) int {
 	mut n := 0
-	n += us.tag().packed_length()
-	uslen := us.payload_length()
+	n += us.tag().packed_length(p)
+	uslen := us.payload_length(p)
 	len := Length.from_i64(uslen) or { panic(err) }
-	n += len.packed_length()
+	n += len.packed_length(p)
 	n += uslen
 
 	return n

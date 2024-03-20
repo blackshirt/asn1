@@ -48,8 +48,7 @@ const tag_numher_mask 	= 0x1f //  32, bits 1-5
 @[params]
 pub struct Params {
 pub mut:
-	mode     EncodingMode = .der
-	is_seqof bool
+	mode EncodingMode = .der
 }
 
 // encoding mode

@@ -43,16 +43,16 @@ fn (v Boolean) payload_length() int {
 	return 1
 }
 
-fn (v Boolean) payload() ![]u8 {
+fn (v Boolean) payload(p Params) ![]u8 {
 	if v.value {
 		return [u8(0xff)]
 	}
 	return [u8(0x00)]
 }
 
-fn (v Boolean) packed_length() int {
+fn (v Boolean) packed_length(p Params) int {
 	mut n := 0
-	n += v.tag().packed_length()
+	n += v.tag().packed_length(p)
 	// boolean length should 1
 	n += 1
 	n += 1

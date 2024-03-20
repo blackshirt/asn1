@@ -6,12 +6,12 @@ interface Element {
 	tag() Tag
 	// payload_length is the length of Element's paylaod, without
 	// the tag length and length itself.
-	payload_length() int
+	payload_length(p Params) int
 	// payload tells the raw payload (values) of this Element
-	payload() ![]u8
+	payload(p Params) ![]u8
 	// packed_length tells total length of serialized Element
 	// included tag length and the length itself
-	packed_length() int
+	packed_length(p Params) int
 	// pack_to_asn1 serializes Element to dst
 	pack_to_asn1(mut dst []u8, p Params) !
 }
@@ -85,7 +85,7 @@ fn (el RawElement) tag() Tag {
 	return el.tag
 }
 
-fn (el RawElement) payload() ![]u8 {
+fn (el RawElement) payload(p Params) ![]u8 {
 	return el.payload
 }
 
@@ -93,11 +93,11 @@ fn (el RawElement) payload_length() int {
 	return el.payload.len
 }
 
-fn (e RawElement) packed_length() int {
+fn (e RawElement) packed_length(p Params) int {
 	mut n := 0
-	n += e.tag.packed_length()
+	n += e.tag.packed_length(p)
 	length := Length.from_i64(e.payload.len) or { panic(err) }
-	n += length.packed_length()
+	n += length.packed_length(p)
 	n += e.payload.len
 
 	return n
@@ -152,68 +152,77 @@ fn (e RawElement) has_inner() bool {
 	return need
 }
 
-// as_tagged treats and parse the RawElement r as TaggedType element.
-fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag) !TaggedType {
-	// make sure tag is in constructed form.
-	// when it true, the r.payload is a element if mode is explicit
-	// or bytes content if mode is implocit.
+// as_tagged treats and parse the RawElement r as TaggedType element with inner_tag is
+// an expected tag of inner Element being tagged.
+fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !TaggedType {
+	// make sure tag is in constructed form, when it true, the r.payload is an ASN.1 Element
+	// when mode is explicit or  the r.payload is bytes content by itself when mode is implicit.
 	if r.has_inner() {
 		if r.payload.len == 0 {
-			return error("constructed but no payload")
+			return error('tag constructed but no payload')
 		}
 		if mode == .explicit {
-			tag, pos := Tag.unpack_from_asn1(r.payload, 0)!
+			tag, pos := Tag.unpack_from_asn1(r.payload, 0, p)!
 			if tag != inner_tag {
-				return error("expected inner_tag != parsed tag")
+				return error('expected inner_tag != parsed tag')
 			}
 			if pos > r.payload.len {
-				return error("bad pos")
+				return error('bad pos')
 			}
-			len, idx := Length.unpack_from_asn1(r.payload, pos)!
+			len, idx := Length.unpack_from_asn1(r.payload, pos, p)!
 			if idx > r.payload.len || len + idx > r.payload.len {
-				return error("truncated input")
+				return error('truncated input')
 			}
 			if len == 0 {
 				// empty sub payload
 				inner := RawElement{
-				    tag: tag
+					tag: tag
 					payload: []u8{}
-			    }
-			    tt := TaggedType{
-				    expected: r.tag
-				    mode: .explicit
-				    inner_el: inner
-			    }
-			    return tt
+				}
+				tt := TaggedType{
+					outer_tag: r.tag
+					mode: .explicit
+					inner_el: inner
+				}
+				return tt
 			}
 			// otherwise are okey
-			sub := unsafe { r.payload[idx..idx+len] }
-			
+			sub := unsafe { r.payload[idx..idx + len] }
+
 			// if tag is constructed, its make possible to do
 			// recursive thing that we currently dont want support
 			// so, return an error instead
 			if tag.is_constructed() {
 				inner_el := parse_constructed_element(tag, sub)!
 				tt := TaggedType{
-				    expected: r.tag
-				    mode: .explicit
-				    inner_el: inner_el
-			    }
-			    return tt
+					outer_tag: r.tag
+					mode: .explicit
+					inner_el: inner_el
+				}
+				return tt
 			}
 			// otherwise its a primitive type
-			inner := RawElement{
-				tag: tag
-				payload: sub
-			}
+			inner_el := parse_primitive_element(tag, sub)!
 			tt := TaggedType{
-				expected: r.tag
+				outer_tag: r.tag
 				mode: .explicit
-				inner_el: inner
+				inner_el: inner_el
 			}
 			return tt
-		} else {}
+		}
+		// as implicit mode, r.payload is a contents payload by itself
+		// TODO: should we can treat r.payload as ASN1 element when inner_tag is constructed
+		inner_el := if inner_tag.is_constructed() {
+			parse_constructed_element(inner_tag, r.payload)!
+		} else {
+			RawElement.new(inner_tag, r.payload)
+		}
+		tt := TaggedType{
+			outer_tag: r.tag
+			mode: .implicit
+			inner_el: inner_el
+		}
+		return tt
 	}
-	return error("This RawElement can not be treated as TaggedType")
+	return error('This RawElement can not be treated as TaggedType')
 }
-		

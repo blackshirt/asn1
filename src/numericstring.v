@@ -38,20 +38,20 @@ fn (ns NumericString) tag() Tag {
 	return ns.tag
 }
 
-fn (ns NumericString) payload() ![]u8 {
+fn (ns NumericString) payload(p Params) ![]u8 {
 	return ns.value.bytes()
 }
 
-fn (ns NumericString) payload_length() int {
+fn (ns NumericString) payload_length(p Params) int {
 	return ns.value.len
 }
 
-fn (ns NumericString) packed_length() int {
+fn (ns NumericString) packed_length(p Params) int {
 	mut n := 0
 
-	n += ns.tag().packed_length()
+	n += ns.tag().packed_length(p)
 	len := Length.from_i64(ns.value.bytes().len) or { panic(err) }
-	n += len.packed_length()
+	n += len.packed_length(p)
 	n += ns.value.bytes().len
 
 	return n

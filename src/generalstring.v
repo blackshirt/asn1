@@ -38,7 +38,7 @@ fn (g GeneralString) tag() Tag {
 	return g.tag
 }
 
-fn (g GeneralString) payload() ![]u8 {
+fn (g GeneralString) payload(p Params) ![]u8 {
 	if !g.value.is_ascii() {
 		return error('GeneralString: contains non-ascii chars')
 	}
@@ -49,12 +49,12 @@ fn (g GeneralString) payload_length() int {
 	return g.value.len
 }
 
-fn (g GeneralString) packed_length() int {
+fn (g GeneralString) packed_length(p Params) int {
 	mut n := 0
 
-	n += g.tag().packed_length()
+	n += g.tag().packed_length(p)
 	len := Length.from_i64(g.value.bytes().len) or { panic(err) }
-	n += len.packed_length()
+	n += len.packed_length(p)
 	n += g.value.bytes().len
 
 	return n

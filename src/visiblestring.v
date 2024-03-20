@@ -34,23 +34,23 @@ fn (vs VisibleString) tag() Tag {
 	return vs.tag
 }
 
-fn (vs VisibleString) payload() ![]u8 {
+fn (vs VisibleString) payload(p Params) ![]u8 {
 	if contains_ctrl_chars(vs.value.bytes()) {
 		return error('VisibleString: contains control chars')
 	}
 	return vs.value.bytes()
 }
 
-fn (vs VisibleString) payload_length() int {
+fn (vs VisibleString) payload_length(p Params) int {
 	return vs.value.len
 }
 
-fn (vs VisibleString) packed_length() int {
+fn (vs VisibleString) packed_length(p Params) int {
 	mut n := 0
-	n += vs.tag().packed_length()
-	len := Length.from_i64(vs.payload_length()) or { panic(err) }
-	n += len.packed_length()
-	n += vs.payload_length()
+	n += vs.tag().packed_length(p)
+	len := Length.from_i64(vs.payload_length(p)) or { panic(err) }
+	n += len.packed_length(p)
+	n += vs.payload_length(p)
 
 	return n
 }

@@ -36,20 +36,20 @@ fn (os OctetString) tag() Tag {
 	return os.tag
 }
 
-fn (os OctetString) payload() ![]u8 {
+fn (os OctetString) payload(p Params) ![]u8 {
 	return os.value.bytes()
 }
 
-fn (os OctetString) payload_length() int {
+fn (os OctetString) payload_length(p Params) int {
 	return os.value.bytes().len
 }
 
-fn (os OctetString) packed_length() int {
+fn (os OctetString) packed_length(p Params) int {
 	mut n := 0
 
-	n += os.tag().packed_length()
+	n += os.tag().packed_length(p)
 	len := Length.from_i64(os.value.bytes().len) or { panic(err) }
-	n += len.packed_length()
+	n += len.packed_length(p)
 	n += os.value.bytes().len
 
 	return n

@@ -223,12 +223,12 @@ fn Integer.unpack_and_validate(b []u8) !Integer {
 	return ret
 }
 
-fn (v Integer) packed_length() int {
+fn (v Integer) packed_length(p Params) int {
 	mut n := 0
-	n += v.tag().packed_length()
+	n += v.tag().packed_length(p)
 
 	len := Length.from_i64(v.bytes_len()) or { panic(err) }
-	n += len.packed_length()
+	n += len.packed_length(p)
 	n += v.bytes_len()
 
 	return n
@@ -238,7 +238,7 @@ fn (v Integer) tag() Tag {
 	return v.tag
 }
 
-fn (v Integer) payload() ![]u8 {
+fn (v Integer) payload(p Params) ![]u8 {
 	bytes, _ := v.pack_into_twoscomplement_form()!
 	return bytes
 }

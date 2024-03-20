@@ -72,28 +72,28 @@ fn (s Set) tag() Tag {
 	return s.tag
 }
 
-fn (s Set) payload() ![]u8 {
+fn (s Set) payload(p Params) ![]u8 {
 	mut out := []u8{}
 	for el in s.elements {
-		el.pack_to_asn1(mut out)!
+		el.pack_to_asn1(mut out, p)!
 	}
 	return out
 }
 
-fn (s Set) payload_length() int {
+fn (s Set) payload_length(p Params) int {
 	mut n := 0
 	for el in s.elements {
-		n += el.packed_length()
+		n += el.packed_length(p)
 	}
 	return n
 }
 
-fn (s Set) packed_length() int {
+fn (s Set) packed_length(p Params) int {
 	mut n := 0
-	n += s.tag().packed_length()
-	ln := s.payload_length()
+	n += s.tag().packed_length(p)
+	ln := s.payload_length(p)
 	length := Length.from_i64(ln) or { panic(err) }
-	n += length.packed_length()
+	n += length.packed_length(p)
 	n += ln
 
 	return n
@@ -109,7 +109,7 @@ fn (s Set) pack_to_asn1(mut dst []u8, p Params) ! {
 	}
 	// pack in DER mode
 	s.tag().pack_to_asn1(mut dst, p)!
-	payload := s.payload()!
+	payload := s.payload(p)!
 	length := Length.from_i64(payload.len)!
 	length.pack_to_asn1(mut dst, p)!
 	dst << payload
@@ -137,12 +137,12 @@ fn Set.parse_contents(tag Tag, contents []u8, p Params) !Set {
 			true {
 				obj := parse_constructed_element(t, sub)!
 				set.add_element(obj)!
-				i += obj.packed_length()
+				i += obj.packed_length(p)
 			}
 			false {
 				obj := parse_primitive_element(t, sub)!
 				set.add_element(obj)!
-				i += obj.packed_length()
+				i += obj.packed_length(p)
 			}
 		}
 	}

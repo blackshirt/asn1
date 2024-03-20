@@ -3,10 +3,9 @@
 // that can be found in the LICENSE file.
 module asn1
 
-fn test_explicit_context_null_encode_decode() ! {
-	el := Null.new().to_element()!
-	exp_tag := new_tag(.context_specific, true, 0)!
-	ex1 := TaggedType.new_explicit(el, exp_tag)!
+fn test_explicit_context_null_pack_unpack() ! {
+	el := Null.new()
+	ex1 := TaggedType.explicit_context(el, 0)!
 
 	mut out := []u8{}
 	ex1.pack_to_asn1(mut out)!
@@ -19,12 +18,11 @@ fn test_explicit_context_null_encode_decode() ! {
 	assert ttback.inner_el == el
 }
 
-fn test_explicit_context_nested_encode_decode() ! {
-	el := Null.new().to_element()!
-	exp_tag := new_tag(.context_specific, true, 1)!
-	ex1 := TaggedType.new_explicit(el, exp_tag)!
-	exp_tag2 := new_tag(.context_specific, true, 2)!
-	exp2 := TaggedType.new_explicit(ex1, exp_tag2)!
+fn test_explicit_context_nested_pack_unpack() ! {
+	el := Null.new()
+
+	ex1 := TaggedType.explicit_context(el, 1)!
+	exp2 := TaggedType.explicit_context(ex1, 2)!
 	// el1 := new_explicit_context(new_null(), 1)
 	// ex1 := new_explicit_context(el1, 2)
 
@@ -34,8 +32,10 @@ fn test_explicit_context_nested_encode_decode() ! {
 
 	assert out == exp
 
-	// asli := el1.as_inner().encode()!
-	// assert asli == [u8(0x05), 0x00]
+	// clears out
+	out.clear()
+	ex1.pack_to_asn1(mut out)!
+	assert out == [u8(0x05), 0x00]
 }
 
 /*
