@@ -166,21 +166,44 @@ fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag) !TaggedType {
 			if tag != inner_tag {
 				return error("expected inner_tag != parsed tag")
 			}
+			if pos > r.payload.len {
+				return error("bad pos")
+			}
+			len, idx := Length.unpack_from_asn1(r.payload, pos)!
+			if idx > r.payload.len || len + idx > r.payload.len {
+				return error("truncated input")
+			}
+			if len == 0 {
+				// empty sub payload
+				inner := RawElement{
+				    tag: tag
+					payload: []u8{}
+			    }
+			    tt := TaggedType{
+				    expected: r.tag
+				    mode: .explicit
+				    inner_el: inner
+			    }
+			    return tt
+			}
+			// otherwise are okey
+			sub := unsafe { r.payload[idx..idx+len] }
+			
 			// if tag is constructed, its make possible to do
 			// recursive thing that we currently dont want support
 			// so, return an error instead
 			if tag.is_constructed() {
-				return error("nested constructed element for TaggedType is not supported")
+				inner_el := parse_constructed_element(tag, sub)!
+				tt := TaggedType{
+				    expected: r.tag
+				    mode: .explicit
+				    inner_el: inner_el
+			    }
+			    return tt
 			}
-			if pos > r.payload.len {
-				return error("bad pos")
-			}
-			// otherwise are okey
-			len, idx := Length.unpack_from_asn1(r.payload, pos)!
-			// Todo: check len n idx
-			sub := unsafe { r.payload[idx..idx+len] }
+			// otherwise its a primitive type
 			inner := RawElement{
-				tag: inner_tag
+				tag: tag
 				payload: sub
 			}
 			tt := TaggedType{
