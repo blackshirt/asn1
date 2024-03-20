@@ -160,10 +160,10 @@ pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag T
 		return error('TaggedType: bad position offset')
 	}
 	// external tag
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	outer_tag, pos := Tag.unpack_from_asn1(src, loc, p)!
 	// TODO: check the tag, do we need .class == .context_specific
 	// in explicit context, the tag should be in constructed form
-	if tm == .explicit && !tag.is_constructed() {
+	if !outer_tag.is_constructed() {
 		return error('TaggedType: tag check failed, .explicit should be constructed')
 	}
 	len, idx := Length.unpack_from_asn1(src, pos, p)!
@@ -179,16 +179,23 @@ pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag T
 	match tm {
 		.explicit {
 			// when explicit, unpack element from bytes
-			inner, _ := RawElement.unpack_from_asn1(bytes, 0, p)!
-			// TODO: parse nested element
-			if inner.tag() != inner_tag {
-				return error('unexpected inner tag')
+			inn_tag, pos0 := Tag.unpack_from_asn1(bytes, 0, p)!
+			inn_len, idx0 := Length.unpack_from_asn1(bytes, pos0, p)!
+			// todo: check boundary
+			inn_sub := unsafe { bytes[idx0..idx0 + inn_len] }
+			inner_el := if inn_tag.is_constructed() {
+				parse_constructed_element(inn_tag, inn_sub)!
+			} else {
+				parse_primitive_element(inn_tag, inn_sub)!
 			}
 
+			if inner_el.tag() != inner_tag {
+				return error('unexpected inner tag')
+			}
 			tt := TaggedType{
-				outer_tag: tag
+				outer_tag: outer_tag
 				mode: .explicit
-				inner_el: inner
+				inner_el: inner_el
 			}
 			return tt, idx + len
 		}
@@ -200,7 +207,7 @@ pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag T
 				payload: bytes
 			}
 			tt := TaggedType{
-				outer_tag: tag
+				outer_tag: outer_tag
 				mode: .implicit
 				inner_el: inner
 			}

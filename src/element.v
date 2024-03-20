@@ -212,11 +212,16 @@ fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !TaggedTyp
 		}
 		// as implicit mode, r.payload is a contents payload by itself
 		// TODO: should we can treat r.payload as ASN1 element when inner_tag is constructed
-		inner_el := if inner_tag.is_constructed() {
-			parse_constructed_element(inner_tag, r.payload)!
-		} else {
-			RawElement.new(inner_tag, r.payload)
+		if inner_tag.is_constructed() {
+			inner_el := parse_constructed_element(inner_tag, r.payload)!
+			tt := TaggedType{
+				outer_tag: r.tag
+				mode: .implicit
+				inner_el: inner_el
+			}
+			return tt
 		}
+		inner_el := RawElement.new(inner_tag, r.payload)
 		tt := TaggedType{
 			outer_tag: r.tag
 			mode: .implicit

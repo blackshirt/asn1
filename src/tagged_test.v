@@ -10,7 +10,6 @@ fn test_explicit_context_null_pack_unpack() ! {
 	mut out := []u8{}
 	ex1.pack_to_asn1(mut out)!
 	exp := [u8(0xa0), 0x02, 0x05, 0x00]
-
 	assert out == exp
 	// unpack back
 	ttback, _ := TaggedType.unpack_from_asn1(out, 0, .explicit, el.tag())!
@@ -22,9 +21,7 @@ fn test_explicit_context_nested_pack_unpack() ! {
 	el := Null.new()
 
 	ex1 := TaggedType.explicit_context(el, 1)!
-	exp2 := TaggedType.explicit_context(ex1, 2)!
-	// el1 := new_explicit_context(new_null(), 1)
-	// ex1 := new_explicit_context(el1, 2)
+	ex2 := TaggedType.explicit_context(ex1, 2)!
 
 	mut out := []u8{}
 	ex2.pack_to_asn1(mut out)!
@@ -35,10 +32,9 @@ fn test_explicit_context_nested_pack_unpack() ! {
 	// clears out
 	out.clear()
 	ex1.pack_to_asn1(mut out)!
-	assert out == [u8(0x05), 0x00]
+	assert out == [u8(0xa1), 0x02, u8(0x05), 0x00]
 }
 
-/*
 fn test_asn1_example() ! {
 	/*
 	```asn.1
@@ -48,22 +44,28 @@ Example ::= SEQUENCE {
     type    [1] EXPLICIT OBJECT IDENTIFIER
 }
 ```*/
-	mut seq := new_sequence()
-	seq.add(new_utf8string('Hello')!) // tag : 12
-	seq.add(new_integer(i64(42))) // tag 2
-	seq.add(new_explicit_context(new_oid_from_string('1.3.6.1.3')!, 1))
+	oid := Oid.from_string('1.3.6.1.3')!
+	expl := TaggedType.explicit_context(oid, 1)!
+	mut seq := Sequence.new(false)!
+	seq.add_element(UTF8String.from_string('Hello')!)! // tag : 12
+	seq.add_element(Integer.from_i64(i64(42)))! // tag 2
+	seq.add_element(expl)!
 
-	out := seq.encode()!
+	mut out := []u8{}
+	seq.pack_to_asn1(mut out)!
 
 	exp := [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1), 6, 6, 4, 43,
 		6, 1, 3]
 	assert out == exp
 
-	back := der_decode(out)!
-	if back is Sequence {
-		assert back.elements[0] is UTF8String
-		assert back.elements[1] is AsnInteger
-		assert back.elements[2] is Tagged
-	}
+	back, n := Sequence.unpack_from_asn1(out, 0)!
+	assert n == exp.len
+
+	els := back.elements()!
+	assert els[0] is UTF8String
+	assert els[1] is Integer
+	els2 := els[2] as RawElement
+
+	els2_tagged := els2.as_tagged(.explicit, oid.tag())!
+	assert els2_tagged == expl
 }
-*/

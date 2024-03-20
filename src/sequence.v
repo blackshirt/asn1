@@ -265,7 +265,8 @@ fn parse_constructed_element(tag Tag, contents []u8) !Element {
 	if !tag.is_constructed() {
 		return error('not constructed tag')
 	}
-	// when its not universal class, just return RawElement
+	// Its maybe Explict or Implicit TaggedType, but at here we have no enought
+	// information to parse on, so we just return RawElement instead.
 	if tag.class() != .universal {
 		return RawElement.new(tag, contents)
 	}
@@ -279,8 +280,6 @@ fn parse_constructed_element(tag Tag, contents []u8) !Element {
 		int(TagType.set) {
 			return Set.parse_contents(tag, contents)!
 		}
-		// Its maybe Explict or Implicit TaggedType, but at here we have no enought
-		// information to parse on, so we just return RawElement instead.
 		else {
 			return RawElement.new(tag, contents)
 		}
