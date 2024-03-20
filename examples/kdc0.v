@@ -142,6 +142,10 @@ struct EncryptedData {
 	cipher asn1.OctetString
 }
 
+fn (e EncryptedData) tag() asn1.Tag {
+	return asn1.new_tag(.universal, true, int(asn1.TagType.sequence)) or {panic(err)}
+}
+		
 // Ticket          ::= [APPLICATION 1] SEQUENCE {
 //    tkt-vno         [0] INTEGER (5),
 //    realm           [1] Realm,
@@ -161,7 +165,7 @@ type KerberosTime = asn1.GeneralizedTime // without fractional seconds
 type Realm = KerberosString
 
 fn (r Realm) tag() asn1.Tag {
-	retrun asn1.new_tag(.universal, false, int(asn1.TagType.generalstring))
+	return asn1.new_tag(.universal, false, int(asn1.TagType.generalstring)) or { panic((err) }
 }
 
 struct KerberosString {
