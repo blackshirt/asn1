@@ -243,7 +243,7 @@ fn (v Integer) payload(p Params) ![]u8 {
 	return bytes
 }
 
-fn (v Integer) payload_length() int {
+fn (v Integer) payload_length(p Params) int {
 	return v.bytes_len()
 }
 

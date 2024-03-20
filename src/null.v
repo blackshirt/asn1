@@ -29,7 +29,7 @@ fn (n Null) tag() Tag {
 	return n.tag
 }
 
-fn (n Null) payload_length() int {
+fn (n Null) payload_length(p Params) int {
 	return 0
 }
 

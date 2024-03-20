@@ -49,7 +49,7 @@ fn (bs BitString) payload(p Params) ![]u8 {
 	return out
 }
 
-fn (bs BitString) payload_length() int {
+fn (bs BitString) payload_length(p Params) int {
 	return bs.bytes_len()
 }
 
@@ -57,7 +57,7 @@ fn (bs BitString) packed_length(p Params) int {
 	mut n := 0
 
 	n += bs.tag().packed_length(p)
-	len := bs.payload_length()
+	len := bs.payload_length(p)
 	bslen := Length.from_i64(len) or { panic(err) }
 	n += bslen.packed_length(p)
 	n += len

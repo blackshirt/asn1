@@ -15,7 +15,7 @@ fn test_explicit_context_null_pack_unpack() ! {
 	// unpack back
 	ttback, _ := TaggedType.unpack_from_asn1(out, 0, .explicit, el.tag())!
 	assert ttback == ex1
-	assert ttback.inner_el == el
+	assert ttback.inner_el as Null == el
 }
 
 fn test_explicit_context_nested_pack_unpack() ! {

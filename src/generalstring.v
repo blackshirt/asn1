@@ -45,7 +45,7 @@ fn (g GeneralString) payload(p Params) ![]u8 {
 	return g.value.bytes()
 }
 
-fn (g GeneralString) payload_length() int {
+fn (g GeneralString) payload_length(p Params) int {
 	return g.value.len
 }
 

@@ -89,7 +89,7 @@ fn (el RawElement) payload(p Params) ![]u8 {
 	return el.payload
 }
 
-fn (el RawElement) payload_length() int {
+fn (el RawElement) payload_length(p Params) int {
 	return el.payload.len
 }
 
