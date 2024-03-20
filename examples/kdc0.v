@@ -89,7 +89,7 @@ struct KdcReqBody {
 	rtime       KerberosTime
 	nonce       u32
 	etype       []u32
-	addresses   HostAddresses
+	addresses   []HostAddress
 	eauth_data  EncryptedData
 	add_tickets []Ticket
 }
@@ -157,7 +157,12 @@ struct Ticket {
 
 type HostAddresses = []HostAddress
 type KerberosTime = asn1.GeneralizedTime // without fractional seconds
+
 type Realm = KerberosString
+
+fn (r Realm) tag() asn1.Tag {
+	retrun asn1.new_tag(.universal, false, int(asn1.TagType.generalstring))
+}
 
 struct KerberosString {
 	tag   asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.generalstring))
@@ -230,7 +235,7 @@ struct PrincipalName {
 	name_string []KerberosString
 }
 
-fn (p PrincipalName) pack(mut dst []u8) ! {
+fn (p PrincipalName) pack(mut dst []u8, p asn1.Params) ! {
 	mut seq1 := asn1.new_sequence()
 	int1 := asn1.new_integer(p.name_type)
 	// explicit context of integer content
