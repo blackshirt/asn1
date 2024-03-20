@@ -4,8 +4,8 @@ import crypto.pem
 import encoding.hex
 
 fn test_multienc_add_and_encode() {
-	mut en := []Encoder{}
-	b := new_boolean(true)
+	mut en := []Element{}
+	b := Boolean.new(true)
 
 	en.add(b)
 
@@ -16,13 +16,13 @@ fn test_multienc_add_and_encode() {
 	n := seq.length()
 	assert out == [u8(0x30), u8(n), 1, 1, 255, 5, 0]
 
-	seq.add(new_boolean(false))
+	seq.add(Boolean.new(false))
 
 	seq2 := new_sequence_from_multiencoder([seq])!
 
 	back := seq2.encode()!
 	// dump(back)
-	outback := der_decode(back)!
+	outback := Sequence.unpack_from_asn1(back)!
 
 	seqb := outback.as_sequence()!
 	assert seqb == seq2
@@ -32,7 +32,7 @@ fn test_simple_certificate_contains_discarded_bytes() {
 	data := [u8(0x30), 0x13, 0x02, 0x01, 0x05, 0x16, 0x0e, 0x41, 0x6e, 0x79, 0x62, 0x6f, 0x64,
 		0x79, 0x20, 0x74, 0x68, 0x65, 0x72, 0x65, 0x3f, 0xff, 0xff]
 
-	out := der_decode(data) or {
+	out := Sequence.unpack_from_asn1(data) or {
 		assert err == error('malformed bytes, contains discarded bytes')
 		return
 	}
@@ -68,7 +68,7 @@ fn test_parse_ed25519_certificate() ! {
 		0xD0, 0xD2, 0xBF, 0x4C, 0xD6, 0x6F, 0x0E, 0xB6, 0xE2, 0xE8, 0x9D, 0x04, 0xA3, 0xE0, 0x99,
 		0x50, 0xF9, 0xC2, 0x6D, 0xDE, 0x73, 0xAD, 0x1D, 0x35, 0x57, 0x85, 0x65, 0x86, 0x06]
 
-	out := der_decode(data)!
+	out := Sequence.unpack_from_asn1(data)!
 
 	assert out is Sequence
 	casted := out.as_sequence()!
@@ -110,7 +110,7 @@ fn test_ed4418_data() ! {
 
 	bytes := hex.decode(data)!
 
-	out := der_decode(bytes)!
+	out := Sequence.unpack_from_asn1(bytes)!
 	seq := out.as_sequence()!
 
 	assert seq.elements.len == 2
@@ -146,7 +146,7 @@ MC4CAQAwBQYDK2VwBCIEINTuctv5E1hK1bbY8fdp+K06/nwoy/HU++CXqI9EdVhC
 	*/
 	block, _ := pem.decode(data)?
 
-	out := der_decode(block.data)!
+	out := Sequence.unpack_from_asn1(block.data)!
 	assert out is Sequence
 	assert out.length() == 46
 	seq := out.as_sequence()!
@@ -263,7 +263,7 @@ w1AH9efZBw==
 	*/
 	block, _ := pem.decode(data)?
 
-	out := der_decode(block.data)!
+	out := Sequence.unpack_from_asn1(block.data)!
 
 	assert out is Sequence
 	assert out.length() == 300

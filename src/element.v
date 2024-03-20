@@ -37,7 +37,7 @@ pub fn (e Element) pack_to_asn1(mut out []u8, p Params) ! {
 	out << payload
 }
 
-// packed_length informs us the length of how many bytes when this Element e
+// packed_length informs us the length of how many bytes when this e Element
 // was serialized to bytes.
 pub fn (e Element) packed_length(p Params) int {
 	mut n := 0

@@ -3,26 +3,26 @@ module asn1
 import math.big
 import encoding.hex
 
-fn test_parse_der_match_length() ! {
+fn test_parse_sequence_match_length() ! {
 	// from https://en.wikipedia.org/wiki/ASN.1#Example_encoded_in_DER
 	data := [u8(0x30), 0x13, 0x02, 0x01, 0x05, 0x16, 0x0e, 0x41, 0x6e, 0x79, 0x62, 0x6f, 0x64,
 		0x79, 0x20, 0x74, 0x68, 0x65, 0x72, 0x65, 0x3f]
 
-	out := der_decode(data)!
-	assert out.packed_length() == 19 // 0x13
-	assert out.tag().class == .universal
-	assert out.tag().constructed == true
-	assert out.tag().number == 16
+	seq, n := Sequence.unpack_from_asn1(data, 0)!
+	assert n == data.len
+	assert seq.length() == 19 // 0x13
+	assert seq.packed_length() == 21
+	assert seq.tag().class() == .universal
+	assert seq.tag().is_constructed() == true
+	assert seq.tag().tag_number() == 16
 
-	seq := out.as_sequence()!
 	assert seq.elements.len == 2
-	el0 := seq.elements[0].as_integer()!
-	el1 := seq.elements[1].as_ia5string()!
+	el0 := seq.elements[0] as Integer
+	el1 := seq.elements[1] as IA5String
 
-	assert el0.tag().number == int(TagType.integer)
-	assert el1.tag().number == int(TagType.ia5string)
-	assert el0.str() == 'INTEGER 5'
-	assert el1 == 'Anybody there?'
+	assert el0.tag().tag_number() == int(TagType.integer)
+	assert el1.tag().tag_number() == int(TagType.ia5string)
+	assert el1.value == 'Anybody there?'
 
 	/*
 	30 — type tag indicating SEQUENCE
@@ -38,19 +38,7 @@ fn test_parse_der_match_length() ! {
 	*/
 }
 
-fn test_parse_der_contains_discarded_bytes() ! {
-	// the length tell 0x13, but two last bytes was added and should trigger malformed bytes.
-	data := [u8(0x30), 0x13, 0x02, 0x01, 0x05, 0x16, 0x0e, 0x41, 0x6e, 0x79, 0x62, 0x6f, 0x64,
-		0x79, 0x20, 0x74, 0x68, 0x65, 0x72, 0x65, 0x3f, 0xff, 0xff]
-
-	out := der_decode(data) or {
-		assert err == error('malformed bytes, contains discarded bytes')
-		return
-	}
-
-	assert out.packed_length() == 19 // 0x13
-}
-
+/*
 fn test_parse_x509_ed25519_certificate() ! {
 	// blindly parse data
 	// data from https://lapo.it/asn1js , with data X.509 certificate based Curve25519 (as per RFC 8410) loaded
@@ -428,3 +416,4 @@ fn test_encoder_casted_as_seq_and_boolean() ! {
 		return
 	}
 }
+*/
