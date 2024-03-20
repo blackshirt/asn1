@@ -29,7 +29,7 @@ struct KdcReq {
 // }
 
 struct PaData {
-	pd_type  asn1.Integer
+	pd_type  int
 	pd_value asn1.OctetString
 }
 
@@ -137,15 +137,16 @@ fn HostAddress.unpack_from_asn1(src []u8) !(HostAddress, i64) {
 //           cipher  [2] OCTET STRING -- ciphertext
 //   }
 struct EncryptedData {
+	tag    asn1.Tag = asn1.new_tag(.universal, true, int(asn1.TagType.sequence)) or { panic(err) }
 	etype  int
 	kvno   u32
 	cipher asn1.OctetString
 }
 
 fn (e EncryptedData) tag() asn1.Tag {
-	return asn1.new_tag(.universal, true, int(asn1.TagType.sequence)) or {panic(err)}
+	return e.tag
 }
-		
+
 // Ticket          ::= [APPLICATION 1] SEQUENCE {
 //    tkt-vno         [0] INTEGER (5),
 //    realm           [1] Realm,
@@ -165,12 +166,38 @@ type KerberosTime = asn1.GeneralizedTime // without fractional seconds
 type Realm = KerberosString
 
 fn (r Realm) tag() asn1.Tag {
-	return asn1.new_tag(.universal, false, int(asn1.TagType.generalstring)) or { panic((err) }
+	return asn1.new_tag(.universal, false, int(asn1.TagType.generalstring)) or { panic(err) }
 }
 
+// type KerberosString = GeneralString
 struct KerberosString {
 	tag   asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.generalstring))
 	value string
+}
+
+fn valid_kerberos_string(s string) bool {
+	if s.is_ascii() {
+		return true
+	}
+	return false
+}
+
+fn KerberosString.from_string(s string) !KerberosString {
+	if !valid_kerberos_string(s) {
+		return error('not valid kerberos string')
+	}
+	return KerberosString{
+		value: s
+	}
+}
+
+fn KerberosString.from_bytes(b []bytes) !KerberosString {
+	if !valid_kerberos_string(b.bytestr()) {
+		return error('not valid kerberos string')
+	}
+	return KerberosString{
+		value: b.bytestr()
+	}
 }
 
 fn (k KerberosString) tag() asn1.Tag {
@@ -179,10 +206,13 @@ fn (k KerberosString) tag() asn1.Tag {
 
 // your validation logic here
 fn (k KerberosString) valid() bool {
-	return true
+	if valid_kerberos_string(k.value) {
+		return true
+	}
+	return false
 }
 
-fn (k KerberosString) pack(mut out []u8, p asn1.Params) ! {
+fn (k KerberosString) pack_to_asn1(mut out []u8, p asn1.Params) ! {
 	// do your validation check for KerberosString type
 	if !k.valid() {
 		return error('not valid KerberosString')
@@ -194,54 +224,64 @@ fn (k KerberosString) pack(mut out []u8, p asn1.Params) ! {
 	out << bytes
 }
 
-fn KerberosString.unpack(src []u8, loc i64) !(KerberosString, i64) {
+fn KerberosString.unpack_from_asn1(src []u8, loc i64, p asn1.Params) !(KerberosString, i64) {
 	if src.len < 2 {
 		return error('src underflow')
 	}
-	tag, pos := asn1.read_tag(src, 0)!
-	if tag.number != int(asn1.TagType.generalstring) {
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	if tag.tag_number() != int(asn1.TagType.generalstring) {
 		return error('bad tag')
 	}
 	if pos > src.len {
 		return error('truncated input')
 	}
 
-	length, next := asn1.decode_length(src, pos)!
-
+	length, next := Length.unpack_from_asn1(src, pos, p)!
+	if length == 0 {
+		return KerberosString.from_string('')!, next
+	}
 	if next > src.len || next + length > src.len {
 		return error('truncated input')
 	}
 	out := unsafe { src[next..next + length] }
 	// validates
-	if !out.bytestr().is_ascii() {
-		return error('contains invalid char')
-	}
-	ks := KerberosString{
-		tag: tag
-		value: out.bytestr()
-	}
-	if !ks.valid() {
-		return error('not valid KerberosString')
-	}
+	ks := KerberosString.from_bytes(out)!
 	return ks, next + length
 }
 
 // KerberosFlags   ::= BIT STRING (SIZE (32..MAX))
 //                      -- minimum number of bits shall be sent,
 //                      -- but no fewer than 32
+const min_kerberosflags_size = 32
+
+struct KerberosFlags {
+	tag   asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.bitstring)) or { panic(err) }
+	value asn1.BitString
+}
+
+fn KerberosFlags.new(value BitString) !KerberosFlags {
+	return KerberosFlags{
+		value: value
+	}
+}
+
+fn (kf KerberosFlags) tag() asn1.Tag {
+	return kf.tag
+}
 
 // PrincipalName   ::= SEQUENCE {
 //    name-type       [0] Int32,
 //    name-string     [1] SEQUENCE OF KerberosString
 // }
 struct PrincipalName {
-	name_type   asn1.AsnInteger
+	tag         asn1.Tag = asn1.new_tag(.universal, true, int(TagType.sequence)) or { panic(err) }
+	name_type   int
 	name_string []KerberosString
 }
 
-fn (p PrincipalName) pack(mut dst []u8, p asn1.Params) ! {
+fn (pn PrincipalName) pack(mut dst []u8, p asn1.Params) ! {
 	mut seq1 := asn1.new_sequence()
-	int1 := asn1.new_integer(p.name_type)
+	int1 := asn1.new_integer(pn.name_type)
 	// explicit context of integer content
 	exp1 := asn1.new_explicit_context(int1, 0)
 	seq1.add(exp1)

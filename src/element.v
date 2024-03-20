@@ -1,7 +1,7 @@
 module asn1
 
 // ASN.1 Element
-interface Element {
+pub interface Element {
 	// tag tells the tag of this Element
 	tag() Tag
 	// payload_length is the length of Element's paylaod, without
@@ -16,14 +16,14 @@ interface Element {
 	pack_to_asn1(mut dst []u8, p Params) !
 }
 
-fn Element.new(tag Tag, payload []u8) !Element {
+pub fn Element.new(tag Tag, payload []u8) !Element {
 	return RawElement{
 		tag: tag
 		payload: payload
 	}
 }
 
-fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
+pub fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
 	if src.len < 2 {
 		return error('Element: bad length bytes')
 	}
@@ -84,7 +84,7 @@ fn (els []Element) hold_different_tag() bool {
 }
 
 // Raw ASN.1 Element
-struct RawElement {
+pub struct RawElement {
 	// the tag of the RawElement
 	tag Tag
 	// payload is the value of this RawElement, its depend how its would be interpreted.
@@ -93,7 +93,7 @@ struct RawElement {
 	payload []u8
 }
 
-fn RawElement.new(t Tag, payload []u8) RawElement {
+pub fn RawElement.new(t Tag, payload []u8) RawElement {
 	el := RawElement{
 		tag: t
 		payload: payload
@@ -101,19 +101,19 @@ fn RawElement.new(t Tag, payload []u8) RawElement {
 	return el
 }
 
-fn (el RawElement) tag() Tag {
+pub fn (el RawElement) tag() Tag {
 	return el.tag
 }
 
-fn (el RawElement) payload(p Params) ![]u8 {
+pub fn (el RawElement) payload(p Params) ![]u8 {
 	return el.payload
 }
 
-fn (el RawElement) payload_length(p Params) int {
+pub fn (el RawElement) payload_length(p Params) int {
 	return el.payload.len
 }
 
-fn (e RawElement) packed_length(p Params) int {
+pub fn (e RawElement) packed_length(p Params) int {
 	mut n := 0
 	n += e.tag.packed_length(p)
 	length := Length.from_i64(e.payload.len) or { panic(err) }
@@ -123,7 +123,7 @@ fn (e RawElement) packed_length(p Params) int {
 	return n
 }
 
-fn (e RawElement) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (e RawElement) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('RawElement: unsupported mode')
 	}
@@ -133,7 +133,7 @@ fn (e RawElement) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << e.payload
 }
 
-fn RawElement.unpack_from_asn1(src []u8, loc i64, p Params) !(RawElement, i64) {
+pub fn RawElement.unpack_from_asn1(src []u8, loc i64, p Params) !(RawElement, i64) {
 	if src.len < 2 {
 		return error('RawElement: bytes underflow')
 	}
@@ -174,7 +174,7 @@ fn (e RawElement) has_inner() bool {
 
 // as_tagged treats and parse the RawElement r as TaggedType element with inner_tag is
 // an expected tag of inner Element being tagged.
-fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !TaggedType {
+pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !TaggedType {
 	// make sure tag is in constructed form, when it true, the r.payload is an ASN.1 Element
 	// when mode is explicit or  the r.payload is bytes content by itself when mode is implicit.
 	if r.has_inner() {

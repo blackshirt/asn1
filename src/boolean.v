@@ -9,19 +9,19 @@ module asn1
 // ASN.1 DER encoding restricts encoding of boolean true value into 0xff
 // and otherwise, encodes into zero (0x00) for false value.
 // The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.
-struct Boolean {
+pub struct Boolean {
 	value bool
 mut:
 	tag Tag = new_tag(.universal, false, int(TagType.boolean))!
 }
 
-fn Boolean.new(value bool) Boolean {
+pub fn Boolean.new(value bool) Boolean {
 	return Boolean{
 		value: value
 	}
 }
 
-fn Boolean.from_bytes(b []u8) !Boolean {
+pub fn Boolean.from_bytes(b []u8) !Boolean {
 	if b.len != 1 {
 		return error('Boolean: bad bytes')
 	}
@@ -35,22 +35,22 @@ fn Boolean.from_bytes(b []u8) !Boolean {
 	return error('Boolean: unsupported value')
 }
 
-fn (v Boolean) tag() Tag {
+pub fn (v Boolean) tag() Tag {
 	return v.tag
 }
 
-fn (v Boolean) payload_length(p Params) int {
+pub fn (v Boolean) payload_length(p Params) int {
 	return 1
 }
 
-fn (v Boolean) payload(p Params) ![]u8 {
+pub fn (v Boolean) payload(p Params) ![]u8 {
 	if v.value {
 		return [u8(0xff)]
 	}
 	return [u8(0x00)]
 }
 
-fn (v Boolean) packed_length(p Params) int {
+pub fn (v Boolean) packed_length(p Params) int {
 	mut n := 0
 	n += v.tag().packed_length(p)
 	// boolean length should 1
@@ -60,7 +60,7 @@ fn (v Boolean) packed_length(p Params) int {
 	return n
 }
 
-fn (v Boolean) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (v Boolean) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('BitString: unsupported mode')
 	}
@@ -76,7 +76,7 @@ fn (v Boolean) pack_to_asn1(mut dst []u8, p Params) ! {
 	}
 }
 
-fn Boolean.unpack_from_asn1(src []u8, loc i64, p Params) !(Boolean, i64) {
+pub fn Boolean.unpack_from_asn1(src []u8, loc i64, p Params) !(Boolean, i64) {
 	if src.len < 3 {
 		return error('Boolean: bad length bytes')
 	}

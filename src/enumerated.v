@@ -7,35 +7,35 @@ module asn1
 // Enumerated type treated as ordinary integer, only differs on tag value.
 // The encoding of an enumerated value shall be that of the integer value with which it is associated.
 // NOTE: It is primitive.
-struct Enumerated {
+pub struct Enumerated {
 	value int
 mut:
 	tag Tag = Tag{.universal, false, int(TagType.enumerated)}
 }
 
-fn Enumerated.from_int(val int) Enumerated {
+pub fn Enumerated.from_int(val int) Enumerated {
 	return Enumerated{
 		value: val
 	}
 }
 
-fn Enumerated.from_bytes(b []u8) !Enumerated {
+pub fn Enumerated.from_bytes(b []u8) !Enumerated {
 	return Enumerated.unpack(b)!
 }
 
-fn (e Enumerated) tag() Tag {
+pub fn (e Enumerated) tag() Tag {
 	return e.tag
 }
 
-fn (e Enumerated) payload(p Params) ![]u8 {
+pub fn (e Enumerated) payload(p Params) ![]u8 {
 	return e.pack()!
 }
 
-fn (e Enumerated) payload_length() int {
+pub fn (e Enumerated) payload_length() int {
 	return e.enumerated_len()
 }
 
-fn (e Enumerated) packed_length(p Params) !int {
+pub fn (e Enumerated) packed_length(p Params) !int {
 	mut n := 0
 	n += e.tag().packed_length(p)
 	len := Length.from_i64(e.value)!
@@ -44,7 +44,7 @@ fn (e Enumerated) packed_length(p Params) !int {
 	return n
 }
 
-fn (e Enumerated) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (e Enumerated) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
@@ -55,7 +55,7 @@ fn (e Enumerated) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << bytes
 }
 
-fn Enumerated.unpack_from_asn1(src []u8, loc i64, p Params) !(Enumerated, i64) {
+pub fn Enumerated.unpack_from_asn1(src []u8, loc i64, p Params) !(Enumerated, i64) {
 	if src.len < 3 {
 		return error('Enumerated: bad src')
 	}

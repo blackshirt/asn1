@@ -384,7 +384,7 @@ fn i64_to_bytes(mut dst []u8, i i64) {
 	mut n := length_i64(i)
 
 	for j := 0; j < n; j++ {
-		dst[j] = u8(i >> u32(n - 1 - j) * 8)
+		dst[j] = u8(i >> u32((n - 1 - j) * 8))
 	}
 }
 

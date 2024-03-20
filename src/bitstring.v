@@ -5,7 +5,7 @@ module asn1
 
 // BITSTRING
 //
-struct BitString {
+pub struct BitString {
 	data []u8
 	pad  u8
 mut:
@@ -38,22 +38,22 @@ fn (bs BitString) bytes_len() int {
 	return bs.data.len + 1
 }
 
-fn (b BitString) tag() Tag {
+pub fn (b BitString) tag() Tag {
 	return b.tag
 }
 
-fn (bs BitString) payload(p Params) ![]u8 {
+pub fn (bs BitString) payload(p Params) ![]u8 {
 	mut out := []u8{}
 	out << bs.pad
 	out << bs.data
 	return out
 }
 
-fn (bs BitString) payload_length(p Params) int {
+pub fn (bs BitString) payload_length(p Params) int {
 	return bs.bytes_len()
 }
 
-fn (bs BitString) packed_length(p Params) int {
+pub fn (bs BitString) packed_length(p Params) int {
 	mut n := 0
 
 	n += bs.tag().packed_length(p)
@@ -65,7 +65,7 @@ fn (bs BitString) packed_length(p Params) int {
 	return n
 }
 
-fn (bs BitString) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (bs BitString) pack_to_asn1(mut dst []u8, p Params) ! {
 	// we currently only support .der and (stricter) .ber
 	if p.mode != .der && p.mode != .ber {
 		return error('BitString: unsupported mode')
@@ -80,7 +80,7 @@ fn (bs BitString) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << bs.data
 }
 
-fn BitString.unpack_from_asn1(src []u8, loc i64, p Params) !(BitString, i64) {
+pub fn BitString.unpack_from_asn1(src []u8, loc i64, p Params) !(BitString, i64) {
 	if src.len < 2 {
 		return error('BitString: b.len underflow')
 	}

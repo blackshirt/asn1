@@ -344,3 +344,135 @@ fn trim_bytes(src []u8) ![]u8 {
 	}
 	return src
 }
+
+// INT64
+struct Int64 {
+	tag   Tag = Tag{.universal, false, int(TagType.integer)}
+	value i64
+}
+
+fn Int64.new(v i64) Int64 {
+	return Int64{
+		value: v
+	}
+}
+
+fn Int64.from_bytes(src []u8) !Int64 {
+	val := read_i64(src)!
+	return Int64.new(val)
+}
+
+fn (v Int64) tag() Tag {
+	return v.tag
+}
+
+fn (v Int64) payload(p Params) ![]u8 {
+	mut n := length_i64(v.value)
+	mut dst := []u8{len: n}
+	i64_to_bytes(mut dst, v.value)
+	return dst
+}
+
+fn (v Int64) payload_length(p Params) int {
+	return length_i64(v.value)
+}
+
+fn (v Int64) packed_length(p Params) int {
+	mut n := 0
+	n += v.tag().packed_length(p)
+	len := v.payload_length(p)
+	vlen := Length.from_i64(len) or { panic(err) }
+	n += vlen.packed_length(p)
+	n += len
+
+	return n
+}
+
+fn (v Int64) pack_to_asn1(mut dst []u8, p Params) ! {
+	v.tag().pack_to_asn1(mut dst, p)!
+	payload := v.payload(p)!
+	len := Length.from_i64(payload.len)!
+	len.pack_to_asn1(mut dst, p)!
+	dst << payload
+}
+
+fn Int64.unpack_from_asn1(src []u8, loc i64, p Params) !(Int64, i64) {
+	if src.len < 3 {
+		return error('Int64: bytes underflow')
+	}
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	if tag.class() != .universal && tag.is_constructed() && tag.tag_number() != int(TagType.integer) {
+		return error('Int64: check tag failed')
+	}
+	if pos > src.len {
+		return error('Int64: truncated output')
+	}
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	if len == 0 {
+		return error('Int64: len==0')
+	}
+	if idx > src.len || idx + len > src.len {
+		return error('Int64: truncated output')
+	}
+
+	bytes := unsafe { src[idx..idx + len] }
+	val := read_i64(bytes)!
+
+	return Int64.new(val), idx + len
+}
+
+// Utility function
+fn length_i64(val i64) int {
+	mut i := val
+	mut n := 1
+
+	for i > 127 {
+		n++
+		i >>= 8
+	}
+
+	for i < -128 {
+		n++
+		i >>= 8
+	}
+
+	return n
+}
+
+fn i64_to_bytes(mut dst []u8, i i64) {
+	mut n := length_i64(i)
+
+	for j := 0; j < n; j++ {
+		dst[j] = u8(i >> u32((n - 1 - j) * 8))
+	}
+}
+
+// read_i64 read src as signed i64
+fn read_i64(src []u8) !i64 {
+	if !valid_bytes(src, true) {
+		return error('i64 check return false')
+	}
+	mut ret := i64(0)
+
+	if src.len > 8 {
+		return error('too large integer')
+	}
+	for i := 0; i < src.len; i++ {
+		ret <<= 8
+		ret |= i64(src[i])
+	}
+
+	ret <<= 64 - u8(src.len) * 8
+	ret >>= 64 - u8(src.len) * 8
+
+	// try to serialize back, and check its matching original one
+	// and gives a warning when its not match.
+	$if debug {
+		a := Int64.new(ret)
+		c := a.payload()!
+		if c != src {
+			eprintln('maybe integer bytes not in shortest form')
+		}
+	}
+	return ret
+}

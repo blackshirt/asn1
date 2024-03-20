@@ -266,7 +266,6 @@ fn test_sequnce_of_sequence() {
 	assert out == [u8(0x30), 17, 5, 0, 1, 1, 0, u8(0x30), 10, 2, 1, 5, 2, 5, 0x14, 0x1f, 0x49,
 		0xd5, 0x4a]
 
-	// out := seq.pack_to_asn1(mut out)!
 	back, n := Sequence.unpack_from_asn1(out, 0)!
 	assert n == out.len
 
