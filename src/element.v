@@ -41,10 +41,30 @@ fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
 	}
 	bytes := unsafe { src[idx..idx + len] }
 
-	return RawElement{
-		tag: tag
-		payload: bytes
-	}, idx + len
+	match tag.class() {
+		.universal {
+			if tag.is_constructed() {
+				return parse_constructed_element(tag, bytes)!, idx + len
+			}
+
+			return parse_primitive_element(tag, bytes)!, idx + len
+		}
+		.application {
+			return RawElement.new(tag, bytes), idx + len
+		}
+		.context_specific {
+			r := RawElement.new(tag, bytes)
+			if tag.is_constructed() {
+				inn_tag, _ := Tag.unpack_from_asn1(bytes, 0, p)!
+				tt := r.as_tagged(.explicit, inn_tag, p)!
+				return tt, idx + len
+			}
+			return r, idx + len
+		}
+		.private {
+			return RawElement.new(tag, bytes), idx + len
+		}
+	}
 }
 
 // hold_different_tag checks whether this array of Element
@@ -192,17 +212,12 @@ fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !TaggedTyp
 			// if tag is constructed, its make possible to do
 			// recursive thing that we currently dont want support
 			// so, return an error instead
-			if tag.is_constructed() {
-				inner_el := parse_constructed_element(tag, sub)!
-				tt := TaggedType{
-					outer_tag: r.tag
-					mode: .explicit
-					inner_el: inner_el
-				}
-				return tt
+			inner_el := if tag.is_constructed() {
+				parse_constructed_element(tag, sub)!
+			} else {
+				// otherwise its a primitive type
+				parse_primitive_element(tag, sub)!
 			}
-			// otherwise its a primitive type
-			inner_el := parse_primitive_element(tag, sub)!
 			tt := TaggedType{
 				outer_tag: r.tag
 				mode: .explicit
@@ -221,6 +236,7 @@ fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !TaggedTyp
 			}
 			return tt
 		}
+		// otherwise, its just RawElement
 		inner_el := RawElement.new(inner_tag, r.payload)
 		tt := TaggedType{
 			outer_tag: r.tag
