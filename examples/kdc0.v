@@ -269,6 +269,27 @@ fn (kf KerberosFlags) tag() asn1.Tag {
 	return kf.tag
 }
 
+fn (kf KerberosFlags) payload(p Params) ![]u8 {
+	return kf.value.payload(p)
+}
+	
+fn (kf KerberosFlags) payload_length(p Params) int {
+	return kf.value.payload_length(p)
+}	
+		
+fn (kf KerberosFlags) packed_length(p Params) int {
+	return kf.value.packed_length(p)
+}
+		
+fn (kf KerberosFlags) pack_to_asn1(mut out []u8, p asn1.Params) ! {
+	kf.value.pack_to_asn1(mut out, p)!
+}
+		
+fn KerberosFlags.unpack_from_asn1(src []u8, loc i64, p Params) !(KerberosFlags, i64) {
+	b, n := BitString.unpack_from_asn1(src, loc, p)!
+	return KerberosFlags.new(b), n
+}
+		
 // PrincipalName   ::= SEQUENCE {
 //    name-type       [0] Int32,
 //    name-string     [1] SEQUENCE OF KerberosString
