@@ -52,7 +52,7 @@ fn (ut UTCTime) payload(p Params) ![]u8 {
 	return ut.value.bytes()
 }
 
-fn (ut UTCTime) payload_length(p Params) int {
+fn (ut UTCTime) length(p Params) int {
 	return ut.value.len
 }
 
@@ -214,7 +214,7 @@ fn (gt GeneralizedTime) payload(p Params) ![]u8 {
 	return gt.value.bytes()
 }
 
-fn (gt GeneralizedTime) payload_length(p Params) int {
+fn (gt GeneralizedTime) length(p Params) int {
 	return gt.value.len
 }
 

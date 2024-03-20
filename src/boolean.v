@@ -39,7 +39,7 @@ pub fn (v Boolean) tag() Tag {
 	return v.tag
 }
 
-pub fn (v Boolean) payload_length(p Params) int {
+pub fn (v Boolean) length(p Params) int {
 	return 1
 }
 

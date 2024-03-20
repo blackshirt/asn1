@@ -78,18 +78,18 @@ fn (tt TaggedType) payload(p Params) ![]u8 {
 	return payload
 }
 
-fn (tt TaggedType) payload_length(p Params) int {
+fn (tt TaggedType) length(p Params) int {
 	mut n := 0
 	// in .explicit, n := tag+lengt+payload
 	if tt.mode == .explicit {
 		n += tt.inner_el.tag().packed_length(p)
-		len := tt.inner_el.payload_length(p)
+		len := tt.inner_el.length(p)
 		xlen := Length.from_i64(len) or { panic(err) }
 		n += xlen.packed_length(p)
 		n += len
 	} else {
 		// .implicit mode, just the payload
-		n += tt.inner_el.payload_length(p)
+		n += tt.inner_el.length(p)
 	}
 	return n
 }

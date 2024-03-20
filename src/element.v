@@ -4,18 +4,18 @@ module asn1
 pub interface Element {
 	// tag tells the tag of this Element
 	tag() Tag
-	// payload_length is the length of Element's paylaod, without
-	// the tag length and length itself.
-	payload_length(p Params) int
-	// payload tells the raw payload (values) of this Element
+	// length tells the length of this Element, how many bytes the payload is.
+	// This length should match with the `Element.payload()` lenght
+	length(p Params) int
+	// payload tells the raw payload (values) of this Element.
+	// Its accept Params parameter in p to allow extending
+	// behaviour how this raw bytes is produced by implemntation.
+	// Its depends on tags part how interpretes this payload,
+	// whether the tag is in constructed or primitive form.
 	payload(p Params) ![]u8
-	// packed_length tells total length of serialized Element
-	// included tag length and the length itself
-	packed_length(p Params) int
-	// pack_to_asn1 serializes Element to dst
-	pack_to_asn1(mut dst []u8, p Params) !
 }
 
+// Element.new creates a new Element from RawElement with tag and payload
 pub fn Element.new(tag Tag, payload []u8) !Element {
 	return RawElement{
 		tag: tag
@@ -23,6 +23,33 @@ pub fn Element.new(tag Tag, payload []u8) !Element {
 	}
 }
 
+// pack_to_asn1 serializes this Element e to bytes and appended to `out`.
+// Its accepts optional p Params.
+pub fn (e Element) pack_to_asn1(mut out []u8, p Params) ! {
+	e.tag().pack_to_asn1(mut out, p)!
+	payload := e.payload(p)!
+	len := e.length(p)
+	if payload.len != len {
+		return error('Element: unmatching length')
+	}
+	length := Length.from_i64(len)!
+	length.pack_to_asn1(mut out, p)!
+	out << payload
+}
+
+// packed_length informs us the length of how many bytes when this Element e
+// was serialized to bytes.
+pub fn (e Element) packed_length(p Params) int {
+	mut n := 0
+	n += e.tag().packed_length(p)
+	length := Length.from_i64(e.length()) or { panic(err) }
+	n += length.packed_length(p)
+	n += length
+
+	return n
+}
+
+// unpack_from_asn1 deserializes bytes in src from offet loc into Element.
 pub fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
 	if src.len < 2 {
 		return error('Element: bad length bytes')
@@ -105,18 +132,18 @@ pub fn (el RawElement) tag() Tag {
 	return el.tag
 }
 
-pub fn (el RawElement) payload(p Params) ![]u8 {
-	return el.payload
+pub fn (el RawElement) length(p Params) int {
+	return el.payload.len
 }
 
-pub fn (el RawElement) payload_length(p Params) int {
-	return el.payload.len
+pub fn (el RawElement) payload(p Params) ![]u8 {
+	return el.payload
 }
 
 pub fn (e RawElement) packed_length(p Params) int {
 	mut n := 0
 	n += e.tag.packed_length(p)
-	length := Length.from_i64(e.payload.len) or { panic(err) }
+	length := Length.from_i64(e.length(p)) or { panic(err) }
 	n += length.packed_length(p)
 	n += e.payload.len
 
@@ -167,17 +194,12 @@ pub fn RawElement.unpack_from_asn1(src []u8, loc i64, p Params) !(RawElement, i6
 	return el, idx + len
 }
 
-fn (e RawElement) has_inner() bool {
-	need := if e.tag.is_constructed() { true } else { false }
-	return need
-}
-
 // as_tagged treats and parse the RawElement r as TaggedType element with inner_tag is
 // an expected tag of inner Element being tagged.
 pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !TaggedType {
 	// make sure tag is in constructed form, when it true, the r.payload is an ASN.1 Element
-	// when mode is explicit or  the r.payload is bytes content by itself when mode is implicit.
-	if r.has_inner() {
+	// when mode is explicit or the r.payload is bytes content by itself when mode is implicit.
+	if r.tag.is_constructed() {
 		if r.payload.len == 0 {
 			return error('tag constructed but no payload')
 		}
@@ -206,7 +228,7 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 				}
 				return tt
 			}
-			// otherwise are okey
+			// otherwise are ok
 			sub := unsafe { r.payload[idx..idx + len] }
 
 			// if tag is constructed, its make possible to do

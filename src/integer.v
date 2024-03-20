@@ -243,7 +243,7 @@ fn (v Integer) payload(p Params) ![]u8 {
 	return bytes
 }
 
-fn (v Integer) payload_length(p Params) int {
+fn (v Integer) length(p Params) int {
 	return v.bytes_len()
 }
 
@@ -373,14 +373,14 @@ fn (v Int64) payload(p Params) ![]u8 {
 	return dst
 }
 
-fn (v Int64) payload_length(p Params) int {
+fn (v Int64) length(p Params) int {
 	return length_i64(v.value)
 }
 
 fn (v Int64) packed_length(p Params) int {
 	mut n := 0
 	n += v.tag().packed_length(p)
-	len := v.payload_length(p)
+	len := v.length(p)
 	vlen := Length.from_i64(len) or { panic(err) }
 	n += vlen.packed_length(p)
 	n += len

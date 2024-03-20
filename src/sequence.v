@@ -89,7 +89,7 @@ fn (s Sequence) tag() Tag {
 	return s.tag
 }
 
-fn (s Sequence) payload_length(p Params) int {
+fn (s Sequence) length(p Params) int {
 	mut n := 0
 	for e in s.elements {
 		n += e.packed_length(p)
@@ -108,7 +108,7 @@ fn (s Sequence) payload(p Params) ![]u8 {
 fn (s Sequence) packed_length(p Params) int {
 	mut n := 0
 	n += s.tag().packed_length(p)
-	ln := s.payload_length()
+	ln := s.length(p)
 	length := Length.from_i64(ln) or { panic(err) }
 	n += length.packed_length(p)
 	n += ln

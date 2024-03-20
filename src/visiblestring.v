@@ -41,16 +41,16 @@ fn (vs VisibleString) payload(p Params) ![]u8 {
 	return vs.value.bytes()
 }
 
-fn (vs VisibleString) payload_length(p Params) int {
+fn (vs VisibleString) length(p Params) int {
 	return vs.value.len
 }
 
 fn (vs VisibleString) packed_length(p Params) int {
 	mut n := 0
 	n += vs.tag().packed_length(p)
-	len := Length.from_i64(vs.payload_length(p)) or { panic(err) }
+	len := Length.from_i64(vs.length(p)) or { panic(err) }
 	n += len.packed_length(p)
-	n += vs.payload_length(p)
+	n += vs.length(p)
 
 	return n
 }

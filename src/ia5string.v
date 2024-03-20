@@ -40,7 +40,7 @@ fn (v IA5String) payload(p Params) ![]u8 {
 	return v.value.bytes()
 }
 
-fn (v IA5String) payload_length(p Params) int {
+fn (v IA5String) length(p Params) int {
 	return v.value.len
 }
 

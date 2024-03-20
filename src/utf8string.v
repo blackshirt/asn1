@@ -43,14 +43,14 @@ fn (us UTF8String) payload(p Params) ![]u8 {
 	return us.value.bytes()
 }
 
-fn (us UTF8String) payload_length(p Params) int {
+fn (us UTF8String) length(p Params) int {
 	return us.value.len
 }
 
 fn (us UTF8String) packed_length(p Params) int {
 	mut n := 0
 	n += us.tag().packed_length(p)
-	uslen := us.payload_length(p)
+	uslen := us.length(p)
 	len := Length.from_i64(uslen) or { panic(err) }
 	n += len.packed_length(p)
 	n += uslen

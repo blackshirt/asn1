@@ -93,7 +93,7 @@ fn (oid Oid) payload(p Params) ![]u8 {
 	return oid.pack()!
 }
 
-fn (oid Oid) payload_length(p Params) int {
+fn (oid Oid) length(p Params) int {
 	bytes := oid.pack() or { panic(err) }
 	return bytes.len
 }

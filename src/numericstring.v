@@ -42,7 +42,7 @@ fn (ns NumericString) payload(p Params) ![]u8 {
 	return ns.value.bytes()
 }
 
-fn (ns NumericString) payload_length(p Params) int {
+fn (ns NumericString) length(p Params) int {
 	return ns.value.len
 }
 

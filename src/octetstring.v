@@ -40,7 +40,7 @@ fn (os OctetString) payload(p Params) ![]u8 {
 	return os.value.bytes()
 }
 
-fn (os OctetString) payload_length(p Params) int {
+fn (os OctetString) length(p Params) int {
 	return os.value.bytes().len
 }
 

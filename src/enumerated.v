@@ -31,7 +31,7 @@ pub fn (e Enumerated) payload(p Params) ![]u8 {
 	return e.pack()!
 }
 
-pub fn (e Enumerated) payload_length() int {
+pub fn (e Enumerated) length(p Params) int {
 	return e.enumerated_len()
 }
 

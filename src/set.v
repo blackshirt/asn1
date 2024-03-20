@@ -80,7 +80,7 @@ fn (s Set) payload(p Params) ![]u8 {
 	return out
 }
 
-fn (s Set) payload_length(p Params) int {
+fn (s Set) length(p Params) int {
 	mut n := 0
 	for el in s.elements {
 		n += el.packed_length(p)
@@ -91,7 +91,7 @@ fn (s Set) payload_length(p Params) int {
 fn (s Set) packed_length(p Params) int {
 	mut n := 0
 	n += s.tag().packed_length(p)
-	ln := s.payload_length(p)
+	ln := s.length(p)
 	length := Length.from_i64(ln) or { panic(err) }
 	n += length.packed_length(p)
 	n += ln

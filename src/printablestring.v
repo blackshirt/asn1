@@ -48,14 +48,14 @@ fn (ps PrintableString) payload(p Params) ![]u8 {
 	return ps.value.bytes()
 }
 
-fn (ps PrintableString) payload_length(p Params) int {
+fn (ps PrintableString) length(p Params) int {
 	return ps.value.len
 }
 
 fn (ps PrintableString) packed_length(p Params) int {
 	mut n := 0
 	n += ps.tag().packed_length(p)
-	len := ps.payload_length(p)
+	len := ps.length(p)
 	pslen := Length.from_i64(len) or { panic(err) }
 	n += pslen.packed_length(p)
 	n += len
