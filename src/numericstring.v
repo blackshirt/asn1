@@ -104,7 +104,7 @@ pub fn NumericString.unpack_from_asn1(src []u8, loc i64, p Params) !(NumericStri
 }
 
 // Utility function
-// 
+//
 fn all_numeric_string(bytes []u8) bool {
 	return bytes.all(is_numericstring(it))
 }

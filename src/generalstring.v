@@ -24,7 +24,7 @@ pub fn GeneralString.from_string(s string) !GeneralString {
 		value: s
 	}
 }
-		
+
 // from_bytes creates GeneralString from bytes b
 pub fn GeneralString.from_bytes(b []u8) !GeneralString {
 	if b.any(it < u8(` `) || it > u8(`~`)) {
@@ -119,7 +119,7 @@ pub fn GeneralString.unpack_from_asn1(src []u8, loc i64, p Params) !(GeneralStri
 	return ret, idx + len
 }
 
-// Utility function 
+// Utility function
 fn validate_general_string(s string) bool {
 	if !s.is_ascii() {
 		return false

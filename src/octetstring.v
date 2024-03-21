@@ -9,7 +9,7 @@ module asn1
 // You can use constraints to specify a maximum length for an OCTET STRING type.
 pub struct OctetString {
 	value string
-	tag Tag = new_tag(.universal, false, int(TagType.octetstring)) or { panic(err) }
+	tag   Tag = new_tag(.universal, false, int(TagType.octetstring)) or { panic(err) }
 }
 
 // new_octetstring creates new octet string

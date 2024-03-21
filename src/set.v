@@ -10,20 +10,20 @@ module asn1
 //
 // Internal machinery of SET and SET OF was built using the same machinery with
 // SEQUENCE and SEQUENCE OF.
-struct Set {
+pub struct Set {
 	tag Tag = Tag{.universal, true, int(TagType.set)}
 mut:
 	setof    bool
 	elements []Element
 }
 
-fn Set.new(setof bool) Set {
+pub fn Set.new(setof bool) Set {
 	return Set{
 		setof: setof
 	}
 }
 
-fn (mut s Set) set_into_setof() ! {
+pub fn (mut s Set) set_into_setof() ! {
 	if !s.elements.hold_different_tag() {
 		s.setof = true
 		return
@@ -33,7 +33,7 @@ fn (mut s Set) set_into_setof() ! {
 }
 
 // is_setof_type checks whether this set is setof type
-fn (s Set) is_setof_type() bool {
+pub fn (s Set) is_setof_type() bool {
 	// we assume the tag is set type
 	// take the first obj's tag, and check if the all the element tags has the same type
 	tag0 := s.elements[0].tag()
@@ -42,7 +42,7 @@ fn (s Set) is_setof_type() bool {
 
 // add_element add the element el to this set. Its check whether its should be added when this
 // set is setof type
-fn (mut s Set) add_element(el Element) ! {
+pub fn (mut s Set) add_element(el Element) ! {
 	if s.elements.len == 0 {
 		// set elements is still empty, just add the element
 		s.elements << el
@@ -64,15 +64,15 @@ fn (mut s Set) add_element(el Element) ! {
 	s.elements << el
 }
 
-fn (s Set) elements() ![]Element {
+pub fn (s Set) elements() ![]Element {
 	return s.elements
 }
 
-fn (s Set) tag() Tag {
+pub fn (s Set) tag() Tag {
 	return s.tag
 }
 
-fn (s Set) payload(p Params) ![]u8 {
+pub fn (s Set) payload(p Params) ![]u8 {
 	mut out := []u8{}
 	for el in s.elements {
 		el.pack_to_asn1(mut out, p)!
@@ -80,7 +80,7 @@ fn (s Set) payload(p Params) ![]u8 {
 	return out
 }
 
-fn (s Set) length(p Params) int {
+pub fn (s Set) length(p Params) int {
 	mut n := 0
 	for el in s.elements {
 		n += el.packed_length(p)
@@ -88,7 +88,7 @@ fn (s Set) length(p Params) int {
 	return n
 }
 
-fn (s Set) packed_length(p Params) int {
+pub fn (s Set) packed_length(p Params) int {
 	mut n := 0
 	n += s.tag().packed_length(p)
 	ln := s.length(p)
@@ -99,7 +99,7 @@ fn (s Set) packed_length(p Params) int {
 	return n
 }
 
-fn (s Set) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (s Set) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('set: unsupported mode')
 	}

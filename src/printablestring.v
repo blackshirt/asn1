@@ -15,7 +15,7 @@ const printable_symbols = r"(')+,-./:=?".bytes()
 
 pub struct PrintableString {
 	value string
-	tag Tag = new_tag(.universal, false, int(TagType.printablestring)) or { panic(err) }
+	tag   Tag = new_tag(.universal, false, int(TagType.printablestring)) or { panic(err) }
 }
 
 pub fn PrintableString.from_string(s string) !PrintableString {

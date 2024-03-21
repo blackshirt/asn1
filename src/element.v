@@ -93,8 +93,8 @@ pub fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
 		}
 	}
 }
-				
-type ElementList = []Element 
+
+type ElementList = []Element
 
 // from_bytes parses bytes in src to array of Element or return error on fail
 pub fn ElementList.from_bytes(src []u8) ![]Element {
@@ -111,7 +111,7 @@ pub fn ElementList.from_bytes(src []u8) ![]Element {
 	}
 	return els
 }
-				
+
 // hold_different_tag checks whether this array of Element
 // contains any different tag, benefit for checking whether the type
 // with this elements is sequence or sequence of type.

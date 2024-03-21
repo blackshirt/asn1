@@ -9,7 +9,7 @@ const max_oid_length = 128
 // ObjectIdentifier
 pub struct Oid {
 	value []int
-	tag Tag = new_tag(.universal, false, int(TagType.oid)) or { panic(err) }
+	tag   Tag = new_tag(.universal, false, int(TagType.oid)) or { panic(err) }
 }
 
 pub fn Oid.from_ints(src []int) !Oid {

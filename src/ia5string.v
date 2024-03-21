@@ -20,7 +20,7 @@ pub fn IA5String.from_string(s string) !IA5String {
 		value: s
 	}
 }
-		
+
 // from_bytes creates a new IA5String from bytes b
 pub fn IA5String.from_bytes(b []u8) !IA5String {
 	if b.any(it < u8(` `) || it > u8(`~`)) {

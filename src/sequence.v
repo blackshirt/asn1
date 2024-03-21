@@ -23,7 +23,7 @@ mut:
 	elements []Element
 }
 
-fn Sequence.new(seqof bool) !Sequence {
+pub fn Sequence.new(seqof bool) !Sequence {
 	tag := new_tag(.universal, true, int(TagType.sequence))!
 	return Sequence.new_with_tag(tag, seqof)
 }
@@ -40,7 +40,7 @@ fn Sequence.new_with_tag(tag Tag, seqof bool) !Sequence {
 	}
 }
 
-fn (mut seq Sequence) set_to_sequenceof() ! {
+pub fn (mut seq Sequence) set_to_sequenceof() ! {
 	if !seq.elements.hold_different_tag() {
 		seq.seqof = true
 		return
@@ -50,7 +50,7 @@ fn (mut seq Sequence) set_to_sequenceof() ! {
 }
 
 // is_sequenceof_type checks whether this sequence is SequenceOf type
-fn (seq Sequence) is_sequenceof_type() bool {
+pub fn (seq Sequence) is_sequenceof_type() bool {
 	// we assume the tag is sequence type
 	// take the first obj's tag, and check if the all the element tags has the same type
 	tag0 := seq.elements[0].tag()
@@ -59,7 +59,7 @@ fn (seq Sequence) is_sequenceof_type() bool {
 
 // add_element add the element el to this sequence. Its check whether its should be added when this
 // sequence is SequenceOf type
-fn (mut seq Sequence) add_element(el Element) ! {
+pub fn (mut seq Sequence) add_element(el Element) ! {
 	if seq.elements.len == 0 {
 		// sequence elements is still empty, just add the element
 		seq.elements << el
@@ -81,15 +81,15 @@ fn (mut seq Sequence) add_element(el Element) ! {
 	seq.elements << el
 }
 
-fn (s Sequence) elements() ![]Element {
+pub fn (s Sequence) elements() ![]Element {
 	return s.elements
 }
 
-fn (s Sequence) tag() Tag {
+pub fn (s Sequence) tag() Tag {
 	return s.tag
 }
 
-fn (s Sequence) length(p Params) int {
+pub fn (s Sequence) length(p Params) int {
 	mut n := 0
 	for e in s.elements {
 		n += e.packed_length(p)
@@ -97,7 +97,7 @@ fn (s Sequence) length(p Params) int {
 	return n
 }
 
-fn (s Sequence) payload(p Params) ![]u8 {
+pub fn (s Sequence) payload(p Params) ![]u8 {
 	mut out := []u8{}
 	for e in s.elements {
 		e.pack_to_asn1(mut out, p)!
@@ -105,7 +105,7 @@ fn (s Sequence) payload(p Params) ![]u8 {
 	return out
 }
 
-fn (s Sequence) packed_length(p Params) int {
+pub fn (s Sequence) packed_length(p Params) int {
 	mut n := 0
 	n += s.tag().packed_length(p)
 	ln := s.length(p)
@@ -116,7 +116,7 @@ fn (s Sequence) packed_length(p Params) int {
 	return n
 }
 
-fn (s Sequence) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (s Sequence) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Sequence: unsupported mode')
 	}
@@ -132,7 +132,7 @@ fn (s Sequence) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << payload
 }
 
-fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
+pub fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
 	if src.len < 2 {
 		return error('Sequence: bytes underflow')
 	}
