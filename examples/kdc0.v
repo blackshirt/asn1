@@ -206,7 +206,7 @@ fn EncryptedData.unpack_from_asn1(src []u8, loc i64, p Params) !(EncryptedData, 
 		return error("EncryptedData: length should != 0")
 	}
 	if idx > src.len || idx+length > src.len {
-		return error("EncryptedData: overflow"(
+		return error("EncryptedData: overflow")
 	}
 	// sequence elements contents
 	contents := unsafe {src[idx..idx+length]}
@@ -395,27 +395,41 @@ fn (pn PrincipalName) tag() asn1.Tag {
 	return pn.tag
 }
 
-fn (pn PrincipalName) payload(p asn1.Params) ![]u8 {}
+fn (pn PrincipalName) payload(p asn1.Params) ![]u8 {
+	el0 := asn1.TaggedType.explicit_context(asn1.Int64.from_i64(pn.name_type), 0)!
+	// second element is SEQUENCEOF
+	mut seq2 := asn1.Sequence.new(true)
+	for item in pn.name_string {
+		ks := asn1.KerberosString.from_string(item)!
+		seq2.add_element(obj)!
+	}
+	el1 := asn1.TaggedType.explicit_context(seq2, 1)
 
-fn (pn PrincipalName) payload_length(p asn1.Params) int {}
+	mut out := []u8{}
+	el0.pack_to_asn1(mut out, p)!
+	el1.pack_to_asn1(mut out, p)!
+	return out 
+}
+
+fn (pn PrincipalName) length(p asn1.Params) int {}
 
 fn (pn PrincipalName) packed_length(p asn1.Params) int {}
 
 fn (pn PrincipalName) pack_to_asn1(mut dst []u8, p asn1.Params) ! {
-	mut seq1 := asn1.new_sequence()
-	int1 := asn1.new_integer(pn.name_type)
+	mut seq1 := asn1.Sequence.new(false)
+	int1 := asn1.Int64.from_i64(pn.name_type)
 	// explicit context of integer content
-	exp1 := asn1.new_explicit_context(int1, 0)
-	seq1.add(exp1)
+	exp1 := asn1.TaggedType.explicit_context(int1, 0)
+	seq1.add_element(exp1)!
 
-	// second item
-	mut seq2 := asn1.new_sequence()
-	for item in p.name_string {
-		obj := asn1.new_asn_object(asn1.Class.universal, false, 27, item.bytes())
-		seq2.add(obj)
+	// second element is SEQUENCEOF
+	mut seq2 := asn1.Sequence.new(true)
+	for item in pn.name_string {
+		ks := asn1.KerberosString.from_string(item)!
+		seq2.add_element(obj)!
 	}
-	exp2 := asn1.new_explicit_context(seq2, 1)
-	seq1.add(exp2)
+	exp2 := asn1.TaggedType.explicit_context(seq2, 1)
+	seq1.add_element(exp2)!
 	out := seq1.encode()!
 
 	dst << out

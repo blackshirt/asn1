@@ -195,7 +195,8 @@ pub fn GeneralizedTime.from_bytes(b []u8) !GeneralizedTime {
 	return GeneralizedTime.from_string(b.bytestr())!
 }
 
-pun fn (gt GeneralizedTime) tag() Tag {
+pun
+fn (gt GeneralizedTime) tag() Tag {
 	return gt.tag
 }
 

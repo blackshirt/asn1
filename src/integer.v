@@ -351,7 +351,7 @@ pub struct Int64 {
 	value i64
 }
 
-pub fn Int64.new(v i64) Int64 {
+pub fn Int64.from_i64(v i64) Int64 {
 	return Int64{
 		value: v
 	}
