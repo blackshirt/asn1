@@ -7,13 +7,12 @@ module asn1
 const max_oid_length = 128
 
 // ObjectIdentifier
-struct Oid {
+pub struct Oid {
 	value []int
-mut:
 	tag Tag = new_tag(.universal, false, int(TagType.oid)) or { panic(err) }
 }
 
-fn Oid.from_ints(src []int) !Oid {
+pub fn Oid.from_ints(src []int) !Oid {
 	// allowed value of first int was 0, 1 or 2,
 	// and when first=2, second int was not limited.
 	// contrary, when first < 2, second <= 39
@@ -35,7 +34,7 @@ fn Oid.from_ints(src []int) !Oid {
 	return oid
 }
 
-fn Oid.from_bytes(src []u8) !Oid {
+pub fn Oid.from_bytes(src []u8) !Oid {
 	// maybe two integer fits in 1 bytes
 	if src.len == 0 {
 		return error('Oid: bad string oid length')
@@ -66,7 +65,7 @@ fn Oid.from_bytes(src []u8) !Oid {
 	return oid
 }
 
-fn Oid.from_string(s string) !Oid {
+pub fn Oid.from_string(s string) !Oid {
 	if s.len < 2 {
 		return error('Oid: bad string oid length')
 	}
@@ -85,20 +84,20 @@ fn Oid.from_string(s string) !Oid {
 	return oid
 }
 
-fn (oid Oid) tag() Tag {
+pub fn (oid Oid) tag() Tag {
 	return oid.tag
 }
 
-fn (oid Oid) payload(p Params) ![]u8 {
+pub fn (oid Oid) payload(p Params) ![]u8 {
 	return oid.pack()!
 }
 
-fn (oid Oid) length(p Params) int {
+pub fn (oid Oid) length(p Params) int {
 	bytes := oid.pack() or { panic(err) }
 	return bytes.len
 }
 
-fn (oid Oid) packed_length(p Params) int {
+pub fn (oid Oid) packed_length(p Params) int {
 	mut n := 0
 	n += oid.tag().packed_length(p)
 
@@ -122,7 +121,7 @@ fn (oid Oid) pack() ![]u8 {
 	return dst
 }
 
-fn (oid Oid) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (oid Oid) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Oid: unsupported mode')
 	}
@@ -134,7 +133,7 @@ fn (oid Oid) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << bytes
 }
 
-fn Oid.unpack_from_asn1(src []u8, loc i64, p Params) !(Oid, i64) {
+pub fn Oid.unpack_from_asn1(src []u8, loc i64, p Params) !(Oid, i64) {
 	if src.len < 2 {
 		return error('Oid: bad payload len')
 	}
@@ -167,7 +166,7 @@ fn Oid.unpack_from_asn1(src []u8, loc i64, p Params) !(Oid, i64) {
 	return oid, idx + len
 }
 
-fn (oid Oid) equal(oth Oid) bool {
+pub fn (oid Oid) equal(oth Oid) bool {
 	if oid.tag != oth.tag {
 		return false
 	}
@@ -182,7 +181,7 @@ fn (oid Oid) equal(oth Oid) bool {
 	return true
 }
 
-fn (oid Oid) str() string {
+pub fn (oid Oid) str() string {
 	mut s := []string{}
 	for i in oid.value {
 		s << i.str()
