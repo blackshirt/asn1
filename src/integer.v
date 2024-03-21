@@ -28,13 +28,13 @@ const zero_integer = big.Integer{
 }
 
 // Universal class of arbitrary length type of ASN.1 INTEGER
-struct Integer {
+pub struct Integer {
 mut:
 	tag   Tag = new_tag(.universal, false, int(TagType.integer))!
 	value big.Integer
 }
 
-fn Integer.from_bigint(b big.Integer) !Integer {
+pub fn Integer.from_bigint(b big.Integer) !Integer {
 	if b == big.zero_int {
 		return Integer{
 			value: asn1.zero_integer
@@ -46,7 +46,7 @@ fn Integer.from_bigint(b big.Integer) !Integer {
 }
 
 // from_string creates a new ASN.1 Integer from decimal string s.
-fn Integer.from_string(s string) Integer {
+pub fn Integer.from_string(s string) Integer {
 	v := big.integer_from_string(s) or { panic(err) }
 	if v == big.zero_int {
 		return Integer{
@@ -59,13 +59,13 @@ fn Integer.from_string(s string) Integer {
 	}
 }
 
-fn Integer.from_bytes(b []u8) !Integer {
+pub fn Integer.from_bytes(b []u8) !Integer {
 	return Integer.unpack_from_twoscomplement_bytes(b)!
 }
 
 // from_hex creates a new ASN.1 Integer from hex string in x
 // where x is a valid hex string without `0x` prefix.
-fn Integer.from_hex(x string) !Integer {
+pub fn Integer.from_hex(x string) !Integer {
 	s := big.integer_from_radix(x, 16)!
 	if s == big.zero_int {
 		return Integer{
@@ -78,7 +78,7 @@ fn Integer.from_hex(x string) !Integer {
 }
 
 // from_i64 creates new a ASN.1 Integer from i64 v
-fn Integer.from_i64(v i64) Integer {
+pub fn Integer.from_i64(v i64) Integer {
 	// same issue as above
 	if v == 0 {
 		return Integer{
@@ -91,7 +91,7 @@ fn Integer.from_i64(v i64) Integer {
 }
 
 // from_u64 creates new Integer from u64 v
-fn Integer.from_u64(v u64) Integer {
+pub fn Integer.from_u64(v u64) Integer {
 	if v == 0 {
 		return Integer{
 			value: asn1.zero_integer
@@ -105,7 +105,7 @@ fn Integer.from_u64(v u64) Integer {
 // equal do checking if n equal to m.
 // ISSUE?: There are some issues when compared n == m directly,
 // its fails even internally its a same, so we provide and use equality check
-fn (n Integer) equal(m Integer) bool {
+pub fn (n Integer) equal(m Integer) bool {
 	nbytes, nsignum := n.value.bytes()
 	mbytes, msignum := m.value.bytes()
 
@@ -223,7 +223,7 @@ fn Integer.unpack_and_validate(b []u8) !Integer {
 	return ret
 }
 
-fn (v Integer) packed_length(p Params) int {
+pub fn (v Integer) packed_length(p Params) int {
 	mut n := 0
 	n += v.tag().packed_length(p)
 
@@ -234,23 +234,23 @@ fn (v Integer) packed_length(p Params) int {
 	return n
 }
 
-fn (v Integer) tag() Tag {
+pub fn (v Integer) tag() Tag {
 	return v.tag
 }
 
-fn (v Integer) payload(p Params) ![]u8 {
+pub fn (v Integer) payload(p Params) ![]u8 {
 	bytes, _ := v.pack_into_twoscomplement_form()!
 	return bytes
 }
 
-fn (v Integer) length(p Params) int {
+pub fn (v Integer) length(p Params) int {
 	return v.bytes_len()
 }
 
 // pack_to_asn1 packs and serializes Integer v into ASN 1 serialized bytes into `dst`.
 // Its accepts encoding mode params, where its currently only suppport `.der` DER mode.
 // If `dst.len != 0`, it act as append semantic, otherwise the `dst` bytes stores the result.
-fn (v Integer) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (v Integer) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
@@ -266,7 +266,7 @@ fn (v Integer) pack_to_asn1(mut dst []u8, p Params) ! {
 // Its accepts `loc` params, the location (offset) within bytes src where the unpack
 // process start form, if not sure set to 0 and optional mode in `Params` to drive unpacking.
 // see `EncodingMode` for availables values. Currently only support`.der`.
-fn Integer.unpack_from_asn1(src []u8, loc i64, p Params) !(Integer, i64) {
+pub fn Integer.unpack_from_asn1(src []u8, loc i64, p Params) !(Integer, i64) {
 	if src.len < 3 {
 		return error('IA5String: bad ia5string bytes length')
 	}
@@ -346,38 +346,38 @@ fn trim_bytes(src []u8) ![]u8 {
 }
 
 // INT64
-struct Int64 {
+pub struct Int64 {
 	tag   Tag = Tag{.universal, false, int(TagType.integer)}
 	value i64
 }
 
-fn Int64.new(v i64) Int64 {
+pub fn Int64.new(v i64) Int64 {
 	return Int64{
 		value: v
 	}
 }
 
-fn Int64.from_bytes(src []u8) !Int64 {
+pub fn Int64.from_bytes(src []u8) !Int64 {
 	val := read_i64(src)!
 	return Int64.new(val)
 }
 
-fn (v Int64) tag() Tag {
+pub fn (v Int64) tag() Tag {
 	return v.tag
 }
 
-fn (v Int64) payload(p Params) ![]u8 {
+pub fn (v Int64) payload(p Params) ![]u8 {
 	mut n := length_i64(v.value)
 	mut dst := []u8{len: n}
 	i64_to_bytes(mut dst, v.value)
 	return dst
 }
 
-fn (v Int64) length(p Params) int {
+pub fn (v Int64) length(p Params) int {
 	return length_i64(v.value)
 }
 
-fn (v Int64) packed_length(p Params) int {
+pub fn (v Int64) packed_length(p Params) int {
 	mut n := 0
 	n += v.tag().packed_length(p)
 	len := v.length(p)
@@ -388,7 +388,7 @@ fn (v Int64) packed_length(p Params) int {
 	return n
 }
 
-fn (v Int64) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (v Int64) pack_to_asn1(mut dst []u8, p Params) ! {
 	v.tag().pack_to_asn1(mut dst, p)!
 	payload := v.payload(p)!
 	len := Length.from_i64(payload.len)!
@@ -396,7 +396,7 @@ fn (v Int64) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << payload
 }
 
-fn Int64.unpack_from_asn1(src []u8, loc i64, p Params) !(Int64, i64) {
+pub fn Int64.unpack_from_asn1(src []u8, loc i64, p Params) !(Int64, i64) {
 	if src.len < 3 {
 		return error('Int64: bytes underflow')
 	}
