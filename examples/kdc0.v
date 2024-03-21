@@ -152,11 +152,12 @@ fn (e EncryptedData) tag() asn1.Tag {
 fn (e EncryptedData) length(p Params) int {
 	mut n := 0
 	el0 := TaggedType.explicit_context(asn1.Int.from_i64(e.etype), 0)!
-	el1 := TaggedType.explicit_context(asn1.Int.from_i64(e.kvno), 1)!
+	// el1 := TaggedType.explicit_context(asn1.Int.from_i64(e.kvno), 1)!
 	el2 := TaggedType.explicit_context(e.cipher, 2)!
 
 	n += el0.packed_length(p)
 	if e.kvno != none {
+		el1 := TaggedType.explicit_context(asn1.Int.from_i64(e.kvno), 1)!
 		n += el1.packed_length(p)
 	}
 	n += el2.packed_length(p)
@@ -167,12 +168,11 @@ fn (e EncryptedData) length(p Params) int {
 fn (e EncryptedData) payload(p Params) ![]u8 {
 	mut out := []u8{}
 	el0 := TaggedType.explicit_context(asn1.Int.from_i64(e.etype), 0)!
-	el1 := TaggedType.explicit_context(asn1.Int.from_i64(e.kvno), 1)!
 	el2 := TaggedType.explicit_context(e.cipher, 2)!
-
 	el0.pack_to_asn1(mut out, p)!
 	if e.kvno != none {
-		el1.pack_to_asn1(mut out, p)!
+		el1 := TaggedType.explicit_context(asn1.Int.from_i64(e.kvno), 1)!
+	    el1.pack_to_asn1(mut out, p)!
 	}
 	el2.pack_to_asn1(mut out, p)!
 
@@ -210,7 +210,22 @@ fn EncryptedData.unpack_from_asn1(src []u8, loc i64, p Params) !(EncryptedData, 
 	}
 	// sequence elements contents
 	contents := unsafe {src[idx..idx+length]}
+	els := asn1.ElementList.from_bytes(src)!
+	if els.len < 2 {
+		return error("ElementList < 2")
+	}
 	
+	// check if optional element is present
+	kvno_present := if els.len == 3 {true} else {false}
+	els0 := els[0] as TaggedType // would panic if not hold TaggedType
+	els1 := if kvno_present { els[1] as TaggedType } else {none}
+	els2 := els[2] as asn1.OctetString
+	ed := EncryptedData{
+		etype: els0
+		kvno: els1
+		cipher: els2
+	}
+	return ed, idx+length 
 }
 
 // Ticket          ::= [APPLICATION 1] SEQUENCE {
