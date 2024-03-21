@@ -97,19 +97,19 @@ pub fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
 type ElementList = []Element
 
 // from_bytes parses bytes in src to array of Element or return error on fail
-pub fn ElementList.from_bytes(src []u8) ![]Element {
+pub fn ElementList.from_bytes(src []u8) !([]Element, i64) {
 	mut els := []Element{}
 	if src.len == 0 {
 		// empty list
-		return els
+		return els, 0
 	}
-	mut i := 0
+	mut i := i64(0)
 	for i < src.len {
 		el, pos := Element.unpack_from_asn1(src, i)!
 		els << el
 		i += pos
 	}
-	return els
+	return els, i
 }
 
 // hold_different_tag checks whether this array of Element

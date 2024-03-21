@@ -30,7 +30,7 @@ const zero_integer = big.Integer{
 // Universal class of arbitrary length type of ASN.1 INTEGER
 pub struct Integer {
 mut:
-	tag   Tag = new_tag(.universal, false, int(TagType.integer))!
+	tag   Tag = Tag{.universal, false, int(TagType.integer)}
 	value big.Integer
 }
 
@@ -119,8 +119,6 @@ fn (v Integer) bytes() []u8 {
 	bytes, _ := v.value.bytes()
 	return bytes
 }
-
-// tag returns the tag of Universal class of this Integer type.
 
 fn (v Integer) bytes_len() int {
 	if v.value == asn1.zero_integer {
@@ -239,7 +237,7 @@ pub fn (v Integer) tag() Tag {
 }
 
 pub fn (v Integer) value() big.Integer {
-	retunr v.value
+	return v.value
 }
 
 pub fn (v Integer) payload(p Params) ![]u8 {
@@ -363,7 +361,7 @@ pub fn Int64.from_i64(v i64) Int64 {
 
 pub fn Int64.from_bytes(src []u8) !Int64 {
 	val := read_i64(src)!
-	return Int64.new(val)
+	return Int64.from_i64(val)
 }
 
 pub fn (v Int64) tag() Tag {
@@ -426,7 +424,7 @@ pub fn Int64.unpack_from_asn1(src []u8, loc i64, p Params) !(Int64, i64) {
 	bytes := unsafe { src[idx..idx + len] }
 	val := read_i64(bytes)!
 
-	return Int64.new(val), idx + len
+	return Int64.from_i64(val), idx + len
 }
 
 // Utility function
@@ -475,12 +473,14 @@ fn read_i64(src []u8) !i64 {
 
 	// try to serialize back, and check its matching original one
 	// and gives a warning when its not match.
-	$if debug {
-		a := Int64.new(ret)
-		c := a.payload()!
-		if c != src {
-			eprintln('maybe integer bytes not in shortest form')
-		}
+
+	a := Int64.from_i64(ret)
+	mut n := length_i64(a.value)
+	mut dst := []u8{len: n}
+	i64_to_bytes(mut dst, a.value)
+	if dst != src {
+		eprintln('maybe integer bytes not in shortest form')
 	}
+
 	return ret
 }

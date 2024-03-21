@@ -47,8 +47,7 @@ pub fn (us UTF8String) payload(p Params) ![]u8 {
 	return us.value.bytes()
 }
 
-pun
-fn (us UTF8String) length(p Params) int {
+pub fn (us UTF8String) length(p Params) int {
 	return us.value.len
 }
 
