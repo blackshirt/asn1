@@ -450,6 +450,8 @@ fn (pn PrincipalName) pack_to_asn1(mut dst []u8, p asn1.Params) ! {
 	seq1.pack_to_asn1(mut dst, p)!
 }
 
+fn PrincipalName.unpack_from_asn1(src []u8, loc i64, p asn1.Params) !(PrincipalName, i64) {}
+
 fn main() {
 	// Basically this is a Kerberos PrincipalName data you sent to me
 
