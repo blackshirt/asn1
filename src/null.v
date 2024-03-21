@@ -4,11 +4,11 @@
 module asn1
 
 // ASN.1 NULL TYPE
-struct Null {
+pub struct Null {
 	tag Tag = Tag{.universal, false, int(TagType.null)}
 }
 
-fn Null.new() Null {
+pub fn Null.new() Null {
 	return Null{}
 }
 
@@ -18,30 +18,30 @@ fn Null.new_with_tag(t Tag) Null {
 	}
 }
 
-fn Null.from_bytes(b []u8) !Null {
+pub fn Null.from_bytes(b []u8) !Null {
 	if b.len != 0 {
 		return error('Null: bad bytes')
 	}
 	return Null{}
 }
 
-fn (n Null) tag() Tag {
+pub fn (n Null) tag() Tag {
 	return n.tag
 }
 
-fn (n Null) length(p Params) int {
+pub fn (n Null) length(p Params) int {
 	return 0
 }
 
-fn (n Null) payload(p Params) ![]u8 {
+pub fn (n Null) payload(p Params) ![]u8 {
 	return []u8{}
 }
 
-fn (n Null) packed_length(p Params) int {
+pub fn (n Null) packed_length(p Params) int {
 	return 2
 }
 
-fn (n Null) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (n Null) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
@@ -75,6 +75,6 @@ fn Null.unpack(src []u8, loc i64, p Params) !(Null, i64) {
 	}, idx
 }
 
-fn (n Null) str() string {
+pub fn (n Null) str() string {
 	return 'NULL'
 }
