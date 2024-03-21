@@ -15,7 +15,8 @@ pub struct GeneralString {
 }
 
 // TODO: proper check GeneralString validation
-fn GeneralString.from_string(s string) !GeneralString {
+// from_string creates GeneralString from string s
+pub fn GeneralString.from_string(s string) !GeneralString {
 	if !s.is_ascii() {
 		return error('GeneralString: contains non-ascii chars')
 	}
@@ -23,8 +24,9 @@ fn GeneralString.from_string(s string) !GeneralString {
 		value: s
 	}
 }
-
-fn GeneralString.from_bytes(b []u8) !GeneralString {
+		
+// from_bytes creates GeneralString from bytes b
+pub fn GeneralString.from_bytes(b []u8) !GeneralString {
 	if b.any(it < u8(` `) || it > u8(`~`)) {
 		return error('GeneralString: bytes contains non-ascii chars')
 	}
@@ -33,22 +35,22 @@ fn GeneralString.from_bytes(b []u8) !GeneralString {
 	}
 }
 
-fn (g GeneralString) tag() Tag {
+pub fn (g GeneralString) tag() Tag {
 	return g.tag
 }
 
-fn (g GeneralString) payload(p Params) ![]u8 {
+pub fn (g GeneralString) payload(p Params) ![]u8 {
 	if !g.value.is_ascii() {
 		return error('GeneralString: contains non-ascii chars')
 	}
 	return g.value.bytes()
 }
 
-fn (g GeneralString) length(p Params) int {
+pub fn (g GeneralString) length(p Params) int {
 	return g.value.bytes().len
 }
 
-fn (g GeneralString) packed_length(p Params) int {
+pub fn (g GeneralString) packed_length(p Params) int {
 	mut n := 0
 
 	n += g.tag().packed_length(p)
@@ -59,7 +61,7 @@ fn (g GeneralString) packed_length(p Params) int {
 	return n
 }
 
-fn (g GeneralString) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (g GeneralString) pack_to_asn1(mut dst []u8, p Params) ! {
 	if !g.value.is_ascii() {
 		return error('GeneralString: contains non-ascii char')
 	}
@@ -74,7 +76,7 @@ fn (g GeneralString) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << bytes
 }
 
-fn GeneralString.unpack_from_asn1(src []u8, loc i64, p Params) !(GeneralString, i64) {
+pub fn GeneralString.unpack_from_asn1(src []u8, loc i64, p Params) !(GeneralString, i64) {
 	if src.len < 2 {
 		return error('GeneralString: bad bytes length')
 	}
@@ -115,4 +117,12 @@ fn GeneralString.unpack_from_asn1(src []u8, loc i64, p Params) !(GeneralString, 
 		value: bytes.bytestr()
 	}
 	return ret, idx + len
+}
+
+// Utility function 
+fn validate_general_string(s string) bool {
+	if !s.is_ascii() {
+		return false
+	}
+	return true
 }
