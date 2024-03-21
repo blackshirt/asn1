@@ -9,14 +9,13 @@ module asn1
 // For historical reasons, the characters SPACE (number 32) and DELETE (number 127)
 // are not considered to be in either the C set or the G set, but instead stand on their own
 // We only treated GeneralString as an us-ascii charset
-struct GeneralString {
+pub struct GeneralString {
 	value string
-mut:
-	tag Tag = Tag{.universal, false, int(TagType.generalstring)}
+	tag   Tag = Tag{.universal, false, int(TagType.generalstring)}
 }
 
 // TODO: proper check GeneralString validation
-fn GeneralString.new(s string) !GeneralString {
+fn GeneralString.from_string(s string) !GeneralString {
 	if !s.is_ascii() {
 		return error('GeneralString: contains non-ascii chars')
 	}

@@ -237,6 +237,9 @@ fn parse_primitive_element(tag Tag, contents []u8) !Element {
 		int(TagType.ia5string) {
 			return IA5String.from_bytes(contents)!
 		}
+		int(TagType.generalstring) {
+			return GeneralString.from_bytes(contents)!
+		}
 		int(TagType.utf8string) {
 			return UTF8String.from_bytes(contents)!
 		}

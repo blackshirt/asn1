@@ -136,26 +136,74 @@ fn HostAddress.unpack_from_asn1(src []u8) !(HostAddress, i64) {
 //           kvno    [1] UInt32 OPTIONAL,
 //           cipher  [2] OCTET STRING -- ciphertext
 //   }
+// minimal bytes to represent this structure, because etype and cipher should present
+// explicit integer : 5 bytes + explicit octet cipher 4 + sequence header 2 = 11
 struct EncryptedData {
 	tag    asn1.Tag = asn1.new_tag(.universal, true, int(asn1.TagType.sequence)) or { panic(err) }
 	etype  int
-	kvno   u32
+	kvno   ?u32 = none // OPTIONAL
 	cipher asn1.OctetString
 }
 
 fn (e EncryptedData) tag() asn1.Tag {
 	return e.tag
 }
-		
+
 fn (e EncryptedData) length(p Params) int {
-	
+	mut n := 0
+	el0 := TaggedType.explicit_context(asn1.Int.from_i64(e.etype), 0)!
+	el1 := TaggedType.explicit_context(asn1.Int.from_i64(e.kvno), 1)!
+	el2 := TaggedType.explicit_context(e.cipher, 2)!
+
+	n += el0.packed_length(p)
+	if e.kvno != none {
+		n += el1.packed_length(p)
+	}
+	n += el2.packed_length(p)
+
+	return n
 }
 
 fn (e EncryptedData) payload(p Params) ![]u8 {
 	mut out := []u8{}
 	el0 := TaggedType.explicit_context(asn1.Int.from_i64(e.etype), 0)!
+	el1 := TaggedType.explicit_context(asn1.Int.from_i64(e.kvno), 1)!
+	el2 := TaggedType.explicit_context(e.cipher, 2)!
+
+	el0.pack_to_asn1(mut out, p)!
+	if e.kvno != none {
+		el1.pack_to_asn1(mut out, p)!
+	}
+	el2.pack_to_asn1(mut out, p)!
+
+	return out
 }
-		
+
+fn (e EncryptedData) pack_to_asn1(mut out []u8, p Params) ! {
+	e.tag().pack_to_asn1(mut out, p)!
+	length := Length.from_i64(e.length(p))!
+	length.pack_to_asn1(mut out, p)!
+	out << e.payload(p)!
+}
+
+fn EncryptedData.unpack_from_asn1(src []u8, loc i64, p Params) !(EncryptedData, i64) {
+	if src.len < 11 {
+		return error('EncryptedData: bytes underflow')
+	}
+	if loc > src.len {
+		return error('EncryptedData: loc overflow')
+	}
+	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	if tag.class() != .universal && !tag.is_constructed()
+		&& tag.tag_number() != int(asn1.TagType.sequence) {
+		return error('EncryptedData: check tag failed')
+	}
+	if pos > src.len {
+		return error('EncryptedData: pos overflow')
+	}
+	length, idx := Length.unpack_from_asn1(src, pos, p)!
+}
+
 // Ticket          ::= [APPLICATION 1] SEQUENCE {
 //    tkt-vno         [0] INTEGER (5),
 //    realm           [1] Realm,
@@ -170,12 +218,12 @@ struct Ticket {
 }
 
 type KerberosTime = asn1.GeneralizedTime // without fractional seconds
-	
+
 fn KerberosTime.from_string(s string) !KerberosTime {
 	g := asn1.GeneralizedTime.from_string(s)!
 	return KerberosTime(g)
 }
-		
+
 // use KerberosString mechanism
 type Realm = KerberosString
 
@@ -183,7 +231,7 @@ fn Realm.from_string(s string) !Realm {
 	ret := KerberosString.from_string(s)
 	return Realm(s)
 }
-		
+
 fn (r Realm) tag() asn1.Tag {
 	return asn1.new_tag(.universal, false, int(asn1.TagType.generalstring)) or { panic(err) }
 }
@@ -291,24 +339,24 @@ fn (kf KerberosFlags) tag() asn1.Tag {
 fn (kf KerberosFlags) payload(p Params) ![]u8 {
 	return kf.value.payload(p)
 }
-	
+
 fn (kf KerberosFlags) payload_length(p Params) int {
 	return kf.value.payload_length(p)
-}	
-		
+}
+
 fn (kf KerberosFlags) packed_length(p Params) int {
 	return kf.value.packed_length(p)
 }
-		
+
 fn (kf KerberosFlags) pack_to_asn1(mut out []u8, p asn1.Params) ! {
 	kf.value.pack_to_asn1(mut out, p)!
 }
-		
+
 fn KerberosFlags.unpack_from_asn1(src []u8, loc i64, p Params) !(KerberosFlags, i64) {
 	b, n := BitString.unpack_from_asn1(src, loc, p)!
 	return KerberosFlags.new(b), n
 }
-		
+
 // PrincipalName   ::= SEQUENCE {
 //    name-type       [0] Int32,
 //    name-string     [1] SEQUENCE OF KerberosString
@@ -318,17 +366,17 @@ struct PrincipalName {
 	name_type   int
 	name_string []KerberosString
 }
-		
+
 fn (pn PrincipalName) tag() asn1.Tag {
 	return pn.tag
 }
 
 fn (pn PrincipalName) payload(p asn1.Params) ![]u8 {}
-		
+
 fn (pn PrincipalName) payload_length(p asn1.Params) int {}
-		
+
 fn (pn PrincipalName) packed_length(p asn1.Params) int {}
-		
+
 fn (pn PrincipalName) pack_to_asn1(mut dst []u8, p asn1.Params) ! {
 	mut seq1 := asn1.new_sequence()
 	int1 := asn1.new_integer(pn.name_type)
