@@ -13,13 +13,12 @@ module asn1
 //
 const printable_symbols = r"(')+,-./:=?".bytes()
 
-struct PrintableString {
+pub struct PrintableString {
 	value string
-mut:
 	tag Tag = new_tag(.universal, false, int(TagType.printablestring)) or { panic(err) }
 }
 
-fn PrintableString.from_string(s string) !PrintableString {
+pub fn PrintableString.from_string(s string) !PrintableString {
 	if !printable_chars(s.bytes()) {
 		return error('PrintableString: contains non-printable string')
 	}
@@ -28,7 +27,7 @@ fn PrintableString.from_string(s string) !PrintableString {
 	}
 }
 
-fn PrintableString.from_bytes(src []u8) !PrintableString {
+pub fn PrintableString.from_bytes(src []u8) !PrintableString {
 	if !printable_chars(src) {
 		return error('PrintableString: contains non-printable string')
 	}
@@ -37,22 +36,22 @@ fn PrintableString.from_bytes(src []u8) !PrintableString {
 	}
 }
 
-fn (ps PrintableString) tag() Tag {
+pub fn (ps PrintableString) tag() Tag {
 	return ps.tag
 }
 
-fn (ps PrintableString) payload(p Params) ![]u8 {
+pub fn (ps PrintableString) payload(p Params) ![]u8 {
 	if !printable_chars(ps.value.bytes()) {
 		return error('PrintableString: contains non-printable string')
 	}
 	return ps.value.bytes()
 }
 
-fn (ps PrintableString) length(p Params) int {
+pub fn (ps PrintableString) length(p Params) int {
 	return ps.value.len
 }
 
-fn (ps PrintableString) packed_length(p Params) int {
+pub fn (ps PrintableString) packed_length(p Params) int {
 	mut n := 0
 	n += ps.tag().packed_length(p)
 	len := ps.length(p)
@@ -63,7 +62,7 @@ fn (ps PrintableString) packed_length(p Params) int {
 	return n
 }
 
-fn (ps PrintableString) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (ps PrintableString) pack_to_asn1(mut dst []u8, p Params) ! {
 	// recheck
 	if !printable_chars(ps.value.bytes()) {
 		return error('PrintableString: contains non-printable string')
@@ -78,7 +77,7 @@ fn (ps PrintableString) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << ps.value.bytes()
 }
 
-fn PrintableString.unpack_from_asn1(src []u8, loc i64, p Params) !(PrintableString, i64) {
+pub fn PrintableString.unpack_from_asn1(src []u8, loc i64, p Params) !(PrintableString, i64) {
 	if src.len < 2 {
 		return error('PrintableString: bad src.len underflow')
 	}
