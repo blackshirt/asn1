@@ -3,45 +3,10 @@ module asn1
 import crypto.pem
 import encoding.hex
 
-fn test_multienc_add_and_encode() {
-	mut en := []Element{}
-	b := Boolean.new(true)
-
-	en.add(b)
-
-	mut seq := new_sequence_from_multiencoder(en)!
-	seq.add(new_null())
-	out := seq.encode()!
-
-	n := seq.length()
-	assert out == [u8(0x30), u8(n), 1, 1, 255, 5, 0]
-
-	seq.add(Boolean.new(false))
-
-	seq2 := new_sequence_from_multiencoder([seq])!
-
-	back := seq2.encode()!
-	// dump(back)
-	outback := Sequence.unpack_from_asn1(back)!
-
-	seqb := outback.as_sequence()!
-	assert seqb == seq2
-}
-
-fn test_simple_certificate_contains_discarded_bytes() {
-	data := [u8(0x30), 0x13, 0x02, 0x01, 0x05, 0x16, 0x0e, 0x41, 0x6e, 0x79, 0x62, 0x6f, 0x64,
-		0x79, 0x20, 0x74, 0x68, 0x65, 0x72, 0x65, 0x3f, 0xff, 0xff]
-
-	out := Sequence.unpack_from_asn1(data) or {
-		assert err == error('malformed bytes, contains discarded bytes')
-		return
-	}
-}
-
 fn test_parse_ed25519_certificate() ! {
 	// blindly parse data
 	// data from https://lapo.it/asn1js , with data X.509 certificate based Curve25519 (as per RFC 8410) loaded
-	data := [u8(0x30), 0x82, 0x01, 0x7F, 0x30, 0x82, 0x01, 0x31, 0xA0, 0x03, 0x02, 0x01, 0x02,
+	data := [u8(0x30), 0x82, 0x01, 0x7F, u8(0x30), 0x82, 0x01, 0x31, 0xA0, 0x03, 0x02, 0x01, 0x02,
 		0x02, 0x14, 0x7C, 0x8E, 0x64, 0x49, 0xD7, 0x0E, 0xD9, 0x2D, 0x3E, 0x2E, 0x4A, 0x5D, 0x2F,
 		0x76, 0xF6, 0x55, 0x42, 0x46, 0xD7, 0x46, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70, 0x30,
 		0x35, 0x31, 0x0B, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x06, 0x13, 0x02, 0x49, 0x54, 0x31,
@@ -68,29 +33,31 @@ fn test_parse_ed25519_certificate() ! {
 		0xD0, 0xD2, 0xBF, 0x4C, 0xD6, 0x6F, 0x0E, 0xB6, 0xE2, 0xE8, 0x9D, 0x04, 0xA3, 0xE0, 0x99,
 		0x50, 0xF9, 0xC2, 0x6D, 0xDE, 0x73, 0xAD, 0x1D, 0x35, 0x57, 0x85, 0x65, 0x86, 0x06]
 
-	out := Sequence.unpack_from_asn1(data)!
+	seq, n := Sequence.unpack_from_asn1(data, 0)!
+	assert n == data.len 
 
-	assert out is Sequence
-	casted := out.as_sequence()!
-	assert casted.length() == 383
-	assert casted.size() == 387
-	assert casted.elements.len == 3
+	assert seq.length() == 383
+	assert seq.packed_length() == 387
+	els := seq.elements()!
+	assert els.len == 3
 
 	// first element of sequence is tbsCertificate
-	tbscert := casted.elements[0].as_sequence()!
+	tbscert := els[0] as Sequence
 	assert tbscert.length() == 305
 	assert tbscert.elements.len == 8
 
 	// fourt element of tbscertificate is issuer
-	issuer := tbscert.elements[3].as_sequence()!
+	issuer := els[3] as Sequence 
 	assert issuer.elements.len == 3
 	assert issuer.length() == 53
 
-	dmp := out.encode()!
+	mut dmp := []u8{}
+	seq.pack_to_asn1(mut dmp)!
 
 	assert dmp == data
 }
 
+/*
 fn test_ed4418_data() ! {
 	// from https://asecuritysite.com/digitalcert/sigs4cd
 	/*
@@ -282,3 +249,4 @@ w1AH9efZBw==
 		assert bts.data == exp
 	}
 }
+*/

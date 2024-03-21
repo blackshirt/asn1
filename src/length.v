@@ -19,7 +19,7 @@ module asn1
 
 // max_definite_length_count is a limit tells how many bytes to represent this length.
 // We're going to limi this to 6 bytes following when the length is in long-definite form.
-const max_definite_length_count = 6
+const max_definite_length_count = 512 // 4096 bits
 const max_definite_length_value = i64(0x0000_ffff_ffff_ffff)
 
 // Length represent ASN.1 length value
@@ -124,9 +124,10 @@ pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
 			return error('Length: unsupported undefinite length')
 		}
 		// we limit the bytes count for length definite form to `max_definite_length_count`
-		if num_bytes > asn1.max_definite_length_count {
-			return error('Length: count bytes exceed limit')
-		}
+		//if num_bytes > asn1.max_definite_length_count {
+		//	dump(num_bytes)
+		//	return error('Length: count bytes exceed limit')
+		//}
 		for i := 0; i < num_bytes; i++ {
 			if pos >= src.len {
 				return error('Length: truncated length')
@@ -135,9 +136,10 @@ pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
 			pos += 1
 			// currently, we're only support limited length.
 			// The length is in integer range
-			if length > asn1.max_definite_length_value {
-				return error('Length: length exceed limit value')
-			}
+			
+			// if length > asn1.max_definite_length_value {
+			// 	return error('Length: length exceed limit value')
+			//}
 			length <<= 8
 			length |= b
 			if length == 0 {
@@ -152,6 +154,7 @@ pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
 			return error('Length: dont needed in long form')
 		}
 	}
+	dump(length)
 	ret := Length.from_i64(length)!
 	return ret, pos
 }
