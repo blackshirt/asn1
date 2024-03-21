@@ -202,6 +202,15 @@ fn EncryptedData.unpack_from_asn1(src []u8, loc i64, p Params) !(EncryptedData, 
 		return error('EncryptedData: pos overflow')
 	}
 	length, idx := Length.unpack_from_asn1(src, pos, p)!
+	if length == 0 {
+		return error("EncryptedData: length should != 0")
+	}
+	if idx > src.len || idx+length > src.len {
+		return error("EncryptedData: overflow"(
+	}
+	// sequence elements contents
+	contents := unsafe {src[idx..idx+length]}
+	
 }
 
 // Ticket          ::= [APPLICATION 1] SEQUENCE {
