@@ -5,22 +5,24 @@ module asn1
 
 // IA5String handling routine
 // Standard ASCII characters
-struct IA5String {
+pub struct IA5String {
 	value string
 mut:
 	tag Tag = new_tag(.universal, false, int(TagType.ia5string)) or { panic(err) }
 }
 
-fn IA5String.from_string(value string) !IA5String {
-	if !value.is_ascii() {
+// from_string creates IA5String from string s
+pub fn IA5String.from_string(s string) !IA5String {
+	if !valid_ia5string(s) {
 		return error('IA5String: contains non-ascii chars')
 	}
 	return IA5String{
-		value: value
+		value: s
 	}
 }
-
-fn IA5String.from_bytes(b []u8) !IA5String {
+		
+// from_bytes creates a new IA5String from bytes b
+pub fn IA5String.from_bytes(b []u8) !IA5String {
 	if b.any(it < u8(` `) || it > u8(`~`)) {
 		return error('IA5String: bytes contains non-ascii chars')
 	}
@@ -29,22 +31,22 @@ fn IA5String.from_bytes(b []u8) !IA5String {
 	}
 }
 
-fn (v IA5String) tag() Tag {
+pub fn (v IA5String) tag() Tag {
 	return v.tag
 }
 
-fn (v IA5String) payload(p Params) ![]u8 {
+pub fn (v IA5String) payload(p Params) ![]u8 {
 	if !v.value.is_ascii() {
 		return error('IA5String: contains non-ascii chars')
 	}
 	return v.value.bytes()
 }
 
-fn (v IA5String) length(p Params) int {
+pub fn (v IA5String) length(p Params) int {
 	return v.value.len
 }
 
-fn (v IA5String) packed_length(p Params) int {
+pub fn (v IA5String) packed_length(p Params) int {
 	mut n := 0
 
 	n += v.tag().packed_length(p)
@@ -55,7 +57,7 @@ fn (v IA5String) packed_length(p Params) int {
 	return n
 }
 
-fn (v IA5String) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (v IA5String) pack_to_asn1(mut dst []u8, p Params) ! {
 	if !v.value.is_ascii() {
 		return error('IA5String: contains non-ascii char')
 	}
@@ -70,7 +72,7 @@ fn (v IA5String) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << bytes
 }
 
-fn IA5String.unpack_from_asn1(src []u8, loc i64, p Params) !(IA5String, i64) {
+pub fn IA5String.unpack_from_asn1(src []u8, loc i64, p Params) !(IA5String, i64) {
 	if src.len < 2 {
 		return error('IA5String: bad ia5string bytes length')
 	}
@@ -111,4 +113,9 @@ fn IA5String.unpack_from_asn1(src []u8, loc i64, p Params) !(IA5String, i64) {
 		value: bytes.bytestr()
 	}
 	return ret, idx + len
+}
+
+// Utility function
+fn valid_ia5string(s string) bool {
+	return s.is_ascii()
 }
