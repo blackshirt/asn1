@@ -9,14 +9,14 @@ module asn1
 // restricted to sequences of zero, one or more characters from some
 // specified collection of characters.
 // That was : digit : 0,1,..9 and spaces char (0x20)
-struct NumericString {
+pub struct NumericString {
 	value string
 mut:
 	tag Tag = new_tag(.universal, false, int(TagType.numericstring)) or { panic(err) }
 }
 
 // new_numeric_string creates new numeric string
-fn NumericString.from_string(s string) !NumericString {
+pub fn NumericString.from_string(s string) !NumericString {
 	if !all_numeric_string(s.bytes()) {
 		return error('NumericString: contains non-numeric string')
 	}
@@ -25,7 +25,7 @@ fn NumericString.from_string(s string) !NumericString {
 	}
 }
 
-fn NumericString.from_bytes(bytes []u8) !NumericString {
+pub fn NumericString.from_bytes(bytes []u8) !NumericString {
 	if !all_numeric_string(bytes) {
 		return error('NumericString: contains non-numeric string')
 	}
@@ -34,19 +34,19 @@ fn NumericString.from_bytes(bytes []u8) !NumericString {
 	}
 }
 
-fn (ns NumericString) tag() Tag {
+pub fn (ns NumericString) tag() Tag {
 	return ns.tag
 }
 
-fn (ns NumericString) payload(p Params) ![]u8 {
+pub fn (ns NumericString) payload(p Params) ![]u8 {
 	return ns.value.bytes()
 }
 
-fn (ns NumericString) length(p Params) int {
+pub fn (ns NumericString) length(p Params) int {
 	return ns.value.len
 }
 
-fn (ns NumericString) packed_length(p Params) int {
+pub fn (ns NumericString) packed_length(p Params) int {
 	mut n := 0
 
 	n += ns.tag().packed_length(p)
@@ -57,7 +57,7 @@ fn (ns NumericString) packed_length(p Params) int {
 	return n
 }
 
-fn (ns NumericString) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (ns NumericString) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
@@ -68,7 +68,7 @@ fn (ns NumericString) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << ns.value.bytes()
 }
 
-fn NumericString.unpack_from_asn1(src []u8, loc i64, p Params) !(NumericString, i64) {
+pub fn NumericString.unpack_from_asn1(src []u8, loc i64, p Params) !(NumericString, i64) {
 	if src.len < 2 {
 		return error('NumericString: src.len underflow')
 	}
@@ -104,6 +104,7 @@ fn NumericString.unpack_from_asn1(src []u8, loc i64, p Params) !(NumericString, 
 }
 
 // Utility function
+// 
 fn all_numeric_string(bytes []u8) bool {
 	return bytes.all(is_numericstring(it))
 }
