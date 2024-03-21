@@ -146,7 +146,16 @@ struct EncryptedData {
 fn (e EncryptedData) tag() asn1.Tag {
 	return e.tag
 }
+		
+fn (e EncryptedData) length(p Params) int {
+	
+}
 
+fn (e EncryptedData) payload(p Params) ![]u8 {
+	mut out := []u8{}
+	el0 := TaggedType.explicit_context(asn1.Int.from_i64(e.etype), 0)!
+}
+		
 // Ticket          ::= [APPLICATION 1] SEQUENCE {
 //    tkt-vno         [0] INTEGER (5),
 //    realm           [1] Realm,
@@ -160,9 +169,14 @@ struct Ticket {
 	enc_part EncryptedData
 }
 
-type HostAddresses = []HostAddress
 type KerberosTime = asn1.GeneralizedTime // without fractional seconds
-
+	
+fn KerberosTime.from_string(s string) !KerberosTime {
+	g := asn1.GeneralizedTime.from_string(s)!
+	return KerberosTime(g)
+}
+		
+// use KerberosString mechanism
 type Realm = KerberosString
 
 fn Realm.from_string(s string) !Realm {
