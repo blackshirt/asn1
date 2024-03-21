@@ -38,6 +38,10 @@ pub fn (ns NumericString) tag() Tag {
 	return ns.tag
 }
 
+pub fn (ns NumericString) value() string {
+	return ns.value
+}
+
 pub fn (ns NumericString) payload(p Params) ![]u8 {
 	return ns.value.bytes()
 }

@@ -35,6 +35,10 @@ pub fn (os OctetString) tag() Tag {
 	return os.tag
 }
 
+pub fn (os OctetString) value() string {
+	return os.value
+}
+
 pub fn (os OctetString) payload(p Params) ![]u8 {
 	return os.value.bytes()
 }

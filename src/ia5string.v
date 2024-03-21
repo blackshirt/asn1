@@ -35,6 +35,10 @@ pub fn (v IA5String) tag() Tag {
 	return v.tag
 }
 
+pub fn (v IA5String) value() string {
+	return v.value
+}
+
 pub fn (v IA5String) payload(p Params) ![]u8 {
 	if !v.value.is_ascii() {
 		return error('IA5String: contains non-ascii chars')

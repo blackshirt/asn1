@@ -39,6 +39,10 @@ pub fn (g GeneralString) tag() Tag {
 	return g.tag
 }
 
+pub fn (g GeneralString) value() string {
+	return g.value
+}
+
 pub fn (g GeneralString) payload(p Params) ![]u8 {
 	if !g.value.is_ascii() {
 		return error('GeneralString: contains non-ascii chars')

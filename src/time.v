@@ -48,6 +48,10 @@ pub fn (ut UTCTime) tag() Tag {
 	return ut.tag
 }
 
+pub fn (ut UTCTime) value() string {
+	return ut.value
+}
+
 pub fn (ut UTCTime) payload(p Params) ![]u8 {
 	return ut.value.bytes()
 }
@@ -195,9 +199,12 @@ pub fn GeneralizedTime.from_bytes(b []u8) !GeneralizedTime {
 	return GeneralizedTime.from_string(b.bytestr())!
 }
 
-pun
-fn (gt GeneralizedTime) tag() Tag {
+pub fn (gt GeneralizedTime) tag() Tag {
 	return gt.tag
+}
+
+pub fn (gt GeneralizedTime) value() string {
+	return gt.value
 }
 
 pub fn (gt GeneralizedTime) packed_length(p Params) int {

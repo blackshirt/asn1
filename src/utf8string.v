@@ -36,6 +36,10 @@ pub fn (us UTF8String) tag() Tag {
 	return us.tag
 }
 
+pub fn (us UTF8String) value() string {
+	return us.value
+}
+
 pub fn (us UTF8String) payload(p Params) ![]u8 {
 	if !utf8.validate_str(us.value) {
 		return error('UTF8String: invalid UTF-8 string')

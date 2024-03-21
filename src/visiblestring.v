@@ -34,6 +34,10 @@ pub fn (vs VisibleString) tag() Tag {
 	return vs.tag
 }
 
+pub fn (vs VisibleString) value() string {
+	return vs.value
+}
+
 pub fn (vs VisibleString) payload(p Params) ![]u8 {
 	if contains_ctrl_chars(vs.value.bytes()) {
 		return error('VisibleString: contains control chars')

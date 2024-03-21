@@ -88,6 +88,10 @@ pub fn (oid Oid) tag() Tag {
 	return oid.tag
 }
 
+pub fn (oid Oid) value() []int {
+	return oid.value
+}
+
 pub fn (oid Oid) payload(p Params) ![]u8 {
 	return oid.pack()!
 }

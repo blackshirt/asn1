@@ -40,6 +40,10 @@ pub fn (ps PrintableString) tag() Tag {
 	return ps.tag
 }
 
+pub fn (ps PrintableString) value() string {
+	return ps.value
+}
+
 pub fn (ps PrintableString) payload(p Params) ![]u8 {
 	if !printable_chars(ps.value.bytes()) {
 		return error('PrintableString: contains non-printable string')

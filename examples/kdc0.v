@@ -172,7 +172,7 @@ fn (e EncryptedData) payload(p Params) ![]u8 {
 	el0.pack_to_asn1(mut out, p)!
 	if e.kvno != none {
 		el1 := TaggedType.explicit_context(asn1.Int.from_i64(e.kvno), 1)!
-	    el1.pack_to_asn1(mut out, p)!
+		el1.pack_to_asn1(mut out, p)!
 	}
 	el2.pack_to_asn1(mut out, p)!
 
@@ -203,29 +203,30 @@ fn EncryptedData.unpack_from_asn1(src []u8, loc i64, p Params) !(EncryptedData, 
 	}
 	length, idx := Length.unpack_from_asn1(src, pos, p)!
 	if length == 0 {
-		return error("EncryptedData: length should != 0")
+		return error('EncryptedData: length should != 0')
 	}
-	if idx > src.len || idx+length > src.len {
-		return error("EncryptedData: overflow")
+	if idx > src.len || idx + length > src.len {
+		return error('EncryptedData: overflow')
 	}
 	// sequence elements contents
-	contents := unsafe {src[idx..idx+length]}
+	contents := unsafe { src[idx..idx + length] }
 	els := asn1.ElementList.from_bytes(src)!
 	if els.len < 2 {
-		return error("ElementList < 2")
+		return error('ElementList < 2')
 	}
-	
+
 	// check if optional element is present
-	kvno_present := if els.len == 3 {true} else {false}
+	kvno_present := if els.len == 3 { true } else { false }
 	els0 := els[0] as TaggedType // would panic if not hold TaggedType
-	els1 := if kvno_present { els[1] as TaggedType } else {none}
+	els1 := if kvno_present { els[1] as TaggedType } else { none }
 	els2 := els[2] as asn1.OctetString
+	// check the result
 	ed := EncryptedData{
-		etype: els0.inner as Int64
-		kvno: els1 as Int64
+		etype: (els0.inner as Int64).value() // etype is int
+		kvno: (els1 as Int64).value() //
 		cipher: els2
 	}
-	return ed, idx+length 
+	return ed, idx + length
 }
 
 // Ticket          ::= [APPLICATION 1] SEQUENCE {
@@ -408,12 +409,27 @@ fn (pn PrincipalName) payload(p asn1.Params) ![]u8 {
 	mut out := []u8{}
 	el0.pack_to_asn1(mut out, p)!
 	el1.pack_to_asn1(mut out, p)!
-	return out 
+	return out
 }
 
-fn (pn PrincipalName) length(p asn1.Params) int {}
+fn (pn PrincipalName) length(p asn1.Params) int {
+	mut n := 0
 
-fn (pn PrincipalName) packed_length(p asn1.Params) int {}
+	n += pn.payload(p)!.len
+	return n
+}
+
+fn (pn PrincipalName) packed_length(p asn1.Params) int {
+	mut n := 0
+
+	n += pn.tag().packed_length(p)
+	payload := pn.payload(p)!
+	len := Length.from_i64(payload.len) or { panic(err) }
+	n += len.packed_length(p)
+	n += payload.len
+
+	return n
+}
 
 fn (pn PrincipalName) pack_to_asn1(mut dst []u8, p asn1.Params) ! {
 	mut seq1 := asn1.Sequence.new(false)
@@ -430,9 +446,8 @@ fn (pn PrincipalName) pack_to_asn1(mut dst []u8, p asn1.Params) ! {
 	}
 	exp2 := asn1.TaggedType.explicit_context(seq2, 1)
 	seq1.add_element(exp2)!
-	out := seq1.encode()!
 
-	dst << out
+	seq1.pack_to_asn1(mut dst, p)!
 }
 
 fn main() {

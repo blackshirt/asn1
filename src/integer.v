@@ -238,6 +238,10 @@ pub fn (v Integer) tag() Tag {
 	return v.tag
 }
 
+pub fn (v Integer) value() big.Integer {
+	retunr v.value
+}
+
 pub fn (v Integer) payload(p Params) ![]u8 {
 	bytes, _ := v.pack_into_twoscomplement_form()!
 	return bytes
@@ -364,6 +368,10 @@ pub fn Int64.from_bytes(src []u8) !Int64 {
 
 pub fn (v Int64) tag() Tag {
 	return v.tag
+}
+
+pub fn (v Int64) value() i64 {
+	return i64(v.value)
 }
 
 pub fn (v Int64) payload(p Params) ![]u8 {
