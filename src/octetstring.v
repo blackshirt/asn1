@@ -7,14 +7,13 @@ module asn1
 // The ASN.1 OCTET STRING type contains arbitrary strings of octets.
 // This type is very similar to BIT STRING, except that all values must be an integral number of eight bits.
 // You can use constraints to specify a maximum length for an OCTET STRING type.
-struct OctetString {
+pub struct OctetString {
 	value string
-mut:
 	tag Tag = new_tag(.universal, false, int(TagType.octetstring)) or { panic(err) }
 }
 
 // new_octetstring creates new octet string
-fn OctetString.from_string(s string) !OctetString {
+pub fn OctetString.from_string(s string) !OctetString {
 	if !valid_octet_string(s) {
 		return error('not valid octet string')
 	}
@@ -23,7 +22,7 @@ fn OctetString.from_string(s string) !OctetString {
 	}
 }
 
-fn OctetString.from_bytes(src []u8) !OctetString {
+pub fn OctetString.from_bytes(src []u8) !OctetString {
 	return OctetString.from_string(src.bytestr())!
 }
 
@@ -32,19 +31,19 @@ fn valid_octet_string(s string) bool {
 	return true
 }
 
-fn (os OctetString) tag() Tag {
+pub fn (os OctetString) tag() Tag {
 	return os.tag
 }
 
-fn (os OctetString) payload(p Params) ![]u8 {
+pub fn (os OctetString) payload(p Params) ![]u8 {
 	return os.value.bytes()
 }
 
-fn (os OctetString) length(p Params) int {
+pub fn (os OctetString) length(p Params) int {
 	return os.value.bytes().len
 }
 
-fn (os OctetString) packed_length(p Params) int {
+pub fn (os OctetString) packed_length(p Params) int {
 	mut n := 0
 
 	n += os.tag().packed_length(p)
@@ -56,7 +55,7 @@ fn (os OctetString) packed_length(p Params) int {
 }
 
 // The encoding of an octetstring value shall be either primitive or constructed
-fn (os OctetString) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (os OctetString) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
@@ -67,7 +66,7 @@ fn (os OctetString) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << os.value.bytes()
 }
 
-fn OctetString.unpack_from_asn1(src []u8, loc i64, p Params) !(OctetString, i64) {
+pub fn OctetString.unpack_from_asn1(src []u8, loc i64, p Params) !(OctetString, i64) {
 	if src.len < 2 {
 		return error('OctetString: src.len underflow')
 	}
