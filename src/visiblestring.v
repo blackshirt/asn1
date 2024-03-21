@@ -6,13 +6,13 @@ module asn1
 // VisibleString
 // The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.
 //
-struct VisibleString {
+pub struct VisibleString {
 	value string
 mut:
 	tag Tag = new_tag(.universal, false, int(TagType.visiblestring)) or { panic(err) }
 }
 
-fn VisibleString.from_string(s string) !VisibleString {
+pub fn VisibleString.from_string(s string) !VisibleString {
 	if contains_ctrl_chars(s.bytes()) {
 		return error('VisibleString: contains control chars')
 	}
@@ -21,7 +21,7 @@ fn VisibleString.from_string(s string) !VisibleString {
 	}
 }
 
-fn VisibleString.from_bytes(src []u8) !VisibleString {
+pub fn VisibleString.from_bytes(src []u8) !VisibleString {
 	if contains_ctrl_chars(src) {
 		return error('VisibleString: contains control chars')
 	}
@@ -30,22 +30,22 @@ fn VisibleString.from_bytes(src []u8) !VisibleString {
 	}
 }
 
-fn (vs VisibleString) tag() Tag {
+pub fn (vs VisibleString) tag() Tag {
 	return vs.tag
 }
 
-fn (vs VisibleString) payload(p Params) ![]u8 {
+pub fn (vs VisibleString) payload(p Params) ![]u8 {
 	if contains_ctrl_chars(vs.value.bytes()) {
 		return error('VisibleString: contains control chars')
 	}
 	return vs.value.bytes()
 }
 
-fn (vs VisibleString) length(p Params) int {
+pub fn (vs VisibleString) length(p Params) int {
 	return vs.value.len
 }
 
-fn (vs VisibleString) packed_length(p Params) int {
+pub fn (vs VisibleString) packed_length(p Params) int {
 	mut n := 0
 	n += vs.tag().packed_length(p)
 	len := Length.from_i64(vs.length(p)) or { panic(err) }
@@ -55,7 +55,7 @@ fn (vs VisibleString) packed_length(p Params) int {
 	return n
 }
 
-fn (vs VisibleString) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (vs VisibleString) pack_to_asn1(mut dst []u8, p Params) ! {
 	// recheck
 	if contains_ctrl_chars(vs.value.bytes()) {
 		return error('VisibleString: contains control chars')
@@ -69,7 +69,7 @@ fn (vs VisibleString) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << vs.value.bytes()
 }
 
-fn VisibleString.unpack_from_asn1(src []u8, loc i64, p Params) !(VisibleString, i64) {
+pub fn VisibleString.unpack_from_asn1(src []u8, loc i64, p Params) !(VisibleString, i64) {
 	if src.len < 2 {
 		return error('VisibleString: bad src.len underflow')
 	}

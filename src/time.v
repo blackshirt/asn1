@@ -23,14 +23,14 @@ module asn1
 // TODO:
 // - check for invalid representation of date and hhmmss part.
 // - represented UTCTime in time.Time
-struct UTCTime {
+pub struct UTCTime {
 	value string
 mut:
 	tag Tag = Tag{.universal, false, int(TagType.utctime)}
 }
 
 // new_utctime creates new UTCTime from string s.
-fn UTCTime.from_string(s string) !UTCTime {
+pub fn UTCTime.from_string(s string) !UTCTime {
 	valid := validate_utctime(s)!
 	if !valid {
 		return error('UTCTime: fail on validate utctime')
@@ -40,23 +40,23 @@ fn UTCTime.from_string(s string) !UTCTime {
 	}
 }
 
-fn UTCTime.from_bytes(b []u8) !UTCTime {
+pub fn UTCTime.from_bytes(b []u8) !UTCTime {
 	return UTCTime.from_string(b.bytestr())!
 }
 
-fn (ut UTCTime) tag() Tag {
+pub fn (ut UTCTime) tag() Tag {
 	return ut.tag
 }
 
-fn (ut UTCTime) payload(p Params) ![]u8 {
+pub fn (ut UTCTime) payload(p Params) ![]u8 {
 	return ut.value.bytes()
 }
 
-fn (ut UTCTime) length(p Params) int {
+pub fn (ut UTCTime) length(p Params) int {
 	return ut.value.len
 }
 
-fn (ut UTCTime) packed_length(p Params) int {
+pub fn (ut UTCTime) packed_length(p Params) int {
 	mut n := 0
 	n += ut.tag.packed_length(p)
 	len := Length.from_i64(ut.value.bytes().len) or { panic(err) }
@@ -67,7 +67,7 @@ fn (ut UTCTime) packed_length(p Params) int {
 	return n
 }
 
-fn (t UTCTime) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (t UTCTime) pack_to_asn1(mut dst []u8, p Params) ! {
 	valid := validate_utctime(t.value)!
 	if !valid {
 		return error('UTCTime: fail on validate utctime')
@@ -82,7 +82,7 @@ fn (t UTCTime) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << bytes
 }
 
-fn UTCTime.unpack_from_asn1(src []u8, loc i64, p Params) !(UTCTime, i64) {
+pub fn UTCTime.unpack_from_asn1(src []u8, loc i64, p Params) !(UTCTime, i64) {
 	if src.len < 3 {
 		return error('UTCTime: bad len')
 	}
@@ -175,13 +175,13 @@ fn valid_time_contents(s string) bool {
 // (i.e., times are `YYYYMMDDHHMMSSZ`), even where the number of seconds
 // is zero.
 // - GeneralizedTime values MUST NOT include fractional seconds.
-struct GeneralizedTime {
+pub struct GeneralizedTime {
 	value string
 mut:
 	tag Tag = Tag{.universal, false, int(TagType.generalizedtime)}
 }
 
-fn GeneralizedTime.from_string(s string) !GeneralizedTime {
+pub fn GeneralizedTime.from_string(s string) !GeneralizedTime {
 	valid := validate_generalizedtime(s)!
 	if !valid {
 		return error('GeneralizedTime: failed on validate')
@@ -191,15 +191,15 @@ fn GeneralizedTime.from_string(s string) !GeneralizedTime {
 	}
 }
 
-fn GeneralizedTime.from_bytes(b []u8) !GeneralizedTime {
+pub fn GeneralizedTime.from_bytes(b []u8) !GeneralizedTime {
 	return GeneralizedTime.from_string(b.bytestr())!
 }
 
-fn (gt GeneralizedTime) tag() Tag {
+pun fn (gt GeneralizedTime) tag() Tag {
 	return gt.tag
 }
 
-fn (gt GeneralizedTime) packed_length(p Params) int {
+pub fn (gt GeneralizedTime) packed_length(p Params) int {
 	mut n := 0
 	n += gt.tag.packed_length(p)
 	len := Length.from_i64(gt.value.bytes().len) or { panic(err) }
@@ -210,15 +210,15 @@ fn (gt GeneralizedTime) packed_length(p Params) int {
 	return n
 }
 
-fn (gt GeneralizedTime) payload(p Params) ![]u8 {
+pub fn (gt GeneralizedTime) payload(p Params) ![]u8 {
 	return gt.value.bytes()
 }
 
-fn (gt GeneralizedTime) length(p Params) int {
+pub fn (gt GeneralizedTime) length(p Params) int {
 	return gt.value.len
 }
 
-fn (gt GeneralizedTime) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (gt GeneralizedTime) pack_to_asn1(mut dst []u8, p Params) ! {
 	valid := validate_generalizedtime(gt.value)!
 	if !valid {
 		return error('GeneralizedTime: fail on validate')
@@ -234,7 +234,7 @@ fn (gt GeneralizedTime) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << bytes
 }
 
-fn GeneralizedTime.unpack_from_asn1(src []u8, loc i64, p Params) !(GeneralizedTime, i64) {
+pub fn GeneralizedTime.unpack_from_asn1(src []u8, loc i64, p Params) !(GeneralizedTime, i64) {
 	if src.len < 2 {
 		return error('GeneralizedTime: bad payload len')
 	}

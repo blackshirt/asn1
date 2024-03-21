@@ -127,7 +127,7 @@ pub fn Tag.unpack_from_asn1(bytes []u8, loc i64, p Params) !(Tag, i64) {
 }
 
 // clone_with_class clones teh tag t into new tag with class is set to c
-fn (mut t Tag) clone_with_class(c Class) Tag {
+pub fn (mut t Tag) clone_with_class(c Class) Tag {
 	if t.class == c {
 		return t
 	}
@@ -136,7 +136,7 @@ fn (mut t Tag) clone_with_class(c Class) Tag {
 	return new
 }
 
-fn (mut t Tag) clone_with_tag(v int) !Tag {
+pub fn (mut t Tag) clone_with_tag(v int) !Tag {
 	if t.number == v {
 		return t
 	}
@@ -243,7 +243,7 @@ fn TagNumber.unpack_from_asn1(bytes []u8, loc i64, p Params) !(TagNumber, i64) {
 
 // `universal_tag_type` transforrms this TagNumber into available Universal class of TagType,
 // or return error if it is unknown number.
-fn (v TagNumber) universal_tag_type() !TagType {
+pub fn (v TagNumber) universal_tag_type() !TagType {
 	// currently, only support Standard universal tag number
 	if v > 36 {
 		return error('TagNumber: unknown TagType number=${v}')
@@ -368,7 +368,7 @@ pub enum TagType {
 	relative_i18_oid = 0x24
 }
 
-fn (t TagType) str() string {
+pub fn (t TagType) str() string {
 	match t {
 		.boolean { return 'boolean' }
 		.integer { return 'integer' }

@@ -221,8 +221,8 @@ fn EncryptedData.unpack_from_asn1(src []u8, loc i64, p Params) !(EncryptedData, 
 	els1 := if kvno_present { els[1] as TaggedType } else {none}
 	els2 := els[2] as asn1.OctetString
 	ed := EncryptedData{
-		etype: els0
-		kvno: els1
+		etype: els0.inner as Int64
+		kvno: els1 as Int64
 		cipher: els2
 	}
 	return ed, idx+length 

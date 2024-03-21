@@ -115,7 +115,7 @@ pub fn ElementList.from_bytes(src []u8) ![]Element {
 // hold_different_tag checks whether this array of Element
 // contains any different tag, benefit for checking whether the type
 // with this elements is sequence or sequence of type.
-fn (els []Element) hold_different_tag() bool {
+pub fn (els []Element) hold_different_tag() bool {
 	// if els has empty length we return false, so we can treat
 	// it as a regular sequence or set.
 	if els.len == 0 {

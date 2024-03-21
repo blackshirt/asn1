@@ -13,7 +13,7 @@ pub enum TaggedMode {
 }
 
 // Tagged type element
-struct TaggedType {
+pub struct TaggedType {
 mut:
 	// class of TaggedType element was default to .context_specific
 	outer_tag Tag
@@ -61,11 +61,11 @@ pub fn TaggedType.implicit_context(el Element, tagnum int) !TaggedType {
 	return tt
 }
 
-fn (tt TaggedType) tag() Tag {
+pub fn (tt TaggedType) tag() Tag {
 	return tt.outer_tag
 }
 
-fn (tt TaggedType) payload(p Params) ![]u8 {
+pub fn (tt TaggedType) payload(p Params) ![]u8 {
 	// if mode is .explicit, the payload is serialized tt.inner_el element
 	// and if .implicit, the payload is tt.inner_el payload
 	if tt.mode == .explicit {
@@ -78,7 +78,7 @@ fn (tt TaggedType) payload(p Params) ![]u8 {
 	return payload
 }
 
-fn (tt TaggedType) length(p Params) int {
+pub fn (tt TaggedType) length(p Params) int {
 	mut n := 0
 	// in .explicit, n := tag+lengt+payload
 	if tt.mode == .explicit {
@@ -94,7 +94,7 @@ fn (tt TaggedType) length(p Params) int {
 	return n
 }
 
-fn (tt TaggedType) packed_length(p Params) int {
+pub fn (tt TaggedType) packed_length(p Params) int {
 	mut n := 0
 	match tt.mode {
 		.explicit {
@@ -217,7 +217,7 @@ pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag T
 }
 
 // from_raw_element treats this RawElement as TaggedType with mode m and inner element
-fn TaggedType.from_raw_element(r RawElement, m TaggedMode, inner_tag Tag, p Params) !TaggedType {
+pub fn TaggedType.from_raw_element(r RawElement, m TaggedMode, inner_tag Tag, p Params) !TaggedType {
 	return r.as_tagged(m, inner_tag, p)!
 }
 

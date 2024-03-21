@@ -8,13 +8,13 @@ import encoding.utf8
 // UTF8String
 // UTF8 unicode charset
 //
-struct UTF8String {
+pub struct UTF8String {
 	value string
 mut:
 	tag Tag = new_tag(.universal, false, int(TagType.utf8string)) or { panic(err) }
 }
 
-fn UTF8String.from_string(s string) !UTF8String {
+pub fn UTF8String.from_string(s string) !UTF8String {
 	if !utf8.validate_str(s) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
@@ -23,7 +23,7 @@ fn UTF8String.from_string(s string) !UTF8String {
 	}
 }
 
-fn UTF8String.from_bytes(src []u8) !UTF8String {
+pub fn UTF8String.from_bytes(src []u8) !UTF8String {
 	if !utf8.validate_str(src.bytestr()) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
@@ -32,22 +32,22 @@ fn UTF8String.from_bytes(src []u8) !UTF8String {
 	}
 }
 
-fn (us UTF8String) tag() Tag {
+pub fn (us UTF8String) tag() Tag {
 	return us.tag
 }
 
-fn (us UTF8String) payload(p Params) ![]u8 {
+pub fn (us UTF8String) payload(p Params) ![]u8 {
 	if !utf8.validate_str(us.value) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
 	return us.value.bytes()
 }
 
-fn (us UTF8String) length(p Params) int {
+pun fn (us UTF8String) length(p Params) int {
 	return us.value.len
 }
 
-fn (us UTF8String) packed_length(p Params) int {
+pub fn (us UTF8String) packed_length(p Params) int {
 	mut n := 0
 	n += us.tag().packed_length(p)
 	uslen := us.length(p)
@@ -58,7 +58,7 @@ fn (us UTF8String) packed_length(p Params) int {
 	return n
 }
 
-fn (us UTF8String) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (us UTF8String) pack_to_asn1(mut dst []u8, p Params) ! {
 	// recheck
 	if !utf8.validate_str(us.value) {
 		return error('UTF8String: invalid UTF-8 string')
@@ -72,7 +72,7 @@ fn (us UTF8String) pack_to_asn1(mut dst []u8, p Params) ! {
 	dst << us.value.bytes()
 }
 
-fn UTF8String.unpack_from_asn1(src []u8, loc i64, p Params) !(UTF8String, i64) {
+pub fn UTF8String.unpack_from_asn1(src []u8, loc i64, p Params) !(UTF8String, i64) {
 	if src.len < 2 {
 		return error('UTF8String: src.len underflow')
 	}
