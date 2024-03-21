@@ -27,7 +27,7 @@ type Length = i64
 
 // from_i64 creates Length from i64  value. Passing negative value (<0) for length
 // is not make a sense, so just return error instead if it happen.
-fn Length.from_i64(v i64) !Length {
+pub fn Length.from_i64(v i64) !Length {
 	if v < 0 {
 		return error('Length: supply with positive i64')
 	}

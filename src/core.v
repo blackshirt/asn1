@@ -27,7 +27,7 @@ pub fn Class.from_int(v int) !Class {
 	}
 }
 
-fn (c Class) str() string {
+pub fn (c Class) str() string {
 	match c {
 		.universal { return 'universal' }
 		.application { return 'application' }
