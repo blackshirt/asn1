@@ -140,11 +140,14 @@ pub fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
 		return error('Sequence: unsupported mode')
 	}
 	if loc > src.len {
-		return error('Sequence: bad position offset')
+		return error('Sequence: bad loc offset')
 	}
 	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
 	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: bad sequence tag')
+	}
+	if pos > src.len {
+		return error('pos overflow')
 	}
 	len, idx := Length.unpack_from_asn1(src, pos, p)!
 	if len == 0 {
@@ -172,7 +175,7 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: not sequence tag')
 	}
-	mut i := 0
+	mut i := i64(0)
 	// by default, we create regular sequence type
 	// if you wish SEQUENCE OF type, call `.set_to_sequenceof()`
 	// on this seqence to have SEQUENCE OF behavior,
@@ -180,8 +183,18 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 	mut seq := Sequence.new(false)!
 	for i < contents.len {
 		t, idx := Tag.unpack_from_asn1(contents, i, p)!
+		if idx > contents.len {
+			return error('idx: truncated bytes')
+		}
 		ln, next := Length.unpack_from_asn1(contents, idx, p)!
-
+		if ln == 0 {
+			i += next
+			// next
+			continue
+		}
+		if next > contents.len || next + ln > contents.len {
+			return error('next: truncated bytes')
+		}
 		// todo : check boundary
 		sub := unsafe { contents[next..next + ln] }
 		match t.is_constructed() {

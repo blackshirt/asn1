@@ -19,6 +19,7 @@ module asn1
 
 // max_definite_length_count is a limit tells how many bytes to represent this length.
 // We're going to limi this to 6 bytes following when the length is in long-definite form.
+const max_definite_length_count = 126
 const max_definite_length_value = max_u64
 
 // Length represent ASN.1 length value
@@ -123,10 +124,10 @@ pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
 			return error('Length: unsupported undefinite length')
 		}
 		if num_bytes == 0x7f {
-			return error("Length: 0x7f is for reserved use"(
+			return error('Length: 0x7f is for reserved use')
 		}
 		// we limit the bytes count for length definite form to `max_definite_length_count`
-		//if num_bytes > asn1.max_definite_length_count {
+		// if num_bytes > asn1.max_definite_length_count {
 		//	dump(num_bytes)
 		//	return error('Length: count bytes exceed limit')
 		//}
@@ -138,7 +139,7 @@ pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
 			pos += 1
 			// currently, we're only support limited length.
 			// The length is in integer range
-			
+
 			// if length > asn1.max_definite_length_value {
 			// 	return error('Length: length exceed limit value')
 			//}
@@ -156,7 +157,6 @@ pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
 			return error('Length: dont needed in long form')
 		}
 	}
-	dump(length)
 	ret := Length.from_i64(length)!
 	return ret, pos
 }
