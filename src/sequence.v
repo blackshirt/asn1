@@ -160,6 +160,7 @@ pub fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
 	}
 	// TODO: check the length, its safe to access bytes
 	contents := unsafe { src[idx..idx + len] }
+
 	mut seq := Sequence.parse_contents(tag, contents)!
 	// check for hold_different_tag
 	if !seq.elements.hold_different_tag() {
@@ -175,40 +176,15 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: not sequence tag')
 	}
-	mut i := i64(0)
+
 	// by default, we create regular sequence type
 	// if you wish SEQUENCE OF type, call `.set_to_sequenceof()`
 	// on this seqence to have SEQUENCE OF behavior,
 	// or you can call it later.
 	mut seq := Sequence.new(false)!
-	for i < contents.len {
-		t, idx := Tag.unpack_from_asn1(contents, i, p)!
-		if idx > contents.len {
-			return error('idx: truncated bytes')
-		}
-		ln, next := Length.unpack_from_asn1(contents, idx, p)!
-		if ln == 0 {
-			i += next
-			// next
-			continue
-		}
-		if next > contents.len || next + ln > contents.len {
-			return error('next: truncated bytes')
-		}
-		// todo : check boundary
-		sub := unsafe { contents[next..next + ln] }
-		match t.is_constructed() {
-			true {
-				obj := parse_constructed_element(t, sub)!
-				seq.add_element(obj)!
-				i += obj.packed_length(p)
-			}
-			false {
-				obj := parse_primitive_element(t, sub)!
-				seq.add_element(obj)!
-				i += obj.packed_length(p)
-			}
-		}
+	els := ElementList.from_bytes(contents)! // !([]Element, i64)
+	for e in els {
+		seq.add_element(e)!
 	}
 	return seq
 }

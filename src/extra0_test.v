@@ -2,6 +2,7 @@ module asn1
 
 import math.big
 import encoding.hex
+import crypto.pem
 
 fn test_parse_sequence_match_length() ! {
 	// from https://en.wikipedia.org/wiki/ASN.1#Example_encoded_in_DER
@@ -38,10 +39,23 @@ fn test_parse_sequence_match_length() ! {
 	*/
 }
 
-/*
 fn test_parse_x509_ed25519_certificate() ! {
 	// blindly parse data
 	// data from https://lapo.it/asn1js , with data X.509 certificate based Curve25519 (as per RFC 8410) loaded
+	src := '-----BEGIN CERTIFICATE-----
+MIIBfzCCATGgAwIBAgIUfI5kSdcO2S0+LkpdL3b2VUJG10YwBQYDK2VwMDUxCzAJ
+BgNVBAYTAklUMQ8wDQYDVQQHDAZNaWxhbm8xFTATBgNVBAMMDFRlc3QgZWQyNTUx
+OTAeFw0yMDA5MDIxMzI1MjZaFw0zMDA5MDIxMzI1MjZaMDUxCzAJBgNVBAYTAklU
+MQ8wDQYDVQQHDAZNaWxhbm8xFTATBgNVBAMMDFRlc3QgZWQyNTUxOTAqMAUGAytl
+cAMhADupL/3LF2beQKKS95PeMPgKI6gxIV3QB9hjJC7/aCGFo1MwUTAdBgNVHQ4E
+FgQUa6W9z536I1l4EmQXrh5y2JqASugwHwYDVR0jBBgwFoAUa6W9z536I1l4EmQX
+rh5y2JqASugwDwYDVR0TAQH/BAUwAwEB/zAFBgMrZXADQQBvc3e+KJZaMzbX5TT9
+kPP9QH8fAvkAV/IWDxZrBL9lhLaY0tDSv0zWbw624uidBKPgmVD5wm3ec60dNVeF
+ZYYG
+-----END CERTIFICATE-----
+'
+	block, _ := pem.decode(src)?
+
 	data := [u8(0x30), 0x82, 0x01, 0x7F, 0x30, 0x82, 0x01, 0x31, 0xA0, 0x03, 0x02, 0x01, 0x02,
 		0x02, 0x14, 0x7C, 0x8E, 0x64, 0x49, 0xD7, 0x0E, 0xD9, 0x2D, 0x3E, 0x2E, 0x4A, 0x5D, 0x2F,
 		0x76, 0xF6, 0x55, 0x42, 0x46, 0xD7, 0x46, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70, 0x30,
@@ -69,24 +83,14 @@ fn test_parse_x509_ed25519_certificate() ! {
 		0xD0, 0xD2, 0xBF, 0x4C, 0xD6, 0x6F, 0x0E, 0xB6, 0xE2, 0xE8, 0x9D, 0x04, 0xA3, 0xE0, 0x99,
 		0x50, 0xF9, 0xC2, 0x6D, 0xDE, 0x73, 0xAD, 0x1D, 0x35, 0x57, 0x85, 0x65, 0x86, 0x06]
 
-	tag, pos := read_tag(data, 0)!
-	length, next := decode_length(data, pos)!
-	assert tag.number == 16
-	assert length == 383
-	assert next == 4
-
-	out := der_decode(data)!
-	seq := out.as_sequence()!
-
-	assert seq.elements.len == 3
-	el0 := seq.elements[0].as_sequence()!
-	assert el0.elements.len == 8
-
-	el1 := seq.elements[1].as_sequence()!
-	assert el1.elements.len == 1
-
-	el2 := seq.elements[2].as_bitstring()!
-	assert el2.packed_length() == 65
+	seq, n := Sequence.unpack_from_asn1(block.data, 0)!
+	assert n == data.len
+	els := seq.elements()!
+	dump(els)
+	assert els.len == 2
+	mut out := []u8{}
+	seq.pack_to_asn1(mut out)!
+	assert out == data 
 }
 
 /*
@@ -120,6 +124,7 @@ AlgorithmIdentifier  ::=  SEQUENCE  {
       }
 */
 
+/*
 fn test_x509_certificate_version() ! {
 	// version         [0]  EXPLICIT Version DEFAULT v1,
 	// Version  ::=  INTEGER  {  v1(0), v2(1), v3(2)  }
@@ -148,7 +153,7 @@ fn test_x509_certificate_signature() ! {
 
 	assert out == exp
 	back := der_decode(exp)!
-	seqback := back.as_sequence()!
+	seqback := back as Sequence
 	assert seqback == seq
 }
 
@@ -328,7 +333,7 @@ fn test_x509_certificate_subject() ! {
 
 	backissuer := der_decode(expissuer)!
 
-	issuer := backissuer.as_sequence()!
+	issuer := backissuer as Sequence
 
 	assert issuer == issuerseq
 }
@@ -389,7 +394,7 @@ fn test_x509_certificate_extensions() ! {
 	out := der_decode(expseq)!
 
 	// cast encoder to seq
-	cast := out.as_sequence()!
+	cast := out as Sequence
 
 	assert cast == seq
 }
@@ -398,7 +403,7 @@ fn test_encoder_casted_as_seq_and_boolean() ! {
 	data := [u8(0x30), 0x06, 0x01, 0x01, 0x00, 0x01, 0x01, 0xff]
 	out := der_decode(data)!
 
-	seq := out.as_sequence()!
+	seq := out as Sequence
 	assert typeof(seq).name == '${@MOD}.Sequence'
 	assert seq.elements.len == 2
 

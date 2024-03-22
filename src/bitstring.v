@@ -98,6 +98,9 @@ pub fn BitString.unpack_from_asn1(src []u8, loc i64, p Params) !(BitString, i64)
 		|| tag.tag_number() != int(TagType.bitstring) {
 		return error('BitString: bad tag check')
 	}
+	if pos >= src.len {
+		return error('BitString: pos overflow')
+	}
 	len, idx := Length.unpack_from_asn1(src, pos, p)!
 	// check for length and required bytes
 	if len == 0 {
