@@ -90,7 +90,7 @@ ZYYG
 	assert els.len == 2
 	mut out := []u8{}
 	seq.pack_to_asn1(mut out)!
-	assert out == data 
+	assert out == data
 }
 
 /*

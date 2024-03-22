@@ -173,7 +173,8 @@ pub fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
 // Utility function
 //
 fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
-	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
+	if tag.class() != .universal && !tag.is_constructed()
+		&& tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: not sequence tag')
 	}
 
@@ -182,9 +183,25 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 	// on this seqence to have SEQUENCE OF behavior,
 	// or you can call it later.
 	mut seq := Sequence.new(false)!
-	els := ElementList.from_bytes(contents)! // !([]Element, i64)
-	for e in els {
-		seq.add_element(e)!
+	mut i := 0
+	for i < contents.len {
+		t, idx := Tag.unpack_from_asn1(contents, i)!
+		ln, next := Length.unpack_from_asn1(contents, idx)!
+
+		// TODO: still no check
+		sub := unsafe { contents[next..next + ln] }
+		match t.is_constructed() {
+			true {
+				obj := parse_constructed_element(t, sub)!
+				seq.add_element(obj)!
+				i += obj.packed_length(p)
+			}
+			false {
+				obj := parse_primitive_element(t, sub)!
+				seq.add_element(obj)!
+				i += obj.packed_length(p)
+			}
+		}
 	}
 	return seq
 }

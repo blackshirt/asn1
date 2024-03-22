@@ -130,9 +130,8 @@ pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
 		}
 		// we limit the bytes count for length definite form to `max_definite_length_count`
 		// if num_bytes > asn1.max_definite_length_count {
-		//	dump(num_bytes)
-		//	return error('Length: count bytes exceed limit')
-		//}
+		//		return error('Length: count bytes exceed limit')
+		// }
 		for i := 0; i < num_bytes; i++ {
 			if pos >= src.len {
 				return error('Length: truncated length')

@@ -96,6 +96,7 @@ pub fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
 
 type ElementList = []Element
 
+// ElementList.from_bytes parses bytes in src as series of Element.
 // from_bytes parses bytes in src to array of Element or return error on fail
 pub fn ElementList.from_bytes(src []u8) ![]Element {
 	mut els := []Element{}
@@ -108,6 +109,9 @@ pub fn ElementList.from_bytes(src []u8) ![]Element {
 		el, pos := Element.unpack_from_asn1(src, i)!
 		els << el
 		i += pos
+	}
+	if i > src.len {
+		return error('i > src.len')
 	}
 	if i < src.len {
 		return error('contains unprocessed bytes')
