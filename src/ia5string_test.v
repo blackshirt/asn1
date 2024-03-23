@@ -19,7 +19,7 @@ fn test_ia5string_handling() ! {
 	]
 
 	for c in data {
-		s := IA5String.new(c.s) or {
+		s := IA5String.from_string(c.s) or {
 			assert err == c.err
 			continue
 		}

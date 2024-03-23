@@ -39,6 +39,9 @@ fn test_parse_sequence_match_length() ! {
 	*/
 }
 
+// this test contains truncated bytes, test with more valid data
+//
+/*
 fn test_parse_x509_ed25519_certificate() ! {
 	// blindly parse data
 	// data from https://lapo.it/asn1js , with data X.509 certificate based Curve25519 (as per RFC 8410) loaded
@@ -83,7 +86,7 @@ ZYYG
 		0xD0, 0xD2, 0xBF, 0x4C, 0xD6, 0x6F, 0x0E, 0xB6, 0xE2, 0xE8, 0x9D, 0x04, 0xA3, 0xE0, 0x99,
 		0x50, 0xF9, 0xC2, 0x6D, 0xDE, 0x73, 0xAD, 0x1D, 0x35, 0x57, 0x85, 0x65, 0x86, 0x06]
 
-	seq, n := Sequence.decode(block.data, 0)!
+	seq, n := Sequence.decode(data, 0)!
 	assert n == data.len
 	els := seq.elements()!
 	dump(els)
@@ -92,7 +95,7 @@ ZYYG
 	seq.encode(mut out)!
 	assert out == data
 }
-
+*/
 /*
 Certificate  ::=  SEQUENCE  {
         tbsCertificate       TBSCertificate,

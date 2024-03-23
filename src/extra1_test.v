@@ -22,7 +22,7 @@ fn test_ed4418_data() ! {
 
 	bytes := hex.decode(data)!
 
-	seq, n := Sequence.unpack_from_asn1(bytes, 0)!
+	seq, n := Sequence.decode(bytes, 0)!
 
 	assert seq.elements.len == 2
 	assert seq.elements[0] is Sequence
@@ -57,7 +57,7 @@ MC4CAQAwBQYDK2VwBCIEINTuctv5E1hK1bbY8fdp+K06/nwoy/HU++CXqI9EdVhC
 	*/
 	block, _ := pem.decode(data)?
 
-	seq, n := Sequence.unpack_from_asn1(block.data, 0)!
+	seq, n := Sequence.decode(block.data, 0)!
 
 	assert seq.length() == 46
 
@@ -178,7 +178,7 @@ w1AH9efZBw==
 	block, _ := pem.decode(data)?
        dump(block.data.hex())
 
-	seq, n := Sequence.unpack_from_asn1(block.data, 0)!
+	seq, n := Sequence.decode(block.data, 0)!
 
 	assert seq.length() == 300
 

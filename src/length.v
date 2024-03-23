@@ -116,7 +116,7 @@ pub fn Length.decode(src []u8, loc i64, p Params) !(Length, i64) {
 		// as an unsigned binary value in the octet's rightmost seven bits.
 		length = b & 0x7f
 	} else {
-		if pos >= src.len {
+		if pos > src.len {
 			return error('truncated tag or length')
 		}
 		// Otherwise, its a Long definite form or undefinite form
@@ -192,6 +192,16 @@ fn Tlv.read(src []u8, loc i64, p Params) !(Tlv, i64) {
 	}
 	// read the length part
 	len, idx := Length.decode(src, pos, p)!
+	// no contents, Tlv without contents
+	if idx == src.len {
+		if len != 0 {
+			return error('len should 0 when no contents')
+		}
+		tlv.tag = tag
+		tlv.length = len
+		tlv.content = []u8{}
+		return tlv, idx
+	}
 	// check if len == 0, its mean this parsed element has no content bytes
 	if len == 0 {
 		tlv.tag = tag
@@ -207,7 +217,7 @@ fn Tlv.read(src []u8, loc i64, p Params) !(Tlv, i64) {
 	// this element has a content, or return error if not.
 	// when idx == src.len, but len != 0, its mean the input is truncated
 	// its also same mean for idx+len is over to the src.len
-	if idx >= src.len || idx + len > src.len {
+	if idx > src.len || idx + len > src.len {
 		return error('Tlv: truncated src bytes')
 	}
 	// idx and idx+len has been checked above, so its would be safe

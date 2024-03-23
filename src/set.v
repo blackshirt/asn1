@@ -151,22 +151,18 @@ fn Set.parse_contents(tag Tag, contents []u8, p Params) !Set {
 	// or you can call it later.
 	mut set := Set.new(false)
 	for i < contents.len {
-		t, idx := Tag.decode(contents, i, p)!
-		ln, next := Length.decode(contents, idx, p)!
-
-		// todo : check boundary
-		sub := unsafe { contents[next..next + ln] }
-		match t.is_constructed() {
-			true {
-				obj := parse_constructed_element(t, sub)!
-				set.add_element(obj)!
-				i += obj.packed_length(p)
-			}
-			false {
-				obj := parse_primitive_element(t, sub)!
-				set.add_element(obj)!
-				i += obj.packed_length(p)
-			}
+		tlv, _ := Tlv.read(contents, i, p)!
+		_ := tlv.length == tlv.content.len
+		// TODO: still no check
+		sub := tlv.content
+		if tlv.tag.is_constructed() {
+			obj := parse_constructed_element(tlv.tag, sub)!
+			set.add_element(obj)!
+			i += obj.packed_length(p)
+		} else {
+			obj := parse_primitive_element(tlv.tag, sub)!
+			set.add_element(obj)!
+			i += obj.packed_length(p)
 		}
 	}
 	return set

@@ -169,15 +169,18 @@ pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Para
 	bytes := tlv.content
 	match tm {
 		.explicit {
-			// when explicit, unpack element from bytes
-			inn_tag, pos0 := Tag.decode(bytes, 0, p)!
-			inn_len, idx0 := Length.decode(bytes, pos0, p)!
-			// todo: check boundary
-			inn_sub := unsafe { bytes[idx0..idx0 + inn_len] }
-			inner_el := if inn_tag.is_constructed() {
-				parse_constructed_element(inn_tag, inn_sub)!
+			// when explicit, read element from bytes
+			inner_tlv, idx := Tlv.read(bytes, 0, p)!
+			if idx != bytes.len {
+				return error('unmatching idx and bytes.len')
+			}
+			_ := inner_tlv.length == inner_tlv.content.len
+
+			inn_sub := inner_tlv.content
+			inner_el := if inner_tlv.tag.is_constructed() {
+				parse_constructed_element(inner_tlv.tag, inn_sub)!
 			} else {
-				parse_primitive_element(inn_tag, inn_sub)!
+				parse_primitive_element(inner_tlv.tag, inn_sub)!
 			}
 
 			if inner_el.tag() != inner_tag {

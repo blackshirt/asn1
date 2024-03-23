@@ -168,24 +168,22 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 	// on this seqence to have SEQUENCE OF behavior,
 	// or you can call it later.
 	mut seq := Sequence.new(false)!
-	mut i := 0
+	mut i := i64(0)
 	for i < contents.len {
-		t, idx := Tag.decode(contents, i)!
-		ln, next := Length.decode(contents, idx)!
-
+		tlv, _ := Tlv.read(contents, i, p)!
+		// t, idx := Tag.decode(contents, i)!
+		// ln, next := Length.decode(contents, idx)!
+		_ := tlv.length == tlv.content.len
 		// TODO: still no check
-		sub := unsafe { contents[next..next + ln] }
-		match t.is_constructed() {
-			true {
-				obj := parse_constructed_element(t, sub)!
-				seq.add_element(obj)!
-				i += obj.packed_length(p)
-			}
-			false {
-				obj := parse_primitive_element(t, sub)!
-				seq.add_element(obj)!
-				i += obj.packed_length(p)
-			}
+		sub := tlv.content
+		if tlv.tag.is_constructed() {
+			obj := parse_constructed_element(tlv.tag, sub)!
+			seq.add_element(obj)!
+			i += obj.packed_length(p)
+		} else {
+			obj := parse_primitive_element(tlv.tag, sub)!
+			seq.add_element(obj)!
+			i += obj.packed_length(p)
 		}
 	}
 	return seq
