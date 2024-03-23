@@ -1,6 +1,38 @@
 module asn1
 
-// ASN.1 Element
+// After merged commit from https://github.com/vlang/v/commit/29e5124c48b613eaac9e1115f428f8164b66f51d
+// Its a good to give a try, 
+// ASN.1 Element implemented as generic type
+struct Element[T] {
+	element T
+}
+
+// new creates a new generic ASN.1 Element from T type
+fn Elm.new[T](el T) Element[T] {
+	return Element[T]{
+		element: el
+	}
+}
+
+// tag gets the tag of this Element
+fn (e Element[T]) tag() Tag {
+	return e.element.tag()
+}
+
+// element gets the underlying T type element from this generic Element
+fn (e Element[T]) element() T {
+	return e.element
+}
+
+fn (e Element[]T]) encode(mut out []u8, p Params) ! {
+	e.element.encode(mut out, p)
+}
+
+fn Element.decode[T](src []u8, loc i64, p Params) !(T, i64) {
+    t, idx:= T.decode(src, loc, pack_to_asn1!)
+	return t, idx
+}
+/*
 pub interface Element {
 	// tag tells the tag of this Element
 	tag() Tag
@@ -14,6 +46,7 @@ pub interface Element {
 	// whether the tag is in constructed or primitive form.
 	payload(p Params) ![]u8
 }
+*/
 
 // Element.new creates a new Element from RawElement with tag and payload
 pub fn Element.new(tag Tag, payload []u8) !Element {

@@ -160,3 +160,64 @@ pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
 	ret := Length.from_i64(length)!
 	return ret, pos
 }
+
+// header in the form tag and length
+//
+struct TagAndLength {
+mut:
+	tag     Tag
+	length  Length
+	content []u8
+	rem     []u8
+}
+
+// parse_tag_and_length parse the bytes in src into Tag and Length
+fn parse_tag_and_length(src []u8, p Params) !(TagAndLength, i64) {
+	// guard check 
+	if p.mode != .der && p.mode != .ber {
+		return error('TagAndLength: bad mode')
+	}
+	// minimal length bytes contains tag and the length is two bytes
+	if src.len < 2 {
+		return error('TagAndLength: bytes underflow')
+	}
+	mut tnl := TagAndLength{}
+	tag, pos := Tag.unpack_from_asn1(src, 0, p)!
+	// check if the offset position is not overflow
+	if pos > src.len {
+		return error('TagAndLength: pos overflow')
+	}
+	// read the length part
+	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	// check if len == 0, its mean this parsed element has no content bytes
+	if len == 0 {
+		tnl.tag = tag
+		tnl.length = len
+		tnl.content = []u8{}
+		// is there are more bytes after this?
+		// when idx still fits under src.len, the remaining bytes after idx is set
+		// as remaining bytes returned
+		if idx < src.len {
+			rem := unsafe { src[idx..] }
+			tnl.rem = rem
+		}
+		return tnl, idx
+	}
+	// len !=0
+	// check if idx + len is not overflow src.len, if its not happen,
+	// this element has a content, or return error if not.
+	if idx + len > src.len {
+		return error('TagAndLength: idx + len overflow')
+	}
+	content := unsafe { src[idx..idx + len] }
+	// is there remaining bytes? if yes, bytes after `idx+len` is remaining bytes
+	// otherwise, its has empty remaining bytes, and its finish.
+	rem := if idx + len < src.len { unsafe { src[idx + len..] } } else { []u8{} }
+
+	tnl.tag = tag
+	tnl.length = len
+	tnl.content = content
+	tnl.rem = rem
+
+	return tnl, idx + len
+}
