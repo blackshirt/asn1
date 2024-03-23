@@ -9,7 +9,7 @@ const max_oid_length = 128
 // ObjectIdentifier
 pub struct Oid {
 	value []int
-	tag   Tag = new_tag(.universal, false, int(TagType.oid)) or { panic(err) }
+	tag   Tag = Tag{.universal, false, int(TagType.oid)}
 }
 
 pub fn Oid.from_ints(src []int) !Oid {
@@ -118,6 +118,7 @@ fn (oid Oid) pack() ![]u8 {
 		return error('Oid: failed to validate')
 	}
 	mut dst := []u8{}
+	// the first two components (a.b) of Oid are encoded as 40*a+b
 	encode_base128_int(mut dst, i64(oid.value[0] * 40 + oid.value[1]))
 	for i := 2; i < oid.value.len; i++ {
 		encode_base128_int(mut dst, i64(oid.value[i]))
@@ -125,49 +126,31 @@ fn (oid Oid) pack() ![]u8 {
 	return dst
 }
 
-pub fn (oid Oid) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (oid Oid) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Oid: unsupported mode')
 	}
 	// packing in DER mode
 	bytes := oid.pack()!
-	oid.tag().pack_to_asn1(mut dst, p)!
+	oid.tag().encode(mut dst, p)!
 	length := Length.from_i64(bytes.len)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << bytes
 }
 
-pub fn Oid.unpack_from_asn1(src []u8, loc i64, p Params) !(Oid, i64) {
-	if src.len < 2 {
-		return error('Oid: bad payload len')
-	}
-	if p.mode != .der && p.mode != .ber {
-		return error('Oid: unsupported mode')
-	}
-	if loc > src.len {
-		return error('Oid: bad position offset')
-	}
-	// unpacking in DER mode
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	if tag.class() != .universal || tag.is_constructed() || tag.tag_number() != int(TagType.oid) {
+pub fn Oid.decode(src []u8, loc i64, p Params) !(Oid, i64) {
+	tlv, next := Tlv.read(src, loc, p)!
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.oid) {
 		return error('Oid: bad tag of universal class type')
 	}
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
-	// no bytes
-	if len == 0 {
-		ret := Oid{
-			tag: tag
-		}
-		return ret, idx
+	_ := tlv.length == tlv.content.len
+	if tlv.length == 0 {
+		return Oid{}, next
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('Oid: truncated input')
-	}
-	// TODO: check the length, its safe to access bytes
-	bytes := unsafe { src[idx..idx + len] }
 
-	oid := Oid.from_bytes(bytes)!
-	return oid, idx + len
+	oid := Oid.from_bytes(tlv.content)!
+	return oid, next
 }
 
 pub fn (oid Oid) equal(oth Oid) bool {

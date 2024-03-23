@@ -8,11 +8,11 @@ fn test_explicit_context_null_pack_unpack() ! {
 	ex1 := TaggedType.explicit_context(el, 0)!
 
 	mut out := []u8{}
-	ex1.pack_to_asn1(mut out)!
+	ex1.encode(mut out)!
 	exp := [u8(0xa0), 0x02, 0x05, 0x00]
 	assert out == exp
 	// unpack back
-	ttback, _ := TaggedType.unpack_from_asn1(out, 0, .explicit, el.tag())!
+	ttback, _ := TaggedType.decode(out, 0, .explicit, el.tag())!
 	assert ttback == ex1
 	assert ttback.inner_el as Null == el
 }
@@ -24,14 +24,14 @@ fn test_explicit_context_nested_pack_unpack() ! {
 	ex2 := TaggedType.explicit_context(ex1, 2)!
 
 	mut out := []u8{}
-	ex2.pack_to_asn1(mut out)!
+	ex2.encode(mut out)!
 	exp := [u8(0xa2), 0x04, 0xa1, 0x02, 0x05, 0x00]
 
 	assert out == exp
 
 	// clears out
 	out.clear()
-	ex1.pack_to_asn1(mut out)!
+	ex1.encode(mut out)!
 	assert out == [u8(0xa1), 0x02, u8(0x05), 0x00]
 }
 
@@ -52,13 +52,13 @@ Example ::= SEQUENCE {
 	seq.add_element(expl)!
 
 	mut out := []u8{}
-	seq.pack_to_asn1(mut out)!
+	seq.encode(mut out)!
 
 	exp := [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1), 6, 6, 4, 43,
 		6, 1, 3]
 	assert out == exp
 
-	back, n := Sequence.unpack_from_asn1(out, 0)!
+	back, n := Sequence.decode(out, 0)!
 	assert n == exp.len
 
 	els := back.elements()!

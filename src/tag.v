@@ -47,8 +47,8 @@ pub fn (t Tag) tag_number() int {
 	return t.number
 }
 
-// pack_to_asn1 serializes tag t into bytes array and appended into dst
-pub fn (t Tag) pack_to_asn1(mut dst []u8, p Params) ! {
+// encode serializes tag t into bytes array and appended into dst
+pub fn (t Tag) encode(mut dst []u8, p Params) ! {
 	// we currently only support .der or (stricter) .ber
 	if p.mode != .der && p.mode != .ber {
 		return error('Tag: unsupported mode')
@@ -79,7 +79,7 @@ pub fn (t Tag) pack_to_asn1(mut dst []u8, p Params) ! {
 // unpack_from_asn1 deserializes bytes back into Tag structure start from `loc` offset.
 // By default, its unpack in .der encoding mode, if you want more control, pass your `Params`.
 // Its return Tag and next offset to operate on, and return error if it fails to unpack.
-pub fn Tag.unpack_from_asn1(bytes []u8, loc i64, p Params) !(Tag, i64) {
+pub fn Tag.decode(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	// preliminary check
 	if bytes.len < 1 {
 		return error('Tag: bytes underflow')
@@ -105,7 +105,7 @@ pub fn Tag.unpack_from_asn1(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	// check if this `number` is in long (multibyte) form, and interpretes more bytes as a tag number.
 	if number == 0x1f {
 		// we only allowed `max_tag_length` bytes following to represent tag number.
-		number, pos = TagNumber.unpack_from_asn1(bytes, pos)!
+		number, pos = TagNumber.decode(bytes, pos)!
 
 		// pos is the next position to read next bytes, so check tag bytes length
 		if pos >= asn1.max_tag_length + loc + 1 {
@@ -212,7 +212,7 @@ fn (v TagNumber) pack_base128(mut to []u8, p Params) {
 
 // unpack_from_asn1 deserializes bytes into TagNumber from loc offset in base 128.
 // Its return deserialized TagNumber and next offset to process on.
-fn TagNumber.unpack_from_asn1(bytes []u8, loc i64, p Params) !(TagNumber, i64) {
+fn TagNumber.decode(bytes []u8, loc i64, p Params) !(TagNumber, i64) {
 	if loc > bytes.len {
 		return error('TagNumber: invalid pos')
 	}

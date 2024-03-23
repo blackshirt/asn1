@@ -10,9 +10,8 @@ module asn1
 // and otherwise, encodes into zero (0x00) for false value.
 // The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.
 pub struct Boolean {
+	tag   Tag = Tag{.universal, false, int(TagType.boolean)}
 	value bool
-mut:
-	tag Tag = new_tag(.universal, false, int(TagType.boolean))!
 }
 
 pub fn Boolean.new(value bool) Boolean {
@@ -60,15 +59,15 @@ pub fn (v Boolean) packed_length(p Params) int {
 	return n
 }
 
-pub fn (v Boolean) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (v Boolean) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('BitString: unsupported mode')
 	}
 
 	// in DER/BER, true or false value packed into single byte of 0xff or 0x00 respectively
-	v.tag().pack_to_asn1(mut dst, p)!
+	v.tag().encode(mut dst, p)!
 	length := Length.from_i64(1)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	if v.value {
 		dst << u8(0xff)
 	} else {
@@ -76,34 +75,24 @@ pub fn (v Boolean) pack_to_asn1(mut dst []u8, p Params) ! {
 	}
 }
 
-pub fn Boolean.unpack_from_asn1(src []u8, loc i64, p Params) !(Boolean, i64) {
+pub fn Boolean.decode(src []u8, loc i64, p Params) !(Boolean, i64) {
 	if src.len < 3 {
 		return error('Boolean: bad length bytes')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('Boolean: unsupported mode')
-	}
-	if loc > src.len {
-		return error('Boolean: bad position offset')
-	}
+	tlv, next := Tlv.read(src, loc, p)!
 
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	if tag.class() != .universal || tag.is_constructed() || tag.tag_number() != int(TagType.boolean) {
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.boolean) {
 		return error('Boolean: bad tag of universal class type')
 	}
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
 	// boolean value should be encoded in single byte
-	if len != 1 {
+	if tlv.length != 1 {
 		return error('der encoding of boolean value represented in multibytes is not allowed')
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('Boolean: truncated input')
-	}
-	bytes := unsafe { src[idx..idx + len] }
-	assert bytes.len == 1
-	b0 := bytes[0]
+
+	assert tlv.content.len == 1
 	mut value := false
-	match b0 {
+	match tlv.content[0] {
 		// 0x00 unpacked into false value
 		0x00 {
 			value = false
@@ -122,6 +111,6 @@ pub fn Boolean.unpack_from_asn1(src []u8, loc i64, p Params) !(Boolean, i64) {
 	}
 	return Boolean{
 		value: value
-		tag: tag
-	}, idx + len
+		tag: tlv.tag
+	}, next
 }

@@ -22,7 +22,7 @@ fn test_sequence_contains_other_seq() ! {
 
 	// lets serialize it to bytes
 	mut out := []u8{}
-	seq2.pack_to_asn1(mut out)!
+	seq2.encode(mut out)!
 	expected := [u8(0x30), 16, u8(0x01), 0x01, 0x00, u8(0x30), 8, 0x01, 0x01, 0xff, u8(0x05), 0x00,
 		u8(0x01), 0x01, 0x00, u8(0x01), 0x01, 0xff]
 	// assert for right value
@@ -34,7 +34,7 @@ fn test_sequence_contains_other_seq() ! {
 fn test_sequence_der_decode() ! {
 	data := [u8(0x30), 16, u8(0x01), 0x01, 0x00, u8(0x30), 8, u8(0x01), 0x01, 0xff, u8(0x05), 0x00,
 		u8(0x01), 0x01, 0x00, u8(0x01), 0x01, 0xff]
-	seq, n := Sequence.unpack_from_asn1(data, 0)!
+	seq, n := Sequence.decode(data, 0)!
 	assert seq.tag.is_constructed() == true
 	assert seq.tag.tag_number() == int(TagType.sequence)
 	assert n == 18
@@ -73,14 +73,14 @@ fn test_sequence_add_and_encode_boolean() {
 	assert size == 11
 
 	mut out := []u8{}
-	seq.pack_to_asn1(mut out)!
+	seq.encode(mut out)!
 
 	exp := [u8(0x30), 0x09, 0x01, 0x01, 0x00, 0x01, 0x01, 0xff, 0x01, 0x01, 0xff]
 
 	assert out == exp
 	assert exp.len == size
 
-	back, n := Sequence.unpack_from_asn1(out, 0)!
+	back, n := Sequence.decode(out, 0)!
 	assert n == exp.len
 
 	assert back.elements.len == 3
@@ -117,13 +117,13 @@ fn test_sequence_add_encode_oid() ! {
 	assert seq.packed_length() == 13
 
 	mut out := []u8{}
-	seq.pack_to_asn1(mut out)!
+	seq.encode(mut out)!
 	exp := [u8(0x30), 0x0b, u8(0x06), 0x02, 0x2a, 0x03, u8(0x06), 0x02, 0x2a, 0x04, u8(0x01), 0x01,
 		0xff]
 
 	assert out == exp
 
-	back, n := Sequence.unpack_from_asn1(out, 0)!
+	back, n := Sequence.decode(out, 0)!
 	assert n == exp.len
 	//(back)
 
@@ -131,15 +131,15 @@ fn test_sequence_add_encode_oid() ! {
 	assert back.tag.constructed == true
 	//
 	out.clear()
-	back.elements[0].pack_to_asn1(mut out)!
+	back.elements[0].encode(mut out)!
 	assert out == [u8(0x06), 0x02, 0x2a, 0x03]
 	//
 	out.clear()
-	back.elements[1].pack_to_asn1(mut out)!
+	back.elements[1].encode(mut out)!
 	assert out == [u8(0x06), 0x02, 0x2a, 0x04]
 	//
 	out.clear()
-	back.elements[2].pack_to_asn1(mut out)!
+	back.elements[2].encode(mut out)!
 	assert out == [u8(0x01), 0x01, 0xff]
 }
 
@@ -158,14 +158,14 @@ fn test_sequence_add_encode_integer() ! {
 	assert seq.packed_length() == 18
 
 	mut out := []u8{}
-	seq.pack_to_asn1(mut out)!
+	seq.encode(mut out)!
 	// math.max_i64 serialize to 02087fffffffffffffff
 	exp := [u8(0x30), 0x10, u8(0x02), 0x01, 0x7f, u8(0x01), 0x01, 0xff, u8(0x02), 0x08, 0x7f, 0xff,
 		0xff, 0xff, 0xff, 0xff, 0xff, 0xff]
 
 	assert out == exp
 
-	back, n := Sequence.unpack_from_asn1(out, 0)!
+	back, n := Sequence.decode(out, 0)!
 	assert n == exp.len
 
 	assert back.elements.len == 3
@@ -185,7 +185,7 @@ fn test_sequence_integer_bigint() ! {
 	seq.add_element(o3)!
 
 	mut out := []u8{}
-	seq.pack_to_asn1(mut out)!
+	seq.encode(mut out)!
 
 	assert seq.length() == 28 + 3 + 2
 	assert seq.packed_length() == 2 + 28 + 3 + 2
@@ -195,12 +195,12 @@ fn test_sequence_integer_bigint() ! {
 
 	assert out == exp
 
-	back, n := Sequence.unpack_from_asn1(out, 0)! // Sequence
+	back, n := Sequence.decode(out, 0)! // Sequence
 	assert n == exp.len
 
 	// clear out
 	out.clear()
-	back.pack_to_asn1(mut out)!
+	back.encode(mut out)!
 	assert out == exp
 
 	assert back.elements.len == 3
@@ -209,7 +209,7 @@ fn test_sequence_integer_bigint() ! {
 
 	// clear out
 	out.clear()
-	back.elements[1].pack_to_asn1(mut out)!
+	back.elements[1].encode(mut out)!
 	assert out == [u8(0x01), 0x01, 0xff]
 }
 
@@ -227,16 +227,16 @@ fn test_sequence_of_string() ! {
 	assert seq.packed_length() == 24
 
 	mut out := []u8{}
-	seq.pack_to_asn1(mut out)!
+	seq.encode(mut out)!
 	exp := [u8(0x30), 22, u8(0x05), 0x00, u8(12), 8, u8(105), 108, 111, 118, 101, 121, 111, 117,
 		u8(22), 8, u8(105), 108, 111, 118, 101, 121, 111, 117]
 	assert out == exp
 
-	back, n := Sequence.unpack_from_asn1(out, 0)!
+	back, n := Sequence.decode(out, 0)!
 	assert n == exp.len
 	// clears out
 	out.clear()
-	back.pack_to_asn1(mut out)!
+	back.encode(mut out)!
 	assert out == exp
 }
 
@@ -247,7 +247,7 @@ fn test_sequnce_of_sequence() {
 	seq.add_element(Boolean.new(false))!
 
 	mut out := []u8{}
-	seq.pack_to_asn1(mut out)!
+	seq.encode(mut out)!
 	assert out == [u8(0x30), 5, 5, 0, 1, 1, 0]
 
 	mut seq2 := Sequence.new(false)!
@@ -256,17 +256,17 @@ fn test_sequnce_of_sequence() {
 
 	// clear out
 	out.clear()
-	seq2.pack_to_asn1(mut out)!
+	seq2.encode(mut out)!
 	assert out == [u8(0x30), 10, 2, 1, 5, 2, 5, 0x14, 0x1f, 0x49, 0xd5, 0x4a]
 
 	seq.add_element(seq2)!
 	// clear out
 	out.clear()
-	seq.pack_to_asn1(mut out)!
+	seq.encode(mut out)!
 	assert out == [u8(0x30), 17, 5, 0, 1, 1, 0, u8(0x30), 10, 2, 1, 5, 2, 5, 0x14, 0x1f, 0x49,
 		0xd5, 0x4a]
 
-	back, n := Sequence.unpack_from_asn1(out, 0)!
+	back, n := Sequence.decode(out, 0)!
 	assert n == out.len
 
 	assert back == seq

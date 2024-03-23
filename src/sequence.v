@@ -100,7 +100,7 @@ pub fn (s Sequence) length(p Params) int {
 pub fn (s Sequence) payload(p Params) ![]u8 {
 	mut out := []u8{}
 	for e in s.elements {
-		e.pack_to_asn1(mut out, p)!
+		e.encode(mut out, p)!
 	}
 	return out
 }
@@ -116,7 +116,7 @@ pub fn (s Sequence) packed_length(p Params) int {
 	return n
 }
 
-pub fn (s Sequence) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (s Sequence) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Sequence: unsupported mode')
 	}
@@ -125,49 +125,34 @@ pub fn (s Sequence) pack_to_asn1(mut dst []u8, p Params) ! {
 		return error('Not a valid sequence tag')
 	}
 	// pack in DER mode
-	s.tag().pack_to_asn1(mut dst, p)!
+	s.tag().encode(mut dst, p)!
 	payload := s.payload(p)!
 	length := Length.from_i64(payload.len)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << payload
 }
 
-pub fn Sequence.unpack_from_asn1(src []u8, loc i64, p Params) !(Sequence, i64) {
-	if src.len < 2 {
-		return error('Sequence: bytes underflow')
-	}
-	if p.mode != .der && p.mode != .ber {
-		return error('Sequence: unsupported mode')
-	}
-	if loc > src.len {
-		return error('Sequence: bad loc offset')
-	}
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	if !tag.is_constructed() && tag.tag_number() != int(TagType.sequence) {
+pub fn Sequence.decode(src []u8, loc i64, p Params) !(Sequence, i64) {
+	tlv, next := Tlv.read(src, loc, p)!
+
+	if tlv.tag.class() != .universal && !tlv.tag.is_constructed()
+		&& tlv.tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: bad sequence tag')
 	}
-	if pos > src.len {
-		return error('pos overflow')
-	}
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
-	if len == 0 {
+	_ := tlv.length == tlv.content.len
+	if tlv.length == 0 {
 		// empty sequence
 		seq := Sequence.new(false)!
-		return seq, idx
+		return seq, next
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('Sequence: truncated input')
-	}
-	// TODO: check the length, its safe to access bytes
-	contents := unsafe { src[idx..idx + len] }
 
-	mut seq := Sequence.parse_contents(tag, contents)!
+	mut seq := Sequence.parse_contents(tlv.tag, tlv.content)!
 	// check for hold_different_tag
 	if !seq.elements.hold_different_tag() {
 		// set sequence into sequenceof type
 		seq.seqof = true
 	}
-	return seq, idx + len
+	return seq, next
 }
 
 // Utility function
@@ -185,8 +170,8 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 	mut seq := Sequence.new(false)!
 	mut i := 0
 	for i < contents.len {
-		t, idx := Tag.unpack_from_asn1(contents, i)!
-		ln, next := Length.unpack_from_asn1(contents, idx)!
+		t, idx := Tag.decode(contents, i)!
+		ln, next := Length.decode(contents, idx)!
 
 		// TODO: still no check
 		sub := unsafe { contents[next..next + ln] }

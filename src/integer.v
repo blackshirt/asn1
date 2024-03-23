@@ -29,7 +29,6 @@ const zero_integer = big.Integer{
 
 // Universal class of arbitrary length type of ASN.1 INTEGER
 pub struct Integer {
-mut:
 	tag   Tag = Tag{.universal, false, int(TagType.integer)}
 	value big.Integer
 }
@@ -252,15 +251,15 @@ pub fn (v Integer) length(p Params) int {
 // pack_to_asn1 packs and serializes Integer v into ASN 1 serialized bytes into `dst`.
 // Its accepts encoding mode params, where its currently only suppport `.der` DER mode.
 // If `dst.len != 0`, it act as append semantic, otherwise the `dst` bytes stores the result.
-pub fn (v Integer) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (v Integer) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
 
-	v.tag().pack_to_asn1(mut dst, p)!
+	v.tag().encode(mut dst, p)!
 	bytes, n := v.pack_into_twoscomplement_form()!
 	length := Length.from_i64(n)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << bytes
 }
 
@@ -268,7 +267,7 @@ pub fn (v Integer) pack_to_asn1(mut dst []u8, p Params) ! {
 // Its accepts `loc` params, the location (offset) within bytes src where the unpack
 // process start form, if not sure set to 0 and optional mode in `Params` to drive unpacking.
 // see `EncodingMode` for availables values. Currently only support`.der`.
-pub fn Integer.unpack_from_asn1(src []u8, loc i64, p Params) !(Integer, i64) {
+pub fn Integer.decode(src []u8, loc i64, p Params) !(Integer, i64) {
 	if src.len < 3 {
 		return error('IA5String: bad ia5string bytes length')
 	}
@@ -279,12 +278,12 @@ pub fn Integer.unpack_from_asn1(src []u8, loc i64, p Params) !(Integer, i64) {
 		return error('Integer: bad position offset')
 	}
 
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	tag, pos := Tag.decode(src, loc, p)!
 	if tag.class() != .universal || tag.is_constructed() || tag.tag_number() != int(TagType.integer) {
 		return error('Integer: bad tag of universal class type')
 	}
 	// read the length part from current position pos
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	len, idx := Length.decode(src, pos, p)!
 	if len == 0 {
 		return error('Integer: len==0')
 	}
@@ -394,26 +393,26 @@ pub fn (v Int64) packed_length(p Params) int {
 	return n
 }
 
-pub fn (v Int64) pack_to_asn1(mut dst []u8, p Params) ! {
-	v.tag().pack_to_asn1(mut dst, p)!
+pub fn (v Int64) encode(mut dst []u8, p Params) ! {
+	v.tag().encode(mut dst, p)!
 	payload := v.payload(p)!
 	len := Length.from_i64(payload.len)!
-	len.pack_to_asn1(mut dst, p)!
+	len.encode(mut dst, p)!
 	dst << payload
 }
 
-pub fn Int64.unpack_from_asn1(src []u8, loc i64, p Params) !(Int64, i64) {
+pub fn Int64.decode(src []u8, loc i64, p Params) !(Int64, i64) {
 	if src.len < 3 {
 		return error('Int64: bytes underflow')
 	}
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	tag, pos := Tag.decode(src, loc, p)!
 	if tag.class() != .universal && tag.is_constructed() && tag.tag_number() != int(TagType.integer) {
 		return error('Int64: check tag failed')
 	}
 	if pos > src.len {
 		return error('Int64: truncated output')
 	}
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	len, idx := Length.decode(src, pos, p)!
 	if len == 0 {
 		return error('Int64: len==0')
 	}

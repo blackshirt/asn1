@@ -12,12 +12,12 @@ fn test_serialize_utctime_basic() ! {
 
 	ut := UTCTime.from_string(inp)!
 	mut out := []u8{}
-	ut.pack_to_asn1(mut out, .der)!
+	ut.encode(mut out, .der)!
 
 	assert out == exp
 
 	// back
-	back, pos := UTCTime.unpack_from_asn1(out, 0, .der)!
+	back, pos := UTCTime.decode(out, 0, .der)!
 	assert back.tag.tag_number() == int(asn1.TagType.utctime)
 	assert back == ut
 	assert back.value == inp
@@ -67,11 +67,11 @@ fn test_serialize_decode_generalizedtime() ! {
 
 	gt := GeneralizedTime.from_string(s)!
 	mut out := []u8{}
-	gt.pack_to_asn1(mut out, .der)!
+	gt.encode(mut out, .der)!
 	assert out == exp
 
 	// back
-	back, pos := GeneralizedTime.unpack_from_asn1(out, 0, .der)!
+	back, pos := GeneralizedTime.decode(out, 0, .der)!
 
 	assert back == gt
 	assert back.value == s

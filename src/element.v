@@ -1,38 +1,5 @@
 module asn1
 
-// After merged commit from https://github.com/vlang/v/commit/29e5124c48b613eaac9e1115f428f8164b66f51d
-// Its a good to give a try, 
-// ASN.1 Element implemented as generic type
-struct Element[T] {
-	element T
-}
-
-// new creates a new generic ASN.1 Element from T type
-fn Elm.new[T](el T) Element[T] {
-	return Element[T]{
-		element: el
-	}
-}
-
-// tag gets the tag of this Element
-fn (e Element[T]) tag() Tag {
-	return e.element.tag()
-}
-
-// element gets the underlying T type element from this generic Element
-fn (e Element[T]) element() T {
-	return e.element
-}
-
-fn (e Element[]T]) encode(mut out []u8, p Params) ! {
-	e.element.encode(mut out, p)
-}
-
-fn Element.decode[T](src []u8, loc i64, p Params) !(T, i64) {
-    t, idx:= T.decode(src, loc, pack_to_asn1!)
-	return t, idx
-}
-/*
 pub interface Element {
 	// tag tells the tag of this Element
 	tag() Tag
@@ -46,7 +13,6 @@ pub interface Element {
 	// whether the tag is in constructed or primitive form.
 	payload(p Params) ![]u8
 }
-*/
 
 // Element.new creates a new Element from RawElement with tag and payload
 pub fn Element.new(tag Tag, payload []u8) !Element {
@@ -56,17 +22,17 @@ pub fn Element.new(tag Tag, payload []u8) !Element {
 	}
 }
 
-// pack_to_asn1 serializes this Element e to bytes and appended to `out`.
+// encode serializes this Element e to bytes and appended to `out`.
 // Its accepts optional p Params.
-pub fn (e Element) pack_to_asn1(mut out []u8, p Params) ! {
-	e.tag().pack_to_asn1(mut out, p)!
+pub fn (e Element) encode(mut out []u8, p Params) ! {
+	e.tag().encode(mut out, p)!
 	payload := e.payload(p)!
 	len := e.length(p)
 	if payload.len != len {
 		return error('Element: unmatching length')
 	}
 	length := Length.from_i64(len)!
-	length.pack_to_asn1(mut out, p)!
+	length.encode(mut out, p)!
 	out << payload
 }
 
@@ -83,7 +49,7 @@ pub fn (e Element) packed_length(p Params) int {
 }
 
 // unpack_from_asn1 deserializes bytes in src from offet loc into Element.
-pub fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
+pub fn Element.decode(src []u8, loc i64, p Params) !(Element, i64) {
 	if src.len < 2 {
 		return error('Element: bad length bytes')
 	}
@@ -94,8 +60,8 @@ pub fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
 		return error('Element: bad position offset')
 	}
 	// TODO: still no check, add check
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	tag, pos := Tag.decode(src, loc, p)!
+	len, idx := Length.decode(src, pos, p)!
 	if idx > src.len || idx + len > src.len {
 		return error('Element: truncated input')
 	}
@@ -115,7 +81,7 @@ pub fn Element.unpack_from_asn1(src []u8, loc i64, p Params) !(Element, i64) {
 		.context_specific {
 			r := RawElement.new(tag, bytes)
 			if tag.is_constructed() {
-				inn_tag, _ := Tag.unpack_from_asn1(bytes, 0, p)!
+				inn_tag, _ := Tag.decode(bytes, 0, p)!
 				tt := r.as_tagged(.explicit, inn_tag, p)!
 				return tt, idx + len
 			}
@@ -139,7 +105,7 @@ pub fn ElementList.from_bytes(src []u8) ![]Element {
 	}
 	mut i := i64(0)
 	for i < src.len {
-		el, pos := Element.unpack_from_asn1(src, i)!
+		el, pos := Element.decode(src, i)!
 		els << el
 		i += pos
 	}
@@ -208,17 +174,17 @@ pub fn (e RawElement) packed_length(p Params) int {
 	return n
 }
 
-pub fn (e RawElement) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (e RawElement) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('RawElement: unsupported mode')
 	}
-	e.tag.pack_to_asn1(mut dst, p)!
+	e.tag.encode(mut dst, p)!
 	length := Length.from_i64(e.payload.len) or { panic(err) }
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << e.payload
 }
 
-pub fn RawElement.unpack_from_asn1(src []u8, loc i64, p Params) !(RawElement, i64) {
+pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
 	if src.len < 2 {
 		return error('RawElement: bytes underflow')
 	}
@@ -226,8 +192,8 @@ pub fn RawElement.unpack_from_asn1(src []u8, loc i64, p Params) !(RawElement, i6
 		return error('RawElement: unsupported mode')
 	}
 	// todo : validate element
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	tag, pos := Tag.decode(src, loc, p)!
+	len, idx := Length.decode(src, pos, p)!
 	// no contents
 	if len == 0 {
 		el := RawElement{
@@ -262,14 +228,14 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 			return error('tag constructed but no payload')
 		}
 		if mode == .explicit {
-			tag, pos := Tag.unpack_from_asn1(r.payload, 0, p)!
+			tag, pos := Tag.decode(r.payload, 0, p)!
 			if tag != inner_tag {
 				return error('expected inner_tag != parsed tag')
 			}
 			if pos > r.payload.len {
 				return error('bad pos')
 			}
-			len, idx := Length.unpack_from_asn1(r.payload, pos, p)!
+			len, idx := Length.decode(r.payload, pos, p)!
 			if idx > r.payload.len || len + idx > r.payload.len {
 				return error('truncated input')
 			}

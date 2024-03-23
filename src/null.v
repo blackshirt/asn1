@@ -12,12 +12,6 @@ pub fn Null.new() Null {
 	return Null{}
 }
 
-fn Null.new_with_tag(t Tag) Null {
-	return Null{
-		tag: t
-	}
-}
-
 pub fn Null.from_bytes(b []u8) !Null {
 	if b.len != 0 {
 		return error('Null: bad bytes')
@@ -41,38 +35,26 @@ pub fn (n Null) packed_length(p Params) int {
 	return 2
 }
 
-pub fn (n Null) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (n Null) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
 
-	n.tag().pack_to_asn1(mut dst, p)!
+	n.tag().encode(mut dst, p)!
 	// the length is 0
 	dst << [u8(0x00)]
 }
 
-fn Null.unpack(src []u8, loc i64, p Params) !(Null, i64) {
-	if src.len < 2 {
-		return error('Null: bad ia5string bytes length')
+fn Null.decode(src []u8, loc i64, p Params) !(Null, i64) {
+	tlv, next := Tlv.read(src, loc, p)!
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.null) {
+		return error('Null: bad tag=${tlv.tag}')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('Null: unsupported mode')
-	}
-	if loc > src.len {
-		return error('Null: bad position offset')
-	}
-
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	if tag.tag_number() != int(TagType.null) {
-		return error('Null: bad tag=${tag}')
-	}
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
-	if len != 0 {
+	if tlv.length != 0 {
 		return error('Null: len != 0')
 	}
-	return Null{
-		tag: tag
-	}, idx
+	return Null.new(), next
 }
 
 pub fn (n Null) str() string {

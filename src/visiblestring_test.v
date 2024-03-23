@@ -25,7 +25,7 @@ fn test_visible_string_handling() {
 			continue
 		}
 		mut out := []u8{}
-		vs.pack_to_asn1(mut out) or {
+		vs.encode(mut out) or {
 			assert err == c.err
 			continue
 		}
@@ -33,7 +33,7 @@ fn test_visible_string_handling() {
 		assert out == c.out
 
 		// back
-		vsback, idx := VisibleString.unpack_from_asn1(out, 0) or {
+		vsback, idx := VisibleString.decode(out, 0) or {
 			assert err == c.err
 			continue
 		}

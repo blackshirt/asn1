@@ -70,7 +70,7 @@ pub fn (tt TaggedType) payload(p Params) ![]u8 {
 	// and if .implicit, the payload is tt.inner_el payload
 	if tt.mode == .explicit {
 		mut out := []u8{}
-		tt.inner_el.pack_to_asn1(mut out, p)!
+		tt.inner_el.encode(mut out, p)!
 		return out
 	}
 	// otherwise is in implicit mode
@@ -121,7 +121,7 @@ pub fn (tt TaggedType) packed_length(p Params) int {
 	return n
 }
 
-pub fn (tt TaggedType) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (tt TaggedType) encode(mut dst []u8, p Params) ! {
 	// TaggedType tag should in constructed form
 	if !tt.outer_tag.is_constructed() {
 		return error('TaggedType tag should in constructed form')
@@ -132,55 +132,46 @@ pub fn (tt TaggedType) pack_to_asn1(mut dst []u8, p Params) ! {
 	match tt.mode {
 		.explicit {
 			// wraps the inner element with this tag and length
-			tt.outer_tag.pack_to_asn1(mut dst, p)!
+			tt.outer_tag.encode(mut dst, p)!
 			length := tt.inner_el.packed_length(p)
 			len := Length.from_i64(length)!
-			len.pack_to_asn1(mut dst, p)!
-			tt.inner_el.pack_to_asn1(mut dst, p)!
+			len.encode(mut dst, p)!
+			tt.inner_el.encode(mut dst, p)!
 		}
 		.implicit {
 			// replace the tag.of inner element with this tag
-			tt.outer_tag.pack_to_asn1(mut dst)!
+			tt.outer_tag.encode(mut dst)!
 			payload := tt.inner_el.payload(p)!
 			length := Length.from_i64(payload.len)!
-			length.pack_to_asn1(mut dst, p)!
+			length.encode(mut dst, p)!
 			dst << payload
 		}
 	}
 }
 
-pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Params) !(TaggedType, i64) {
-	if src.len < 2 {
+pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Params) !(TaggedType, i64) {
+	// TaggedType without inner element is not make sense
+	if src.len < 4 {
 		return error('TaggedType: bytes underflow')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('TaggedType: unsupported mode')
-	}
-	if loc > src.len {
-		return error('TaggedType: bad position offset')
-	}
-	// external tag
-	outer_tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	tlv, next := Tlv.read(src, loc, p)!
 	// TODO: check the tag, do we need .class == .context_specific
 	// in explicit context, the tag should be in constructed form
-	if !outer_tag.is_constructed() {
+	// tlv.tag is outer_tag
+	if !tlv.tag.is_constructed() {
 		return error('TaggedType: tag check failed, .explicit should be constructed')
 	}
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
-	if len == 0 {
+	_ := tlv.length == tlv.content.len
+	if tlv.length == 0 {
 		// its bad TaggedType with len==0, ie, without contents
 		return error('TaggedType: len==0')
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('TaggedType: truncated bytes')
-	}
-	// TODO: check the length, its safe to access bytes
-	bytes := unsafe { src[idx..idx + len] }
+	bytes := tlv.content
 	match tm {
 		.explicit {
 			// when explicit, unpack element from bytes
-			inn_tag, pos0 := Tag.unpack_from_asn1(bytes, 0, p)!
-			inn_len, idx0 := Length.unpack_from_asn1(bytes, pos0, p)!
+			inn_tag, pos0 := Tag.decode(bytes, 0, p)!
+			inn_len, idx0 := Length.decode(bytes, pos0, p)!
 			// todo: check boundary
 			inn_sub := unsafe { bytes[idx0..idx0 + inn_len] }
 			inner_el := if inn_tag.is_constructed() {
@@ -193,11 +184,11 @@ pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag T
 				return error('unexpected inner tag')
 			}
 			tt := TaggedType{
-				outer_tag: outer_tag
+				outer_tag: tlv.tag
 				mode: .explicit
 				inner_el: inner_el
 			}
-			return tt, idx + len
+			return tt, next
 		}
 		.implicit {
 			// when in .implicit mode, inner tag is unknown, so we pass inner_tag as expected tag
@@ -207,11 +198,11 @@ pub fn TaggedType.unpack_from_asn1(src []u8, loc i64, tm TaggedMode, inner_tag T
 				payload: bytes
 			}
 			tt := TaggedType{
-				outer_tag: outer_tag
+				outer_tag: tlv.tag
 				mode: .implicit
 				inner_el: inner
 			}
-			return tt, idx + len
+			return tt, next
 		}
 	}
 }

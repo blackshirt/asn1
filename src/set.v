@@ -75,7 +75,7 @@ pub fn (s Set) tag() Tag {
 pub fn (s Set) payload(p Params) ![]u8 {
 	mut out := []u8{}
 	for el in s.elements {
-		el.pack_to_asn1(mut out, p)!
+		el.encode(mut out, p)!
 	}
 	return out
 }
@@ -99,7 +99,7 @@ pub fn (s Set) packed_length(p Params) int {
 	return n
 }
 
-pub fn (s Set) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (s Set) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('set: unsupported mode')
 	}
@@ -108,11 +108,34 @@ pub fn (s Set) pack_to_asn1(mut dst []u8, p Params) ! {
 		return error('Not a valid set tag')
 	}
 	// pack in DER mode
-	s.tag().pack_to_asn1(mut dst, p)!
+	s.tag().encode(mut dst, p)!
 	payload := s.payload(p)!
 	length := Length.from_i64(payload.len)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << payload
+}
+
+pub fn Set.decode(src []u8, loc i64, p Params) !(Set, i64) {
+	tlv, next := Tlv.read(src, loc, p)!
+
+	if tlv.tag.class() != .universal && !tlv.tag.is_constructed()
+		&& tlv.tag.tag_number() != int(TagType.set) {
+		return error('Set: bad set tag')
+	}
+	_ := tlv.length == tlv.content.len
+	if tlv.length == 0 {
+		// empty sequence
+		set := Set.new(false)
+		return set, next
+	}
+
+	mut set := Set.parse_contents(tlv.tag, tlv.content)!
+	// check for hold_different_tag
+	if !set.elements.hold_different_tag() {
+		// set sequence into sequenceof type
+		set.setof = true
+	}
+	return set, next
 }
 
 // Utility function
@@ -128,8 +151,8 @@ fn Set.parse_contents(tag Tag, contents []u8, p Params) !Set {
 	// or you can call it later.
 	mut set := Set.new(false)
 	for i < contents.len {
-		t, idx := Tag.unpack_from_asn1(contents, i, p)!
-		ln, next := Length.unpack_from_asn1(contents, idx, p)!
+		t, idx := Tag.decode(contents, i, p)!
+		ln, next := Length.decode(contents, idx, p)!
 
 		// todo : check boundary
 		sub := unsafe { contents[next..next + ln] }
@@ -160,9 +183,9 @@ fn (mut els []Element) sort_the_set() []Element {
 		if a.tag() == b.tag() {
 			// compare by contents instead just return 0
 			mut aa := []u8{}
-			a.pack_to_asn1(mut aa) or { panic(err) }
+			a.encode(mut aa) or { panic(err) }
 			mut bb := []u8{}
-			b.pack_to_asn1(mut bb) or { panic(err) }
+			b.encode(mut bb) or { panic(err) }
 			return aa.bytestr().compare(bb.bytestr())
 		}
 		q := if a.tag().number < b.tag().number { -1 } else { 1 }
@@ -174,9 +197,9 @@ fn (mut els []Element) sort_the_set() []Element {
 fn (mut els []Element) sort_the_setof() ![]Element {
 	els.sort_with_compare(fn (a &Element, b &Element) int {
 		mut aa := []u8{}
-		a.pack_to_asn1(mut aa) or { panic(err) }
+		a.encode(mut aa) or { panic(err) }
 		mut bb := []u8{}
-		b.pack_to_asn1(mut bb) or { panic(err) }
+		b.encode(mut bb) or { panic(err) }
 		return aa.bytestr().compare(bb.bytestr())
 	})
 	return els

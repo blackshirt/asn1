@@ -8,9 +8,8 @@ module asn1
 // The encoding of an enumerated value shall be that of the integer value with which it is associated.
 // NOTE: It is primitive.
 pub struct Enumerated {
+	tag   Tag = Tag{.universal, false, int(TagType.enumerated)}
 	value int
-mut:
-	tag Tag = Tag{.universal, false, int(TagType.enumerated)}
 }
 
 pub fn Enumerated.from_int(val int) Enumerated {
@@ -44,46 +43,29 @@ pub fn (e Enumerated) packed_length(p Params) !int {
 	return n
 }
 
-pub fn (e Enumerated) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (e Enumerated) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
-	e.tag().pack_to_asn1(mut dst, p)!
+	e.tag().encode(mut dst, p)!
 	bytes := e.pack()!
 	length := Length.from_i64(bytes.len)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << bytes
 }
 
-pub fn Enumerated.unpack_from_asn1(src []u8, loc i64, p Params) !(Enumerated, i64) {
+pub fn Enumerated.decode(src []u8, loc i64, p Params) !(Enumerated, i64) {
+	// integer minimaly should length 1 for 0 value
 	if src.len < 3 {
-		return error('Enumerated: bad src')
+		return error('Enumerated: bytes underflow')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('Enumerated: unsupported mode')
-	}
-	if loc > src.len {
-		return error('Enumerated: bad position offset')
-	}
-
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	if tag.class() != .universal || tag.is_constructed()
-		|| tag.tag_number() != int(TagType.enumerated) {
+	tlv, next := Tlv.read(src, loc, p)!
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.enumerated) {
 		return error('Enumerated: bad tag of universal class type')
 	}
-	// read the length part from current position pos
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
-	if len == 0 {
-		return error('Enumerated: len==0')
-	}
-	if idx + len > src.len || idx + len > src.len {
-		return error('Enumerated: truncated input')
-	}
-	// read the bytes part from current position idx to the length part
-	bytes := unsafe { src[idx..idx + len] }
-	// buf := trim_bytes(bytes)!
-	ret := Enumerated.unpack(bytes)!
-	return ret, idx + len
+	ret := Enumerated.unpack(tlv.content)!
+	return ret, next
 }
 
 fn Enumerated.unpack(src []u8) !Enumerated {

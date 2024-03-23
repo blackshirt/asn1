@@ -148,7 +148,7 @@ fn test_serialize_oid_basic() {
 	oid := Oid.from_ints(inp)!
 
 	mut out := []u8{}
-	oid.pack_to_asn1(mut out)!
+	oid.encode(mut out)!
 
 	assert out == exp
 }
@@ -185,7 +185,7 @@ fn test_serialize_decode_oid() {
 			continue
 		}
 		mut out := []u8{}
-		oid.pack_to_asn1(mut out) or {
+		oid.encode(mut out) or {
 			assert err == t.err
 			continue
 		}
@@ -193,7 +193,7 @@ fn test_serialize_decode_oid() {
 		assert out == t.exp
 		// dump(out)
 		// decode back
-		oidback, next := Oid.unpack_from_asn1(out, 0)!
+		oidback, next := Oid.decode(out, 0)!
 
 		assert oidback.tag.tag_number() == int(TagType.oid)
 		assert oidback == oid
@@ -206,12 +206,12 @@ fn test_oid_encode_decode() ! {
 	src := Oid.from_string(inp)!
 
 	mut out := []u8{}
-	src.pack_to_asn1(mut out)!
+	src.encode(mut out)!
 	exp := [u8(0x06), 0x06, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d]
 
 	assert out == exp
 
-	oidback, _ := Oid.unpack_from_asn1(out, 0)!
+	oidback, _ := Oid.decode(out, 0)!
 
 	assert oidback.str() == inp
 	assert oidback.tag.tag_number() == 6
@@ -220,7 +220,7 @@ fn test_oid_encode_decode() ! {
 fn test_tc21_long_format_of_oid_encoding_should_error_in_der() ! {
 	data := [u8(0x06), 0x06, 0x80, 0x80, 0x51, 0x80, 0x80, 0x01]
 
-	_, _ := Oid.unpack_from_asn1(data, 0) or {
+	_, _ := Oid.decode(data, 0) or {
 		assert err == error('integer is not minimaly encoded')
 		return
 	}
@@ -230,7 +230,7 @@ fn test_tc22_too_big_value_oid() ! {
 	data := [u8(0x06), 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f,
 		0x85, 0x03, 0x02, 0x02, 0x03]
 
-	_, _ := Oid.unpack_from_asn1(data, 0) or {
+	_, _ := Oid.decode(data, 0) or {
 		assert err == error('integer is not minimaly encoded')
 		return
 	}

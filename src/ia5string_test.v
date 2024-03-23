@@ -24,14 +24,14 @@ fn test_ia5string_handling() ! {
 			continue
 		}
 		mut out := []u8{}
-		s.pack_to_asn1(mut out) or {
+		s.encode(mut out) or {
 			assert err == c.err
 			continue
 		}
 		assert out == c.out
 
 		// unpack back
-		ret, next := IA5String.unpack_from_asn1(out, 0) or {
+		ret, next := IA5String.decode(out, 0) or {
 			assert err == c.err
 			continue
 		}

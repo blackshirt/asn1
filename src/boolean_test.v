@@ -14,11 +14,11 @@ fn test_encode_decode_boolean_in_der_mode() {
 		BooleanTest{[u8(1), 0x01, 0xff], true, none},
 		BooleanTest{[u8(1), 0x01, 0x00], false, none},
 		BooleanTest{[u8(1), 0x01, 0x10], false, error('Boolean: in DER, other than 0xff is not allowed for true value')}, // invalid value
-		BooleanTest{[u8(1), 0x02, 0x00], false, error('der encoding of boolean value represented in multibytes is not allowed')}, // bad length
+		BooleanTest{[u8(1), 0x02, 0x00], false, error('Tlv: truncated src bytes')}, // bad length
 		BooleanTest{[u8(1), 0x01, 0x00], false, error('Boolean: bad tag of universal class type')}, // bad tag number
 	]
 	for c in bd {
-		out, pos := Boolean.unpack_from_asn1(c.inp, 0) or {
+		out, pos := Boolean.decode(c.inp, 0) or {
 			assert err == c.err
 			continue
 		}

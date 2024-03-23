@@ -8,7 +8,7 @@ fn test_encode_printablestring_basic() ! {
 	s := 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 	mut buf := []u8{}
 	ps := PrintableString.from_string(s)!
-	ps.pack_to_asn1(mut buf)!
+	ps.encode(mut buf)!
 
 	mut out := [u8(0x13)]
 	length := [u8(0x81), u8(s.len)]
@@ -17,7 +17,7 @@ fn test_encode_printablestring_basic() ! {
 	// dump(out)
 	assert out == buf
 
-	psback, _ := PrintableString.unpack_from_asn1(buf, 0)!
+	psback, _ := PrintableString.decode(buf, 0)!
 	assert psback.tag.tag_number() == int(TagType.printablestring)
 	assert psback.tag.class() == .universal
 
@@ -41,12 +41,12 @@ fn test_encode_printablestring_generic() {
 	for t in data {
 		ps := PrintableString.from_string(string(t.input))!
 		mut out := []u8{}
-		ps.pack_to_asn1(mut out)!
+		ps.encode(mut out)!
 		// out := serialize_printablestring(string(t.input))!
 		assert out == t.exp
 
 		// decode back
-		psback, _ := PrintableString.unpack_from_asn1(out, 0)!
+		psback, _ := PrintableString.decode(out, 0)!
 
 		assert psback.value == t.input
 		assert psback.tag.tag_number() == int(TagType.printablestring)

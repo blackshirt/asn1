@@ -64,10 +64,10 @@ pub fn (v Length) packed_length(p Params) int {
 	return n
 }
 
-// pack_to_asn1 serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
+// encode serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
 // it would use p.mode of `EncodingMode` to drive packing operation operation would be done.
 // By default the .der mode is only currently supported.
-pub fn (v Length) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (v Length) encode(mut dst []u8, p Params) ! {
 	// we currently only support .der and (stricter) .ber
 	if p.mode != .der && p.mode != .ber {
 		return error('Length: unsupported mode')
@@ -93,7 +93,7 @@ pub fn (v Length) pack_to_asn1(mut dst []u8, p Params) ! {
 
 // unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buffer.
 // Its return Length and next offset in the buffer src to process on, and return error on fail.
-pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
+pub fn Length.decode(src []u8, loc i64, p Params) !(Length, i64) {
 	if src.len < 1 {
 		return error('Length: truncated length')
 	}
@@ -161,63 +161,61 @@ pub fn Length.unpack_from_asn1(src []u8, loc i64, p Params) !(Length, i64) {
 	return ret, pos
 }
 
-// header in the form tag and length
+// ASN.1 header in the form of tag, length and value for storing parse results.
 //
-struct TagAndLength {
+struct Tlv {
 mut:
 	tag     Tag
 	length  Length
 	content []u8
-	rem     []u8
 }
 
-// parse_tag_and_length parse the bytes in src into Tag and Length
-fn parse_tag_and_length(src []u8, p Params) !(TagAndLength, i64) {
-	// guard check 
-	if p.mode != .der && p.mode != .ber {
-		return error('TagAndLength: bad mode')
-	}
+// Tlv.read parses and read the bytes in src into Tag, Length and bytes value
+fn Tlv.read(src []u8, loc i64, p Params) !(Tlv, i64) {
 	// minimal length bytes contains tag and the length is two bytes
 	if src.len < 2 {
-		return error('TagAndLength: bytes underflow')
+		return error('Tlv: bytes underflow')
 	}
-	mut tnl := TagAndLength{}
-	tag, pos := Tag.unpack_from_asn1(src, 0, p)!
-	// check if the offset position is not overflow
-	if pos > src.len {
-		return error('TagAndLength: pos overflow')
+	if loc > src.len {
+		return error('Tlv: bad loc')
+	}
+	// guard check
+	if p.mode != .der && p.mode != .ber {
+		return error('Tlv: bad mode')
+	}
+
+	mut tnl := Tlv{}
+	tag, pos := Tag.decode(src, loc, p)!
+	// check if the offset position is not overflowing src.len
+	if pos >= src.len {
+		return error('Tlv: pos overflow')
 	}
 	// read the length part
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	len, idx := Length.decode(src, pos, p)!
 	// check if len == 0, its mean this parsed element has no content bytes
 	if len == 0 {
 		tnl.tag = tag
 		tnl.length = len
-		tnl.content = []u8{}
 		// is there are more bytes after this?
 		// when idx still fits under src.len, the remaining bytes after idx is set
 		// as remaining bytes returned
-		if idx < src.len {
-			rem := unsafe { src[idx..] }
-			tnl.rem = rem
-		}
 		return tnl, idx
 	}
 	// len !=0
 	// check if idx + len is not overflow src.len, if its not happen,
 	// this element has a content, or return error if not.
-	if idx + len > src.len {
-		return error('TagAndLength: idx + len overflow')
+	// when idx == src.len, but len != 0, its mean the input is truncated
+	// its also same mean for idx+len is over to the src.len
+	if idx >= src.len || idx + len > src.len {
+		return error('Tlv: truncated src bytes')
 	}
+	// idx and idx+len has been checked above, so its would be safe
+	// to access slices of underlying bytes
 	content := unsafe { src[idx..idx + len] }
-	// is there remaining bytes? if yes, bytes after `idx+len` is remaining bytes
-	// otherwise, its has empty remaining bytes, and its finish.
-	rem := if idx + len < src.len { unsafe { src[idx + len..] } } else { []u8{} }
 
 	tnl.tag = tag
 	tnl.length = len
 	tnl.content = content
-	tnl.rem = rem
 
 	return tnl, idx + len
 }

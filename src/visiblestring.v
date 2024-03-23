@@ -59,7 +59,7 @@ pub fn (vs VisibleString) packed_length(p Params) int {
 	return n
 }
 
-pub fn (vs VisibleString) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (vs VisibleString) encode(mut dst []u8, p Params) ! {
 	// recheck
 	if contains_ctrl_chars(vs.value.bytes()) {
 		return error('VisibleString: contains control chars')
@@ -67,47 +67,25 @@ pub fn (vs VisibleString) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
-	vs.tag().pack_to_asn1(mut dst, p)!
+	vs.tag().encode(mut dst, p)!
 	length := Length.from_i64(vs.value.bytes().len)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << vs.value.bytes()
 }
 
-pub fn VisibleString.unpack_from_asn1(src []u8, loc i64, p Params) !(VisibleString, i64) {
-	if src.len < 2 {
-		return error('VisibleString: bad src.len underflow')
+pub fn VisibleString.decode(src []u8, loc i64, p Params) !(VisibleString, i64) {
+	tlv, next := Tlv.read(src, loc, p)!
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.visiblestring) {
+		return error('VisibleString: bad tag of universal class type')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('VisibleString: unsupported mode')
-	}
-	if loc > src.len {
-		return error('VisibleString: bad position offset')
-	}
-
-	// unpacking in DER mode
-	// get the tag
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	if tag.class() != .universal || tag.is_constructed()
-		|| tag.tag_number() != int(TagType.visiblestring) {
-		return error('VisibleString: tag check failed')
-	}
-	// get the Length
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	_ := tlv.length == tlv.content.len
 	// no bytes
-	if len == 0 {
-		ret := VisibleString{
-			tag: tag
-		}
-		return ret, idx
+	if tlv.length == 0 {
+		return VisibleString{}, next
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('VisibleString: truncated input')
-	}
-	// TODO: check the length, its safe to access bytes
-	bytes := unsafe { src[idx..idx + len] }
-
-	vs := VisibleString.from_bytes(bytes)!
-	return vs, idx + len
+	us := VisibleString.from_bytes(tlv.content)!
+	return us, next
 }
 
 // Utility function

@@ -25,8 +25,7 @@ module asn1
 // - represented UTCTime in time.Time
 pub struct UTCTime {
 	value string
-mut:
-	tag Tag = Tag{.universal, false, int(TagType.utctime)}
+	tag   Tag = Tag{.universal, false, int(TagType.utctime)}
 }
 
 // new_utctime creates new UTCTime from string s.
@@ -71,7 +70,7 @@ pub fn (ut UTCTime) packed_length(p Params) int {
 	return n
 }
 
-pub fn (t UTCTime) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (t UTCTime) encode(mut dst []u8, p Params) ! {
 	valid := validate_utctime(t.value)!
 	if !valid {
 		return error('UTCTime: fail on validate utctime')
@@ -79,40 +78,29 @@ pub fn (t UTCTime) pack_to_asn1(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
-	t.tag().pack_to_asn1(mut dst, p)!
+	t.tag().encode(mut dst, p)!
 	bytes := t.value.bytes()
 	length := Length.from_i64(bytes.len)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << bytes
 }
 
-pub fn UTCTime.unpack_from_asn1(src []u8, loc i64, p Params) !(UTCTime, i64) {
-	if src.len < 3 {
+pub fn UTCTime.decode(src []u8, loc i64, p Params) !(UTCTime, i64) {
+	if src.len < 13 {
 		return error('UTCTime: bad len')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('UTCTime: unsupported mode')
-	}
-	if loc > src.len {
-		return error('UTCTime: bad position offset')
-	}
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	if tag.class() != .universal || tag.is_constructed() || tag.tag_number() != int(TagType.utctime) {
+	tlv, next := Tlv.read(src, loc, p)!
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.utctime) {
 		return error('UTCTime: bad tag of universal class type')
 	}
-	// read the length part from current position pos
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
-	if len == 0 {
+	_ := tlv.length == tlv.content.len
+	if tlv.length == 0 {
 		return error('UTCTime: len==0')
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('UTCTime: truncated input')
-	}
-	// read the bytes part from current position idx to the length part
-	bytes := unsafe { src[idx..idx + len] }
-	mut ret := UTCTime.from_string(bytes.bytestr())!
-	ret.tag = tag
-	return ret, idx + len
+
+	ret := UTCTime.from_string(tlv.content.bytestr())!
+	return ret, next
 }
 
 // utility function for UTCTime
@@ -181,8 +169,7 @@ fn valid_time_contents(s string) bool {
 // - GeneralizedTime values MUST NOT include fractional seconds.
 pub struct GeneralizedTime {
 	value string
-mut:
-	tag Tag = Tag{.universal, false, int(TagType.generalizedtime)}
+	tag   Tag = Tag{.universal, false, int(TagType.generalizedtime)}
 }
 
 pub fn GeneralizedTime.from_string(s string) !GeneralizedTime {
@@ -226,7 +213,7 @@ pub fn (gt GeneralizedTime) length(p Params) int {
 	return gt.value.len
 }
 
-pub fn (gt GeneralizedTime) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (gt GeneralizedTime) encode(mut dst []u8, p Params) ! {
 	valid := validate_generalizedtime(gt.value)!
 	if !valid {
 		return error('GeneralizedTime: fail on validate')
@@ -235,44 +222,31 @@ pub fn (gt GeneralizedTime) pack_to_asn1(mut dst []u8, p Params) ! {
 		return error('GeneralizedTime: unsupported mode')
 	}
 
-	gt.tag().pack_to_asn1(mut dst, p)!
+	gt.tag().encode(mut dst, p)!
 	bytes := gt.value.bytes()
 	length := Length.from_i64(bytes.len)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << bytes
 }
 
-pub fn GeneralizedTime.unpack_from_asn1(src []u8, loc i64, p Params) !(GeneralizedTime, i64) {
-	if src.len < 2 {
+pub fn GeneralizedTime.decode(src []u8, loc i64, p Params) !(GeneralizedTime, i64) {
+	if src.len < 15 {
 		return error('GeneralizedTime: bad payload len')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('GeneralizedTime: unsupported mode')
-	}
-	if loc > src.len {
-		return error('GeneralizedTime: bad position offset')
-	}
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	tlv, next := Tlv.read(src, loc, p)!
 	// its only for universal class, maybe present with different context/class
-	if tag.class() != .universal || tag.is_constructed()
-		|| tag.tag_number() != int(TagType.generalizedtime) {
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.generalizedtime) {
 		return error('GeneralizedTime: bad tag of universal class type')
 	}
-	// read the length part from current position pos
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
-	if len == 0 {
+	_ := tlv.length == tlv.content.len
+	if tlv.length == 0 {
 		// we dont allow null length
 		return error('GeneralizedTime: len==0')
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('GeneralizedTime: truncated input')
-	}
-	// read the bytes part from current position idx to the length part
-	// internally, .from_string performs validation part
-	bytes := unsafe { src[idx..idx + len] }
-	mut ret := GeneralizedTime.from_string(bytes.bytestr())!
-	ret.tag = tag
-	return ret, idx + len
+	ret := GeneralizedTime.from_string(tlv.content.bytestr())!
+
+	return ret, next
 }
 
 // utility function for GeneralizedTime

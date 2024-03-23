@@ -18,7 +18,7 @@ fn test_octetstring_handling() ! {
 	for o in data {
 		os := OctetString.from_string(o.inp)
 		mut out := []u8{}
-		os.pack_to_asn1(mut out) or {
+		os.encode(mut out) or {
 			assert err == o.err
 			continue
 		}

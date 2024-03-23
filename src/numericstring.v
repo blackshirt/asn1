@@ -10,9 +10,8 @@ module asn1
 // specified collection of characters.
 // That was : digit : 0,1,..9 and spaces char (0x20)
 pub struct NumericString {
+	tag   Tag = Tag{.universal, false, int(TagType.numericstring)}
 	value string
-mut:
-	tag Tag = new_tag(.universal, false, int(TagType.numericstring)) or { panic(err) }
 }
 
 // new_numeric_string creates new numeric string
@@ -61,50 +60,31 @@ pub fn (ns NumericString) packed_length(p Params) int {
 	return n
 }
 
-pub fn (ns NumericString) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (ns NumericString) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
 
-	ns.tag().pack_to_asn1(mut dst, p)!
+	ns.tag().encode(mut dst, p)!
 	length := Length.from_i64(ns.value.bytes().len)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << ns.value.bytes()
 }
 
-pub fn NumericString.unpack_from_asn1(src []u8, loc i64, p Params) !(NumericString, i64) {
-	if src.len < 2 {
-		return error('NumericString: src.len underflow')
-	}
-	if p.mode != .der && p.mode != .ber {
-		return error('NumericString: unsupported mode')
-	}
-	if loc > src.len {
-		return error('NumericString: bad position offset')
-	}
-
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	if tag.class() != .universal || tag.is_constructed()
-		|| tag.tag_number() != int(TagType.numericstring) {
+pub fn NumericString.decode(src []u8, loc i64, p Params) !(NumericString, i64) {
+	tlv, next := Tlv.read(src, loc, p)!
+	// correct way to check if this NumericString is in constucted form
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.numericstring) {
 		return error('NumericString: bad tag of universal class type')
 	}
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
+
 	// no bytes
-	if len == 0 {
-		ret := NumericString{
-			tag: tag
-		}
-		return ret, idx
+	if tlv.length == 0 || tlv.content.len == 0 {
+		return NumericString{}, next
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('NumericString: truncated input')
-	}
-
-	// TODO: check the length, its safe to access bytes
-	bytes := unsafe { src[idx..idx + len] }
-
-	ns := NumericString.from_bytes(bytes)!
-	return ns, idx + len
+	ns := NumericString.from_bytes(tlv.content)!
+	return ns, next
 }
 
 // Utility function

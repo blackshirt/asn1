@@ -6,9 +6,8 @@ module asn1
 // IA5String handling routine
 // Standard ASCII characters
 pub struct IA5String {
+	tag   Tag = Tag{.universal, false, int(TagType.ia5string)}
 	value string
-mut:
-	tag Tag = new_tag(.universal, false, int(TagType.ia5string)) or { panic(err) }
 }
 
 // from_string creates IA5String from string s
@@ -61,7 +60,7 @@ pub fn (v IA5String) packed_length(p Params) int {
 	return n
 }
 
-pub fn (v IA5String) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (v IA5String) encode(mut dst []u8, p Params) ! {
 	if !v.value.is_ascii() {
 		return error('IA5String: contains non-ascii char')
 	}
@@ -69,14 +68,14 @@ pub fn (v IA5String) pack_to_asn1(mut dst []u8, p Params) ! {
 		return error('IA5String: unsupported mode')
 	}
 
-	v.tag().pack_to_asn1(mut dst, p)!
+	v.tag().encode(mut dst, p)!
 	bytes := v.value.bytes()
 	length := Length.from_i64(bytes.len)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << bytes
 }
 
-pub fn IA5String.unpack_from_asn1(src []u8, loc i64, p Params) !(IA5String, i64) {
+pub fn IA5String.decode(src []u8, loc i64, p Params) !(IA5String, i64) {
 	if src.len < 2 {
 		return error('IA5String: bad ia5string bytes length')
 	}
@@ -87,14 +86,14 @@ pub fn IA5String.unpack_from_asn1(src []u8, loc i64, p Params) !(IA5String, i64)
 		return error('IA5String: bad position offset')
 	}
 
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	tag, pos := Tag.decode(src, loc, p)!
 	// TODO: checks tag for matching type
 	if tag.class() != .universal || tag.is_constructed()
 		|| tag.tag_number() != int(TagType.ia5string) {
 		return error('IA5String: bad tag of universal class type')
 	}
 	// read the length part from current position pos
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
+	len, idx := Length.decode(src, pos, p)!
 	// read the bytes part from current position idx to the length part
 	// TODO: dont trust provided length, make sure to do checking
 	if idx > src.len || idx + len > src.len {

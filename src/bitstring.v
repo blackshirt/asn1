@@ -6,10 +6,9 @@ module asn1
 // BITSTRING
 //
 pub struct BitString {
+	tag  Tag = Tag{.universal, false, int(TagType.bitstring)}
 	data []u8
 	pad  u8
-mut:
-	tag Tag = new_tag(.universal, false, int(TagType.bitstring))!
 }
 
 // from_string creates new BitString from sring s
@@ -65,53 +64,34 @@ pub fn (bs BitString) packed_length(p Params) int {
 	return n
 }
 
-pub fn (bs BitString) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (bs BitString) encode(mut dst []u8, p Params) ! {
 	// we currently only support .der and (stricter) .ber
 	if p.mode != .der && p.mode != .ber {
 		return error('BitString: unsupported mode')
 	}
 
-	bs.tag().pack_to_asn1(mut dst, p)!
+	bs.tag().encode(mut dst, p)!
 	length := Length.from_i64(bs.bytes_len())!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 
 	// write pad bit and data
 	dst << bs.pad
 	dst << bs.data
 }
 
-pub fn BitString.unpack_from_asn1(src []u8, loc i64, p Params) !(BitString, i64) {
-	if src.len < 2 {
-		return error('BitString: b.len underflow')
-	}
-	// we currently only support .der and (stricter) .ber
-	if p.mode != .der && p.mode != .ber {
-		return error('BitString: unsupported mode')
-	}
-	if loc > src.len {
-		return error('BitString: bad position offset')
-	}
+pub fn BitString.decode(src []u8, loc i64, p Params) !(BitString, i64) {
+	tlv, next := Tlv.read(src, loc, p)!
 
-	// TODO: support for other encoding mode
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	if tag.class() != .universal || tag.is_constructed()
-		|| tag.tag_number() != int(TagType.bitstring) {
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.bitstring) {
 		return error('BitString: bad tag check')
 	}
-	if pos >= src.len {
-		return error('BitString: pos overflow')
-	}
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
+
 	// check for length and required bytes
-	if len == 0 {
+	if tlv.length == 0 {
 		return error('BitString: zero length bit string')
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('BitString: truncated bytes')
-	}
-	// todo: check length
-	bytes := unsafe { src[idx..idx + len] }
 
-	bs := BitString.new_with_pad(bytes[1..], bytes[0])!
-	return bs, idx + len
+	bs := BitString.new_with_pad(tlv.content[1..], tlv.content[0])!
+	return bs, next
 }

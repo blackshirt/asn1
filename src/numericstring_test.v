@@ -9,11 +9,11 @@ fn test_encode_decode_numericstring_basic() {
 
 	ns := NumericString.from_string(str)!
 	mut out := []u8{}
-	ns.pack_to_asn1(mut out)!
+	ns.encode(mut out)!
 	assert out == exp
 
 	// decode back
-	nsback, _ := NumericString.unpack_from_asn1(out, 0)!
+	nsback, _ := NumericString.decode(out, 0)!
 
 	assert nsback.tag.class() == .universal
 	assert nsback.tag.is_constructed() == false
@@ -46,7 +46,7 @@ fn test_encode_decode_numericstring_advanced() ! {
 		b := s.bytes()
 		ln := Length.from_i64(b.len)!
 		mut dst := []u8{}
-		ln.pack_to_asn1(mut dst)!
+		ln.encode(mut dst)!
 
 		d := NumericalTest{
 			inp: s
@@ -68,11 +68,11 @@ fn test_encode_decode_numericstring_advanced() ! {
 			continue
 		}
 		mut out := []u8{}
-		ns.pack_to_asn1(mut out)!
+		ns.encode(mut out)!
 		assert out == exp_out
 
 		// decode back
-		back, _ := NumericString.unpack_from_asn1(out, 0)!
+		back, _ := NumericString.decode(out, 0)!
 
 		assert back.value == c.inp
 	}

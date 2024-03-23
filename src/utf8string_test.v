@@ -29,13 +29,13 @@ fn test_uf8string_handling() ! {
 			continue
 		}
 		mut out := []u8{}
-		us.pack_to_asn1(mut out) or {
+		us.encode(mut out) or {
 			assert err == c.err
 			continue
 		}
 		assert out == c.out
 
-		uss, _ := UTF8String.unpack_from_asn1(out, 0)!
+		uss, _ := UTF8String.decode(out, 0)!
 
 		assert uss.tag.tag_number() == int(TagType.utf8string)
 		assert uss.value == c.s

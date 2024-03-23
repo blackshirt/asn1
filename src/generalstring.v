@@ -65,7 +65,7 @@ pub fn (g GeneralString) packed_length(p Params) int {
 	return n
 }
 
-pub fn (g GeneralString) pack_to_asn1(mut dst []u8, p Params) ! {
+pub fn (g GeneralString) encode(mut dst []u8, p Params) ! {
 	if !g.value.is_ascii() {
 		return error('GeneralString: contains non-ascii char')
 	}
@@ -73,54 +73,33 @@ pub fn (g GeneralString) pack_to_asn1(mut dst []u8, p Params) ! {
 		return error('GeneralString: unsupported mode')
 	}
 
-	g.tag().pack_to_asn1(mut dst, p)!
+	g.tag().encode(mut dst, p)!
 	bytes := g.value.bytes()
 	length := Length.from_i64(bytes.len)!
-	length.pack_to_asn1(mut dst, p)!
+	length.encode(mut dst, p)!
 	dst << bytes
 }
 
-pub fn GeneralString.unpack_from_asn1(src []u8, loc i64, p Params) !(GeneralString, i64) {
-	if src.len < 2 {
-		return error('GeneralString: bad bytes length')
-	}
-	if p.mode != .der && p.mode != .ber {
-		return error('GeneralString: unsupported mode')
-	}
-	if loc > src.len {
-		return error('GeneralString: bad position offset')
-	}
-
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
-	// TODO: checks tag for matching type
-	if tag.class() != .universal || tag.is_constructed()
-		|| tag.tag_number() != int(TagType.generalstring) {
+pub fn GeneralString.decode(src []u8, loc i64, p Params) !(GeneralString, i64) {
+	tlv, next := Tlv.read(src, loc, p)!
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.generalstring) {
 		return error('GeneralString: bad tag of universal class type')
 	}
-	// read the length part from current position pos
-	len, idx := Length.unpack_from_asn1(src, pos, p)!
-	// read the bytes part from current position idx to the length part
-	// TODO: dont trust provided length, make sure to do checking
-	if idx > src.len || idx + len > src.len {
-		return error('GeneralString: truncated input')
-	}
+
 	// no bytes
-	if len == 0 {
-		ret := GeneralString{
-			tag: tag
-		}
-		return ret, idx
+	if tlv.length == 0 {
+		// empty content
+		return GeneralString{}, next
 	}
-	bytes := unsafe { src[idx..idx + len] }
 	// check for ASCII charset
-	if bytes.any(it < u8(` `) || it > u8(`~`)) {
+	if tlv.content.any(it < u8(` `) || it > u8(`~`)) {
 		return error('GeneralString: bytes contains non-ascii chars')
 	}
 	ret := GeneralString{
-		tag: tag
-		value: bytes.bytestr()
+		value: tlv.content.bytestr()
 	}
-	return ret, idx + len
+	return ret, next
 }
 
 // Utility function
