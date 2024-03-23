@@ -87,7 +87,9 @@ pub fn Tag.decode(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	if p.mode != .der && p.mode != .ber {
 		return error('Tag: unsupported mode')
 	}
-	if loc > bytes.len {
+	// when accessing byte at ofset `loc` within bytes, ie, `b := bytes[loc]`, 
+	// its maybe can lead to panic when the loc is not be checked.
+	if loc >= bytes.len {
 		return error('Tag: invalid pos')
 	}
 	mut pos := loc
@@ -128,20 +130,14 @@ pub fn Tag.decode(bytes []u8, loc i64, p Params) !(Tag, i64) {
 
 // clone_with_class clones teh tag t into new tag with class is set to c
 pub fn (mut t Tag) clone_with_class(c Class) Tag {
-	if t.class == c {
-		return t
-	}
 	mut new := t
 	new.class = c
 	return new
 }
 
 pub fn (mut t Tag) clone_with_tag(v int) !Tag {
-	if t.number == v {
-		return t
-	}
-	val := TagNumber.from_int(v)!
 	mut new := t
+	val := TagNumber.from_int(v)!
 	t.number = val
 	return new
 }
