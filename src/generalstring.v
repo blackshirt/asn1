@@ -86,7 +86,7 @@ pub fn GeneralString.decode(src []u8, loc i64, p Params) !(GeneralString, i64) {
 		|| tlv.tag.tag_number() != int(TagType.generalstring) {
 		return error('GeneralString: bad tag of universal class type')
 	}
-
+	_ := tlv.length == tlv.content.len
 	// no bytes
 	if tlv.length == 0 {
 		// empty content

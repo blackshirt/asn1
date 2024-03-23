@@ -161,7 +161,7 @@ pub fn Length.decode(src []u8, loc i64, p Params) !(Length, i64) {
 	return ret, pos
 }
 
-// ASN.1 header in the form of tag, length and value for storing parse results.
+// ASN.1 ekement in the form of tag, length and value for storing parse results.
 //
 struct Tlv {
 mut:
@@ -184,7 +184,7 @@ fn Tlv.read(src []u8, loc i64, p Params) !(Tlv, i64) {
 		return error('Tlv: bad mode')
 	}
 
-	mut tnl := Tlv{}
+	mut tlv := Tlv{}
 	tag, pos := Tag.decode(src, loc, p)!
 	// check if the offset position is not overflowing src.len
 	if pos >= src.len {
@@ -194,12 +194,13 @@ fn Tlv.read(src []u8, loc i64, p Params) !(Tlv, i64) {
 	len, idx := Length.decode(src, pos, p)!
 	// check if len == 0, its mean this parsed element has no content bytes
 	if len == 0 {
-		tnl.tag = tag
-		tnl.length = len
+		tlv.tag = tag
+		tlv.length = len
+		tlv.content = []u8{}
 		// is there are more bytes after this?
 		// when idx still fits under src.len, the remaining bytes after idx is set
 		// as remaining bytes returned
-		return tnl, idx
+		return tlv, idx
 	}
 	// len !=0
 	// check if idx + len is not overflow src.len, if its not happen,
@@ -212,10 +213,13 @@ fn Tlv.read(src []u8, loc i64, p Params) !(Tlv, i64) {
 	// idx and idx+len has been checked above, so its would be safe
 	// to access slices of underlying bytes
 	content := unsafe { src[idx..idx + len] }
+	// check for matching length and content length
+	if len != content.len {
+		return error('Tlv: unmatching length')
+	}
+	tlv.tag = tag
+	tlv.length = len
+	tlv.content = content
 
-	tnl.tag = tag
-	tnl.length = len
-	tnl.content = content
-
-	return tnl, idx + len
+	return tlv, idx + len
 }

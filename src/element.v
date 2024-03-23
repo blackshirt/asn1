@@ -50,45 +50,31 @@ pub fn (e Element) packed_length(p Params) int {
 
 // unpack_from_asn1 deserializes bytes in src from offet loc into Element.
 pub fn Element.decode(src []u8, loc i64, p Params) !(Element, i64) {
-	if src.len < 2 {
-		return error('Element: bad length bytes')
-	}
-	if p.mode != .der && p.mode != .ber {
-		return error('Element: unsupported mode')
-	}
-	if loc > src.len {
-		return error('Element: bad position offset')
-	}
-	// TODO: still no check, add check
-	tag, pos := Tag.decode(src, loc, p)!
-	len, idx := Length.decode(src, pos, p)!
-	if idx > src.len || idx + len > src.len {
-		return error('Element: truncated input')
-	}
-	bytes := unsafe { src[idx..idx + len] }
+	tlv, next := Tlv.read(src, loc, p)!
+	bytes := tlv.content
 
-	match tag.class() {
+	match tlv.tag.class() {
 		.universal {
-			if tag.is_constructed() {
-				return parse_constructed_element(tag, bytes)!, idx + len
+			if tlv.tag.is_constructed() {
+				return parse_constructed_element(tlv.tag, bytes)!, next
 			}
 
-			return parse_primitive_element(tag, bytes)!, idx + len
+			return parse_primitive_element(tlv.tag, bytes)!, next
 		}
 		.application {
-			return RawElement.new(tag, bytes), idx + len
+			return RawElement.new(tlv.tag, bytes), next
 		}
 		.context_specific {
-			r := RawElement.new(tag, bytes)
-			if tag.is_constructed() {
+			r := RawElement.new(tlv.tag, bytes)
+			if tlv.tag.is_constructed() {
 				inn_tag, _ := Tag.decode(bytes, 0, p)!
 				tt := r.as_tagged(.explicit, inn_tag, p)!
-				return tt, idx + len
+				return tt, next
 			}
-			return r, idx + len
+			return r, next
 		}
 		.private {
-			return RawElement.new(tag, bytes), idx + len
+			return RawElement.new(tlv.tag, bytes), next
 		}
 	}
 }
@@ -97,7 +83,7 @@ type ElementList = []Element
 
 // ElementList.from_bytes parses bytes in src as series of Element.
 // from_bytes parses bytes in src to array of Element or return error on fail
-pub fn ElementList.from_bytes(src []u8) ![]Element {
+pub fn ElementList.from_bytes(src []u8, p Params) ![]Element {
 	mut els := []Element{}
 	if src.len == 0 {
 		// empty list
@@ -185,37 +171,13 @@ pub fn (e RawElement) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
-	if src.len < 2 {
-		return error('RawElement: bytes underflow')
-	}
-	if p.mode != .der && p.mode != .ber {
-		return error('RawElement: unsupported mode')
-	}
-	// todo : validate element
-	tag, pos := Tag.decode(src, loc, p)!
-	len, idx := Length.decode(src, pos, p)!
-	// no contents
-	if len == 0 {
-		el := RawElement{
-			tag: tag
-			payload: []u8{}
-		}
-		return el, idx
-	}
-	if idx > src.len || idx + len > src.len {
-		return error('RawElement: truncated bytes contents')
-	}
-	// TODO: check the length, its safe to access bytes
-	bytes := unsafe { src[idx..idx + len] }
-
-	if len != bytes.len {
-		return error('RawElement: unmatching length')
-	}
+	tlv, next := Tlv.read(src, loc, p)!
+	_ := tlv.length == tlv.content.len
 	el := RawElement{
-		tag: tag
-		payload: bytes
+		tag: tlv.tag
+		payload: tlv.content
 	}
-	return el, idx + len
+	return el, next
 }
 
 // as_tagged treats and parse the RawElement r as TaggedType element with inner_tag is

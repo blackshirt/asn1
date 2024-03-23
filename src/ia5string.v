@@ -76,46 +76,26 @@ pub fn (v IA5String) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn IA5String.decode(src []u8, loc i64, p Params) !(IA5String, i64) {
-	if src.len < 2 {
-		return error('IA5String: bad ia5string bytes length')
-	}
-	if p.mode != .der && p.mode != .ber {
-		return error('IA5String: unsupported mode')
-	}
-	if loc > src.len {
-		return error('IA5String: bad position offset')
-	}
-
-	tag, pos := Tag.decode(src, loc, p)!
+	tlv, next := Tlv.read(src, loc, p)!
 	// TODO: checks tag for matching type
-	if tag.class() != .universal || tag.is_constructed()
-		|| tag.tag_number() != int(TagType.ia5string) {
+	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
+		|| tlv.tag.tag_number() != int(TagType.ia5string) {
 		return error('IA5String: bad tag of universal class type')
 	}
-	// read the length part from current position pos
-	len, idx := Length.decode(src, pos, p)!
-	// read the bytes part from current position idx to the length part
-	// TODO: dont trust provided length, make sure to do checking
-	if idx > src.len || idx + len > src.len {
-		return error('IA5String: truncated input')
-	}
+	_ := tlv.length == tlv.content.len
 	// no bytes
-	if len == 0 {
-		ret := IA5String{
-			tag: tag
-		}
-		return ret, idx
+	if tlv.length == 0 {
+		return IA5String{}, next
 	}
-	bytes := unsafe { src[idx..idx + len] }
+
 	// check for ASCII charset
-	if bytes.any(it < u8(` `) || it > u8(`~`)) {
+	if tlv.content.any(it < u8(` `) || it > u8(`~`)) {
 		return error('IA5String: bytes contains non-ascii chars')
 	}
 	ret := IA5String{
-		tag: tag
-		value: bytes.bytestr()
+		value: tlv.content.bytestr()
 	}
-	return ret, idx + len
+	return ret, next
 }
 
 // Utility function
