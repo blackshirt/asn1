@@ -101,7 +101,8 @@ pub fn Length.decode(src []u8, loc i64, p Params) !(Length, i64) {
 	if p.mode != .der && p.mode != .ber {
 		return error('Length: unsupported mode')
 	}
-	if loc > src.len {
+	// consider b := src[loc] would lead to panic
+	if loc >= src.len {
 		return error('Length: invalid pos')
 	}
 
