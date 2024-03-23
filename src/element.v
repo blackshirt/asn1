@@ -234,3 +234,68 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 	}
 	return error('This RawElement can not be treated as TaggedType')
 }
+
+// OPTIONAL
+// Optional has no dedicated tag, its follow some already defined element
+struct Optional {
+	elm Element
+}
+				
+fn Optional.new(el Element) Optional {
+	return Optional{el}
+}
+				
+fn (op Optional) tag() Tag {
+	return op.elm.tag()
+}
+
+fn (op Optional) payload(p Params) ![]u8 {
+	return op.elm.payload(p)
+}
+
+fn (op Optional) length(p Params) int {
+	return op.elm.length(p)
+}
+
+fn (op Optional) encode(mut dst []u8, p Params) ! {
+	op.elm.encode(mut dst, p)!	
+}
+
+fn Optional.decode(src []u8, loc i64, p Params) !(Optional, i64) {
+	el, pos := Element.decode(src, loc, p)!
+	ret := Optional{el}
+	return ret, pos
+}
+
+// CHOICE
+// Choice element also no have dedicated semantic and tag.
+// Its also follow underlying choosen element
+struct Choice {
+	chosen Element
+}
+				
+fn Choice.new(el Element) Choice {	
+	return Choice{el}
+}
+				
+fn (c Choice) tag() Tag {
+	return c.chosen.tag()
+}
+
+fn (c Choice) payload(p Params) ![]u8 {
+	return op.chosen.payload(p)
+}
+
+fn (op Choice) length(p Params) int {
+	return c.chosen.length(p)
+}
+
+fn (c Choice) encode(mut dst []u8, p Params) ! {
+	c.chosen.encode(mut dst, p)!	
+}
+
+fn Choice.decode(src []u8, loc i64, p Params) !(Choice, i64) {
+	el, pos := Element.decode(src, loc, p)!
+	ret := Choice{el}
+	return ret, pos
+}
