@@ -82,17 +82,16 @@ pub fn (ps PrintableString) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn PrintableString.decode(src []u8, loc i64, p Params) !(PrintableString, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
+	raw, next := RawElement.decode(src, loc, p)!
 
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.printablestring) {
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.printablestring) {
 		return error('PrintableString: bad tag of universal class type')
 	}
-	_ := tlv.length == tlv.content.len
-	if tlv.length == 0 {
+	if raw.length(p) == 0 {
 		return PrintableString{}, next
 	}
-	ps := PrintableString.from_bytes(tlv.content)!
+	ps := PrintableString.from_bytes(raw.payload)!
 	return ps, next
 }
 

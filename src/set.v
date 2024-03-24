@@ -116,20 +116,20 @@ pub fn (s Set) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn Set.decode(src []u8, loc i64, p Params) !(Set, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
+	raw, next := RawElement.decode(src, loc, p)!
 
-	if tlv.tag.class() != .universal && !tlv.tag.is_constructed()
-		&& tlv.tag.tag_number() != int(TagType.set) {
+	if raw.tag.class() != .universal && !raw.tag.is_constructed()
+		&& raw.tag.tag_number() != int(TagType.set) {
 		return error('Set: bad set tag')
 	}
-	_ := tlv.length == tlv.content.len
-	if tlv.length == 0 {
+
+	if raw.length(p) == 0 {
 		// empty sequence
 		set := Set.new(false)
 		return set, next
 	}
 
-	mut set := Set.parse_contents(tlv.tag, tlv.content)!
+	mut set := Set.parse_contents(raw.tag, raw.payload)!
 	// check for hold_different_tag
 	if !set.elements.hold_different_tag() {
 		// set sequence into sequenceof type
@@ -151,16 +151,15 @@ fn Set.parse_contents(tag Tag, contents []u8, p Params) !Set {
 	// or you can call it later.
 	mut set := Set.new(false)
 	for i < contents.len {
-		tlv, _ := Tlv.read(contents, i, p)!
-		_ := tlv.length == tlv.content.len
+		raw, _ := RawElement.decode(contents, i, p)!
 		// TODO: still no check
-		sub := tlv.content
-		if tlv.tag.is_constructed() {
-			obj := parse_constructed_element(tlv.tag, sub)!
+		sub := raw.payload
+		if raw.tag.is_constructed() {
+			obj := parse_constructed_element(raw.tag, sub)!
 			set.add_element(obj)!
 			i += obj.packed_length(p)
 		} else {
-			obj := parse_primitive_element(tlv.tag, sub)!
+			obj := parse_primitive_element(raw.tag, sub)!
 			set.add_element(obj)!
 			i += obj.packed_length(p)
 		}

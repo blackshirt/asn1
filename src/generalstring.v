@@ -81,23 +81,22 @@ pub fn (g GeneralString) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn GeneralString.decode(src []u8, loc i64, p Params) !(GeneralString, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.generalstring) {
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.generalstring) {
 		return error('GeneralString: bad tag of universal class type')
 	}
-	_ := tlv.length == tlv.content.len
 	// no bytes
-	if tlv.length == 0 {
+	if raw.length() == 0 {
 		// empty content
 		return GeneralString{}, next
 	}
 	// check for ASCII charset
-	if tlv.content.any(it < u8(` `) || it > u8(`~`)) {
+	if raw.payload.any(it < u8(` `) || it > u8(`~`)) {
 		return error('GeneralString: bytes contains non-ascii chars')
 	}
 	ret := GeneralString{
-		value: tlv.content.bytestr()
+		value: raw.payload.bytestr()
 	}
 	return ret, next
 }

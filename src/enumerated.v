@@ -59,12 +59,12 @@ pub fn Enumerated.decode(src []u8, loc i64, p Params) !(Enumerated, i64) {
 	if src.len < 3 {
 		return error('Enumerated: bytes underflow')
 	}
-	tlv, next := Tlv.read(src, loc, p)!
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.enumerated) {
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.enumerated) {
 		return error('Enumerated: bad tag of universal class type')
 	}
-	ret := Enumerated.unpack(tlv.content)!
+	ret := Enumerated.unpack(raw.payload)!
 	return ret, next
 }
 

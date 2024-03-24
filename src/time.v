@@ -89,17 +89,16 @@ pub fn UTCTime.decode(src []u8, loc i64, p Params) !(UTCTime, i64) {
 	if src.len < 13 {
 		return error('UTCTime: bad len')
 	}
-	tlv, next := Tlv.read(src, loc, p)!
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.utctime) {
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.utctime) {
 		return error('UTCTime: bad tag of universal class type')
 	}
-	_ := tlv.length == tlv.content.len
-	if tlv.length == 0 {
+	if raw.length(p) == 0 {
 		return error('UTCTime: len==0')
 	}
 
-	ret := UTCTime.from_string(tlv.content.bytestr())!
+	ret := UTCTime.from_string(raw.payload.bytestr())!
 	return ret, next
 }
 
@@ -233,18 +232,17 @@ pub fn GeneralizedTime.decode(src []u8, loc i64, p Params) !(GeneralizedTime, i6
 	if src.len < 15 {
 		return error('GeneralizedTime: bad payload len')
 	}
-	tlv, next := Tlv.read(src, loc, p)!
+	raw, next := RawElement.decode(src, loc, p)!
 	// its only for universal class, maybe present with different context/class
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.generalizedtime) {
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.generalizedtime) {
 		return error('GeneralizedTime: bad tag of universal class type')
 	}
-	_ := tlv.length == tlv.content.len
-	if tlv.length == 0 {
+	if raw.length(p) == 0 {
 		// we dont allow null length
 		return error('GeneralizedTime: len==0')
 	}
-	ret := GeneralizedTime.from_string(tlv.content.bytestr())!
+	ret := GeneralizedTime.from_string(raw.payload.bytestr())!
 
 	return ret, next
 }

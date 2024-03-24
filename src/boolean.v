@@ -79,20 +79,20 @@ pub fn Boolean.decode(src []u8, loc i64, p Params) !(Boolean, i64) {
 	if src.len < 3 {
 		return error('Boolean: bad length bytes')
 	}
-	tlv, next := Tlv.read(src, loc, p)!
+	raw, next := RawElement.decode(src, loc, p)!
 
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.boolean) {
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.boolean) {
 		return error('Boolean: bad tag of universal class type')
 	}
 	// boolean value should be encoded in single byte
-	if tlv.length != 1 {
+	if raw.length(p) != 1 {
 		return error('der encoding of boolean value represented in multibytes is not allowed')
 	}
 
-	assert tlv.content.len == 1
+	assert raw.payload.len == 1
 	mut value := false
-	match tlv.content[0] {
+	match raw.payload[0] {
 		// 0x00 unpacked into false value
 		0x00 {
 			value = false
@@ -111,6 +111,6 @@ pub fn Boolean.decode(src []u8, loc i64, p Params) !(Boolean, i64) {
 	}
 	return Boolean{
 		value: value
-		tag: tlv.tag
+		tag: raw.tag
 	}, next
 }

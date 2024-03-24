@@ -71,17 +71,16 @@ pub fn (os OctetString) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn OctetString.decode(src []u8, loc i64, p Params) !(OctetString, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.octetstring) {
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.octetstring) {
 		return error('OctetString: bad tag of universal class type')
 	}
-	_ := tlv.length == tlv.content.len
 	// no bytes
-	if tlv.length == 0 {
+	if raw.length(p) == 0 {
 		return OctetString{}, next
 	}
 
-	os := OctetString.from_bytes(tlv.content)!
+	os := OctetString.from_bytes(raw.payload)!
 	return os, next
 }

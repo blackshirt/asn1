@@ -51,19 +51,19 @@ pub fn (e Element) packed_length(p Params) int {
 
 // unpack_from_asn1 deserializes bytes in src from offet loc into Element.
 pub fn Element.decode(src []u8, loc i64, p Params) !(Element, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
-	bytes := tlv.content
+	raw, next := RawElement.decode(src, loc, p)!
+	bytes := raw.payload
 
-	match tlv.tag.class() {
+	match raw.tag.class() {
 		.universal {
-			if tlv.tag.is_constructed() {
-				return parse_constructed_element(tlv.tag, bytes)!, next
+			if raw.tag.is_constructed() {
+				return parse_constructed_element(raw.tag, bytes)!, next
 			}
-			return parse_primitive_element(tlv.tag, bytes)!, next
+			return parse_primitive_element(raw.tag, bytes)!, next
 		}
 		// other classes parsed as a RawElement
 		else {
-			return RawElement.new(tlv.tag, bytes), next
+			return RawElement.new(raw.tag, bytes), next
 		}
 	}
 }
@@ -111,6 +111,7 @@ pub fn (els []Element) hold_different_tag() bool {
 
 // Raw ASN.1 Element
 pub struct RawElement {
+mut:
 	// the tag of the RawElement
 	tag Tag
 	// payload is the value of this RawElement, its depend how its would be interpreted.
@@ -162,13 +163,46 @@ pub fn (e RawElement) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
-	_ := tlv.length == tlv.content.len
-	el := RawElement{
-		tag: tlv.tag
-		payload: tlv.content
+	// minimal length bytes contains tag and the length is two bytes
+	if src.len < 2 {
+		return error('Tlv: bytes underflow')
 	}
-	return el, next
+	if loc > src.len {
+		return error('Tlv: bad loc')
+	}
+	// guard check
+	if p.mode != .der && p.mode != .ber {
+		return error('Tlv: bad mode')
+	}
+	mut raw := RawElement{}
+	tag, pos := Tag.decode(src, loc, p)!
+	// check if the offset position is not overflowing src.len
+	if pos >= src.len {
+		return error('RawElement: pos overflow')
+	}
+	// read the length part
+	len, idx := Length.decode(src, pos, p)!
+	// check if len == 0, its mean this parsed element has no content bytes
+	if len == 0 {
+		raw.tag = tag
+		raw.payload = []u8{}
+		return raw, idx
+	}
+	// len !=0
+	// check if idx + len is not overflow src.len, if its not happen,
+	// this element has a content, or return error if not.
+	// when idx == src.len, but len != 0, its mean the input is truncated
+	// its also same mean for idx+len is over to the src.len
+	if idx > src.len || idx + len > src.len {
+		return error('Tlv: truncated src bytes')
+	}
+	content := unsafe { src[idx..idx + len] }
+	if len != content.len {
+		return error('RawElement: unmatching length')
+	}
+	raw.tag = tag
+	raw.payload = content
+	return raw, idx
 }
 
 // as_tagged treats and parse the RawElement r as TaggedType element with inner_tag is
@@ -181,20 +215,19 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 			return error('tag is constructed but no payload')
 		}
 		if mode == .explicit {
-			tlv, idx := Tlv.read(r.payload, 0, p)!
-			if tlv.tag != inner_tag {
+			raw, idx := RawElement.decode(r.payload, 0, p)!
+			if raw.tag != inner_tag {
 				return error('expected inner_tag != parsed tag')
 			}
 			if idx != r.payload.len {
 				return error('RawElement: r.payload != idx')
 			}
-			_ := tlv.length == tlv.content.len
-			if tlv.length == 0 {
+			if raw.length(p) == 0 {
 				// empty sub payload
-				_ := tlv.content.len == 0
+				_ := raw.payload.len == 0
 				inner := RawElement{
-					tag: tlv.tag
-					payload: tlv.content
+					tag: raw.tag
+					payload: raw.payload
 				}
 				tt := TaggedType{
 					outer_tag: r.tag
@@ -204,14 +237,14 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 				return tt
 			}
 			// otherwise are ok
-			sub := tlv.content
+			sub := raw.payload
 
 			// if tag is constructed, its maybe recursive thing
-			inner_el := if tlv.tag.is_constructed() {
-				parse_constructed_element(tlv.tag, sub)!
+			inner_el := if raw.tag.is_constructed() {
+				parse_constructed_element(raw.tag, sub)!
 			} else {
 				// otherwise its a primitive type
-				parse_primitive_element(tlv.tag, sub)!
+				parse_primitive_element(raw.tag, sub)!
 			}
 			tt := TaggedType{
 				outer_tag: r.tag
@@ -302,5 +335,35 @@ pub fn (c Choice) encode(mut dst []u8, p Params) ! {
 pub fn Choice.decode(src []u8, loc i64, p Params) !(Choice, i64) {
 	el, pos := Element.decode(src, loc, p)!
 	ret := Choice{el}
+	return ret, pos
+}
+
+pub struct AnyDefinedBy {
+	by Element
+}
+
+pub fn AnyDefinedBy.new(el Element) AnyDefinedBy {
+	return AnyDefinedBy{el}
+}
+
+pub fn (a AnyDefinedBy) tag() Tag {
+	return a.by.tag()
+}
+
+pub fn (a AnyDefinedBy) payload(p Params) ![]u8 {
+	return a.by.payload(p)
+}
+
+pub fn (a AnyDefinedBy) length(p Params) int {
+	return a.by.length(p)
+}
+
+pub fn (a AnyDefinedBy) encode(mut dst []u8, p Params) ! {
+	a.by.encode(mut dst, p)!
+}
+
+pub fn AnyDefinedBy.decode(src []u8, loc i64, p Params) !(AnyDefinedBy, i64) {
+	el, pos := Element.decode(src, loc, p)!
+	ret := AnyDefinedBy{el}
 	return ret, pos
 }

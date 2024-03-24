@@ -46,12 +46,12 @@ pub fn (n Null) encode(mut dst []u8, p Params) ! {
 }
 
 fn Null.decode(src []u8, loc i64, p Params) !(Null, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.null) {
-		return error('Null: bad tag=${tlv.tag}')
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.null) {
+		return error('Null: bad tag=${raw.tag}')
 	}
-	if tlv.length != 0 {
+	if raw.length(p) != 0 {
 		return error('Null: len != 0')
 	}
 	return Null.new(), next

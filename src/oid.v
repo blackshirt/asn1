@@ -139,17 +139,16 @@ pub fn (oid Oid) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn Oid.decode(src []u8, loc i64, p Params) !(Oid, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.oid) {
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.oid) {
 		return error('Oid: bad tag of universal class type')
 	}
-	_ := tlv.length == tlv.content.len
-	if tlv.length == 0 {
+	if raw.length(p) == 0 {
 		return Oid{}, next
 	}
 
-	oid := Oid.from_bytes(tlv.content)!
+	oid := Oid.from_bytes(raw.payload)!
 	return oid, next
 }
 

@@ -74,17 +74,17 @@ pub fn (vs VisibleString) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn VisibleString.decode(src []u8, loc i64, p Params) !(VisibleString, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.visiblestring) {
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.visiblestring) {
 		return error('VisibleString: bad tag of universal class type')
 	}
-	_ := tlv.length == tlv.content.len
+
 	// no bytes
-	if tlv.length == 0 {
+	if raw.length(p) == 0 {
 		return VisibleString{}, next
 	}
-	us := VisibleString.from_bytes(tlv.content)!
+	us := VisibleString.from_bytes(raw.payload)!
 	return us, next
 }
 

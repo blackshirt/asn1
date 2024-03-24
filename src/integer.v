@@ -271,30 +271,19 @@ pub fn Integer.decode(src []u8, loc i64, p Params) !(Integer, i64) {
 	if src.len < 3 {
 		return error('IA5String: bad ia5string bytes length')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('Integer: unsupported mode')
-	}
-	if loc > src.len {
-		return error('Integer: bad position offset')
-	}
-
-	tag, pos := Tag.decode(src, loc, p)!
-	if tag.class() != .universal || tag.is_constructed() || tag.tag_number() != int(TagType.integer) {
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.integer) {
 		return error('Integer: bad tag of universal class type')
 	}
-	// read the length part from current position pos
-	len, idx := Length.decode(src, pos, p)!
-	if len == 0 {
+	if raw.length(p) == 0 {
 		return error('Integer: len==0')
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('Integer: truncated input')
-	}
-	// read the bytes part from current position idx to the length part
-	bytes := unsafe { src[idx..idx + len] }
+
+	bytes := raw.payload
 	// buf := trim_bytes(bytes)!
 	ret := Integer.unpack_and_validate(bytes)!
-	return ret, idx + len
+	return ret, next
 }
 
 // valid_bytes validates bytes meets some requirement for DER encoding.
@@ -405,25 +394,15 @@ pub fn Int64.decode(src []u8, loc i64, p Params) !(Int64, i64) {
 	if src.len < 3 {
 		return error('Int64: bytes underflow')
 	}
-	tag, pos := Tag.decode(src, loc, p)!
-	if tag.class() != .universal && tag.is_constructed() && tag.tag_number() != int(TagType.integer) {
-		return error('Int64: check tag failed')
-	}
-	if pos > src.len {
-		return error('Int64: truncated output')
-	}
-	len, idx := Length.decode(src, pos, p)!
-	if len == 0 {
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.length(p) == 0 {
 		return error('Int64: len==0')
 	}
-	if idx > src.len || idx + len > src.len {
-		return error('Int64: truncated output')
-	}
 
-	bytes := unsafe { src[idx..idx + len] }
+	bytes := raw.payload
 	val := read_i64(bytes)!
 
-	return Int64.from_i64(val), idx + len
+	return Int64.from_i64(val), next
 }
 
 // Utility function

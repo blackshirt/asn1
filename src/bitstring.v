@@ -80,18 +80,18 @@ pub fn (bs BitString) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn BitString.decode(src []u8, loc i64, p Params) !(BitString, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
+	raw, next := RawElement.decode(src, loc, p)!
 
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.bitstring) {
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.bitstring) {
 		return error('BitString: bad tag check')
 	}
 
 	// check for length and required bytes
-	if tlv.length == 0 {
+	if raw.length(p) == 0 {
 		return error('BitString: zero length bit string')
 	}
 
-	bs := BitString.new_with_pad(tlv.content[1..], tlv.content[0])!
+	bs := BitString.new_with_pad(raw.payload[1..], raw.payload[0])!
 	return bs, next
 }

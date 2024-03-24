@@ -155,40 +155,40 @@ pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Para
 	if src.len < 4 {
 		return error('TaggedType: bytes underflow')
 	}
-	tlv, next := Tlv.read(src, loc, p)!
+	raw, next := RawElement.decode(src, loc, p)!
+	dump(raw)
+	dump(next)
 	// TODO: check the tag, do we need .class == .context_specific
 	// in explicit context, the tag should be in constructed form
-	// tlv.tag is outer_tag
-	if !tlv.tag.is_constructed() {
+	// raw.tag is outer_tag
+	if !raw.tag.is_constructed() {
 		return error('TaggedType: tag check failed, .explicit should be constructed')
 	}
-	_ := tlv.length == tlv.content.len
-	if tlv.length == 0 {
+	if raw.length(p) == 0 {
 		// its bad TaggedType with len==0, ie, without contents
 		return error('TaggedType: len==0')
 	}
-	bytes := tlv.content
+	bytes := raw.payload
+	dump(raw.payload)
 	match tm {
 		.explicit {
 			// when explicit, read element from bytes
-			inner_tlv, idx := Tlv.read(bytes, 0, p)!
+			inner_raw, idx := RawElement.decode(bytes, 0, p)!
 			if idx != bytes.len {
 				return error('unmatching idx and bytes.len')
 			}
-			_ := inner_tlv.length == inner_tlv.content.len
-
-			inn_sub := inner_tlv.content
-			inner_el := if inner_tlv.tag.is_constructed() {
-				parse_constructed_element(inner_tlv.tag, inn_sub)!
+			inn_sub := inner_raw.payload
+			inner_el := if inner_raw.tag.is_constructed() {
+				parse_constructed_element(inner_raw.tag, inn_sub)!
 			} else {
-				parse_primitive_element(inner_tlv.tag, inn_sub)!
+				parse_primitive_element(inner_raw.tag, inn_sub)!
 			}
 
 			if inner_el.tag() != inner_tag {
 				return error('unexpected inner tag')
 			}
 			tt := TaggedType{
-				outer_tag: tlv.tag
+				outer_tag: raw.tag
 				mode: .explicit
 				inner_el: inner_el
 			}
@@ -202,7 +202,7 @@ pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Para
 				payload: bytes
 			}
 			tt := TaggedType{
-				outer_tag: tlv.tag
+				outer_tag: raw.tag
 				mode: .implicit
 				inner_el: inner
 			}

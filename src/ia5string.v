@@ -76,24 +76,23 @@ pub fn (v IA5String) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn IA5String.decode(src []u8, loc i64, p Params) !(IA5String, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
+	raw, next := RawElement.decode(src, loc, p)!
 	// TODO: checks tag for matching type
-	if tlv.tag.class() != .universal || tlv.tag.is_constructed()
-		|| tlv.tag.tag_number() != int(TagType.ia5string) {
+	if raw.tag.class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.ia5string) {
 		return error('IA5String: bad tag of universal class type')
 	}
-	_ := tlv.length == tlv.content.len
 	// no bytes
-	if tlv.length == 0 {
+	if raw.length(p) == 0 {
 		return IA5String{}, next
 	}
 
 	// check for ASCII charset
-	if tlv.content.any(it < u8(` `) || it > u8(`~`)) {
+	if raw.payload.any(it < u8(` `) || it > u8(`~`)) {
 		return error('IA5String: bytes contains non-ascii chars')
 	}
 	ret := IA5String{
-		value: tlv.content.bytestr()
+		value: raw.payload.bytestr()
 	}
 	return ret, next
 }

@@ -133,20 +133,19 @@ pub fn (s Sequence) encode(mut dst []u8, p Params) ! {
 }
 
 pub fn Sequence.decode(src []u8, loc i64, p Params) !(Sequence, i64) {
-	tlv, next := Tlv.read(src, loc, p)!
+	raw, next := RawElement.decode(src, loc, p)!
 
-	if tlv.tag.class() != .universal && !tlv.tag.is_constructed()
-		&& tlv.tag.tag_number() != int(TagType.sequence) {
+	if raw.tag.class() != .universal && !raw.tag.is_constructed()
+		&& raw.tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: bad sequence tag')
 	}
-	_ := tlv.length == tlv.content.len
-	if tlv.length == 0 {
+	if raw.length(p) == 0 {
 		// empty sequence
 		seq := Sequence.new(false)!
 		return seq, next
 	}
 
-	mut seq := Sequence.parse_contents(tlv.tag, tlv.content)!
+	mut seq := Sequence.parse_contents(raw.tag, raw.payload)!
 	// check for hold_different_tag
 	if !seq.elements.hold_different_tag() {
 		// set sequence into sequenceof type
@@ -170,18 +169,17 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 	mut seq := Sequence.new(false)!
 	mut i := i64(0)
 	for i < contents.len {
-		tlv, _ := Tlv.read(contents, i, p)!
+		raw, _ := RawElement.decode(contents, i, p)!
 		// t, idx := Tag.decode(contents, i)!
 		// ln, next := Length.decode(contents, idx)!
-		_ := tlv.length == tlv.content.len
 		// TODO: still no check
-		sub := tlv.content
-		if tlv.tag.is_constructed() {
-			obj := parse_constructed_element(tlv.tag, sub)!
+		sub := raw.payload
+		if raw.tag.is_constructed() {
+			obj := parse_constructed_element(raw.tag, sub)!
 			seq.add_element(obj)!
 			i += obj.packed_length(p)
 		} else {
-			obj := parse_primitive_element(tlv.tag, sub)!
+			obj := parse_primitive_element(raw.tag, sub)!
 			seq.add_element(obj)!
 			i += obj.packed_length(p)
 		}
