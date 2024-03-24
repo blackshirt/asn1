@@ -60,8 +60,8 @@ fn (p PaData) pack(mut out []u8) ! {
 	el1 := tt1.to_element()!
 
 	mut els := []Element{}
-	mut seq := asn1.Sequence.new(new_tag(.universal, true, int(asn1.TagType.sequence))!, false,
-		els)!
+	mut seq := asn1.Sequence.new(new_tag(.universal, true, int(asn1.TagType.sequence))!,
+		false, els)!
 
 	seq.add_element(el0)!
 	seq.add_element(el1)!
@@ -78,6 +78,8 @@ fn PaData.unpack(src []u8) !PaData {
 	seq, n := asn1.Sequence.decode(src, 0)!
 	assert seq.elements.len == 2
 }
+
+type KDCOptions = KerberosFlags
 
 struct KdcReqBody {
 	kdc_options KDCOptions
@@ -115,7 +117,7 @@ fn (ha HostAddress) encode(mut out []u8) ! {
 	seq.encode(mut out)!
 }
 
-fn HostAddress.decode(src []u8) !(HostAddress, i64) {
+fn HostAddress.decode(src []u8, loc i64) !(HostAddress, i64) {
 	seq, n := asn1.Sequence.decode(src, 0)!
 	els := seq.elements()!
 
@@ -124,7 +126,7 @@ fn HostAddress.decode(src []u8) !(HostAddress, i64) {
 	el1 := els[1] as asn1.RawElement
 	// should integer
 	expected_inner0, _ := Integer.decode(el0.payload)!
-	expected_inner1, _ := asn1.OctetString.decode(el1.payload)!
+	expected_inner1, _ := asn1.OctetString.decode(el1.payload, )!
 	return HostAddress{
 		addr_type: expected_inner0.int()
 		address: expected_inner1
@@ -151,13 +153,13 @@ fn (e EncryptedData) tag() asn1.Tag {
 
 fn (e EncryptedData) length(p asn1.Params) int {
 	mut n := 0
-	el0 := asn1.TaggedType.explicit_context( asn1.Int64.from_i64(e.etype), 0)!
-	// el1 := asn1.TaggedType.explicit_context( asn1.Int64.from_i64(e.kvno), 1)!
-	el2 := asn1.TaggedType.explicit_context(e.cipher, 2)!
+	el0 := asn1.TaggedType.explicit_context(asn1.Int64.from_i64(e.etype), 0) or { panic(err) }
+	// el1 := asn1.TaggedType.explicit_context( asn1.Int64.from_i64(e.kvno), 1)or { panic(err) }
+	el2 := asn1.TaggedType.explicit_context(e.cipher, 2) or { panic(err) }
 
 	n += el0.packed_length(p)
 	if e.kvno != none {
-		el1 := asn1.TaggedType.explicit_context( asn1.Int64.from_i64(e.kvno), 1)!
+		el1 := asn1.TaggedType.explicit_context(asn1.Int64.from_i64(e.kvno), 1) or { panic(err) }
 		n += el1.packed_length(p)
 	}
 	n += el2.packed_length(p)
@@ -167,11 +169,11 @@ fn (e EncryptedData) length(p asn1.Params) int {
 
 fn (e EncryptedData) payload(p asn1.Params) ![]u8 {
 	mut out := []u8{}
-	el0 := asn1.TaggedType.explicit_context( asn1.Int64.from_i64(e.etype), 0)!
+	el0 := asn1.TaggedType.explicit_context(asn1.Int64.from_i64(e.etype), 0)!
 	el2 := asn1.TaggedType.explicit_context(e.cipher, 2)!
 	el0.encode(mut out, p)!
 	if e.kvno != none {
-		el1 := asn1.TaggedType.explicit_context( asn1.Int64.from_i64(e.kvno), 1)!
+		el1 := asn1.TaggedType.explicit_context(asn1.Int64.from_i64(e.kvno), 1)!
 		el1.encode(mut out, p)!
 	}
 	el2.encode(mut out, p)!
@@ -195,11 +197,11 @@ fn EncryptedData.decode(src []u8, loc i64, p asn1.Params) !(EncryptedData, i64) 
 		&& tlv.tag.tag_number() != int(asn1.TagType.sequence) {
 		return error('EncryptedData: check tag failed')
 	}
-	
+
 	if tlv.length() == 0 {
 		return error('EncryptedData: length should != 0')
 	}
-	
+
 	// sequence elements contents
 	els := asn1.ElementList.from_bytes(tlv.content())!
 	if els.len < 2 {
@@ -244,7 +246,7 @@ fn KerberosTime.from_string(s string) !KerberosTime {
 type Realm = KerberosString
 
 fn Realm.from_string(s string) !Realm {
-	ret := KerberosString.from_string(s)
+	ret := KerberosString.from_string(s)!
 	return Realm(s)
 }
 
@@ -254,7 +256,7 @@ fn (r Realm) tag() asn1.Tag {
 
 // type KerberosString = GeneralString
 struct KerberosString {
-	tag   asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.generalstring))
+	tag   asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.generalstring)) or { panic(err) }
 	value string
 }
 
@@ -274,7 +276,7 @@ fn KerberosString.from_string(s string) !KerberosString {
 	}
 }
 
-fn KerberosString.from_bytes(b []bytes) !KerberosString {
+fn KerberosString.from_bytes(b []u8) !KerberosString {
 	if !valid_kerberos_string(b.bytestr()) {
 		return error('not valid kerberos string')
 	}
@@ -308,28 +310,17 @@ fn (k KerberosString) encode(mut out []u8, p asn1.Params) ! {
 }
 
 fn KerberosString.decode(src []u8, loc i64, p asn1.Params) !(KerberosString, i64) {
-	if src.len < 2 {
-		return error('src underflow')
-	}
-	tag, pos := Tag.decode(src, loc, p)!
-	if tag.tag_number() != int(asn1.TagType.generalstring) {
+	tlv, next := asn1.Tlv.read(src, loc, p)!
+	if tlv.tag.tag_number() != int(asn1.TagType.generalstring) {
 		return error('bad tag')
 	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-
-	length, next := asn1.Length.decode(src, pos, p)!
-	if length == 0 {
+	if tlv.length() == 0 {
 		return KerberosString.from_string('')!, next
 	}
-	if next > src.len || next + length > src.len {
-		return error('truncated input')
-	}
-	out := unsafe { src[next..next + length] }
+
 	// validates
-	ks := KerberosString.from_bytes(out)!
-	return ks, next + length
+	ks := KerberosString.from_bytes(tlv.content())!
+	return ks, next
 }
 
 // KerberosFlags   ::= BIT STRING (SIZE (32..MAX))
@@ -356,8 +347,8 @@ fn (kf KerberosFlags) payload(p asn1.Params) ![]u8 {
 	return kf.value.payload(p)
 }
 
-fn (kf KerberosFlags) payload_length(p asn1.Params) int {
-	return kf.value.payload_length(p)
+fn (kf KerberosFlags) length(p asn1.Params) int {
+	return kf.value.length(p)
 }
 
 fn (kf KerberosFlags) packed_length(p asn1.Params) int {
@@ -392,8 +383,8 @@ fn (pn PrincipalName) payload(p asn1.Params) ![]u8 {
 	// second element is SEQUENCEOF
 	mut seq2 := asn1.Sequence.new(true)!
 	for item in pn.name_string {
-		ks := asn1.KerberosString.from_string(item)!
-		seq2.add_element(obj)!
+		ks := KerberosString.from_string(item)!
+		seq2.add_element(ks)!
 	}
 	el1 := asn1.TaggedType.explicit_context(seq2, 1)
 
@@ -430,11 +421,10 @@ fn (pn PrincipalName) encode(mut dst []u8, p asn1.Params) ! {
 
 	// second element is SEQUENCEOF
 	mut seq2 := asn1.Sequence.new(true)!
-	for item in pn.name_string {
-		ks := asn1.KerberosString.from_string(item)!
-		seq2.add_element(obj)!
+	for ks in pn.name_string {
+		seq2.add_element(ks)!
 	}
-	exp2 := asn1.TaggedType.explicit_context(seq2, 1)
+	exp2 := asn1.TaggedType.explicit_context(seq2, 1)!
 	seq1.add_element(exp2)!
 
 	seq1.encode(mut dst, p)!
@@ -443,9 +433,9 @@ fn (pn PrincipalName) encode(mut dst []u8, p asn1.Params) ! {
 fn PrincipalName.decode(src []u8, loc i64, p asn1.Params) !(PrincipalName, i64) {
 	// PrincipalName is sequence
 	seq, pos := asn1.Sequence.decode(src, loc, p)!
-	// when src.len is exact length of PrincipalName data, maybe stream one
+	// when src.len is exact length of PrincipalName data, maybe not one
 	assert pos == src.len
-	assert seq.elements.len == 2
+	assert seq.elements()!.len == 2
 	// all sequence elements when parsed, if has not .universal class
 	// is parsed as asn1.RawElement
 	els := seq.elements()!
@@ -457,13 +447,25 @@ fn PrincipalName.decode(src []u8, loc i64, p asn1.Params) !(PrincipalName, i64) 
 	tag0 := asn1.new_tag(.universal, false, 2)!
 	tt0 := re0.as_tagged(.explicit, tag0)!
 	el0 := tt0 as asn1.Int64
+
+	tag1 := asn1.new_tag(.universal, true, int(asn1.TagType.sequence))!
+	tt1 := re1.as_tagged(.explicit, tag1)!
+	el1 := tt1 as Sequence
+
+	f0 := el1.elements()![0] as KerberosString
+
+	ret := PrincipalName{
+		name_type: el0
+		name_string: [f0]
+	}
+	return ret, pos
 }
 
 fn main() {
 	// Basically this is a Kerberos PrincipalName data you sent to me
 
 	p := PrincipalName{
-		name_type: asn1.Int64(1)
+		name_type: asn1.Int64.from_i64(1)
 		name_string: [KerberosString.from_string('bobba-fett')!]
 	}
 	mut out := []u8{}

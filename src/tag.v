@@ -87,7 +87,7 @@ pub fn Tag.decode(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	if p.mode != .der && p.mode != .ber {
 		return error('Tag: unsupported mode')
 	}
-	// when accessing byte at ofset `loc` within bytes, ie, `b := bytes[loc]`, 
+	// when accessing byte at ofset `loc` within bytes, ie, `b := bytes[loc]`,
 	// its maybe can lead to panic when the loc is not be checked.
 	if loc >= bytes.len {
 		return error('Tag: invalid pos')

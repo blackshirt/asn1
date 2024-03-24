@@ -172,7 +172,7 @@ mut:
 }
 
 pub fn (t Tlv) tag() Tag {
-	return t.tag 
+	return t.tag
 }
 
 pub fn (t Tlv) length() i64 {
@@ -182,6 +182,7 @@ pub fn (t Tlv) length() i64 {
 pub fn (t Tlv) content() []u8 {
 	return t.content
 }
+
 // Tlv.read parses and read the bytes in src into Tag, Length and bytes value
 pub fn Tlv.read(src []u8, loc i64, p Params) !(Tlv, i64) {
 	// minimal length bytes contains tag and the length is two bytes

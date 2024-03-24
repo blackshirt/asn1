@@ -240,11 +240,11 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 pub struct Optional {
 	elm Element
 }
-				
+
 pub fn Optional.new(el Element) Optional {
 	return Optional{el}
 }
-				
+
 pub fn (op Optional) tag() Tag {
 	return op.elm.tag()
 }
@@ -258,7 +258,7 @@ pub fn (op Optional) length(p Params) int {
 }
 
 pub fn (op Optional) encode(mut dst []u8, p Params) ! {
-	op.elm.encode(mut dst, p)!	
+	op.elm.encode(mut dst, p)!
 }
 
 pub fn Optional.decode(src []u8, loc i64, p Params) !(Optional, i64) {
@@ -271,18 +271,18 @@ pub fn Optional.decode(src []u8, loc i64, p Params) !(Optional, i64) {
 pub fn (o Optional) present(t Tag) bool {
 	return o.elm.tag() == t
 }
-				
+
 // CHOICE
 // Choice element also no have dedicated semantic and tag.
 // Its also follow underlying choosen element
 pub struct Choice {
 	chosen Element
 }
-				
-pub fn Choice.new(el Element) Choice {	
+
+pub fn Choice.new(el Element) Choice {
 	return Choice{el}
 }
-				
+
 pub fn (c Choice) tag() Tag {
 	return c.chosen.tag()
 }
@@ -296,7 +296,7 @@ pub fn (c Choice) length(p Params) int {
 }
 
 pub fn (c Choice) encode(mut dst []u8, p Params) ! {
-	c.chosen.encode(mut dst, p)!	
+	c.chosen.encode(mut dst, p)!
 }
 
 pub fn Choice.decode(src []u8, loc i64, p Params) !(Choice, i64) {
