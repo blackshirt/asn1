@@ -75,7 +75,7 @@ fn PaData.unpack(src []u8) !PaData {
 	if src.len < 2 {
 		return error('src underflow')
 	}
-	seq, n := Sequence.unpack_from_asn1(src, 0)!
+	seq, n := Sequence.decode(src, 0)!
 	assert seq.elements.len == 2
 }
 
@@ -103,7 +103,7 @@ struct HostAddress {
 	address   asn1.OctetString
 }
 
-fn (ha HostAddress) pack_to_asn1(mut out []u8) ! {
+fn (ha HostAddress) encode(mut out []u8) ! {
 	mut seq := Sequence.new(false)!
 	el1 := asn1.Integer.from_i64(ha.addr_type)!
 	ctx1 := TaggedType.explicit_context(el1, 0)!
@@ -112,19 +112,19 @@ fn (ha HostAddress) pack_to_asn1(mut out []u8) ! {
 	seq.add_element(ctx1)!
 	seq.add_element(ctx2)!
 
-	seq.pack_to_asn1(mut out)!
+	seq.encode(mut out)!
 }
 
-fn HostAddress.unpack_from_asn1(src []u8) !(HostAddress, i64) {
-	seq, n := Sequence.unpack_from_asn1(src, 0)!
+fn HostAddress.decode(src []u8) !(HostAddress, i64) {
+	seq, n := Sequence.decode(src, 0)!
 	els := seq.elements()!
 
 	// el0 is rawelement of tagged type
 	el0 := els[0] as RawElement
 	el1 := els[1] as RawElement
 	// should integer
-	expected_inner0, _ := Integer.unpack_from_asn1(el0.payload)!
-	expected_inner1, _ := OctetString.unpack_from_asn1(el1.payload)!
+	expected_inner0, _ := Integer.decode(el0.payload)!
+	expected_inner1, _ := OctetString.decode(el1.payload)!
 	return HostAddress{
 		addr_type: expected_inner0.int()
 		address: expected_inner1
@@ -169,31 +169,31 @@ fn (e EncryptedData) payload(p Params) ![]u8 {
 	mut out := []u8{}
 	el0 := TaggedType.explicit_context(asn1.Int.from_i64(e.etype), 0)!
 	el2 := TaggedType.explicit_context(e.cipher, 2)!
-	el0.pack_to_asn1(mut out, p)!
+	el0.encode(mut out, p)!
 	if e.kvno != none {
 		el1 := TaggedType.explicit_context(asn1.Int.from_i64(e.kvno), 1)!
-		el1.pack_to_asn1(mut out, p)!
+		el1.encode(mut out, p)!
 	}
-	el2.pack_to_asn1(mut out, p)!
+	el2.encode(mut out, p)!
 
 	return out
 }
 
-fn (e EncryptedData) pack_to_asn1(mut out []u8, p Params) ! {
-	e.tag().pack_to_asn1(mut out, p)!
+fn (e EncryptedData) encode(mut out []u8, p Params) ! {
+	e.tag().encode(mut out, p)!
 	length := Length.from_i64(e.length(p))!
-	length.pack_to_asn1(mut out, p)!
+	length.encode(mut out, p)!
 	out << e.payload(p)!
 }
 
-fn EncryptedData.unpack_from_asn1(src []u8, loc i64, p Params) !(EncryptedData, i64) {
+fn EncryptedData.decode(src []u8, loc i64, p Params) !(EncryptedData, i64) {
 	if src.len < 11 {
 		return error('EncryptedData: bytes underflow')
 	}
 	if loc > src.len {
 		return error('EncryptedData: loc overflow')
 	}
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	tag, pos := Tag.decode(src, loc, p)!
 	if tag.class() != .universal && !tag.is_constructed()
 		&& tag.tag_number() != int(asn1.TagType.sequence) {
 		return error('EncryptedData: check tag failed')
@@ -201,7 +201,7 @@ fn EncryptedData.unpack_from_asn1(src []u8, loc i64, p Params) !(EncryptedData, 
 	if pos > src.len {
 		return error('EncryptedData: pos overflow')
 	}
-	length, idx := Length.unpack_from_asn1(src, pos, p)!
+	length, idx := Length.decode(src, pos, p)!
 	if length == 0 {
 		return error('EncryptedData: length should != 0')
 	}
@@ -304,23 +304,23 @@ fn (k KerberosString) valid() bool {
 	return false
 }
 
-fn (k KerberosString) pack_to_asn1(mut out []u8, p asn1.Params) ! {
+fn (k KerberosString) encode(mut out []u8, p asn1.Params) ! {
 	// do your validation check for KerberosString type
 	if !k.valid() {
 		return error('not valid KerberosString')
 	}
-	k.tag().pack_to_asn1(mut out, p)!
+	k.tag().encode(mut out, p)!
 	bytes := k.value.bytes()
 	length := Length.from_i64(bytes.len)!
-	length.pack_to_asn1(mut out, p)!
+	length.encode(mut out, p)!
 	out << bytes
 }
 
-fn KerberosString.unpack_from_asn1(src []u8, loc i64, p asn1.Params) !(KerberosString, i64) {
+fn KerberosString.decode(src []u8, loc i64, p asn1.Params) !(KerberosString, i64) {
 	if src.len < 2 {
 		return error('src underflow')
 	}
-	tag, pos := Tag.unpack_from_asn1(src, loc, p)!
+	tag, pos := Tag.decode(src, loc, p)!
 	if tag.tag_number() != int(asn1.TagType.generalstring) {
 		return error('bad tag')
 	}
@@ -328,7 +328,7 @@ fn KerberosString.unpack_from_asn1(src []u8, loc i64, p asn1.Params) !(KerberosS
 		return error('truncated input')
 	}
 
-	length, next := Length.unpack_from_asn1(src, pos, p)!
+	length, next := Length.decode(src, pos, p)!
 	if length == 0 {
 		return KerberosString.from_string('')!, next
 	}
@@ -373,12 +373,12 @@ fn (kf KerberosFlags) packed_length(p Params) int {
 	return kf.value.packed_length(p)
 }
 
-fn (kf KerberosFlags) pack_to_asn1(mut out []u8, p asn1.Params) ! {
-	kf.value.pack_to_asn1(mut out, p)!
+fn (kf KerberosFlags) encode(mut out []u8, p asn1.Params) ! {
+	kf.value.encode(mut out, p)!
 }
 
-fn KerberosFlags.unpack_from_asn1(src []u8, loc i64, p Params) !(KerberosFlags, i64) {
-	b, n := BitString.unpack_from_asn1(src, loc, p)!
+fn KerberosFlags.decode(src []u8, loc i64, p Params) !(KerberosFlags, i64) {
+	b, n := BitString.decode(src, loc, p)!
 	return KerberosFlags.new(b), n
 }
 
@@ -407,8 +407,8 @@ fn (pn PrincipalName) payload(p asn1.Params) ![]u8 {
 	el1 := asn1.TaggedType.explicit_context(seq2, 1)
 
 	mut out := []u8{}
-	el0.pack_to_asn1(mut out, p)!
-	el1.pack_to_asn1(mut out, p)!
+	el0.encode(mut out, p)!
+	el1.encode(mut out, p)!
 	return out
 }
 
@@ -431,7 +431,7 @@ fn (pn PrincipalName) packed_length(p asn1.Params) int {
 	return n
 }
 
-fn (pn PrincipalName) pack_to_asn1(mut dst []u8, p asn1.Params) ! {
+fn (pn PrincipalName) encode(mut dst []u8, p asn1.Params) ! {
 	mut seq1 := asn1.Sequence.new(false)
 	int1 := asn1.Int64.from_i64(pn.name_type)
 	// explicit context of integer content
@@ -447,10 +447,27 @@ fn (pn PrincipalName) pack_to_asn1(mut dst []u8, p asn1.Params) ! {
 	exp2 := asn1.TaggedType.explicit_context(seq2, 1)
 	seq1.add_element(exp2)!
 
-	seq1.pack_to_asn1(mut dst, p)!
+	seq1.encode(mut dst, p)!
 }
 
-fn PrincipalName.unpack_from_asn1(src []u8, loc i64, p asn1.Params) !(PrincipalName, i64) {}
+fn PrincipalName.decode(src []u8, loc i64, p asn1.Params) !(PrincipalName, i64) {
+	// PrincipalName is sequence
+	seq, pos := Sequence.decode(src, loc, p)!
+	// when src.len is exact length of PrincipalName data, maybe stream one
+	assert pos == src.len
+	assert seq.elements.len == 2 
+	// all sequence elements when parsed, if has not .universal class
+	// is parsed as RawElement
+	els := seq.elements()!
+
+	// first element is exlicit context of integer
+	re0 := els[0] as RawElement 
+	re0 := els[1] as RawElement
+
+	tag0 := asn1.new_tag(.universal, false, 2)!
+	tt0 := re0.as_tagged(.explicit, tag0)!
+	el0 := (tt0 as asn1.Int64).value()
+}
 
 fn main() {
 	// Basically this is a Kerberos PrincipalName data you sent to me

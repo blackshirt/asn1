@@ -288,10 +288,10 @@ pub fn (c Choice) tag() Tag {
 }
 
 pub fn (c Choice) payload(p Params) ![]u8 {
-	return op.chosen.payload(p)
+	return c.chosen.payload(p)
 }
 
-pub fn (op Choice) length(p Params) int {
+pub fn (c Choice) length(p Params) int {
 	return c.chosen.length(p)
 }
 
