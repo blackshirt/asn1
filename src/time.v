@@ -94,7 +94,7 @@ pub fn UTCTime.decode(src []u8, loc i64, p Params) !(UTCTime, i64) {
 		|| raw.tag.tag_number() != int(TagType.utctime) {
 		return error('UTCTime: bad tag of universal class type')
 	}
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return error('UTCTime: len==0')
 	}
 
@@ -238,7 +238,7 @@ pub fn GeneralizedTime.decode(src []u8, loc i64, p Params) !(GeneralizedTime, i6
 		|| raw.tag.tag_number() != int(TagType.generalizedtime) {
 		return error('GeneralizedTime: bad tag of universal class type')
 	}
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		// we dont allow null length
 		return error('GeneralizedTime: len==0')
 	}

@@ -123,7 +123,7 @@ pub fn Set.decode(src []u8, loc i64, p Params) !(Set, i64) {
 		return error('Set: bad set tag')
 	}
 
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		// empty sequence
 		set := Set.new(false)
 		return set, next

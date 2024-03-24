@@ -77,7 +77,7 @@ pub fn OctetString.decode(src []u8, loc i64, p Params) !(OctetString, i64) {
 		return error('OctetString: bad tag of universal class type')
 	}
 	// no bytes
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return OctetString{}, next
 	}
 

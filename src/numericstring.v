@@ -80,7 +80,7 @@ pub fn NumericString.decode(src []u8, loc i64, p Params) !(NumericString, i64) {
 	}
 
 	// no bytes
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return NumericString{}, next
 	}
 	ns := NumericString.from_bytes(raw.payload)!

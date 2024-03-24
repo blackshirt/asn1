@@ -82,7 +82,7 @@ pub fn UTF8String.decode(src []u8, loc i64, p Params) !(UTF8String, i64) {
 		return error('UTF8String: bad tag of universal class type')
 	}
 	// no bytes
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return UTF8String{}, next
 	}
 	us := UTF8String.from_bytes(raw.payload)!

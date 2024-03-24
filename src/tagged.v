@@ -164,7 +164,7 @@ pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Para
 	if !raw.tag.is_constructed() {
 		return error('TaggedType: tag check failed, .explicit should be constructed')
 	}
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		// its bad TaggedType with len==0, ie, without contents
 		return error('TaggedType: len==0')
 	}

@@ -88,7 +88,7 @@ pub fn BitString.decode(src []u8, loc i64, p Params) !(BitString, i64) {
 	}
 
 	// check for length and required bytes
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return error('BitString: zero length bit string')
 	}
 

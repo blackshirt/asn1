@@ -144,7 +144,7 @@ pub fn Oid.decode(src []u8, loc i64, p Params) !(Oid, i64) {
 		|| raw.tag.tag_number() != int(TagType.oid) {
 		return error('Oid: bad tag of universal class type')
 	}
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return Oid{}, next
 	}
 

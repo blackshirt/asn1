@@ -276,7 +276,7 @@ pub fn Integer.decode(src []u8, loc i64, p Params) !(Integer, i64) {
 		|| raw.tag.tag_number() != int(TagType.integer) {
 		return error('Integer: bad tag of universal class type')
 	}
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return error('Integer: len==0')
 	}
 
@@ -395,7 +395,7 @@ pub fn Int64.decode(src []u8, loc i64, p Params) !(Int64, i64) {
 		return error('Int64: bytes underflow')
 	}
 	raw, next := RawElement.decode(src, loc, p)!
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return error('Int64: len==0')
 	}
 

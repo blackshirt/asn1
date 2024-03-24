@@ -81,7 +81,7 @@ pub fn VisibleString.decode(src []u8, loc i64, p Params) !(VisibleString, i64) {
 	}
 
 	// no bytes
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return VisibleString{}, next
 	}
 	us := VisibleString.from_bytes(raw.payload)!

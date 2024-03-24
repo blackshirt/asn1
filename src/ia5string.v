@@ -83,7 +83,7 @@ pub fn IA5String.decode(src []u8, loc i64, p Params) !(IA5String, i64) {
 		return error('IA5String: bad tag of universal class type')
 	}
 	// no bytes
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return IA5String{}, next
 	}
 

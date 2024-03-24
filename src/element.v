@@ -167,15 +167,13 @@ pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
 	if src.len < 2 {
 		return error('Tlv: bytes underflow')
 	}
-	if loc > src.len {
-		return error('Tlv: bad loc')
-	}
 	// guard check
 	if p.mode != .der && p.mode != .ber {
 		return error('Tlv: bad mode')
 	}
 	mut raw := RawElement{}
 	tag, pos := Tag.decode(src, loc, p)!
+	raw.tag = tag
 	// check if the offset position is not overflowing src.len
 	if pos >= src.len {
 		return error('RawElement: pos overflow')
@@ -184,7 +182,14 @@ pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
 	len, idx := Length.decode(src, pos, p)!
 	// check if len == 0, its mean this parsed element has no content bytes
 	if len == 0 {
-		raw.tag = tag
+		raw.payload = []u8{}
+		return raw, idx
+	}
+	// on last offset 
+	if idx == src.len {
+		if len != 0 {
+			return error("len != 0 but no payload bytes)
+		}
 		raw.payload = []u8{}
 		return raw, idx
 	}
@@ -196,12 +201,11 @@ pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
 	if idx > src.len || idx + len > src.len {
 		return error('Tlv: truncated src bytes')
 	}
-	content := unsafe { src[idx..idx + len] }
-	if len != content.len {
+	payload := unsafe { src[idx..idx + len] }
+	if len != payload.len {
 		return error('RawElement: unmatching length')
 	}
-	raw.tag = tag
-	raw.payload = content
+	raw.payload = payload
 	return raw, idx
 }
 
@@ -222,9 +226,8 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 			if idx != r.payload.len {
 				return error('RawElement: r.payload != idx')
 			}
-			if raw.length(p) == 0 {
+			if raw.payload.len == 0 {
 				// empty sub payload
-				_ := raw.payload.len == 0
 				inner := RawElement{
 					tag: raw.tag
 					payload: raw.payload

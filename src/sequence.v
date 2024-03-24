@@ -134,12 +134,11 @@ pub fn (s Sequence) encode(mut dst []u8, p Params) ! {
 
 pub fn Sequence.decode(src []u8, loc i64, p Params) !(Sequence, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
-
 	if raw.tag.class() != .universal && !raw.tag.is_constructed()
 		&& raw.tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: bad sequence tag')
 	}
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		// empty sequence
 		seq := Sequence.new(false)!
 		return seq, next

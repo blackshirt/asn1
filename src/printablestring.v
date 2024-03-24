@@ -88,7 +88,7 @@ pub fn PrintableString.decode(src []u8, loc i64, p Params) !(PrintableString, i6
 		|| raw.tag.tag_number() != int(TagType.printablestring) {
 		return error('PrintableString: bad tag of universal class type')
 	}
-	if raw.length(p) == 0 {
+	if raw.payload.len == 0 {
 		return PrintableString{}, next
 	}
 	ps := PrintableString.from_bytes(raw.payload)!
