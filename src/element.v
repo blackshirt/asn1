@@ -181,10 +181,6 @@ pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
 	// read the length part
 	len, idx := Length.decode(src, pos, p)!
 	// check if len == 0, its mean this parsed element has no content bytes
-	if len == 0 {
-		raw.payload = []u8{}
-		return raw, idx
-	}
 	// on last offset 
 	if idx == src.len {
 		if len != 0 {
