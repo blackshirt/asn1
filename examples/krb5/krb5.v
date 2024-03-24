@@ -109,4 +109,3 @@ fn KerberosString.decode(src []u8, loc i64, p asn1.Params) !(KerberosString, i64
 	ks := KerberosString.from_bytes(tlv.content())!
 	return ks, next
 }
-

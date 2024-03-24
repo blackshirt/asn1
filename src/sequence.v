@@ -138,11 +138,6 @@ pub fn Sequence.decode(src []u8, loc i64, p Params) !(Sequence, i64) {
 		&& raw.tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: bad sequence tag')
 	}
-	if raw.payload.len == 0 {
-		// empty sequence
-		seq := Sequence.new(false)!
-		return seq, next
-	}
 
 	mut seq := Sequence.parse_contents(raw.tag, raw.payload)!
 	// check for hold_different_tag

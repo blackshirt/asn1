@@ -14,7 +14,7 @@ fn test_encode_decode_boolean_in_der_mode() {
 		BooleanTest{[u8(1), 0x01, 0xff], true, none},
 		BooleanTest{[u8(1), 0x01, 0x00], false, none},
 		BooleanTest{[u8(1), 0x01, 0x10], false, error('Boolean: in DER, other than 0xff is not allowed for true value')}, // invalid value
-		BooleanTest{[u8(1), 0x02, 0x00], false, error('Tlv: truncated src bytes')}, // bad length
+		BooleanTest{[u8(1), 0x02, 0x00], false, error('RawElement: truncated src bytes')}, // bad length
 		BooleanTest{[u8(1), 0x01, 0x00], false, error('Boolean: bad tag of universal class type')}, // bad tag number
 	]
 	for c in bd {

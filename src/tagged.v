@@ -156,8 +156,6 @@ pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Para
 		return error('TaggedType: bytes underflow')
 	}
 	raw, next := RawElement.decode(src, loc, p)!
-	dump(raw)
-	dump(next)
 	// TODO: check the tag, do we need .class == .context_specific
 	// in explicit context, the tag should be in constructed form
 	// raw.tag is outer_tag
@@ -169,7 +167,7 @@ pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Para
 		return error('TaggedType: len==0')
 	}
 	bytes := raw.payload
-	dump(raw.payload)
+
 	match tm {
 		.explicit {
 			// when explicit, read element from bytes
