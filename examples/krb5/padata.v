@@ -7,7 +7,8 @@ module main
 // }
 
 struct PaData {
-	pd_type  int
+	tag		 asn1.Tag = asn1.new_tag(.universal, true, int(asn1.TagType.sequence)) or { panic(err) }
+	pd_type  asn1.Int64 // we use Int64
 	pd_value asn1.OctetString
 }
 
@@ -20,39 +21,58 @@ fn (p PaData) tag() asn1.Tag {
 	return p.tag
 }
 
-fn (p PaData) packed_length() int {
+fn (p PaData) payload(p asn1.Params) ![]u8 {
+	el0 := asn1.TaggedType.explicit_context(p.pd_type, 1)!
+	el1 := asn1.TaggedType.explicit_context(p.pd_value, 2)!
+
+	mut out := []u8{}
+	el0.encode(mut out, p)!
+	el1.encode(mut out, p)!
+
+	return out 
+}
+
+fn (p PaData) packed_length(p asn1.Params) int {
 	mut n := 0
 
 	n += p.tag().packed_length()
+	payload := p.payload(p) or { panic(err) }
+	len := asn1.Length.from_i64(payload.len) or { panic(err) }
+	n += len.packed_length(p)
+	n += payload.len 
 
 	return n
 }
 
-fn (p PaData) pack(mut out []u8) ! {
+fn (p PaData) encode(mut out []u8, p asn1.Params) ! {
 	if !p.valid() {
 		return error('not valid')
 	}
-	tt0 := asn1.TaggedType.explicit_context(p.pd_type, 1)!
-	tt1 := asn1.TaggedType.explicit_context(p.pd_value, 2)!
-	el0 := tt0.to_element()!
-	el1 := tt1.to_element()!
-
-	mut els := []Element{}
-	mut seq := asn1.Sequence.new(new_tag(.universal, true, int(asn1.TagType.sequence))!,
-		false, els)!
-
+	el0 := asn1.TaggedType.explicit_context(p.pd_type, 1)!
+	el1 := asn1.TaggedType.explicit_context(p.pd_value, 2)!
+	
+	mut seq := asn1.Sequence.new(false)!
 	seq.add_element(el0)!
 	seq.add_element(el1)!
 
-	mut pa_length := 0
-	pa_length += el0.packed_length()
-	pa_length += el1.packed_length()
+	mut out := []u8{}
+	seq.encode(mut out, p)!
 }
 
-fn PaData.unpack(src []u8) !PaData {
+fn PaData.decode(src []u8, loc i64, p asn1.Params) !(PaData, i64) {
 	if src.len < 2 {
 		return error('src underflow')
 	}
-	seq, n := asn1.Sequence.decode(src, 0)!
+	seq, n := asn1.Sequence.decode(src, 0, p)!
 	assert seq.elements.len == 2
+	
+	els := seq.elements()!
+	els0 := els[0] as asn1.Int64
+	els1 := els[1] as asn1.OctetString
+
+	pa := PaData{
+		pd_type: els0 
+		pd_value: els1 
+	}
+	return pa, n 
 }

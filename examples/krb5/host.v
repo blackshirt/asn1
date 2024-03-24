@@ -3,7 +3,8 @@
 //           address         [1] OCTET STRING
 //   }
 struct HostAddress {
-	addr_type int
+	tag 	  asn1.Tag = asn1.new_tag(.universal, true, int(asn1.TagType.sequence)) or { panic(err) }
+	addr_type asn1.Int64
 	address   asn1.OctetString
 }
 
