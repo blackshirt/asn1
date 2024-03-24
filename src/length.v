@@ -171,8 +171,19 @@ mut:
 	content []u8
 }
 
+pub fn (t Tlv) tag() Tag {
+	return t.tag 
+}
+
+pub fn (t Tlv) length() i64 {
+	return t.length
+}
+
+pub fn (t Tlv) content() []u8 {
+	return t.content
+}
 // Tlv.read parses and read the bytes in src into Tag, Length and bytes value
-fn Tlv.read(src []u8, loc i64, p Params) !(Tlv, i64) {
+pub fn Tlv.read(src []u8, loc i64, p Params) !(Tlv, i64) {
 	// minimal length bytes contains tag and the length is two bytes
 	if src.len < 2 {
 		return error('Tlv: bytes underflow')

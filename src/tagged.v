@@ -210,6 +210,10 @@ pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Para
 	}
 }
 
+pub fn (tt TaggedType) inner_element() Element {
+	return tt.inner_el
+}
+
 // from_raw_element treats this RawElement as TaggedType with mode m and inner element
 pub fn TaggedType.from_raw_element(r RawElement, m TaggedMode, inner_tag Tag, p Params) !TaggedType {
 	return r.as_tagged(m, inner_tag, p)!
