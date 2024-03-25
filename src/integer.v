@@ -462,3 +462,19 @@ fn read_i64(src []u8) !i64 {
 
 	return ret
 }
+
+// i32 handling
+//
+// read_i32 readt  from bytes
+fn read_i32(src []u8) !int {
+	if !valid_bytes(src, true) {
+		return error('i32 check return false')
+	}
+
+	ret := read_i64(src)!
+	if ret != i64(int(ret)) {
+		return error('integer too large')
+	}
+
+	return int(ret)
+}
