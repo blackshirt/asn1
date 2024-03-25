@@ -85,7 +85,7 @@ fn KerberosString.decode(src []u8, loc i64, p asn1.Params) !(KerberosString, i64
 // }
 struct PrincipalName {
 	tag         asn1.Tag = asn1.new_tag(.universal, true, int(asn1.TagType.sequence)) or { panic(err) }
-	name_type   asn1.Int64
+	name_type   asn1.Integer
 	name_string []KerberosString
 }
 
@@ -160,32 +160,37 @@ fn PrincipalName.decode(src []u8, loc i64, p asn1.Params) !(PrincipalName, i64) 
 	re0 := els[0] as asn1.RawElement
 	re1 := els[1] as asn1.RawElement
 
-	tag0 := asn1.new_tag(.universal, false, 2)!
+	tag0 := asn1.new_tag(.universal, false, int(asn1.TagType.integer))!
 	tt0 := re0.as_tagged(.explicit, tag0)!
-	el0 := tt0.inner_el as asn1.Int64
+	el0 := tt0.inner_el as asn1.Integer
 
 	tag1 := asn1.new_tag(.universal, true, int(asn1.TagType.sequence))!
 	tt1 := re1.as_tagged(.explicit, tag1)!
 	el1 := tt1.inner_el as asn1.Sequence
 
-	f0 := el1.elements()![0] as KerberosString
+	gs0 := el1.elements()![0] as asn1.GeneralString
+	ks0 := KerberosString.from_string(gs0.value())!
 
 	ret := PrincipalName{
 		name_type: el0
-		name_string: [f0]
+		name_string: [ks0]
 	}
 	return ret, pos
 }
 
 fn main() {
-	// Basically this is a Kerberos PrincipalName data you sent to me
+	// Basically this is a Kerberos PrincipalName data
 	data := [u8(0x30), 0x15, 0xa0, 0x03, 0x02, 0x01, 0x01, 0xa1, 0x0e, 0x30, 0x0c, 0x1b, 0x0a,
 		0x62, 0x6f, 0x62, 0x62, 0x61, 0x2d, 0x66, 0x65, 0x74, 0x74]
 	p := PrincipalName{
-		name_type: asn1.Int64.from_i64(1)
+		name_type: asn1.Integer.from_i64(1)
 		name_string: [KerberosString.from_string('bobba-fett')!]
 	}
 	mut out := []u8{}
 	p.encode(mut out)!
-	assert out == data // should assert to true
+
+	back, n := PrincipalName.decode(data, 0)!
+	dump(n == data.len)
+	dump(back == p)
+	dump(out == data) // should assert to true
 }

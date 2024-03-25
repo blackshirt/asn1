@@ -77,7 +77,7 @@ MC4CAQAwBQYDK2VwBCIEINTuctv5E1hK1bbY8fdp+K06/nwoy/HU++CXqI9EdVhC
 
 // TODO: This test still failed on `Sequence.parse_contents` with error `next: truncated bytes`
 // FIXME: need to be investigated, bad data, or sequence handling or others source of fail
-// so just disable this test,
+// so just disable this test, would be moved into related module when ready
 /*
 fn test_example_x25519_certificate() {
 	// taken from https://www.rfc-editor.org/rfc/rfc8410.html#section-10
@@ -195,4 +195,5 @@ w1AH9efZBw==
 		0x07, 0xF5, 0xE7, 0xD9, 0x07]
 	assert bts.data == exp
 }
+
 */
