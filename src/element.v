@@ -111,7 +111,7 @@ pub fn (els []Element) hold_different_tag() bool {
 
 // Raw ASN.1 Element
 pub struct RawElement {
-mut:
+pub mut:
 	// the tag of the RawElement
 	tag Tag
 	// payload is the value of this RawElement, its depend how its would be interpreted.
@@ -182,26 +182,23 @@ pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
 	len, idx := Length.decode(src, pos, p)!
 	// check if len == 0, its mean this parsed element has no content bytes
 	// on last offset
-	if idx == src.len {
-		if len != 0 {
-			return error('len != 0 but no payload bytes')
-		}
+	if len == 0 {
 		raw.payload = []u8{}
-		return raw, idx
+	} else {
+		// len !=0
+		// check if idx + len is not overflow src.len, if its not happen,
+		// this element has a content, or return error if not.
+		// when idx == src.len, but len != 0, its mean the input is truncated
+		// its also same mean for idx+len is over to the src.len
+		if idx >= src.len || idx + len > src.len {
+			return error('RawElement: truncated src bytes')
+		}
+		payload := unsafe { src[idx..idx + len] }
+		if len != payload.len {
+			return error('RawElement: unmatching length')
+		}
+		raw.payload = payload
 	}
-	// len !=0
-	// check if idx + len is not overflow src.len, if its not happen,
-	// this element has a content, or return error if not.
-	// when idx == src.len, but len != 0, its mean the input is truncated
-	// its also same mean for idx+len is over to the src.len
-	if idx > src.len || idx + len > src.len {
-		return error('RawElement: truncated src bytes')
-	}
-	payload := unsafe { src[idx..idx + len] }
-	if len != payload.len {
-		return error('RawElement: unmatching length')
-	}
-	raw.payload = payload
 	return raw, idx + len
 }
 
@@ -215,7 +212,7 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 			return error('tag is constructed but no payload')
 		}
 		if mode == .explicit {
-			raw, idx := RawElement.decode(r.payload, 0, p)!
+			raw, _ := RawElement.decode(r.payload, 0, p)!
 			if raw.tag != inner_tag {
 				return error('expected inner_tag != parsed tag')
 			}
