@@ -1,6 +1,9 @@
 module asn1
 
-// ASN.1 Element
+// Element represents a generic ASN.1 Element.
+// Most of the standard Universal class element defined on this module
+// satisfies this interface. This interface was also expandabled by methods
+// defined on this interface.
 pub interface Element {
 	// tag tells the identity tag of this Element
 	tag() Tag
@@ -38,7 +41,7 @@ pub fn (e Element) length(p Params) int {
 	return payload.len
 }
 
-// encode serializes this Element e into bytes and appended to `dst`.
+// encode serializes this e Element into bytes and appended to `dst`.
 // Its accepts optional p Params.
 pub fn (e Element) encode(mut dst []u8, p Params) ! {
 	e.tag().encode(mut dst, p)!
@@ -61,7 +64,9 @@ pub fn (e Element) packed_length(p Params) int {
 	return n
 }
 
-// unpack_from_asn1 deserializes bytes in src from offet loc into Element.
+// decode deserializes back bytes in src from offet loc into Element.
+// Basically, its tries to parse a Universal class Elememt when it is possible.
+// Other class parsed as a RawElement.
 pub fn Element.decode(src []u8, loc i64, p Params) !(Element, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
 	bytes := raw.payload
@@ -157,7 +162,8 @@ pub fn RawElement.new(t Tag, payload []u8) RawElement {
 	}
 	return el
 }
-
+			
+// tag returns the tag of the RawElement
 pub fn (el RawElement) tag() Tag {
 	return el.tag
 }
