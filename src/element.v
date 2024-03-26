@@ -20,6 +20,18 @@ pub fn Element.new(tag Tag, payload []u8) !Element {
 	}
 }
 
+// FIXME: its not tested
+// from_object creates a new element from raw type (maybe universal type, like OctetString)
+// examples:
+// ```v
+// oc := asn1.OctetString.from_string("xxx")!
+// el := Element.from_object[OctetString](oc)!
+// ```
+// and then treats your OctetString as an Element
+pub fn Element.from_object[T](t T) !Element {
+	return t
+}
+
 // length returns the length of the payload of this element.
 pub fn (e Element) length(p Params) int {
 	payload := e.payload(p) or { panic(err) }
@@ -68,6 +80,13 @@ pub fn Element.decode(src []u8, loc i64, p Params) !(Element, i64) {
 	}
 }
 
+// equal checks whether this two element equal and holds the same tag and content
+pub fn (e Element) equal(other Element) bool {
+	a := e.payload() or { panic(err) }
+	b := other.payload() or { panic(err) }
+	return e.tag() == other.tag() && a == b
+}
+
 type ElementList = []Element
 
 // ElementList.from_bytes parses bytes in src as series of Element.
@@ -107,6 +126,16 @@ pub fn (els []Element) hold_different_tag() bool {
 	// in the elements hold the different tag.
 	tag0 := els[0].tag()
 	return els.any(it.tag() != tag0)
+}
+
+// contains checks whether this array of Element contains the Element el
+pub fn (els []Element) contains(el Element) bool {
+	for e in els {
+		if !e.equal(el) {
+			return false
+		}
+	}
+	return true
 }
 
 // Raw ASN.1 Element
@@ -303,32 +332,42 @@ pub fn (o Optional) present(t Tag) bool {
 // Choice element also no have dedicated semantic and tag.
 // Its also follow underlying choosen element
 pub struct Choice {
-	chosen Element
+	choices []Element
+mut:
+	// choosen element
+	choosen Element
 }
 
-pub fn Choice.new(el Element) Choice {
-	return Choice{el}
+pub fn Choice.new(choices []Element, el Element) !Choice {
+	if !choices.contains(el) {
+		return error('Choice: el is not in choices')
+	}
+	ret := Choice{
+		choices: choices
+		choosen: el
+	}
+	return ret
 }
 
 pub fn (c Choice) tag() Tag {
-	return c.chosen.tag()
+	return c.choosen.tag()
 }
 
 pub fn (c Choice) payload(p Params) ![]u8 {
-	return c.chosen.payload(p)
+	return c.choosen.payload(p)
 }
 
 pub fn (c Choice) length(p Params) int {
-	return c.chosen.length(p)
+	return c.choosen.length(p)
 }
 
 pub fn (c Choice) encode(mut dst []u8, p Params) ! {
-	c.chosen.encode(mut dst, p)!
+	c.choosen.encode(mut dst, p)!
 }
 
-pub fn Choice.decode(src []u8, loc i64, p Params) !(Choice, i64) {
+pub fn Choice.decode(choices []Element, src []u8, loc i64, p Params) !(Choice, i64) {
 	el, pos := Element.decode(src, loc, p)!
-	ret := Choice{el}
+	ret := Choice.new(choices, el)!
 	return ret, pos
 }
 
