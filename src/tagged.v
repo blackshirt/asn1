@@ -66,6 +66,10 @@ pub fn (tt TaggedType) tag() Tag {
 	return tt.outer_tag
 }
 
+pub fn (tt TaggedType) tagged_mode() TaggedMode {
+	return tt.mode
+}
+
 pub fn (tt TaggedType) payload(p Params) ![]u8 {
 	// if mode is .explicit, the payload is serialized tt.inner_el element
 	// and if .implicit, the payload is tt.inner_el payload

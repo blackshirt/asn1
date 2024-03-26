@@ -297,6 +297,7 @@ pub struct Optional {
 	elm Element
 }
 
+// not tested
 pub fn Optional.new(el Element) Optional {
 	return Optional{el}
 }
@@ -338,6 +339,7 @@ mut:
 	choosen Element
 }
 
+// not tested
 pub fn Choice.new(choices []Element, el Element) !Choice {
 	if !choices.contains(el) {
 		return error('Choice: el is not in choices')
@@ -371,6 +373,7 @@ pub fn Choice.decode(choices []Element, src []u8, loc i64, p Params) !(Choice, i
 	return ret, pos
 }
 
+// not tested
 pub struct AnyDefinedBy {
 	by Element
 }
