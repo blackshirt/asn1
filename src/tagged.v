@@ -18,7 +18,6 @@ mut:
 	// class of TaggedType element was default to .context_specific
 	outer_tag Tag
 	mode      TaggedMode = .explicit
-pub:
 	// Element being tagged
 	inner_el Element
 }
