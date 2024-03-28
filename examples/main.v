@@ -162,11 +162,11 @@ fn PrincipalName.decode(src []u8, loc i64, p asn1.Params) !(PrincipalName, i64) 
 
 	tag0 := asn1.new_tag(.universal, false, int(asn1.TagType.integer))!
 	tt0 := re0.as_tagged(.explicit, tag0)!
-	el0 := tt0.inner_el as asn1.Integer
+	el0 := tt0.inner_element() as asn1.Integer
 
 	tag1 := asn1.new_tag(.universal, true, int(asn1.TagType.sequence))!
 	tt1 := re1.as_tagged(.explicit, tag1)!
-	el1 := tt1.inner_el as asn1.Sequence
+	el1 := tt1.inner_element() as asn1.Sequence
 
 	gs0 := el1.elements()![0] as asn1.GeneralString
 	ks0 := KerberosString.from_string(gs0.value())!
