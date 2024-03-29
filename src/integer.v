@@ -248,7 +248,7 @@ pub fn (v Integer) length(p Params) int {
 	return v.bytes_len()
 }
 
-// pack_to_asn1 packs and serializes Integer v into ASN 1 serialized bytes into `dst`.
+// encode serializes and encodes Integer v into bytes and appended into `dst`.
 // Its accepts encoding mode params, where its currently only suppport `.der` DER mode.
 // If `dst.len != 0`, it act as append semantic, otherwise the `dst` bytes stores the result.
 pub fn (v Integer) encode(mut dst []u8, p Params) ! {
@@ -263,7 +263,7 @@ pub fn (v Integer) encode(mut dst []u8, p Params) ! {
 	dst << bytes
 }
 
-// unpack_from_asn1 deserializes bytes src into ASN.1 Integer.
+// decode deserializes and decodes bytes src back into ASN.1 Integer.
 // Its accepts `loc` params, the location (offset) within bytes src where the unpack
 // process start form, if not sure set to 0 and optional mode in `Params` to drive unpacking.
 // see `EncodingMode` for availables values. Currently only support`.der`.
