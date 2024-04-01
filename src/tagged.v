@@ -1,4 +1,4 @@
-// Copyright (c) 2022, 2023 blackshirt. All rights reserved.
+h// Copyright (c) 2022, 2023 blackshirt. All rights reserved.
 // Use of this source code is governed by a MIT License
 // that can be found in the LICENSE file.
 module asn1
@@ -145,8 +145,17 @@ pub fn (ctx Tagged) size() int {
 		}
 		// size := expected tag length + size of inner object
 		.implicit {
+			mut size := 0
 			taglen := calc_tag_length(ctx.tag())
-			size := taglen + ctx.inner.size()
+			size += taglen
+
+			// length of length
+			lol := calc_length_of_length(ctx.length())
+			size += int(lol)
+
+			// plus size of inner object
+			size += ctx.length()
+
 			return size
 		}
 	}
