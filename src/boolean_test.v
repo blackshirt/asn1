@@ -8,13 +8,11 @@ fn test_read_boolean() {
 	// tag := new_tag(.universal, false, int(TagType.boolean))
 	o1 := read_boolean(b1)!
 
-	exp := o1.as_boolean()!
-	assert exp == false
+	assert o1 == false
 	b2 := [u8(0xff)]
 	o2 := read_boolean(b2)!
 
-	exp2 := o2.as_boolean()!
-	assert exp2 == true
+	assert o2 == true
 }
 
 fn test_encode_boolean() {

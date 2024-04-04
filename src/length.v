@@ -32,7 +32,8 @@ fn append_length(mut dst []u8, i int) []u8 {
 	mut n := calc_length(i)
 
 	for ; n > 0; n-- {
-		dst << u8(i >> (n - 1) * 8)
+		v := i >> u32((n - 1) * 8)
+		dst << u8(v)
 	}
 
 	return dst

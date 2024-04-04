@@ -21,8 +21,9 @@ fn test_serialize_length() ! {
 		LengthEncodeTest{65536, [u8(0x83), 0x01, 0x00, 0x00]},
 		LengthEncodeTest{16777215, [u8(0x83), 0xff, 0xff, 0xff]},
 	]
-	for c in edata {
+	for i, c in edata {
 		mut dst := []u8{}
+		dump(i)
 		dst = serialize_length(mut dst, c.inp)
 		assert dst == c.exp
 
@@ -67,6 +68,7 @@ fn test_append_length() {
 
 	for i in bdata {
 		mut dst := []u8{}
+		dump(i)
 		out := append_length(mut dst, i.inp)
 
 		assert out == i.exp
