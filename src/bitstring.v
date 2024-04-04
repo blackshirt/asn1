@@ -7,7 +7,7 @@ import bitfield
 
 // BITSTRING
 //
-struct BitString {
+pub struct BitString {
 	data    []u8
 	padbits u8
 }
