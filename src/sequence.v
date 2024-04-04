@@ -39,7 +39,7 @@ pub fn new_sequence_with_class(c Class) Sequence {
 	return seq
 }
 
-pub fn new_sequence_from_multiencoder(me []Encoder) Sequence {
+pub fn new_sequence_from_multiencoder(me []Encoder) !Sequence {
 	mut seq := new_sequence()
 	seq.add_multi(me)
 	return seq
