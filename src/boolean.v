@@ -18,7 +18,7 @@ pub fn new_boolean(value bool) Boolean {
 }
 
 fn new_boolean_from_bytes(src []u8) !Encoder {
-	ret := decode_boolean(src)!
+	ret := read_boolean(src)!
 	return ret
 }
 
