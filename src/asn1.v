@@ -13,9 +13,7 @@ pub enum Class {
 }
 
 const class_mask = 0xc0 // 192, bits 7-8
-
 const compound_mask = 0x20 //  32, bits 6
-
 const tagnumber_mask = 0x1f //  32, bits 1-5
 
 // Encoder is a main interrface that wraps ASN.1 encoding functionality.
@@ -100,6 +98,9 @@ fn parse_primitive_element(tag Tag, contents []u8) !Encoder {
 		}
 		int(TagType.ia5string) {
 			return new_ia5string(contents.bytestr())
+		}
+		int(TagType.generalstring) {
+			return new_generalstring(contents.bytestr())
 		}
 		int(TagType.utf8string) {
 			return new_utf8string(contents.bytestr())
@@ -283,6 +284,14 @@ pub fn (e Encoder) as_ia5string() !IA5String {
 		return *e
 	}
 	return error('not ia5string type')
+}
+
+// as_generalstring cast encoder to ASN.1 GeneralString.
+pub fn (e Encoder) as_generalstring() !GeneralString {
+	if e is GeneralString {
+		return *e
+	}
+	return error('not generalstring type')
 }
 
 // as_visiblestring cast encoder to ASN.1 VisibleString.

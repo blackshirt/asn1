@@ -16,7 +16,7 @@ pub fn new_bitstring(s string) !Encoder {
 	return new_bitstring_with_pad(s.bytes(), 0x00)
 }
 
-fn new_bitstring_from_bytes(src []u8) !Encoder {
+pub fn new_bitstring_from_bytes(src []u8) !Encoder {
 	bs := read_bitstring(src)!
 	return bs
 }

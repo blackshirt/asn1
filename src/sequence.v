@@ -39,7 +39,7 @@ pub fn new_sequence_with_class(c Class) Sequence {
 	return seq
 }
 
-fn new_sequence_from_multiencoder(me []Encoder) !Sequence {
+pub fn new_sequence_from_multiencoder(me []Encoder) Sequence {
 	mut seq := new_sequence()
 	seq.add_multi(me)
 	return seq
@@ -61,7 +61,7 @@ fn new_sequenceof_from_bytes(src []u8) !Sequence {
 	return seq
 }
 
-fn (seq Sequence) tag() Tag {
+pub fn (seq Sequence) tag() Tag {
 	return seq.tag
 }
 
