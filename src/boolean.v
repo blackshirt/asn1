@@ -27,7 +27,7 @@ fn validate_boolean(content []u8) bool {
 }
 
 // read_boolean read boolean content without tag and length parts
-fn read_boolean(content []u8) !Boolean {
+fn read_boolean(content []u8) !Encoder {
 	if !validate_boolean(content) {
 		return error('bad boolean content')
 	}
