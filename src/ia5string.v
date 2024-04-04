@@ -7,7 +7,7 @@ module asn1
 // Standard ASCII characters
 type IA5String = string
 
-pub fn new_ia5string(s string) !Encoder {
+pub fn new_ia5string(s string) !IA5String {
 	if !is_ia5string(s) {
 		return error('bad ascii string')
 	}

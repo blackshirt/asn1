@@ -8,7 +8,7 @@ module asn1
 // TODO: NEED TO BE FIXED, NOT TESTED
 type GeneralString = string
 
-pub fn new_generalstring(s string) !Encoder {
+pub fn new_generalstring(s string) !GeneralString {
 	if !is_generalstring(s) {
 		return error('bad ascii string')
 	}
