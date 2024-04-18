@@ -7,12 +7,13 @@ module asn1
 // The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.
 //
 pub struct VisibleString {
-	value string
+	tag Tag = Tag{.universal, false, int(TagType.visiblestring)}
 mut:
-	tag Tag = new_tag(.universal, false, int(TagType.visiblestring)) or { panic(err) }
+	value string
 }
-
-pub fn VisibleString.from_string(s string) !VisibleString {
+	
+// from_string creates a new VisibleString from string s
+pub fn VisibleString.from_string(s string, p Params) !VisibleString {
 	if contains_ctrl_chars(s.bytes()) {
 		return error('VisibleString: contains control chars')
 	}
@@ -20,8 +21,9 @@ pub fn VisibleString.from_string(s string) !VisibleString {
 		value: s
 	}
 }
-
-pub fn VisibleString.from_bytes(src []u8) !VisibleString {
+		
+// from_bytes creates a new VisibleString from bytes src
+pub fn VisibleString.from_bytes(src []u8, p Params) !VisibleString {
 	if contains_ctrl_chars(src) {
 		return error('VisibleString: contains control chars')
 	}
@@ -65,7 +67,7 @@ pub fn (vs VisibleString) encode(mut dst []u8, p Params) ! {
 		return error('VisibleString: contains control chars')
 	}
 	if p.mode != .der && p.mode != .ber {
-		return error('Integer: unsupported mode')
+		return error('VisibleString: unsupported mode')
 	}
 	vs.tag().encode(mut dst, p)!
 	length := Length.from_i64(vs.value.bytes().len)!
@@ -84,8 +86,8 @@ pub fn VisibleString.decode(src []u8, loc i64, p Params) !(VisibleString, i64) {
 	if raw.payload.len == 0 {
 		return VisibleString{}, next
 	}
-	us := VisibleString.from_bytes(raw.payload)!
-	return us, next
+	vs := VisibleString.from_bytes(raw.payload, p)!
+	return vs, next
 }
 
 // Utility function
