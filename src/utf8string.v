@@ -9,11 +9,12 @@ import encoding.utf8
 // UTF8 unicode charset
 //
 pub struct UTF8String {
+	tag   Tag = Tag{.universal, false, int(TagType.utf8string)}
+mut:
 	value string
-	tag   Tag = new_tag(.universal, false, int(TagType.utf8string)) or { panic(err) }
 }
 
-pub fn UTF8String.from_string(s string) !UTF8String {
+pub fn UTF8String.from_string(s string, p Params) !UTF8String {
 	if !utf8.validate_str(s) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
@@ -22,7 +23,7 @@ pub fn UTF8String.from_string(s string) !UTF8String {
 	}
 }
 
-pub fn UTF8String.from_bytes(src []u8) !UTF8String {
+pub fn UTF8String.from_bytes(src []u8, p Params) !UTF8String {
 	if !utf8.validate_str(src.bytestr()) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
@@ -85,6 +86,6 @@ pub fn UTF8String.decode(src []u8, loc i64, p Params) !(UTF8String, i64) {
 	if raw.payload.len == 0 {
 		return UTF8String{}, next
 	}
-	us := UTF8String.from_bytes(raw.payload)!
-	return us, next
+	uts := UTF8String.from_bytes(raw.payload, p)!
+	return uts, next
 }
