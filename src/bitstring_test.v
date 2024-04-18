@@ -76,7 +76,6 @@ fn test_serialize_and_decode_bitstring() ! {
 		// bad args
 	]
 	for i, c in ds {
-		dump(i)
 		bs, idx := BitString.decode(c.inp, 0) or {
 			assert err == c.err
 			continue
@@ -124,15 +123,22 @@ struct BinaryStringTest {
 }
 
 const binstring_data = [
+	// empty bit string
+	BinaryStringTest{'', [u8(0x03), 0x01, 0x00], none},
+	// malformed bit string
+	BinaryStringTest{'aaa', []u8{}, error('not valid bit string')},
 	// taken examples from internet
 	BinaryStringTest{'011010001', [u8(0x03), 0x03, 0x07, 0x68, 0x80], none},
 	BinaryStringTest{'101100001001', [u8(0x03), 0x03, 0x04, 0xb0, 0x90], none},
-	BinaryStringTest{"011011100101110111", [u8(0x03), 0x04, 0x06, 0x6e, 0x5d, 0xc0], none}
+	BinaryStringTest{'011011100101110111', [u8(0x03), 0x04, 0x06, 0x6e, 0x5d, 0xc0], none},
 ]
 
 fn test_bitstring_from_binary_string() ! {
 	for item in asn1.binstring_data {
-		bs := BitString.from_binary_string(item.bits)!
+		bs := BitString.from_binary_string(item.bits) or {
+			assert err == item.err
+			continue
+		}
 		mut out := []u8{}
 		bs.encode(mut out)!
 		assert out == item.out

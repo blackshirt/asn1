@@ -10,6 +10,7 @@ module asn1
 // and otherwise, encodes into zero (0x00) for false value.
 // The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.
 pub struct Boolean {
+mut:
 	tag   Tag = Tag{.universal, false, int(TagType.boolean)}
 	value bool
 }

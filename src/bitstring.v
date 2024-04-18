@@ -5,8 +5,8 @@ module asn1
 
 import arrays
 
-// BIT STRING
-// The BIT STRING type denotes an arbitrary string of bits (ones and zeroes). 
+// ASN.1 BIT STRING Type handling
+// The BIT STRING type denotes an arbitrary string of bits (ones and zeroes).
 // A BIT STRING value can have any length, including zero. This type is a string type.
 pub struct BitString {
 	tag  Tag = Tag{.universal, false, int(TagType.bitstring)}
@@ -16,10 +16,10 @@ pub struct BitString {
 
 // BitString.from_binary_string creates a new BitString from binary bits arrays,
 // ie, arrays of `1` and `0`.
-// Example: 
+// Example:
 // bit string '011010001' will need two content octets: 01101000 10000000 (hexadecimal 68 80);
 // seven bits of the last octet are not used and its interpreted as a pad value.
-// bs := BitString.from_binary_string('011010001')! 
+// bs := BitString.from_binary_string('011010001')!
 // bs.pad == 7 and bs.data == [u8(0x68), 0x80]
 pub fn BitString.from_binary_string(s string) !BitString {
 	res, pad := parse_bits_string(s)!
@@ -115,9 +115,6 @@ pub fn BitString.decode(src []u8, loc i64, p Params) !(BitString, i64) {
 
 // valid_bitstring checks whether this s string is a valid of arrays of binary string `0` and `1`.
 fn valid_bitstring(s string) bool {
-	if s.len == 0 {
-		return false
-	}
 	return s.contains_only('01')
 }
 
@@ -142,18 +139,25 @@ fn parse_into_u8(s string) !u8 {
 	return b
 }
 
-// pad_into_8 pads string s by string `0` into string with size 8
-fn pad_into_8(s string) !string {
-	if s.len > 0 && s.len < 8 {
+// pad_into_octet pads string s by string `0` into new string with size 8
+fn pad_into_octet(s string) !string {
+	if valid_bitstring(s) && s.len > 0 && s.len < 8 {
 		len := if s.len % 8 == 0 { 0 } else { 8 - s.len % 8 }
 		pad := '0'.repeat(len)
 		res := s + pad
 		return res
 	}
-	return error('s.len > 8')
+	return error('not valid bit string')
 }
 
+// parse_bits_string parses binary bits string s into arrays of bytes and number of padding bits
 fn parse_bits_string(s string) !([]u8, int) {
+	if s.len == 0 {
+		return []u8{}, 0
+	}
+	if !valid_bitstring(s) {
+		return error('not valid bit string')
+	}
 	arr := arrays.chunk[u8](s.bytes(), 8)
 	mut res := []u8{}
 	pad_len := if s.len % 8 == 0 { 0 } else { 8 - s.len % 8 }
@@ -162,7 +166,7 @@ fn parse_bits_string(s string) !([]u8, int) {
 	}
 	for item in arr {
 		if item.len != 8 {
-			pb := pad_into_8(item.bytestr())!
+			pb := pad_into_octet(item.bytestr())!
 			val := parse_into_u8(pb)!
 			res << val
 		}
