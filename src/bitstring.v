@@ -36,11 +36,17 @@ pub fn BitString.from_string(s string, p Params) !BitString {
 pub fn BitString.from_bytes(src []u8, p Params) !BitString {
 	return BitString.new_with_pad(src, u8(0x00), p)!
 }
-
+	
+// new_with_pad creates a new BitString from bytes array in src with specific
+// padding bits in pad
 fn BitString.new_with_pad(src []u8, pad u8, p Params) !BitString {
+	// to align with octet size, ie, 8 in length, pad bits only need maximum 7 bits
+	// and when the bytes.len is multiples of 8, no need to pad, ie, pad should 0.
 	if pad > 7 || (src.len == 0 && pad != 0) {
 		return error('BitString: bad pad bits or zero length')
 	}
+	// this check if the pad != 0, whether the last `pad` number of bits of the last byte 
+	// is all bits cleared, and it was not used in the BitString data.
 	if pad > 0 && (src[src.len - 1]) & ((1 << pad) - 1) != 0 {
 		return error('BitString: bad args')
 	}
