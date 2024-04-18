@@ -162,7 +162,7 @@ pub fn RawElement.new(t Tag, payload []u8) RawElement {
 	}
 	return el
 }
-			
+
 // tag returns the tag of the RawElement
 pub fn (el RawElement) tag() Tag {
 	return el.tag

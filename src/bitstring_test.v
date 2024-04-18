@@ -115,3 +115,27 @@ fn test_bitstring_from_bytes() ! {
 	assert bs.bytes_len() == 0x81
 	assert bs.pad == 0x00
 }
+
+// test for BitString from binary string
+struct BinaryStringTest {
+	bits string
+	out  []u8
+	err  IError
+}
+
+// bit string '011010001'B will need two content octets: 01101000 10000000 (hexadecimal 68 80);
+// seven bits of the last octet are not used leading to the following DER encoding (hexadecimal):
+// 03 03 07 68 80
+const binstring_data = [
+	BinaryStringTest{'011010001', [u8(0x03), 0x03, 0x07, 0x68, 0x80], none},
+	BinaryStringTest{'101100001001', [u8(0x03), 0x03, 0x04, 0xb0, 0x90], none},
+]
+
+fn test_bitstring_from_binary_string() ! {
+	for item in asn1.binstring_data {
+		bs := BitString.from_binary_string(item.bits)!
+		mut out := []u8{}
+		bs.encode(mut out)!
+		assert out == item.out
+	}
+}

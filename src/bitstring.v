@@ -3,17 +3,24 @@
 // that can be found in the LICENSE file.
 module asn1
 
+import arrays
+
 // BITSTRING
 //
 pub struct BitString {
 	tag  Tag = Tag{.universal, false, int(TagType.bitstring)}
 	data []u8
-	pad  u8
+	pad  u8 // numbers of unused bits
 }
 
 // from_string creates new BitString from sring s
 pub fn BitString.from_string(s string) !BitString {
 	return BitString.from_bytes(s.bytes())
+}
+
+pub fn BitString.from_binary_string(s string) !BitString {
+	res, pad := parse_bits_string(s)!
+	return BitString.new_with_pad(res, u8(pad))!
 }
 
 pub fn BitString.from_bytes(src []u8) !BitString {
@@ -94,4 +101,67 @@ pub fn BitString.decode(src []u8, loc i64, p Params) !(BitString, i64) {
 
 	bs := BitString.new_with_pad(raw.payload[1..], raw.payload[0])!
 	return bs, next
+}
+
+// Utility function
+
+// valid_bitstring checks whether this s string is a valid of arrays of binary string `0` and `1`.
+fn valid_bitstring(s string) bool {
+	if s.len == 0 {
+		return false
+	}
+	return s.contains_only('01')
+}
+
+// parse_into_u8 parses arrays of binary bits of `0` and '1' with length == 8 into single byte (u8)
+// Example: parse_to_u8('01101000')! == u8(0x68) // => true
+fn parse_into_u8(s string) !u8 {
+	if s.len != 8 {
+		return error('not 8 length')
+	}
+	if !valid_bitstring(s) {
+		return error('not valid bit string: ${s}')
+	}
+	mut b := u8(0)
+
+	mut ctr := 0
+	bitmask := 0x01
+	for bit := 0; bit < s.len; bit++ {
+		v := u32(s[ctr] & bitmask) << (7 - bit)
+		b |= u8(v & 0x00ff)
+		ctr += 1
+	}
+	return b
+}
+
+// pad_into_8 pads string s by string `0` into string with size 8
+fn pad_into_8(s string) !string {
+	if s.len > 0 && s.len < 8 {
+		len := if s.len % 8 == 0 { 0 } else { 8 - s.len % 8 }
+		pad := '0'.repeat(len)
+		res := s + pad
+		return res
+	}
+	return error('s.len > 8')
+}
+
+fn parse_bits_string(s string) !([]u8, int) {
+	arr := arrays.chunk[u8](s.bytes(), 8)
+	mut res := []u8{}
+	pad_len := if s.len % 8 == 0 { 0 } else { 8 - s.len % 8 }
+	if pad_len > 7 {
+		return error('pad_len > 7')
+	}
+	for item in arr {
+		if item.len != 8 {
+			pb := pad_into_8(item.bytestr())!
+			val := parse_into_u8(pb)!
+			res << val
+		}
+		if item.len == 8 {
+			b := parse_into_u8(item.bytestr())!
+			res << b
+		}
+	}
+	return res, pad_len
 }
