@@ -12,7 +12,7 @@ pub fn Null.new() Null {
 	return Null{}
 }
 
-pub fn Null.from_bytes(b []u8) !Null {
+pub fn Null.from_bytes(b []u8, p Params) !Null {
 	if b.len != 0 {
 		return error('Null: bad bytes')
 	}
@@ -54,7 +54,8 @@ fn Null.decode(src []u8, loc i64, p Params) !(Null, i64) {
 	if raw.length(p) != 0 {
 		return error('Null: len != 0')
 	}
-	return Null.new(), next
+	ret := Null.from_bytes(raw.payload, p)!
+	return ret, next
 }
 
 pub fn (n Null) str() string {

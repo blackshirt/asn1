@@ -8,8 +8,9 @@ const max_oid_length = 128
 
 // ObjectIdentifier
 pub struct Oid {
-	value []int
+mut:
 	tag   Tag = Tag{.universal, false, int(TagType.oid)}
+	value []int
 }
 
 pub fn Oid.from_ints(src []int) !Oid {
@@ -34,7 +35,7 @@ pub fn Oid.from_ints(src []int) !Oid {
 	return oid
 }
 
-pub fn Oid.from_bytes(src []u8) !Oid {
+pub fn Oid.from_bytes(src []u8, p Params) !Oid {
 	// maybe two integer fits in 1 bytes
 	if src.len == 0 {
 		return error('Oid: bad string oid length')
@@ -65,7 +66,7 @@ pub fn Oid.from_bytes(src []u8) !Oid {
 	return oid
 }
 
-pub fn Oid.from_string(s string) !Oid {
+pub fn Oid.from_string(s string, p Params) !Oid {
 	if s.len < 2 {
 		return error('Oid: bad string oid length')
 	}
@@ -148,7 +149,7 @@ pub fn Oid.decode(src []u8, loc i64, p Params) !(Oid, i64) {
 		return Oid{}, next
 	}
 
-	oid := Oid.from_bytes(raw.payload)!
+	oid := Oid.from_bytes(raw.payload, p)!
 	return oid, next
 }
 

@@ -76,9 +76,9 @@ pub fn (t Tag) encode(mut dst []u8, p Params) ! {
 	}
 }
 
-// unpack_from_asn1 deserializes bytes back into Tag structure start from `loc` offset.
-// By default, its unpack in .der encoding mode, if you want more control, pass your `Params`.
-// Its return Tag and next offset to operate on, and return error if it fails to unpack.
+// Tag.decode deserializes bytes back into Tag structure start from `loc` offset.
+// By default, its decodes in .der encoding mode, if you want more control, pass your `Params`.
+// Its return Tag and next offset to operate on, and return error if it fails to decode.
 pub fn Tag.decode(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	// preliminary check
 	if bytes.len < 1 {

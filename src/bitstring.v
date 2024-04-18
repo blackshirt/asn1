@@ -5,7 +5,7 @@ module asn1
 
 import arrays
 
-// ASN.1 BIT STRING Type handling
+// ASN.1 BIT STRING type handling
 // The BIT STRING type denotes an arbitrary string of bits (ones and zeroes).
 // A BIT STRING value can have any length, including zero. This type is a string type.
 pub struct BitString {
@@ -14,28 +14,30 @@ pub struct BitString {
 	pad  u8 // numbers of unused bits
 }
 
-// BitString.from_binary_string creates a new BitString from binary bits arrays,
-// ie, arrays of `1` and `0`.
+// BitString.from_binary_string creates a new BitString from binary bits arrays in s,
+// ie, arrays of `1` and `0`. If s.len is not multiple of 8, it would contain non-null pad,
+// otherwise, the pad is null.
 // Example:
-// bit string '011010001' will need two content octets: 01101000 10000000 (hexadecimal 68 80);
+// The bits string '011010001' will need two content octets: 01101000 10000000 (hexadecimal 68 80);
 // seven bits of the last octet are not used and its interpreted as a pad value.
 // bs := BitString.from_binary_string('011010001')!
 // bs.pad == 7 and bs.data == [u8(0x68), 0x80]
-pub fn BitString.from_binary_string(s string) !BitString {
+pub fn BitString.from_binary_string(s string, p Params) !BitString {
 	res, pad := parse_bits_string(s)!
-	return BitString.new_with_pad(res, u8(pad))!
+	return BitString.new_with_pad(res, u8(pad), p)!
 }
 
 // from_string creates a new BitString from regular string s
-pub fn BitString.from_string(s string) !BitString {
-	return BitString.from_bytes(s.bytes())
+pub fn BitString.from_string(s string, p Params) !BitString {
+	return BitString.from_bytes(s.bytes(), p)
 }
 
-pub fn BitString.from_bytes(src []u8) !BitString {
-	return BitString.new_with_pad(src, u8(0x00))
+// from_bytes creates a new BitString from bytes array in src
+pub fn BitString.from_bytes(src []u8, p Params) !BitString {
+	return BitString.new_with_pad(src, u8(0x00), p)!
 }
 
-fn BitString.new_with_pad(src []u8, pad u8) !BitString {
+fn BitString.new_with_pad(src []u8, pad u8, p Params) !BitString {
 	if pad > 7 || (src.len == 0 && pad != 0) {
 		return error('BitString: bad pad bits or zero length')
 	}
@@ -107,15 +109,18 @@ pub fn BitString.decode(src []u8, loc i64, p Params) !(BitString, i64) {
 		return error('BitString: zero length bit string')
 	}
 
-	bs := BitString.new_with_pad(raw.payload[1..], raw.payload[0])!
+	bs := BitString.new_with_pad(raw.payload[1..], raw.payload[0], p)!
 	return bs, next
 }
 
 // Utility function
 
+// maximum allowed binary bits string length
+const max_bitstring_len = 8192
+
 // valid_bitstring checks whether this s string is a valid of arrays of binary string `0` and `1`.
 fn valid_bitstring(s string) bool {
-	return s.contains_only('01')
+	return s.contains_only('01') && s.len <= asn1.max_bitstring_len
 }
 
 // parse_into_u8 parses arrays of binary bits of `0` and '1' with length == 8 into single byte (u8)
@@ -150,7 +155,7 @@ fn pad_into_octet(s string) !string {
 	return error('not valid bit string')
 }
 
-// parse_bits_string parses binary bits string s into arrays of bytes and number of padding bits
+// parse_bits_string parses binary bits string s into arrays of byte and number of padding bits
 fn parse_bits_string(s string) !([]u8, int) {
 	if s.len == 0 {
 		return []u8{}, 0
@@ -166,8 +171,8 @@ fn parse_bits_string(s string) !([]u8, int) {
 	}
 	for item in arr {
 		if item.len != 8 {
-			pb := pad_into_octet(item.bytestr())!
-			val := parse_into_u8(pb)!
+			bts := pad_into_octet(item.bytestr())!
+			val := parse_into_u8(bts)!
 			res << val
 		}
 		if item.len == 8 {

@@ -11,7 +11,7 @@ pub struct IA5String {
 }
 
 // from_string creates IA5String from string s
-pub fn IA5String.from_string(s string) !IA5String {
+pub fn IA5String.from_string(s string, p Params) !IA5String {
 	if !valid_ia5string(s) {
 		return error('IA5String: contains non-ascii chars')
 	}
@@ -21,7 +21,7 @@ pub fn IA5String.from_string(s string) !IA5String {
 }
 
 // from_bytes creates a new IA5String from bytes b
-pub fn IA5String.from_bytes(b []u8) !IA5String {
+pub fn IA5String.from_bytes(b []u8, p Params) !IA5String {
 	if b.any(it < u8(` `) || it > u8(`~`)) {
 		return error('IA5String: bytes contains non-ascii chars')
 	}
@@ -86,14 +86,8 @@ pub fn IA5String.decode(src []u8, loc i64, p Params) !(IA5String, i64) {
 	if raw.payload.len == 0 {
 		return IA5String{}, next
 	}
-
-	// check for ASCII charset
-	if raw.payload.any(it < u8(` `) || it > u8(`~`)) {
-		return error('IA5String: bytes contains non-ascii chars')
-	}
-	ret := IA5String{
-		value: raw.payload.bytestr()
-	}
+	ret := IA5String.from_bytes(raw.payload, p)!
+	
 	return ret, next
 }
 

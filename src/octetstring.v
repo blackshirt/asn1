@@ -8,12 +8,13 @@ module asn1
 // This type is very similar to BIT STRING, except that all values must be an integral number of eight bits.
 // You can use constraints to specify a maximum length for an OCTET STRING type.
 pub struct OctetString {
-	value string
+mut:
 	tag   Tag = Tag{.universal, false, int(TagType.octetstring)}
+	value string
 }
 
 // new_octetstring creates new octet string
-pub fn OctetString.from_string(s string) !OctetString {
+pub fn OctetString.from_string(s string, p Params) !OctetString {
 	if !valid_octet_string(s) {
 		return error('not valid octet string')
 	}
@@ -22,8 +23,8 @@ pub fn OctetString.from_string(s string) !OctetString {
 	}
 }
 
-pub fn OctetString.from_bytes(src []u8) !OctetString {
-	return OctetString.from_string(src.bytestr())!
+pub fn OctetString.from_bytes(src []u8, p Params) !OctetString {
+	return OctetString.from_string(src.bytestr(), p)!
 }
 
 fn valid_octet_string(s string) bool {
@@ -81,6 +82,6 @@ pub fn OctetString.decode(src []u8, loc i64, p Params) !(OctetString, i64) {
 		return OctetString{}, next
 	}
 
-	os := OctetString.from_bytes(raw.payload)!
+	os := OctetString.from_bytes(raw.payload, p)!
 	return os, next
 }

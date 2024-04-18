@@ -181,7 +181,7 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 	return seq
 }
 
-fn parse_primitive_element(tag Tag, contents []u8) !Element {
+fn parse_primitive_element(tag Tag, contents []u8, p Params) !Element {
 	if tag.is_constructed() {
 		return error('not primitive tag')
 	}
@@ -192,46 +192,46 @@ fn parse_primitive_element(tag Tag, contents []u8) !Element {
 	// parse as an universal class primitive type
 	match tag.tag_number() {
 		int(TagType.boolean) {
-			return Boolean.from_bytes(contents)!
+			return Boolean.from_bytes(contents, p)!
 		}
 		int(TagType.integer) {
-			return Integer.from_bytes(contents)!
+			return Integer.from_bytes(contents, p)!
 		}
 		int(TagType.bitstring) {
-			return BitString.from_bytes(contents)!
+			return BitString.from_bytes(contents, p)!
 		}
 		int(TagType.octetstring) {
 			return OctetString.from_bytes(contents)!
 		}
 		int(TagType.null) {
-			return Null.from_bytes(contents)!
+			return Null.from_bytes(contents, p)!
 		}
 		int(TagType.oid) {
-			return Oid.from_bytes(contents)!
+			return Oid.from_bytes(contents, p)!
 		}
 		int(TagType.numericstring) {
-			return NumericString.from_bytes(contents)!
+			return NumericString.from_bytes(contents, p)!
 		}
 		int(TagType.printablestring) {
-			return PrintableString.from_bytes(contents)!
+			return PrintableString.from_bytes(contents, p)!
 		}
 		int(TagType.ia5string) {
-			return IA5String.from_bytes(contents)!
+			return IA5String.from_bytes(contents, p)!
 		}
 		int(TagType.generalstring) {
 			return GeneralString.from_bytes(contents)!
 		}
 		int(TagType.utf8string) {
-			return UTF8String.from_bytes(contents)!
+			return UTF8String.from_bytes(contents, p)!
 		}
 		int(TagType.visiblestring) {
-			return VisibleString.from_bytes(contents)!
+			return VisibleString.from_bytes(contents, p)!
 		}
 		int(TagType.utctime) {
-			return UTCTime.from_bytes(contents)!
+			return UTCTime.from_bytes(contents, p)!
 		}
 		int(TagType.generalizedtime) {
-			return GeneralizedTime.from_bytes(contents)!
+			return GeneralizedTime.from_bytes(contents, p)!
 		}
 		// TODO:
 		//   - add other type
@@ -245,7 +245,7 @@ fn parse_primitive_element(tag Tag, contents []u8) !Element {
 	}
 }
 
-fn parse_constructed_element(tag Tag, contents []u8) !Element {
+fn parse_constructed_element(tag Tag, contents []u8, p Params) !Element {
 	if !tag.is_constructed() {
 		return error('not constructed tag')
 	}
@@ -259,10 +259,10 @@ fn parse_constructed_element(tag Tag, contents []u8) !Element {
 	// parse manually from RawElement result.
 	match tag.tag_number() {
 		int(TagType.sequence) {
-			return Sequence.parse_contents(tag, contents)!
+			return Sequence.parse_contents(tag, contents, p)!
 		}
 		int(TagType.set) {
-			return Set.parse_contents(tag, contents)!
+			return Set.parse_contents(tag, contents, p)!
 		}
 		else {
 			return RawElement.new(tag, contents)
