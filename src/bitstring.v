@@ -5,22 +5,30 @@ module asn1
 
 import arrays
 
-// BITSTRING
-//
+// BIT STRING
+// The BIT STRING type denotes an arbitrary string of bits (ones and zeroes). 
+// A BIT STRING value can have any length, including zero. This type is a string type.
 pub struct BitString {
 	tag  Tag = Tag{.universal, false, int(TagType.bitstring)}
 	data []u8
 	pad  u8 // numbers of unused bits
 }
 
-// from_string creates new BitString from sring s
-pub fn BitString.from_string(s string) !BitString {
-	return BitString.from_bytes(s.bytes())
-}
-
+// BitString.from_binary_string creates a new BitString from binary bits arrays,
+// ie, arrays of `1` and `0`.
+// Example: 
+// bit string '011010001' will need two content octets: 01101000 10000000 (hexadecimal 68 80);
+// seven bits of the last octet are not used and its interpreted as a pad value.
+// bs := BitString.from_binary_string('011010001')! 
+// bs.pad == 7 and bs.data == [u8(0x68), 0x80]
 pub fn BitString.from_binary_string(s string) !BitString {
 	res, pad := parse_bits_string(s)!
 	return BitString.new_with_pad(res, u8(pad))!
+}
+
+// from_string creates a new BitString from regular string s
+pub fn BitString.from_string(s string) !BitString {
+	return BitString.from_bytes(s.bytes())
 }
 
 pub fn BitString.from_bytes(src []u8) !BitString {

@@ -123,12 +123,11 @@ struct BinaryStringTest {
 	err  IError
 }
 
-// bit string '011010001'B will need two content octets: 01101000 10000000 (hexadecimal 68 80);
-// seven bits of the last octet are not used leading to the following DER encoding (hexadecimal):
-// 03 03 07 68 80
 const binstring_data = [
+	// taken examples from internet
 	BinaryStringTest{'011010001', [u8(0x03), 0x03, 0x07, 0x68, 0x80], none},
 	BinaryStringTest{'101100001001', [u8(0x03), 0x03, 0x04, 0xb0, 0x90], none},
+	BinaryStringTest{"011011100101110111", [u8(0x03), 0x04, 0x06, 0x6e, 0x5d, 0xc0], none}
 ]
 
 fn test_bitstring_from_binary_string() ! {
