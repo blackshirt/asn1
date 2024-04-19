@@ -27,6 +27,21 @@ const zero_integer = big.Integer{
 	signum: 1
 }
 
+type IntValue = int | i64 | big.Integer
+
+fn (v IntValue) bytes(p Params) ![]u8 {
+	match v {
+		int {}
+		i64 {
+			n := length_i64(v)
+			mut dst := []u8{len: n}
+			i64_to_bytes(mut dst, v)
+			return dst
+		}
+		big.Integer {}
+	}
+}
+	
 // Universal class of arbitrary length type of ASN.1 INTEGER
 pub struct Integer {
 	tag   Tag = Tag{.universal, false, int(TagType.integer)}
