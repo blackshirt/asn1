@@ -438,9 +438,14 @@ fn length_i64(val i64) int {
 	return n
 }
 
-fn i64_to_bytes(mut dst []u8, i i64) {
+fn length_i32(v i32) int {
+	return length_i64(i64(v))
+}
+		
+fn i32_to_bytes(
+fn i64_to_bytes(i i64) []u8 {
 	mut n := length_i64(i)
-
+	mut dst := []u8{len: n}
 	for j := 0; j < n; j++ {
 		dst[j] = u8(i >> u32((n - 1 - j) * 8))
 	}
@@ -480,7 +485,7 @@ fn read_i64(src []u8) !i64 {
 
 // i32 handling
 //
-// read_i32 readt  from bytes
+// read_i32 read from bytes
 fn read_i32(src []u8) !int {
 	if !valid_bytes(src, true) {
 		return error('i32 check return false')
