@@ -26,12 +26,16 @@ const zero_integer = big.Integer{
 	digits: [u32(0)]
 	signum: 1
 }
-
+	
+// IntValue represents integer value
 type IntValue = i32 | i64 | big.Integer
 
 fn (v IntValue) bytes(p Params) ![]u8 {
 	match v {
-		i32, i64 {
+		i32 {
+			return i32_to_bytes(v)
+		}
+		i64 {
 			return i64_to_bytes(v)
 		}
 		big.Integer {
@@ -44,7 +48,7 @@ fn (v IntValue) bytes(p Params) ![]u8 {
 			if v == big.zero_int {
 				return [u8(0x00)]
 			}
-			// todo: proper check of 0
+			// todo: proper check of 0 bytes
 			if v.bit_len() == 0 {
 				return [u8(0x00)]
 			}
@@ -57,32 +61,28 @@ fn (v IntValue) bytes(p Params) ![]u8 {
 	
 // Universal class of arbitrary length type of ASN.1 INTEGER
 pub struct Integer {
+mut:
 	tag   Tag = Tag{.universal, false, int(TagType.integer)}
-	value big.Integer
+	value IntValue 
 }
-
-pub fn Integer.from_bigint(b big.Integer) !Integer {
-	if b == big.zero_int {
-		return Integer{
-			value: asn1.zero_integer
-		}
-	}
+				
+fn Integer.from_int(v int) Integer {
 	return Integer{
-		value: b
+		value: IntValue(i64(v))
+	}
+}
+				
+pub fn Integer.from_bigint(b big.Integer) !Integer {
+	return Integer{
+		value: IntValue(b)
 	}
 }
 
 // from_string creates a new ASN.1 Integer from decimal string s.
-pub fn Integer.from_string(s string) Integer {
-	v := big.integer_from_string(s) or { panic(err) }
-	if v == big.zero_int {
-		return Integer{
-			value: asn1.zero_integer
-		}
-	}
-
+pub fn Integer.from_string(s string) !Integer {
+	v := big.integer_from_string(s)!
 	return Integer{
-		value: v
+		value: IntValue(v)
 	}
 }
 
@@ -94,38 +94,15 @@ pub fn Integer.from_bytes(b []u8) !Integer {
 // where x is a valid hex string without `0x` prefix.
 pub fn Integer.from_hex(x string) !Integer {
 	s := big.integer_from_radix(x, 16)!
-	if s == big.zero_int {
-		return Integer{
-			value: asn1.zero_integer
-		}
-	}
 	return Integer{
-		value: s
+		value: IntValue(s)
 	}
 }
 
 // from_i64 creates new a ASN.1 Integer from i64 v
 pub fn Integer.from_i64(v i64) Integer {
-	// same issue as above
-	if v == 0 {
-		return Integer{
-			value: asn1.zero_integer
-		}
-	}
 	return Integer{
-		value: big.integer_from_i64(v)
-	}
-}
-
-// from_u64 creates new Integer from u64 v
-pub fn Integer.from_u64(v u64) Integer {
-	if v == 0 {
-		return Integer{
-			value: asn1.zero_integer
-		}
-	}
-	return Integer{
-		value: big.integer_from_u64(v)
+		value: IntValue(v)
 	}
 }
 
