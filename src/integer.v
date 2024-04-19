@@ -27,18 +27,31 @@ const zero_integer = big.Integer{
 	signum: 1
 }
 
-type IntValue = int | i64 | big.Integer
+type IntValue = i32 | i64 | big.Integer
 
 fn (v IntValue) bytes(p Params) ![]u8 {
 	match v {
-		int {}
-		i64 {
-			n := length_i64(v)
-			mut dst := []u8{len: n}
-			i64_to_bytes(mut dst, v)
-			return dst
+		i32, i64 {
+			return i64_to_bytes(v)
 		}
-		big.Integer {}
+		big.Integer {
+			// if v == big.zero_int or similar big.Integer values that produces empty bytes,
+			// returns v.bytes() directly can lead to undesired behavior thats doesn't aligned with 
+			// ASN.1 INTEGER requirement. See the discussion on the discord about the issues 
+			// at https://discord.com/channels/592103645835821068/592294828432424960/1230460279733620777
+			// so, we do some hack to get the correct value
+			// TODO: find the correct way to tackle this
+			if v == big.zero_int {
+				return [u8(0x00)]
+			}
+			// todo: proper check of 0
+			if v.bit_len() == 0 {
+				return [u8(0x00)]
+			}
+			// otherwise, we use v.bytes() directly
+			b, _ := v.bytes()
+			return b
+		}
 	}
 }
 	
@@ -442,7 +455,10 @@ fn length_i32(v i32) int {
 	return length_i64(i64(v))
 }
 		
-fn i32_to_bytes(
+fn i32_to_bytes(v i32) []u8 {
+	return i64_to_bytes(i64(v))
+}
+		
 fn i64_to_bytes(i i64) []u8 {
 	mut n := length_i64(i)
 	mut dst := []u8{len: n}
