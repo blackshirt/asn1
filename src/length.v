@@ -9,8 +9,8 @@ module asn1
 // DER encoding only uses the definite length.
 // There are two forms of definite length octets: short (for lengths value between 0 and 127),
 // and long definite (for lengths value between 0 and 2^1008 -1).
-// Short form. One octet. Bit 8 has value "0" and bits 7-1 give the length (length value from 0 to 127)
-// Long form. Two to 127 octets. Bit 8 of first octet has value "1" and bits 7-1 give
+// In short form contains one octet. Bit 8 has value "0" and bits 7-1 give the length (length value from 0 to 127)
+// In long form, its required two or more octets, limited to 127 octets. Bit 8 of first octet has value "1" and bits 7-1 gives
 // the number of additional length octets.
 // Second and following octets give the length, base 256, most significant digit first.
 //
@@ -48,7 +48,7 @@ fn (v Length) bytes_len() int {
 	return num
 }
 
-// pack_and_append packs v to bytes and apends it to `to`
+// pack_and_append packs v into bytes and apends it into `to` bytes.
 fn (v Length) pack_and_append(mut to []u8) {
 	mut n := v.bytes_len()
 	for ; n > 0; n-- {
@@ -65,7 +65,7 @@ pub fn (v Length) packed_length(p Params) int {
 }
 
 // encode serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
-// it would use p.mode of `EncodingMode` to drive packing operation operation would be done.
+// it would use p.mode of `EncodingMode` to drive how encode operation would be done.
 // By default the .der mode is only currently supported.
 pub fn (v Length) encode(mut dst []u8, p Params) ! {
 	// we currently only support .der and (stricter) .ber
@@ -91,8 +91,8 @@ pub fn (v Length) encode(mut dst []u8, p Params) ! {
 	}
 }
 
-// unpack_from_asn1 deserializes back of buffer into Length form, start from offset loc in the buffer.
-// Its return Length and next offset in the buffer src to process on, and return error on fail.
+// decode decodes and deserializes buffer in src into Length form, start from offset loc in the buffer.
+// Its return Length and next offset in the buffer to process on, or return error on fails.
 pub fn Length.decode(src []u8, loc i64, p Params) !(Length, i64) {
 	if src.len < 1 {
 		return error('Length: truncated length')
