@@ -28,6 +28,7 @@ const max_integer_length = 2048
 pub struct Integer {
 mut:
 	tag   Tag = Tag{.universal, false, int(TagType.integer)}
+	// underlying integer value with support from i64 and big.Integer
 	value IntValue
 }
 
@@ -53,6 +54,7 @@ pub fn Integer.from_bigint(b big.Integer) Integer {
 }
 
 // from_string creates a new ASN.1 Integer from decimal string s.
+// If your string value is below max_i64, use from_i64 instead
 pub fn Integer.from_string(s string) !Integer {
 	v := big.integer_from_string(s)!
 	return Integer{
@@ -62,6 +64,7 @@ pub fn Integer.from_string(s string) !Integer {
 
 // from_hex creates a new ASN.1 Integer from hex string in x
 // where x is a valid hex string without `0x` prefix.
+// If your string value is below max_i64, use from_i64 instead
 pub fn Integer.from_hex(x string) !Integer {
 	s := big.integer_from_radix(x, 16)!
 	return Integer{
@@ -92,7 +95,7 @@ fn (v Integer) bytes_len() int {
 pub fn (n Integer) equal(m Integer) bool {
 	nbytes := n.bytes()
 	mbytes := m.bytes()
-
+	// todo: check sign equality
 	return n.tag == m.tag && nbytes == mbytes
 }
 
@@ -204,6 +207,7 @@ pub fn (v Integer) tag() Tag {
 	return v.tag
 }
 
+// as_bigint casts Integer value to big.Integer or error on fails.
 pub fn (v Integer) as_bigint() !big.Integer {
 	if v.value is big.Integer {
 		val := v.value as big.Integer
@@ -212,6 +216,7 @@ pub fn (v Integer) as_bigint() !big.Integer {
 	return error('not hold big.Integer type')
 }
 
+// as_i64 casts Integer value to i64 value or error on fails.
 pub fn (v Integer) as_i64() !i64 {
 	if v.value is i64 {
 		val := v.value as i64
@@ -263,11 +268,13 @@ pub fn Integer.decode(src []u8, loc i64, p Params) !(Integer, i64) {
 
 	bytes := raw.payload
 	// buf := trim_bytes(bytes)!
-	ret := Integer.unpack_and_validate(bytes, p)!
+	ret := Integer.from_bytes(bytes, p)!
 	return ret, next
 }
 
-// IntValue represents arbitrary integer value
+// IntValue represents arbitrary integer value, currently we support 
+// through primitive 164 type for integer value below < max_i64, and
+// use `big.Integer` for support arbitrary length of integer values.
 type IntValue = big.Integer | i64
 
 fn (v IntValue) str() string {
@@ -312,7 +319,7 @@ fn (v IntValue) bytes() []u8 {
 
 // Utility function
 
-// valid_bytes validates bytes meets some requirement for DER encoding.
+// valid_bytes validates bytes meets some requirement for BER/DER encoding.
 fn valid_bytes(src []u8, signed bool) bool {
 	// Requirement for der encoding
 	// The contents octets shall consist of one or more octets.
@@ -353,7 +360,7 @@ fn trim_bytes(src []u8) ![]u8 {
 		bytes := src[1..]
 		return bytes
 	}
-	// TODO: how with multiples 0xff
+	// TODO: how to do with multiples 0xff
 	if src.len > 1 && src[0] == 0xff && src[1] & 0x80 == 0 {
 		bytes := src[1..]
 		return bytes
@@ -379,14 +386,7 @@ fn length_i64(val i64) int {
 	return n
 }
 
-fn length_i32(v i32) int {
-	return length_i64(i64(v))
-}
-
-fn i32_to_bytes(v i32) []u8 {
-	return i64_to_bytes(i64(v))
-}
-
+// i64_to_bytes transforms i64 value into bytes representation
 fn i64_to_bytes(i i64) []u8 {
 	mut n := length_i64(i)
 	mut dst := []u8{len: n}
@@ -440,3 +440,12 @@ fn read_i32(src []u8) !int {
 
 	return int(ret)
 }
+
+fn length_i32(v i32) int {
+	return length_i64(i64(v))
+}
+
+fn i32_to_bytes(v i32) []u8 {
+	return i64_to_bytes(i64(v))
+}
+
