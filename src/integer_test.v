@@ -37,7 +37,7 @@ const string_data = [
 
 fn test_integer_pack_n_unpack_from_n_into_2form() ! {
 	for i, c in asn1.string_data {
-		v := Integer.from_string(c.value)
+		v := Integer.from_string(c.value)!
 		out, _ := v.pack_into_twoscomplement_form()!
 
 		assert out == c.expected.bytes()
@@ -81,38 +81,38 @@ fn test_asn1_integer_unencode() ! {
 	}
 }
 
-struct IntegerTest {
+struct ASNIntegerTest {
 	bytes    []u8
 	err      IError
-	expected big.Integer
+	expected Integer
 }
 
 const integer_test_data = [
-	IntegerTest{[u8(0x00)], none, zero_integer},
-	IntegerTest{[u8(0x7f)], none, big.integer_from_int(127)},
-	IntegerTest{[u8(0x00), 0x80], none, big.integer_from_int(128)},
-	IntegerTest{[u8(0x01), 0x00], none, big.integer_from_int(256)},
-	IntegerTest{[u8(0x80)], none, big.integer_from_int(-128)},
-	IntegerTest{[u8(0xff), 0x7f], none, big.integer_from_int(-129)},
-	IntegerTest{[u8(0xff)], none, big.integer_from_int(-1)},
-	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], none, big.integer_from_i64(-9223372036854775808)},
-	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], none, big.integer_from_string('-2361183241434822606848') or {
-		panic(err)
+	ASNIntegerTest{[u8(0x00)], none, Integer.from_int(0)},
+	ASNIntegerTest{[u8(0x7f)], none, Integer.from_int(127)},
+	ASNIntegerTest{[u8(0x00), 0x80], none, Integer.from_int(128)},
+	ASNIntegerTest{[u8(0x01), 0x00], none, Integer.from_int(256)},
+	ASNIntegerTest{[u8(0x80)], none, Integer.from_int(-128)},
+	ASNIntegerTest{[u8(0xff), 0x7f], none, Integer.from_int(-129)},
+	ASNIntegerTest{[u8(0xff)], none, Integer.from_int(-1)},
+	ASNIntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], none, Integer.from_i64(-9223372036854775808)},
+	ASNIntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], none, Integer{
+		value: big.integer_from_string('-2361183241434822606848') or { panic(err) }
 	}},
-	IntegerTest{[], error('Integer: check return false'), zero_integer},
-	IntegerTest{[u8(0x00), 0x7f], error('Integer: check return false'), big.integer_from_int(127)}, // non-minimal form
-	IntegerTest{[u8(0xff), 0xf0], error('Integer: check return false'), big.integer_from_int(-16)}, // non-minimal form
-	IntegerTest{[], error('Integer: check return false'), zero_integer}, // empty integer
-	IntegerTest{[u8(0x00)], none, zero_integer},
-	IntegerTest{[u8(0x7f)], none, big.integer_from_int(127)},
-	IntegerTest{[u8(0x00), 0x80], none, big.integer_from_int(128)},
-	IntegerTest{[u8(0x01), 0x00], none, big.integer_from_int(256)},
-	IntegerTest{[u8(0x80)], none, big.integer_from_int(-128)},
-	IntegerTest{[u8(0xff), 0x7f], none, big.integer_from_int(-129)},
-	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00], none, big.integer_from_i64(-2147483648)},
-	IntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00], none, big.integer_from_i64(-549755813888)},
-	IntegerTest{[u8(0x00), 0x7f], error('Integer: check return false'), zero_integer},
-	IntegerTest{[u8(0xff), 0xf0], error('Integer: check return false'), zero_integer}, // not minimally
+	ASNIntegerTest{[], error('Integer: check return false'), Integer.from_i64(0)},
+	ASNIntegerTest{[u8(0x00), 0x7f], error('Integer: check return false'), Integer.from_int(127)}, // non-minimal form
+	ASNIntegerTest{[u8(0xff), 0xf0], error('Integer: check return false'), Integer.from_int(-16)}, // non-minimal form
+	ASNIntegerTest{[], error('Integer: check return false'), Integer.from_i64(0)}, // empty integer
+	ASNIntegerTest{[u8(0x00)], none, Integer.from_i64(0)},
+	ASNIntegerTest{[u8(0x7f)], none, Integer.from_int(127)},
+	ASNIntegerTest{[u8(0x00), 0x80], none, Integer.from_int(128)},
+	ASNIntegerTest{[u8(0x01), 0x00], none, Integer.from_int(256)},
+	ASNIntegerTest{[u8(0x80)], none, Integer.from_int(-128)},
+	ASNIntegerTest{[u8(0xff), 0x7f], none, Integer.from_int(-129)},
+	ASNIntegerTest{[u8(0x80), 0x00, 0x00, 0x00], none, Integer.from_i64(-2147483648)},
+	ASNIntegerTest{[u8(0x80), 0x00, 0x00, 0x00, 0x00], none, Integer.from_i64(-549755813888)},
+	ASNIntegerTest{[u8(0x00), 0x7f], error('Integer: check return false'), Integer.from_i64(0)},
+	ASNIntegerTest{[u8(0xff), 0xf0], error('Integer: check return false'), Integer.from_i64(0)}, // not minimally
 ]
 
 // from golang encoding/asn1 test
@@ -123,7 +123,7 @@ fn test_asn1_unpack_and_validate() {
 			continue
 		}
 
-		assert ret.value == v.expected
+		assert ret == v.expected
 	}
 }
 
@@ -165,7 +165,7 @@ fn test_integer_large_int() ! {
 		0x13, 0xd7, 0x2a, 0x6b, 0x30, 0x91, 0x19, 0xd6, 0xd4, 0x42, 0xe0, 0xc4, 0x9d, 0x7c, 0x92,
 		0x71, 0xe1, 0xb2, 0x2f, 0x5c, 0x8d, 0xee, 0xf0, 0xf1, 0x17, 0x1e, 0xd2, 0x5f, 0x31, 0x5b,
 		0xb1, 0x9c, 0xbc, 0x20, 0x55, 0xbf, 0x3a, 0x37, 0x42, 0x45, 0x75, 0xdc, 0x90, 0x65]
-	expected_integer := Integer.from_string('101038645214968213029489864879507742420925199145132483818978980455132582258676381289000109319204510275496178360219909358646064503513889573494768497419381751359787623037449375660247011308028102339473875820259375735204357343091558075960601364303443174344509161224592926325506446708043127306053676664799729848421')
+	expected_integer := Integer.from_string('101038645214968213029489864879507742420925199145132483818978980455132582258676381289000109319204510275496178360219909358646064503513889573494768497419381751359787623037449375660247011308028102339473875820259375735204357343091558075960601364303443174344509161224592926325506446708043127306053676664799729848421')!
 	out, pos := Integer.decode(bytes, 0)!
 
 	assert pos == bytes.len
@@ -174,12 +174,12 @@ fn test_integer_large_int() ! {
 	outbytes := out.bytes()
 	expbytes := expected_integer.bytes()
 	assert outbytes == expbytes // success
-	assert out.equal(expected_integer) == true // success
 
 	// this direct assert fails
 	// BUG?: there are some issues when compared out == expected directly, even internally its a same,
 	// but it fails to assert, so we provide and use equality check
 	// assert out == expected_integer
+	assert out.equal(expected_integer)
 
 	// pack back
 	mut dst := []u8{}

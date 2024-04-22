@@ -11,7 +11,7 @@ pub struct VisibleString {
 mut:
 	value string
 }
-	
+
 // from_string creates a new VisibleString from string s
 pub fn VisibleString.from_string(s string, p Params) !VisibleString {
 	if contains_ctrl_chars(s.bytes()) {
@@ -21,7 +21,7 @@ pub fn VisibleString.from_string(s string, p Params) !VisibleString {
 		value: s
 	}
 }
-		
+
 // from_bytes creates a new VisibleString from bytes src
 pub fn VisibleString.from_bytes(src []u8, p Params) !VisibleString {
 	if contains_ctrl_chars(src) {

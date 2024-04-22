@@ -87,7 +87,7 @@ pub fn IA5String.decode(src []u8, loc i64, p Params) !(IA5String, i64) {
 		return IA5String{}, next
 	}
 	ret := IA5String.from_bytes(raw.payload, p)!
-	
+
 	return ret, next
 }
 

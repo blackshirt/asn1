@@ -15,8 +15,8 @@ pub struct NumericString {
 }
 
 // new_numeric_string creates new numeric string
-pub fn NumericString.from_string(s string) !NumericString {
-	if !all_numeric_string(s.bytes()) {
+pub fn NumericString.from_string(s string, p Params) !NumericString {
+	if !all_numeric_string(s.bytes(), p) {
 		return error('NumericString: contains non-numeric string')
 	}
 	return NumericString{
@@ -24,8 +24,8 @@ pub fn NumericString.from_string(s string) !NumericString {
 	}
 }
 
-pub fn NumericString.from_bytes(bytes []u8) !NumericString {
-	if !all_numeric_string(bytes) {
+pub fn NumericString.from_bytes(bytes []u8, p Params) !NumericString {
+	if !all_numeric_string(bytes, p) {
 		return error('NumericString: contains non-numeric string')
 	}
 	return NumericString{
@@ -89,7 +89,7 @@ pub fn NumericString.decode(src []u8, loc i64, p Params) !(NumericString, i64) {
 
 // Utility function
 //
-fn all_numeric_string(bytes []u8) bool {
+fn all_numeric_string(bytes []u8, p Params) bool {
 	return bytes.all(is_numericstring(it))
 }
 

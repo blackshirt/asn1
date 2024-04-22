@@ -18,17 +18,12 @@ pub struct PrintableString {
 	tag   Tag = Tag{.universal, false, int(TagType.printablestring)}
 }
 
-pub fn PrintableString.from_string(s string) !PrintableString {
-	if !printable_chars(s.bytes()) {
-		return error('PrintableString: contains non-printable string')
-	}
-	return PrintableString{
-		value: s
-	}
+pub fn PrintableString.from_string(s string, p Params) !PrintableString {
+	return PrintableString.from_bytes(s.bytes(), p)!
 }
 
-pub fn PrintableString.from_bytes(src []u8) !PrintableString {
-	if !printable_chars(src) {
+pub fn PrintableString.from_bytes(src []u8, p Params) !PrintableString {
+	if !printable_chars(src, p) {
 		return error('PrintableString: contains non-printable string')
 	}
 	return PrintableString{
@@ -45,7 +40,7 @@ pub fn (ps PrintableString) value() string {
 }
 
 pub fn (ps PrintableString) payload(p Params) ![]u8 {
-	if !printable_chars(ps.value.bytes()) {
+	if !printable_chars(ps.value.bytes(), p) {
 		return error('PrintableString: contains non-printable string')
 	}
 	return ps.value.bytes()
@@ -68,7 +63,7 @@ pub fn (ps PrintableString) packed_length(p Params) int {
 
 pub fn (ps PrintableString) encode(mut dst []u8, p Params) ! {
 	// recheck
-	if !printable_chars(ps.value.bytes()) {
+	if !printable_chars(ps.value.bytes(), p) {
 		return error('PrintableString: contains non-printable string')
 	}
 	if p.mode != .der && p.mode != .ber {
@@ -96,7 +91,7 @@ pub fn PrintableString.decode(src []u8, loc i64, p Params) !(PrintableString, i6
 }
 
 // utility function
-fn printable_chars(bytes []u8) bool {
+fn printable_chars(bytes []u8, p Params) bool {
 	return bytes.all(is_printablestring(it))
 }
 

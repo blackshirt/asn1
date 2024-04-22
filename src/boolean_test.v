@@ -22,7 +22,7 @@ fn test_encode_decode_boolean_in_der_mode() {
 			assert err == c.err
 			continue
 		}
-
-		assert out.value == c.out
+		// out.value is now u8, call .value() instead
+		assert out.value() == c.out
 	}
 }

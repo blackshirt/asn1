@@ -29,8 +29,8 @@ pub struct UTCTime {
 }
 
 // new_utctime creates new UTCTime from string s.
-pub fn UTCTime.from_string(s string) !UTCTime {
-	valid := validate_utctime(s)!
+pub fn UTCTime.from_string(s string, p Params) !UTCTime {
+	valid := validate_utctime(s, p)!
 	if !valid {
 		return error('UTCTime: fail on validate utctime')
 	}
@@ -39,8 +39,8 @@ pub fn UTCTime.from_string(s string) !UTCTime {
 	}
 }
 
-pub fn UTCTime.from_bytes(b []u8) !UTCTime {
-	return UTCTime.from_string(b.bytestr())!
+pub fn UTCTime.from_bytes(b []u8, p Params) !UTCTime {
+	return UTCTime.from_string(b.bytestr(), p)!
 }
 
 pub fn (ut UTCTime) tag() Tag {
@@ -71,7 +71,7 @@ pub fn (ut UTCTime) packed_length(p Params) int {
 }
 
 pub fn (t UTCTime) encode(mut dst []u8, p Params) ! {
-	valid := validate_utctime(t.value)!
+	valid := validate_utctime(t.value, p)!
 	if !valid {
 		return error('UTCTime: fail on validate utctime')
 	}
@@ -104,7 +104,7 @@ pub fn UTCTime.decode(src []u8, loc i64, p Params) !(UTCTime, i64) {
 
 // utility function for UTCTime
 //
-fn validate_utctime(s string) !bool {
+fn validate_utctime(s string, p Params) !bool {
 	if !basic_utctime_check(s) {
 		return false
 	}
@@ -171,8 +171,8 @@ pub struct GeneralizedTime {
 	tag   Tag = Tag{.universal, false, int(TagType.generalizedtime)}
 }
 
-pub fn GeneralizedTime.from_string(s string) !GeneralizedTime {
-	valid := validate_generalizedtime(s)!
+pub fn GeneralizedTime.from_string(s string, p Params) !GeneralizedTime {
+	valid := validate_generalizedtime(s, p)!
 	if !valid {
 		return error('GeneralizedTime: failed on validate')
 	}
@@ -181,8 +181,8 @@ pub fn GeneralizedTime.from_string(s string) !GeneralizedTime {
 	}
 }
 
-pub fn GeneralizedTime.from_bytes(b []u8) !GeneralizedTime {
-	return GeneralizedTime.from_string(b.bytestr())!
+pub fn GeneralizedTime.from_bytes(b []u8, p Params) !GeneralizedTime {
+	return GeneralizedTime.from_string(b.bytestr(), p)!
 }
 
 pub fn (gt GeneralizedTime) tag() Tag {
@@ -213,7 +213,7 @@ pub fn (gt GeneralizedTime) length(p Params) int {
 }
 
 pub fn (gt GeneralizedTime) encode(mut dst []u8, p Params) ! {
-	valid := validate_generalizedtime(gt.value)!
+	valid := validate_generalizedtime(gt.value, p)!
 	if !valid {
 		return error('GeneralizedTime: fail on validate')
 	}
@@ -263,7 +263,7 @@ fn basic_generalizedtime_check(s string) bool {
 	return min_generalizedtime_length(s) && valid_time_contents(s)
 }
 
-fn validate_generalizedtime(s string) !bool {
+fn validate_generalizedtime(s string, p Params) !bool {
 	if !basic_generalizedtime_check(s) {
 		return false
 	}

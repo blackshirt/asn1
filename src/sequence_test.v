@@ -3,7 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-import math
 import math.big
 
 fn test_sequence_contains_other_seq() ! {
@@ -45,16 +44,16 @@ fn test_sequence_der_decode() ! {
 	assert els[0].payload()! == [u8(0x00)]
 
 	el1 := els[1] as Sequence
-	assert el1.elements.len == 3 // [boolean(true), null, boolean(false)]
+	assert el1.elements.len == 3 // [true, null, false]
 	el10 := el1.elements[0] as Boolean
-	assert el10.value == true
+	assert el10.value() == true
 	el11 := el1.elements[1] as Null
 	assert el11 == Null{}
 	el12 := el1.elements[2] as Boolean
-	assert el12.value == false
+	assert el12.value() == false
 
 	el2 := els[2] as Boolean
-	assert el2.value == true
+	assert el2.value() == true
 }
 
 fn test_sequence_add_and_encode_boolean() {
@@ -177,7 +176,7 @@ fn test_sequence_integer_bigint() ! {
 	inp := big.integer_from_string('84885164052257330097714121751630835360966663883732297726369399')!
 	mut seq := Sequence.new(false)!
 
-	o1 := Integer.from_bigint(inp)!
+	o1 := Integer.from_bigint(inp)
 	o2 := Boolean.new(true)
 	o3 := Null.new()
 	seq.add_element(o1)!

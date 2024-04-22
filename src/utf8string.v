@@ -9,7 +9,7 @@ import encoding.utf8
 // UTF8 unicode charset
 //
 pub struct UTF8String {
-	tag   Tag = Tag{.universal, false, int(TagType.utf8string)}
+	tag Tag = Tag{.universal, false, int(TagType.utf8string)}
 mut:
 	value string
 }
