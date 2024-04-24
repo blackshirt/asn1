@@ -27,7 +27,7 @@ const max_integer_length = 2048
 // NOTE – These rules ensure that an integer value is always encoded in the smallest possible number of octets
 pub struct Integer {
 mut:
-	tag   Tag = Tag{.universal, false, int(TagType.integer)}
+	tag Tag = Tag{.universal, false, int(TagType.integer)}
 	// underlying integer value with support from i64 and big.Integer
 	value IntValue
 }
@@ -272,7 +272,7 @@ pub fn Integer.decode(src []u8, loc i64, p Params) !(Integer, i64) {
 	return ret, next
 }
 
-// IntValue represents arbitrary integer value, currently we support 
+// IntValue represents arbitrary integer value, currently we support
 // through primitive 164 type for integer value below < max_i64, and
 // use `big.Integer` for support arbitrary length of integer values.
 type IntValue = big.Integer | i64
@@ -448,4 +448,3 @@ fn length_i32(v i32) int {
 fn i32_to_bytes(v i32) []u8 {
 	return i64_to_bytes(i64(v))
 }
-
