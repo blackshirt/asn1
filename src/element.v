@@ -92,10 +92,10 @@ pub fn (e Element) equal_with(other Element) bool {
 	return e.tag() == other.tag() && a == b
 }
 
+// ElementList is arrays of ELement
 type ElementList = []Element
 
-// ElementList.from_bytes parses bytes in src as series of Element.
-// from_bytes parses bytes in src to array of Element or return error on fail
+// ElementList.from_bytes parses bytes in src as series of Element or return error on fails
 pub fn ElementList.from_bytes(src []u8, p Params) ![]Element {
 	mut els := []Element{}
 	if src.len == 0 {
@@ -136,7 +136,7 @@ pub fn (els []Element) hold_different_tag() bool {
 // contains checks whether this array of Element contains the Element el
 pub fn (els []Element) contains(el Element) bool {
 	for e in els {
-		if !e.equal(el) {
+		if !e.equal_with(el) {
 			return false
 		}
 	}
