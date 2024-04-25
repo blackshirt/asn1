@@ -85,6 +85,10 @@ pub fn Element.decode(src []u8, loc i64, p Params) !(Element, i64) {
 	}
 }
 
+pub fn (e Element) expect_tag(t Tag) bool {
+	return e.tag() == t
+}
+
 // equal_with checks whether this two element equal and holds the same tag and content
 pub fn (e Element) equal_with(other Element) bool {
 	a := e.payload() or { panic(err) }
@@ -300,7 +304,7 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 // OPTIONAL
 // Optional has no dedicated tag, its follow some already defined element
 pub struct Optional {
-	elm Element
+	elm ?Element = none
 }
 
 // not tested
@@ -450,31 +454,52 @@ pub fn Choice.decode(choices []Element, src []u8, loc i64, p Params) !(Choice, i
 
 // not tested
 pub struct AnyDefinedBy {
-	by Element
+	expected_tag Tag
+	raw_payload  []u8
 }
 
-pub fn AnyDefinedBy.new(el Element) AnyDefinedBy {
-	return AnyDefinedBy{el}
+pub fn AnyDefinedBy.new(el Element, p Params) !AnyDefinedBy {
+	return AnyDefinedBy{
+		expected_tag: el.tag()
+		raw_payload: el.payload()!
+	}
 }
 
-pub fn (a AnyDefinedBy) tag() Tag {
-	return a.by.tag()
+pub fn (ab AnyDefinedBy) expect_tag(tag Tag) bool {
+	return ab.tag() == tag
 }
 
-pub fn (a AnyDefinedBy) payload(p Params) ![]u8 {
-	return a.by.payload(p)
+pub fn (ab AnyDefinedBy) expect_payload(b []u8) bool {
+	return ab.raw_payload == b
 }
 
-pub fn (a AnyDefinedBy) length(p Params) int {
-	return a.by.length(p)
+pub fn (ab AnyDefinedBy) expect(el Element, p Params) bool {
+	payload := el.payload(p) or { panic(err) }
+	return ab.tag == el.tag() && ab.raw_payload == payload
 }
 
-pub fn (a AnyDefinedBy) encode(mut dst []u8, p Params) ! {
-	a.by.encode(mut dst, p)!
+pub fn (ab AnyDefinedBy) tag() Tag {
+	return ab.expected_tag
+}
+
+pub fn (ab AnyDefinedBy) payload(p Params) ![]u8 {
+	return ab.raw_payload
+}
+
+pub fn (ab AnyDefinedBy) length(p Params) int {
+	return ab.raw_payload.len
+}
+
+pub fn (ab AnyDefinedBy) encode(mut dst []u8, p Params) ! {
+	ab.tag().encode(mut out, p)!
+	payload := ab.payload(p)!
+	len := Length.from_i64(payload.len)!
+	len.encode(mut out, p)!
+	out << payload
 }
 
 pub fn AnyDefinedBy.decode(src []u8, loc i64, p Params) !(AnyDefinedBy, i64) {
 	el, pos := Element.decode(src, loc, p)!
-	ret := AnyDefinedBy{el}
+	ret := AnyDefinedBy.new(el, p)!
 	return ret, pos
 }
