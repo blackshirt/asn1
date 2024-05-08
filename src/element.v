@@ -307,7 +307,8 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 // AnyDefinedBy is not implements `asn1.Element`, so its can't be used as an ASN.1 ELement.
 pub struct AnyDefinedBy {
 	// params is raw bytes contents, its maybe contains only payload element
-	// or encoded element, or just null bytes
+	// or full encoded element, or just null bytes. Its depends on the context.
+pub:
 	params []u8
 }
 
