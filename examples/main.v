@@ -49,7 +49,7 @@ fn (k KerberosString) payload(p asn1.Params) ![]u8 {
 	return k.value.bytes()
 }
 
-fn (k KerberosString) packed_length(p asn1.Params) int {
+fn (k KerberosString) packed_length(p asn1.Params) !int {
 	return k.value.bytes().len
 }
 
@@ -109,20 +109,20 @@ fn (pn PrincipalName) payload(p asn1.Params) ![]u8 {
 	return out
 }
 
-fn (pn PrincipalName) length(p asn1.Params) int {
+fn (pn PrincipalName) length(p asn1.Params) !int {
 	mut n := 0
-	payload := pn.payload(p) or { panic(err) }
+	payload := pn.payload(p)!
 	n += payload.len
 	return n
 }
 
-fn (pn PrincipalName) packed_length(p asn1.Params) int {
+fn (pn PrincipalName) packed_length(p asn1.Params) !int {
 	mut n := 0
 
-	n += pn.tag().packed_length(p)
-	payload := pn.payload(p) or { panic(err) }
-	len := asn1.Length.from_i64(payload.len) or { panic(err) }
-	n += len.packed_length(p)
+	n += pn.tag().packed_length(p)!
+	payload := pn.payload(p)!
+	len := asn1.Length.from_i64(payload.len)!
+	n += len.packed_length(p)!
 	n += payload.len
 
 	return n
