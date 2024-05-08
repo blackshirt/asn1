@@ -301,54 +301,51 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 	return error('This RawElement can not be treated as TaggedType')
 }
 
-// not tested
+// ANY DEFINED BY
+//
+// Note: not tested
+// AnyDefinedBy is not implements `asn1.Element`, so its can't be used as an ASN.1 ELement.
 pub struct AnyDefinedBy {
-	expected_tag Tag
-	raw_payload  []u8
+	// params is raw bytes contents, its maybe contains only payload element
+	// or encoded element, or just null bytes
+	params []u8
 }
 
-pub fn AnyDefinedBy.new(el Element, p Params) !AnyDefinedBy {
+// from_element creates AnyDefinedBy from ASN.1 Element el. Its stores
+// encoded element as AnyDefinedBy's content.
+pub fn AnyDefinedBy.from_element(el Element, p Params) !AnyDefinedBy {
+	mut out := []u8{}
+	el.encode(mut out, p)!
 	return AnyDefinedBy{
-		expected_tag: el.tag()
-		raw_payload: el.payload()!
+		params: out
 	}
 }
 
-pub fn (ab AnyDefinedBy) expect_tag(tag Tag) bool {
-	return ab.tag() == tag
+// from_bytes creates AnyDefinedBy from raw bytes in b in uninterpreted way.
+pub fn AnyDefinedBy.from_bytes(b []u8) AnyDefinedBy {
+	return AnyDefinedBy{
+		params: b
+	}
 }
 
-pub fn (ab AnyDefinedBy) expect_payload(b []u8) bool {
-	return ab.raw_payload == b
+// as_element interpretes this AnyDefinedBy params as an ASN.1 Element
+pub fn (a AnyDefinedBy) as_element(p Params) !Element {
+	el, pos := Element.decode(a.params, 0, p)!
+	if pos != a.params.len {
+		return error('AnyDefinedBy params contains unprocessed bytes')
+	}
+	return el
 }
 
-pub fn (ab AnyDefinedBy) expect(el Element, p Params) bool {
-	payload := el.payload(p) or { panic(err) }
-	return ab.tag() == el.tag() && ab.raw_payload == payload
+// as_raw returns AnyDefinedBy as raw bytes
+pub fn (a AnyDefinedBy) as_raw() []u8 {
+	return a.params
 }
 
-pub fn (ab AnyDefinedBy) tag() Tag {
-	return ab.expected_tag
-}
-
-pub fn (ab AnyDefinedBy) payload(p Params) ![]u8 {
-	return ab.raw_payload
-}
-
-pub fn (ab AnyDefinedBy) length(p Params) int {
-	return ab.raw_payload.len
-}
-
-pub fn (ab AnyDefinedBy) encode(mut out []u8, p Params) ! {
-	ab.tag().encode(mut out, p)!
-	payload := ab.payload(p)!
-	len := Length.from_i64(payload.len)!
-	len.encode(mut out, p)!
-	out << payload
-}
-
+// AnyDefinedBy.decode parses and decodes bytes in src into AnyDefinedBy.
+// Its try to interprete the bytes as an encoded ASN.1 Element
 pub fn AnyDefinedBy.decode(src []u8, loc i64, p Params) !(AnyDefinedBy, i64) {
 	el, pos := Element.decode(src, loc, p)!
-	ret := AnyDefinedBy.new(el, p)!
+	ret := AnyDefinedBy.from_element(el, p)!
 	return ret, pos
 }
