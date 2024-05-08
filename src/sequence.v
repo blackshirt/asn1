@@ -89,10 +89,10 @@ pub fn (s Sequence) tag() Tag {
 	return s.tag
 }
 
-pub fn (s Sequence) length(p Params) int {
+pub fn (s Sequence) length(p Params) !int {
 	mut n := 0
 	for e in s.elements {
-		n += e.packed_length(p)
+		n += e.packed_length(p)!
 	}
 	return n
 }
@@ -105,12 +105,12 @@ pub fn (s Sequence) payload(p Params) ![]u8 {
 	return out
 }
 
-pub fn (s Sequence) packed_length(p Params) int {
+pub fn (s Sequence) packed_length(p Params) !int {
 	mut n := 0
-	n += s.tag().packed_length(p)
-	ln := s.length(p)
-	length := Length.from_i64(ln) or { panic(err) }
-	n += length.packed_length(p)
+	n += s.tag.packed_length(p)!
+	ln := s.length(p)!
+	length := Length.from_i64(ln)!
+	n += length.packed_length(p)!
 	n += ln
 
 	return n
@@ -171,11 +171,11 @@ fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
 		if raw.tag.is_constructed() {
 			obj := parse_constructed_element(raw.tag, sub)!
 			seq.add_element(obj)!
-			i += obj.packed_length(p)
+			i += obj.packed_length(p)!
 		} else {
 			obj := parse_primitive_element(raw.tag, sub)!
 			seq.add_element(obj)!
-			i += obj.packed_length(p)
+			i += obj.packed_length(p)!
 		}
 	}
 	return seq

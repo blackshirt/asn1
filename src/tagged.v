@@ -61,6 +61,7 @@ pub fn TaggedType.implicit_context(el Element, tagnum int) !TaggedType {
 	return tt
 }
 
+// tag returns outer tag of TaggedType
 pub fn (tt TaggedType) tag() Tag {
 	return tt.outer_tag
 }
@@ -82,43 +83,43 @@ pub fn (tt TaggedType) payload(p Params) ![]u8 {
 	return payload
 }
 
-pub fn (tt TaggedType) length(p Params) int {
+pub fn (tt TaggedType) length(p Params) !int {
 	mut n := 0
 	// in .explicit, n := tag+lengt+payload
 	if tt.mode == .explicit {
-		n += tt.inner_el.tag().packed_length(p)
-		len := tt.inner_el.length(p)
-		xlen := Length.from_i64(len) or { panic(err) }
-		n += xlen.packed_length(p)
+		n += tt.inner_el.tag().packed_length(p)!
+		len := tt.inner_el.length(p)!
+		xlen := Length.from_i64(len)!
+		n += xlen.packed_length(p)!
 		n += len
 	} else {
 		// .implicit mode, just the payload
-		n += tt.inner_el.length(p)
+		n += tt.inner_el.length(p)!
 	}
 	return n
 }
 
-pub fn (tt TaggedType) packed_length(p Params) int {
+pub fn (tt TaggedType) packed_length(p Params) !int {
 	mut n := 0
 	match tt.mode {
 		.explicit {
 			// when in explicit mode, outer tag and length is appended to packed inner element
-			n += tt.outer_tag.packed_length(p)
+			n += tt.outer_tag.packed_length(p)!
 			// inner_length also included length of tag and length of inner Element
-			inner_length := tt.inner_el.packed_length(p)
+			inner_length := tt.inner_el.packed_length(p)!
 
-			tt_length := Length.from_i64(inner_length) or { panic(err) }
-			n += tt_length.packed_length(p)
+			tt_length := Length.from_i64(inner_length)!
+			n += tt_length.packed_length(p)!
 			n += inner_length
 		}
 		.implicit {
 			// when in implicit mode, inner tag and length of inner element being replaced by outer tag and length
-			n += tt.outer_tag.packed_length(p)
+			n += tt.outer_tag.packed_length(p)!
 			// in implicit mode, inner_length only contains inner_el.payload.len length (without tag and length)
-			inner := tt.inner_el.payload(p) or { panic(err) }
+			inner := tt.inner_el.payload(p)!
 			inner_length := inner.len
-			tt_length := Length.from_i64(inner_length) or { panic(err) }
-			n += tt_length.packed_length(p)
+			tt_length := Length.from_i64(inner_length)!
+			n += tt_length.packed_length(p)!
 			n += inner_length
 		}
 	}
@@ -137,7 +138,7 @@ pub fn (tt TaggedType) encode(mut dst []u8, p Params) ! {
 		.explicit {
 			// wraps the inner element with this tag and length
 			tt.outer_tag.encode(mut dst, p)!
-			length := tt.inner_el.packed_length(p)
+			length := tt.inner_el.packed_length(p)!
 			len := Length.from_i64(length)!
 			len.encode(mut dst, p)!
 			tt.inner_el.encode(mut dst, p)!

@@ -75,7 +75,7 @@ pub fn (v Boolean) tag() Tag {
 	return v.tag
 }
 
-pub fn (v Boolean) length(p Params) int {
+pub fn (v Boolean) length(p Params) !int {
 	return 1
 }
 
@@ -89,9 +89,9 @@ pub fn (v Boolean) payload(p Params) ![]u8 {
 	return [v.value]
 }
 
-pub fn (v Boolean) packed_length(p Params) int {
+pub fn (v Boolean) packed_length(p Params) !int {
 	mut n := 0
-	n += v.tag().packed_length(p)
+	n += v.tag.packed_length(p)!
 	// boolean length should 1
 	n += 1
 	n += 1
@@ -105,7 +105,7 @@ pub fn (v Boolean) encode(mut dst []u8, p Params) ! {
 	}
 
 	// in DER, true or false value packed into single byte of 0xff or 0x00 respectively
-	v.tag().encode(mut dst, p)!
+	v.tag.encode(mut dst, p)!
 	length := Length.from_i64(1)!
 	length.encode(mut dst, p)!
 	// when mode != .der payload may contains not 0xff bytes

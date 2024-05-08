@@ -23,7 +23,7 @@ pub fn (n Null) tag() Tag {
 	return n.tag
 }
 
-pub fn (n Null) length(p Params) int {
+pub fn (n Null) length(p Params) !int {
 	return 0
 }
 
@@ -31,7 +31,7 @@ pub fn (n Null) payload(p Params) ![]u8 {
 	return []u8{}
 }
 
-pub fn (n Null) packed_length(p Params) int {
+pub fn (n Null) packed_length(p Params) !int {
 	return 2
 }
 
@@ -40,7 +40,7 @@ pub fn (n Null) encode(mut dst []u8, p Params) ! {
 		return error('Integer: unsupported mode')
 	}
 
-	n.tag().encode(mut dst, p)!
+	n.tag.encode(mut dst, p)!
 	// the length is 0
 	dst << [u8(0x00)]
 }
@@ -51,7 +51,7 @@ fn Null.decode(src []u8, loc i64, p Params) !(Null, i64) {
 		|| raw.tag.tag_number() != int(TagType.null) {
 		return error('Null: bad tag=${raw.tag}')
 	}
-	if raw.length(p) != 0 {
+	if raw.length(p)! != 0 {
 		return error('Null: len != 0')
 	}
 	ret := Null.from_bytes(raw.payload, p)!

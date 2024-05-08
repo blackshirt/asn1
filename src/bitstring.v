@@ -71,17 +71,17 @@ pub fn (bs BitString) payload(p Params) ![]u8 {
 	return out
 }
 
-pub fn (bs BitString) length(p Params) int {
+pub fn (bs BitString) length(p Params) !int {
 	return bs.bytes_len()
 }
 
-pub fn (bs BitString) packed_length(p Params) int {
+pub fn (bs BitString) packed_length(p Params) !int {
 	mut n := 0
 
-	n += bs.tag().packed_length(p)
-	len := bs.length(p)
-	bslen := Length.from_i64(len) or { panic(err) }
-	n += bslen.packed_length(p)
+	n += bs.tag.packed_length(p)!
+	len := bs.length(p)!
+	bslen := Length.from_i64(len)!
+	n += bslen.packed_length(p)!
 	n += len
 
 	return n
@@ -93,7 +93,7 @@ pub fn (bs BitString) encode(mut dst []u8, p Params) ! {
 		return error('BitString: unsupported mode')
 	}
 
-	bs.tag().encode(mut dst, p)!
+	bs.tag.encode(mut dst, p)!
 	length := Length.from_i64(bs.bytes_len())!
 	length.encode(mut dst, p)!
 

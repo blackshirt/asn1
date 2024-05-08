@@ -89,8 +89,8 @@ fn test_sequence_of_time() ! {
 	seq.add_element(o3)!
 	seq.add_element(o4)!
 
-	assert seq.length() == 3 + 15 + 3 + 17 // 38
-	assert seq.packed_length() == 2 + 38
+	assert seq.length()! == 3 + 15 + 3 + 17 // 38
+	assert seq.packed_length()! == 2 + 38
 
 	mut out := []u8{}
 	seq.encode(mut out)!

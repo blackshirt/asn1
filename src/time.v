@@ -55,15 +55,15 @@ pub fn (ut UTCTime) payload(p Params) ![]u8 {
 	return ut.value.bytes()
 }
 
-pub fn (ut UTCTime) length(p Params) int {
+pub fn (ut UTCTime) length(p Params) !int {
 	return ut.value.len
 }
 
-pub fn (ut UTCTime) packed_length(p Params) int {
+pub fn (ut UTCTime) packed_length(p Params) !int {
 	mut n := 0
-	n += ut.tag.packed_length(p)
-	len := Length.from_i64(ut.value.bytes().len) or { panic(err) }
-	n += len.packed_length(p)
+	n += ut.tag.packed_length(p)!
+	len := Length.from_i64(ut.value.bytes().len)!
+	n += len.packed_length(p)!
 
 	n += ut.value.bytes().len
 
@@ -78,7 +78,7 @@ pub fn (t UTCTime) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
-	t.tag().encode(mut dst, p)!
+	t.tag.encode(mut dst, p)!
 	bytes := t.value.bytes()
 	length := Length.from_i64(bytes.len)!
 	length.encode(mut dst, p)!
@@ -193,11 +193,11 @@ pub fn (gt GeneralizedTime) value() string {
 	return gt.value
 }
 
-pub fn (gt GeneralizedTime) packed_length(p Params) int {
+pub fn (gt GeneralizedTime) packed_length(p Params) !int {
 	mut n := 0
-	n += gt.tag.packed_length(p)
-	len := Length.from_i64(gt.value.bytes().len) or { panic(err) }
-	n += len.packed_length(p)
+	n += gt.tag.packed_length(p)!
+	len := Length.from_i64(gt.value.bytes().len)!
+	n += len.packed_length(p)!
 
 	n += gt.value.bytes().len
 
@@ -208,7 +208,7 @@ pub fn (gt GeneralizedTime) payload(p Params) ![]u8 {
 	return gt.value.bytes()
 }
 
-pub fn (gt GeneralizedTime) length(p Params) int {
+pub fn (gt GeneralizedTime) length(p Params) !int {
 	return gt.value.len
 }
 
@@ -221,7 +221,7 @@ pub fn (gt GeneralizedTime) encode(mut dst []u8, p Params) ! {
 		return error('GeneralizedTime: unsupported mode')
 	}
 
-	gt.tag().encode(mut dst, p)!
+	gt.tag.encode(mut dst, p)!
 	bytes := gt.value.bytes()
 	length := Length.from_i64(bytes.len)!
 	length.encode(mut dst, p)!

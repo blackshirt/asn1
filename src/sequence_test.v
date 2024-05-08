@@ -25,8 +25,8 @@ fn test_sequence_contains_other_seq() ! {
 	expected := [u8(0x30), 16, u8(0x01), 0x01, 0x00, u8(0x30), 8, 0x01, 0x01, 0xff, u8(0x05), 0x00,
 		u8(0x01), 0x01, 0x00, u8(0x01), 0x01, 0xff]
 	// assert for right value
-	assert seq2.length() == 16
-	assert seq2.packed_length() == 18
+	assert seq2.length()! == 16
+	assert seq2.packed_length()! == 18
 	assert out == expected
 }
 
@@ -65,10 +65,10 @@ fn test_sequence_add_and_encode_boolean() {
 	seq.add_element(o2)!
 	seq.add_element(o3)!
 
-	length := seq.length()
+	length := seq.length()!
 	assert length == 9
 
-	size := seq.packed_length()
+	size := seq.packed_length()!
 	assert size == 11
 
 	mut out := []u8{}
@@ -112,8 +112,8 @@ fn test_sequence_add_encode_oid() ! {
 	seq.add_element(o3)!
 
 	assert seq.tag() == new_tag(.universal, true, int(TagType.sequence))!
-	assert seq.length() == 11
-	assert seq.packed_length() == 13
+	assert seq.length()! == 11
+	assert seq.packed_length()! == 13
 
 	mut out := []u8{}
 	seq.encode(mut out)!
@@ -153,8 +153,8 @@ fn test_sequence_add_encode_integer() ! {
 	seq.add_element(o3)!
 
 	assert seq.tag() == new_tag(.universal, true, int(TagType.sequence))!
-	assert seq.length() == 16
-	assert seq.packed_length() == 18
+	assert seq.length()! == 16
+	assert seq.packed_length()! == 18
 
 	mut out := []u8{}
 	seq.encode(mut out)!
@@ -186,8 +186,8 @@ fn test_sequence_integer_bigint() ! {
 	mut out := []u8{}
 	seq.encode(mut out)!
 
-	assert seq.length() == 28 + 3 + 2
-	assert seq.packed_length() == 2 + 28 + 3 + 2
+	assert seq.length()! == 28 + 3 + 2
+	assert seq.packed_length()! == 2 + 28 + 3 + 2
 	exp := [u8(0x30), 33, u8(0x02), 26, 52, 210, 252, 160, 105, 66, 145, 88, 8, 53, 227, 150, 221,
 		98, 149, 87, 146, 121, 109, 20, 162, 246, 230, 65, 30, 119, u8(0x01), 0x01, 0xff, u8(0x05),
 		0x00]
@@ -222,8 +222,8 @@ fn test_sequence_of_string() ! {
 	seq.add_element(o2)!
 	seq.add_element(o3)!
 
-	assert seq.length() == 22
-	assert seq.packed_length() == 24
+	assert seq.length()! == 22
+	assert seq.packed_length()! == 24
 
 	mut out := []u8{}
 	seq.encode(mut out)!
@@ -278,6 +278,6 @@ fn test_sequnce_of_sequence() {
 	if two is Sequence {
 		assert two.elements[0] is Integer
 		assert two.elements[1] is Integer
-		assert two.elements[1].length() == 5
+		assert two.elements[1].length()! == 5
 	}
 }

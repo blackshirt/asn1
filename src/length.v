@@ -59,7 +59,7 @@ fn (v Length) pack_and_append(mut to []u8) {
 
 // packed_length calculates the length of bytes needed to store the Length value `v`
 // includes one byte marker for long definite form of length value, for value >= 128
-pub fn (v Length) packed_length(p Params) int {
+pub fn (v Length) packed_length(p Params) !int {
 	n := if v < 128 { 1 } else { v.bytes_len() + 1 }
 	return n
 }

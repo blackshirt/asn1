@@ -47,16 +47,16 @@ pub fn (us UTF8String) payload(p Params) ![]u8 {
 	return us.value.bytes()
 }
 
-pub fn (us UTF8String) length(p Params) int {
+pub fn (us UTF8String) length(p Params) !int {
 	return us.value.len
 }
 
-pub fn (us UTF8String) packed_length(p Params) int {
+pub fn (us UTF8String) packed_length(p Params) !int {
 	mut n := 0
-	n += us.tag().packed_length(p)
-	uslen := us.length(p)
-	len := Length.from_i64(uslen) or { panic(err) }
-	n += len.packed_length(p)
+	n += us.tag.packed_length(p)!
+	uslen := us.length(p)!
+	len := Length.from_i64(uslen)!
+	n += len.packed_length(p)!
 	n += uslen
 
 	return n
@@ -70,7 +70,7 @@ pub fn (us UTF8String) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('UTF8String: unsupported mode')
 	}
-	us.tag().encode(mut dst, p)!
+	us.tag.encode(mut dst, p)!
 	length := Length.from_i64(us.value.bytes().len)!
 	length.encode(mut dst, p)!
 	dst << us.value.bytes()

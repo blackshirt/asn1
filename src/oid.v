@@ -97,18 +97,18 @@ pub fn (oid Oid) payload(p Params) ![]u8 {
 	return oid.pack()!
 }
 
-pub fn (oid Oid) length(p Params) int {
-	bytes := oid.pack() or { panic(err) }
+pub fn (oid Oid) length(p Params) !int {
+	bytes := oid.pack()!
 	return bytes.len
 }
 
-pub fn (oid Oid) packed_length(p Params) int {
+pub fn (oid Oid) packed_length(p Params) !int {
 	mut n := 0
-	n += oid.tag().packed_length(p)
+	n += oid.tag.packed_length(p)!
 
-	src := oid.pack() or { panic(err) }
-	len := Length.from_i64(src.len) or { panic(err) }
-	n += len.packed_length(p)
+	src := oid.pack()!
+	len := Length.from_i64(src.len)!
+	n += len.packed_length(p)!
 	n += src.len
 
 	return n
@@ -133,7 +133,7 @@ pub fn (oid Oid) encode(mut dst []u8, p Params) ! {
 	}
 	// packing in DER mode
 	bytes := oid.pack()!
-	oid.tag().encode(mut dst, p)!
+	oid.tag.encode(mut dst, p)!
 	length := Length.from_i64(bytes.len)!
 	length.encode(mut dst, p)!
 	dst << bytes

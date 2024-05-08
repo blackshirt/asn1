@@ -47,16 +47,16 @@ pub fn (vs VisibleString) payload(p Params) ![]u8 {
 	return vs.value.bytes()
 }
 
-pub fn (vs VisibleString) length(p Params) int {
+pub fn (vs VisibleString) length(p Params) !int {
 	return vs.value.len
 }
 
-pub fn (vs VisibleString) packed_length(p Params) int {
+pub fn (vs VisibleString) packed_length(p Params) !int {
 	mut n := 0
-	n += vs.tag().packed_length(p)
-	len := Length.from_i64(vs.length(p)) or { panic(err) }
-	n += len.packed_length(p)
-	n += vs.length(p)
+	n += vs.tag.packed_length(p)!
+	len := Length.from_i64(vs.length(p)!)!
+	n += len.packed_length(p)!
+	n += vs.length(p)!
 
 	return n
 }
@@ -69,7 +69,7 @@ pub fn (vs VisibleString) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('VisibleString: unsupported mode')
 	}
-	vs.tag().encode(mut dst, p)!
+	vs.tag.encode(mut dst, p)!
 	length := Length.from_i64(vs.value.bytes().len)!
 	length.encode(mut dst, p)!
 	dst << vs.value.bytes()

@@ -119,7 +119,7 @@ fn test_calc_length_of_length() ! {
 
 	for c in data {
 		len := Length.from_i64(c.value)!
-		out := len.packed_length()
+		out := len.packed_length()!
 
 		assert out == c.expected
 	}

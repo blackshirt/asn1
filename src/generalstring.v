@@ -50,16 +50,16 @@ pub fn (g GeneralString) payload(p Params) ![]u8 {
 	return g.value.bytes()
 }
 
-pub fn (g GeneralString) length(p Params) int {
+pub fn (g GeneralString) length(p Params) !int {
 	return g.value.bytes().len
 }
 
-pub fn (g GeneralString) packed_length(p Params) int {
+pub fn (g GeneralString) packed_length(p Params) !int {
 	mut n := 0
 
-	n += g.tag().packed_length(p)
-	len := Length.from_i64(g.value.bytes().len) or { panic(err) }
-	n += len.packed_length(p)
+	n += g.tag.packed_length(p)!
+	len := Length.from_i64(g.value.bytes().len)!
+	n += len.packed_length(p)!
 	n += g.value.bytes().len
 
 	return n
@@ -73,7 +73,7 @@ pub fn (g GeneralString) encode(mut dst []u8, p Params) ! {
 		return error('GeneralString: unsupported mode')
 	}
 
-	g.tag().encode(mut dst, p)!
+	g.tag.encode(mut dst, p)!
 	bytes := g.value.bytes()
 	length := Length.from_i64(bytes.len)!
 	length.encode(mut dst, p)!
@@ -87,7 +87,7 @@ pub fn GeneralString.decode(src []u8, loc i64, p Params) !(GeneralString, i64) {
 		return error('GeneralString: bad tag of universal class type')
 	}
 	// no bytes
-	if raw.length() == 0 {
+	if raw.length(p)! == 0 {
 		// empty content
 		return GeneralString{}, next
 	}

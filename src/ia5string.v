@@ -45,16 +45,16 @@ pub fn (v IA5String) payload(p Params) ![]u8 {
 	return v.value.bytes()
 }
 
-pub fn (v IA5String) length(p Params) int {
+pub fn (v IA5String) length(p Params) !int {
 	return v.value.len
 }
 
-pub fn (v IA5String) packed_length(p Params) int {
+pub fn (v IA5String) packed_length(p Params) !int {
 	mut n := 0
 
-	n += v.tag().packed_length(p)
-	len := Length.from_i64(v.value.bytes().len) or { panic(err) }
-	n += len.packed_length(p)
+	n += v.tag.packed_length(p)!
+	len := Length.from_i64(v.value.bytes().len)!
+	n += len.packed_length(p)!
 	n += v.value.bytes().len
 
 	return n
@@ -68,7 +68,7 @@ pub fn (v IA5String) encode(mut dst []u8, p Params) ! {
 		return error('IA5String: unsupported mode')
 	}
 
-	v.tag().encode(mut dst, p)!
+	v.tag.encode(mut dst, p)!
 	bytes := v.value.bytes()
 	length := Length.from_i64(bytes.len)!
 	length.encode(mut dst, p)!

@@ -11,8 +11,8 @@ fn test_parse_sequence_match_length() ! {
 
 	seq, n := Sequence.decode(data, 0)!
 	assert n == data.len
-	assert seq.length() == 19 // 0x13
-	assert seq.packed_length() == 21
+	assert seq.length()! == 19 // 0x13
+	assert seq.packed_length()! == 21
 	assert seq.tag().class() == .universal
 	assert seq.tag().is_constructed() == true
 	assert seq.tag().tag_number() == 16

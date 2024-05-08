@@ -30,15 +30,15 @@ pub fn (e Enumerated) payload(p Params) ![]u8 {
 	return e.pack()!
 }
 
-pub fn (e Enumerated) length(p Params) int {
+pub fn (e Enumerated) length(p Params) !int {
 	return e.enumerated_len()
 }
 
 pub fn (e Enumerated) packed_length(p Params) !int {
 	mut n := 0
-	n += e.tag().packed_length(p)
+	n += e.tag.packed_length(p)!
 	len := Length.from_i64(e.value)!
-	n += len.packed_length(p)
+	n += len.packed_length(p)!
 	n += e.enumerated_len()
 	return n
 }
@@ -47,7 +47,7 @@ pub fn (e Enumerated) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('Integer: unsupported mode')
 	}
-	e.tag().encode(mut dst, p)!
+	e.tag.encode(mut dst, p)!
 	bytes := e.pack()!
 	length := Length.from_i64(bytes.len)!
 	length.encode(mut dst, p)!

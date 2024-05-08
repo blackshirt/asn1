@@ -44,16 +44,16 @@ pub fn (os OctetString) payload(p Params) ![]u8 {
 	return os.value.bytes()
 }
 
-pub fn (os OctetString) length(p Params) int {
+pub fn (os OctetString) length(p Params) !int {
 	return os.value.bytes().len
 }
 
-pub fn (os OctetString) packed_length(p Params) int {
+pub fn (os OctetString) packed_length(p Params) !int {
 	mut n := 0
 
-	n += os.tag().packed_length(p)
-	len := Length.from_i64(os.value.bytes().len) or { panic(err) }
-	n += len.packed_length(p)
+	n += os.tag.packed_length(p)!
+	len := Length.from_i64(os.value.bytes().len)!
+	n += len.packed_length(p)!
 	n += os.value.bytes().len
 
 	return n
@@ -65,7 +65,7 @@ pub fn (os OctetString) encode(mut dst []u8, p Params) ! {
 		return error('Integer: unsupported mode')
 	}
 	// packing in DER mode
-	os.tag().encode(mut dst, p)!
+	os.tag.encode(mut dst, p)!
 	length := Length.from_i64(os.value.bytes().len)!
 	length.encode(mut dst, p)!
 	dst << os.value.bytes()

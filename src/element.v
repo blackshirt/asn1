@@ -36,8 +36,8 @@ pub fn Element.from_object[T](t T) !Element {
 }
 
 // length returns the length of the payload of this element.
-pub fn (e Element) length(p Params) int {
-	payload := e.payload(p) or { panic(err) }
+pub fn (e Element) length(p Params) !int {
+	payload := e.payload(p)!
 	return payload.len
 }
 
@@ -53,12 +53,12 @@ pub fn (e Element) encode(mut dst []u8, p Params) ! {
 
 // packed_length informs us the length of how many bytes when this e Element
 // was serialized into bytes.
-pub fn (e Element) packed_length(p Params) int {
+pub fn (e Element) packed_length(p Params) !int {
 	mut n := 0
-	n += e.tag().packed_length(p)
-	payload := e.payload(p) or { panic(err) }
-	length := Length.from_i64(payload.len) or { panic(err) }
-	n += length.packed_length(p)
+	n += e.tag().packed_length(p)!
+	payload := e.payload(p)!
+	length := Length.from_i64(payload.len)!
+	n += length.packed_length(p)!
 	n += payload.len
 
 	return n
@@ -172,7 +172,7 @@ pub fn (el RawElement) tag() Tag {
 	return el.tag
 }
 
-pub fn (el RawElement) length(p Params) int {
+pub fn (el RawElement) length(p Params) !int {
 	return el.payload.len
 }
 
@@ -181,11 +181,11 @@ pub fn (el RawElement) payload(p Params) ![]u8 {
 	return el.payload
 }
 
-pub fn (e RawElement) packed_length(p Params) int {
+pub fn (e RawElement) packed_length(p Params) !int {
 	mut n := 0
-	n += e.tag.packed_length(p)
-	length := Length.from_i64(e.payload.len) or { panic(err) }
-	n += length.packed_length(p)
+	n += e.tag.packed_length(p)!
+	length := Length.from_i64(e.payload.len)!
+	n += length.packed_length(p)!
 	n += e.payload.len
 
 	return n
@@ -196,7 +196,7 @@ pub fn (e RawElement) encode(mut dst []u8, p Params) ! {
 		return error('RawElement: unsupported mode')
 	}
 	e.tag.encode(mut dst, p)!
-	length := Length.from_i64(e.payload.len) or { panic(err) }
+	length := Length.from_i64(e.payload.len)!
 	length.encode(mut dst, p)!
 	dst << e.payload
 }
@@ -301,157 +301,6 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 	return error('This RawElement can not be treated as TaggedType')
 }
 
-// OPTIONAL
-// Optional has no dedicated tag, its follow some already defined element
-pub struct Optional {
-	elm ?Element = none
-}
-
-// not tested
-pub fn Optional.new(el Element) Optional {
-	return Optional{el}
-}
-
-pub fn (op Optional) tag() Tag {
-	return op.elm.tag()
-}
-
-pub fn (op Optional) payload(p Params) ![]u8 {
-	return op.elm.payload(p)
-}
-
-pub fn (op Optional) length(p Params) int {
-	return op.elm.length(p)
-}
-
-pub fn (op Optional) encode(mut dst []u8, p Params) ! {
-	op.elm.encode(mut dst, p)!
-}
-
-pub fn Optional.decode(src []u8, loc i64, p Params) !(Optional, i64) {
-	el, pos := Element.decode(src, loc, p)!
-	ret := Optional{el}
-	return ret, pos
-}
-
-// present checks whether this Optional o present with expected tag t.
-pub fn (o Optional) present(t Tag) bool {
-	return o.elm.tag() == t
-}
-
-// CHOICE
-// Choice element also no have dedicated semantic and tag.
-// Its also follow underlying choosen element
-pub struct Choice {
-mut:
-	// choosen element
-	choosen Element
-}
-
-// ChoiceList is arrays of Element
-type ChoiceList = []Choice
-
-// ChoiceList.from_element_list creates a new choices list from list of Element
-pub fn ChoiceList.from_element_list(els []Element, strict bool) !ChoiceList {
-	mut cs := ChoiceList{}
-	for el in els {
-		cs.register_element(el, strict)!
-	}
-	return cs
-}
-
-fn (cs ChoiceList) contain(c Choice) bool {
-	for item in cs {
-		if !item.equal_with(c) {
-			return false
-		}
-	}
-	return true
-}
-
-// register_element registers an element el into choice list in cs.
-// if you pass true into the strict parameter, it would check this element
-// agains already defined choice list in cs, otherwise, just register it into cs.
-pub fn (mut cs ChoiceList) register_element(el Element, strict bool) ! {
-	if strict {
-		c := Choice.new_and_validate(el, cs)!
-		cs.register(c)
-		return
-	}
-	c := Choice.from_element(el)
-	cs.register(c)
-}
-
-// register registers a Choice c into ChoiceList cs
-pub fn (mut cs ChoiceList) register(c Choice) {
-	// ChoiceList already containing the choice c
-	if cs.contain(c) {
-		return
-	}
-	// otherwise, appends it into cs
-	c << cs
-}
-
-// from_element creates a new Choice from ELement el.
-// You should validate this choice agains available and predefined ChoiceList.
-// see `Choice.new_and_validate` for more detail.
-pub fn Choice.from_element(el Element) Choice {
-	ret := Choice{
-		choosen: el
-	}
-	return ret
-}
-
-// new_and_validate creates a new Choice and validate this choice agains supplied ChoiceList.
-// It returns created choice or error on fails.
-pub fn Choice.new_and_validate(el Element, cs ChoiceList) !Choice {
-	c := Choice.from_element(el)
-	if !c.validate(cs) {
-		return error('Not valid choice')
-	}
-	return c
-}
-
-fn (c Choice) equal_with(o Choice) bool {
-	a := c.payload() or { panic(err) }
-	b := o.payload() or { panic(err) }
-	return a.tag() == o.tag() && a == b
-}
-
-// validate validates Choice c agains ChoiceList cs.
-// Its checks whether this c is a valid choice again supplied choices list.
-pub fn (c Choice) validate(cs ChoiceList) bool {
-	// we check only matching the tag
-	for item in cs {
-		if c.tag() == item.tag() {
-			return true
-		}
-	}
-	return false
-}
-
-pub fn (c Choice) tag() Tag {
-	return c.choosen.tag()
-}
-
-pub fn (c Choice) payload(p Params) ![]u8 {
-	return c.choosen.payload(p)
-}
-
-pub fn (c Choice) length(p Params) int {
-	return c.choosen.length(p)
-}
-
-pub fn (c Choice) encode(mut dst []u8, p Params) ! {
-	c.choosen.encode(mut dst, p)!
-}
-
-pub fn Choice.decode(choices []Element, src []u8, loc i64, p Params) !(Choice, i64) {
-	el, pos := Element.decode(src, loc, p)!
-	ret := Choice.new(choices, el)!
-	return ret, pos
-}
-
 // not tested
 pub struct AnyDefinedBy {
 	expected_tag Tag
@@ -475,7 +324,7 @@ pub fn (ab AnyDefinedBy) expect_payload(b []u8) bool {
 
 pub fn (ab AnyDefinedBy) expect(el Element, p Params) bool {
 	payload := el.payload(p) or { panic(err) }
-	return ab.tag == el.tag() && ab.raw_payload == payload
+	return ab.tag() == el.tag() && ab.raw_payload == payload
 }
 
 pub fn (ab AnyDefinedBy) tag() Tag {
@@ -490,7 +339,7 @@ pub fn (ab AnyDefinedBy) length(p Params) int {
 	return ab.raw_payload.len
 }
 
-pub fn (ab AnyDefinedBy) encode(mut dst []u8, p Params) ! {
+pub fn (ab AnyDefinedBy) encode(mut out []u8, p Params) ! {
 	ab.tag().encode(mut out, p)!
 	payload := ab.payload(p)!
 	len := Length.from_i64(payload.len)!

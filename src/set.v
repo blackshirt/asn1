@@ -80,20 +80,20 @@ pub fn (s Set) payload(p Params) ![]u8 {
 	return out
 }
 
-pub fn (s Set) length(p Params) int {
+pub fn (s Set) length(p Params) !int {
 	mut n := 0
 	for el in s.elements {
-		n += el.packed_length(p)
+		n += el.packed_length(p)!
 	}
 	return n
 }
 
-pub fn (s Set) packed_length(p Params) int {
+pub fn (s Set) packed_length(p Params) !int {
 	mut n := 0
-	n += s.tag().packed_length(p)
-	ln := s.length(p)
-	length := Length.from_i64(ln) or { panic(err) }
-	n += length.packed_length(p)
+	n += s.tag.packed_length(p)!
+	ln := s.length(p)!
+	length := Length.from_i64(ln)!
+	n += length.packed_length(p)!
 	n += ln
 
 	return n
@@ -108,7 +108,7 @@ pub fn (s Set) encode(mut dst []u8, p Params) ! {
 		return error('Not a valid set tag')
 	}
 	// pack in DER mode
-	s.tag().encode(mut dst, p)!
+	s.tag.encode(mut dst, p)!
 	payload := s.payload(p)!
 	length := Length.from_i64(payload.len)!
 	length.encode(mut dst, p)!
@@ -157,11 +157,11 @@ fn Set.parse_contents(tag Tag, contents []u8, p Params) !Set {
 		if raw.tag.is_constructed() {
 			obj := parse_constructed_element(raw.tag, sub)!
 			set.add_element(obj)!
-			i += obj.packed_length(p)
+			i += obj.packed_length(p)!
 		} else {
 			obj := parse_primitive_element(raw.tag, sub)!
 			set.add_element(obj)!
-			i += obj.packed_length(p)
+			i += obj.packed_length(p)!
 		}
 	}
 	return set

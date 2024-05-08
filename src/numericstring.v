@@ -45,16 +45,16 @@ pub fn (ns NumericString) payload(p Params) ![]u8 {
 	return ns.value.bytes()
 }
 
-pub fn (ns NumericString) length(p Params) int {
+pub fn (ns NumericString) length(p Params) !int {
 	return ns.value.len
 }
 
-pub fn (ns NumericString) packed_length(p Params) int {
+pub fn (ns NumericString) packed_length(p Params) !int {
 	mut n := 0
 
-	n += ns.tag().packed_length(p)
-	len := Length.from_i64(ns.value.bytes().len) or { panic(err) }
-	n += len.packed_length(p)
+	n += ns.tag.packed_length(p)!
+	len := Length.from_i64(ns.value.bytes().len)!
+	n += len.packed_length(p)!
 	n += ns.value.bytes().len
 
 	return n
@@ -65,7 +65,7 @@ pub fn (ns NumericString) encode(mut dst []u8, p Params) ! {
 		return error('Integer: unsupported mode')
 	}
 
-	ns.tag().encode(mut dst, p)!
+	ns.tag.encode(mut dst, p)!
 	length := Length.from_i64(ns.value.bytes().len)!
 	length.encode(mut dst, p)!
 	dst << ns.value.bytes()

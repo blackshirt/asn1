@@ -46,16 +46,16 @@ pub fn (ps PrintableString) payload(p Params) ![]u8 {
 	return ps.value.bytes()
 }
 
-pub fn (ps PrintableString) length(p Params) int {
+pub fn (ps PrintableString) length(p Params) !int {
 	return ps.value.len
 }
 
-pub fn (ps PrintableString) packed_length(p Params) int {
+pub fn (ps PrintableString) packed_length(p Params) !int {
 	mut n := 0
-	n += ps.tag().packed_length(p)
-	len := ps.length(p)
-	pslen := Length.from_i64(len) or { panic(err) }
-	n += pslen.packed_length(p)
+	n += ps.tag.packed_length(p)!
+	len := ps.length(p)!
+	pslen := Length.from_i64(len)!
+	n += pslen.packed_length(p)!
 	n += len
 
 	return n
@@ -70,7 +70,7 @@ pub fn (ps PrintableString) encode(mut dst []u8, p Params) ! {
 		return error('PrintableString: unsupported mode')
 	}
 	// pack in DER mode
-	ps.tag().encode(mut dst, p)!
+	ps.tag.encode(mut dst, p)!
 	length := Length.from_i64(ps.value.bytes().len)!
 	length.encode(mut dst, p)!
 	dst << ps.value.bytes()

@@ -59,20 +59,20 @@ MC4CAQAwBQYDK2VwBCIEINTuctv5E1hK1bbY8fdp+K06/nwoy/HU++CXqI9EdVhC
 
 	seq, n := Sequence.decode(block.data, 0)!
 
-	assert seq.length() == 46
+	assert seq.length()! == 46
 
 	assert seq.elements[0] is Integer
 	assert seq.elements[1] is Sequence
 	b := seq.elements[1] as Sequence
 
 	assert b.elements[0] is Oid
-	assert b.elements[0].length() == 3
+	assert b.elements[0].length()! == 3
 
 	oid := b.elements[0] as Oid
 	assert oid.str() == '1.3.101.112'
 
 	assert seq.elements[2] is OctetString
-	assert seq.elements[2].length() == 34
+	assert seq.elements[2].length()! == 34
 }
 
 // TODO: This test still failed on `Sequence.parse_contents` with error `next: truncated bytes`
@@ -180,13 +180,13 @@ w1AH9efZBw==
 
 	seq, n := Sequence.decode(block.data, 0)!
 
-	assert seq.length() == 300
+	assert seq.length()! == 300
 
 	// certificate is arrays of 3 element
 	assert seq.elements.len == 3
 	// last element
 	assert seq.elements[2] is BitString
-	assert seq.elements[2].length() == 65
+	assert seq.elements[2].length()! == 65
 	bts := BitString.from_bytes(seq.elements[2].payload()!)!
 	exp := [u8(0xAF), 0x23, 0x01, 0xFE, 0xDD, 0xC9, 0xE6, 0xFF, 0xC1, 0xCC, 0xA7, 0x3D, 0x74, 0xD6,
 		0x48, 0xA4, 0x39, 0x80, 0x82, 0xCD, 0xDB, 0x69, 0xB1, 0x4E, 0x4D, 0x06, 0xEC, 0xF8, 0x1A,

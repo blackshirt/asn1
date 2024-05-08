@@ -192,12 +192,12 @@ fn Integer.unpack_from_twoscomplement_bytes(b []u8, p Params) !Integer {
 	return res
 }
 
-pub fn (v Integer) packed_length(p Params) int {
+pub fn (v Integer) packed_length(p Params) !int {
 	mut n := 0
-	n += v.tag().packed_length(p)
+	n += v.tag.packed_length(p)!
 
-	len := Length.from_i64(v.bytes_len()) or { panic(err) }
-	n += len.packed_length(p)
+	len := Length.from_i64(v.bytes_len())!
+	n += len.packed_length(p)!
 	n += v.bytes_len()
 
 	return n
@@ -230,7 +230,7 @@ pub fn (v Integer) payload(p Params) ![]u8 {
 	return bytes
 }
 
-pub fn (v Integer) length(p Params) int {
+pub fn (v Integer) length(p Params) !int {
 	return v.bytes_len()
 }
 
@@ -242,7 +242,7 @@ pub fn (v Integer) encode(mut dst []u8, p Params) ! {
 		return error('Integer: unsupported mode')
 	}
 
-	v.tag().encode(mut dst, p)!
+	v.tag.encode(mut dst, p)!
 	bytes, n := v.pack_into_twoscomplement_form(p)!
 	length := Length.from_i64(n)!
 	length.encode(mut dst, p)!
