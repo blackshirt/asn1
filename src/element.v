@@ -2,7 +2,7 @@ module asn1
 
 // Element represents a generic ASN.1 Element.
 // Most of the standard Universal class element defined on this module
-// satisfies this interface. This interface was also expandabled by methods
+// satisfies this interface. This interface was also expanded by methods
 // defined on this interface.
 pub interface Element {
 	// tag tells the identity tag of this Element
@@ -304,7 +304,7 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 // ANY DEFINED BY
 //
 // Note: not tested
-// AnyDefinedBy is not implements `asn1.Element`, so its can't be used as an ASN.1 ELement.
+// AnyDefinedBy do not implements `asn1.Element`, so its can't be used as an ASN.1 ELement.
 pub struct AnyDefinedBy {
 	// params is raw bytes contents, its maybe contains only payload element
 	// or full encoded element, or just null bytes. Its depends on the context.
