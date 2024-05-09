@@ -301,6 +301,32 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 	return error('This RawElement can not be treated as TaggedType')
 }
 
+// CHOICE
+// Note: not tested
+// We represent ASN.1 CHOICE as an arbitryary `asn1.Element` which is possible to do something
+// in more broader scope. You should validate your choice against yours predefined choice list.
+type Choice = Element
+
+// new creates a new Choice from element el
+pub fn Choice.new(el Element) Choice {
+	return Choice(el)
+}
+
+// validate_choice performs validation and check if this choice was valid choice and
+// was contained within choice list cl.
+pub fn (c Choice) validate_choice(cl []Choice) bool {
+	for el in cl {
+		// check if one of the choice in choice list has matching tag and payload with
+		// the given choice
+		chp := c.payload() or { panic(err) }
+		elp := el.payload() or { panic(err) }
+		if c.tag() == el.tag() && chp == elp {
+			return true
+		}
+	}
+	return false
+}
+
 // ANY DEFINED BY
 //
 // Note: not tested
