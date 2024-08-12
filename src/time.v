@@ -90,7 +90,7 @@ pub fn UTCTime.decode(src []u8, loc i64, p Params) !(UTCTime, i64) {
 		return error('UTCTime: bad len')
 	}
 	raw, next := RawElement.decode(src, loc, p)!
-	if raw.tag.class() != .universal || raw.tag.is_constructed()
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
 		|| raw.tag.tag_number() != int(TagType.utctime) {
 		return error('UTCTime: bad tag of universal class type')
 	}
@@ -234,7 +234,7 @@ pub fn GeneralizedTime.decode(src []u8, loc i64, p Params) !(GeneralizedTime, i6
 	}
 	raw, next := RawElement.decode(src, loc, p)!
 	// its only for universal class, maybe present with different context/class
-	if raw.tag.class() != .universal || raw.tag.is_constructed()
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
 		|| raw.tag.tag_number() != int(TagType.generalizedtime) {
 		return error('GeneralizedTime: bad tag of universal class type')
 	}

@@ -47,7 +47,7 @@ pub fn (n Null) encode(mut dst []u8, p Params) ! {
 
 fn Null.decode(src []u8, loc i64, p Params) !(Null, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
-	if raw.tag.class() != .universal || raw.tag.is_constructed()
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
 		|| raw.tag.tag_number() != int(TagType.null) {
 		return error('Null: bad tag=${raw.tag}')
 	}

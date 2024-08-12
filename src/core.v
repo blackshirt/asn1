@@ -3,17 +3,17 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// Class is ASN.1 tag class.
+// TagClass is ASN.1 tag class.
 // Currently most of universal class supported in this module, with limited support for other class.
-pub enum Class {
+pub enum TagClass {
 	universal        = 0x00 // 0b00
 	application      = 0x01 // 0b01
 	context_specific = 0x02 // 0b10
 	private          = 0x03 // 0b11
 }
 
-// class_from_int creates Class from integer v
-pub fn Class.from_int(v int) !Class {
+// class_from_int creates TagClass from integer v
+pub fn TagClass.from_int(v int) !TagClass {
 	match v {
 		// vfmt off
 		0x00 { return .universal }
@@ -27,7 +27,7 @@ pub fn Class.from_int(v int) !Class {
 	}
 }
 
-pub fn (c Class) str() string {
+pub fn (c TagClass) str() string {
 	match c {
 		.universal { return 'universal' }
 		.application { return 'application' }

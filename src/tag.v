@@ -17,23 +17,23 @@ const max_tag_number = 16383
 // See limit restriction comment above.
 pub struct Tag {
 mut:
-	class       Class = .universal
+	class       TagClass = .universal
 	constructed bool
 	number      TagNumber
 }
 
-// `new_tag` creates new ASN.1 tag identifier. Its accepts params of Class `c`,
+// `new_tag` creates new ASN.1 tag identifier. Its accepts params of TagClass `cls`,
 // constructed or primitive form in `constructed` boolean flag, and the integer tag `number`.
-pub fn new_tag(c Class, constructed bool, number int) !Tag {
+pub fn new_tag(cls TagClass, constructed bool, number int) !Tag {
 	return Tag{
-		class: c
+		class:       cls
 		constructed: constructed
-		number: TagNumber.from_int(number)!
+		number:      TagNumber.from_int(number)!
 	}
 }
 
-// class return the ASN.1 class of this tag
-pub fn (t Tag) class() Class {
+// tag_class return the ASN.1 class of this tag
+pub fn (t Tag) tag_class() TagClass {
 	return t.class
 }
 
@@ -121,15 +121,15 @@ pub fn Tag.decode(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	}
 	// build the tag
 	tag := Tag{
-		class: Class.from_int(class)!
+		class:       TagClass.from_int(class)!
 		constructed: constructed
-		number: number
+		number:      number
 	}
 	return tag, pos
 }
 
 // clone_with_class clones teh tag t into new tag with class is set to c
-pub fn (mut t Tag) clone_with_class(c Class) Tag {
+pub fn (mut t Tag) clone_with_class(c TagClass) Tag {
 	mut new := t
 	new.class = c
 	return new
@@ -293,72 +293,72 @@ pub fn (v TagNumber) universal_tag_type() !TagType {
 // so its not going to be supported on this module.
 pub enum TagType {
 	//	reserved for BER
-	reserved         = 0
+	reserved = 0
 	// BOOLEAN type
-	boolean          = 1
+	boolean = 1
 	// INTEGER type
-	integer          = 2
+	integer = 2
 	// BIT STRING
-	bitstring        = 3
+	bitstring = 3
 	// OCTET STRING
-	octetstring      = 4
+	octetstring = 4
 	// NULL
-	null             = 5
+	null = 5
 	// OBJECT IDENTIFIER
-	oid              = 6
+	oid = 6
 	// ObjectDescriptor
-	objdesc          = 7
+	objdesc = 7
 	//	INSTANCE OF, EXTERNAL
-	external         = 8
+	external = 8
 	// REAL
-	real             = 9
+	real = 9
 	// ENUMERATED
-	enumerated       = 10
+	enumerated = 10
 	// EMBEDDED PDV
-	embedded         = 11
+	embedded = 11
 	// UTF8String
-	utf8string       = 12
+	utf8string = 12
 	// RELATIVE-OID
-	relativeoid      = 13
+	relativeoid = 13
 	// deprecated
 	// 0x0f is reserved
-	time             = 14
+	time = 14
 	// SEQUENCE, SEQUENCE OF, Constructed
-	sequence         = 16
+	sequence = 16
 	///SET, SET OF, Constructed
-	set              = 17
+	set = 17
 	// NumericString
-	numericstring    = 18
+	numericstring = 18
 	// PrintableString
-	printablestring  = 19
+	printablestring = 19
 	// TeletexString, T61String
-	t61string        = 20
+	t61string = 20
 	// VideotexString
-	videotexstring   = 21
+	videotexstring = 21
 	// IA5String
-	ia5string        = 22
+	ia5string = 22
 	// UTCTime
-	utctime          = 23
+	utctime = 23
 	// GeneralizedTime
-	generalizedtime  = 24
+	generalizedtime = 24
 	// GraphicString
-	graphicstring    = 25
+	graphicstring = 25
 	// VisibleString, ISO646String
-	visiblestring    = 26
+	visiblestring = 26
 	// GeneralString
-	generalstring    = 27
+	generalstring = 27
 	// UniversalString
-	universalstring  = 28
+	universalstring = 28
 	// CHARACTER STRING
-	characterstring  = 29
+	characterstring = 29
 	// BMPString
-	bmpstring        = 30
-	date             = 0x1f
-	time_of_day      = 0x20
-	date_time        = 0x21
-	duration         = 0x22
+	bmpstring   = 30
+	date        = 0x1f
+	time_of_day = 0x20
+	date_time   = 0x21
+	duration    = 0x22
 	// Internationalized OID
-	i18_oid          = 0x23
+	i18_oid = 0x23
 	// Internationalized Relative OID
 	// Reserved 0x25 and above
 	relative_i18_oid = 0x24

@@ -172,7 +172,7 @@ fn PrincipalName.decode(src []u8, loc i64, p asn1.Params) !(PrincipalName, i64) 
 	ks0 := KerberosString.from_string(gs0.value())!
 
 	ret := PrincipalName{
-		name_type: el0
+		name_type:   el0
 		name_string: [ks0]
 	}
 	return ret, pos
@@ -183,7 +183,7 @@ fn main() {
 	data := [u8(0x30), 0x15, 0xa0, 0x03, 0x02, 0x01, 0x01, 0xa1, 0x0e, 0x30, 0x0c, 0x1b, 0x0a,
 		0x62, 0x6f, 0x62, 0x62, 0x61, 0x2d, 0x66, 0x65, 0x74, 0x74]
 	p := PrincipalName{
-		name_type: asn1.Integer.from_i64(1)
+		name_type:   asn1.Integer.from_i64(1)
 		name_string: [KerberosString.from_string('bobba-fett')!]
 	}
 	mut out := []u8{}

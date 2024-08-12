@@ -35,7 +35,7 @@ fn Sequence.new_with_tag(tag Tag, seqof bool) !Sequence {
 		return error('Not a valid sequence tag')
 	}
 	return Sequence{
-		tag: tag
+		tag:   tag
 		seqof: seqof
 	}
 }
@@ -134,7 +134,7 @@ pub fn (s Sequence) encode(mut dst []u8, p Params) ! {
 
 pub fn Sequence.decode(src []u8, loc i64, p Params) !(Sequence, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
-	if raw.tag.class() != .universal && !raw.tag.is_constructed()
+	if raw.tag.tag_class() != .universal && !raw.tag.is_constructed()
 		&& raw.tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: bad sequence tag')
 	}
@@ -151,7 +151,7 @@ pub fn Sequence.decode(src []u8, loc i64, p Params) !(Sequence, i64) {
 // Utility function
 //
 fn Sequence.parse_contents(tag Tag, contents []u8, p Params) !Sequence {
-	if tag.class() != .universal && !tag.is_constructed()
+	if tag.tag_class() != .universal && !tag.is_constructed()
 		&& tag.tag_number() != int(TagType.sequence) {
 		return error('Sequence: not sequence tag')
 	}
@@ -186,7 +186,7 @@ fn parse_primitive_element(tag Tag, contents []u8, p Params) !Element {
 		return error('not primitive tag')
 	}
 	// for other class, just return raw element
-	if tag.class() != .universal {
+	if tag.tag_class() != .universal {
 		return RawElement.new(tag, contents)
 	}
 	// parse as an universal class primitive type
@@ -238,7 +238,7 @@ fn parse_primitive_element(tag Tag, contents []u8, p Params) !Element {
 		//   - relaxed parsing by return raw asn1 object.
 		else {
 			return RawElement{
-				tag: tag
+				tag:     tag
 				payload: contents
 			}
 		}
@@ -251,7 +251,7 @@ fn parse_constructed_element(tag Tag, contents []u8, p Params) !Element {
 	}
 	// Its maybe Explict or Implicit TaggedType, but at here we have no enought
 	// information to parse on, so we just return RawElement instead.
-	if tag.class() != .universal {
+	if tag.tag_class() != .universal {
 		return RawElement.new(tag, contents)
 	}
 	// we only parse sequence(of) and or set(of). type
@@ -296,7 +296,7 @@ pub fn new_sequence() Sequence {
 }
 
 // new_sequence_with_class creates new empty sequence with specific ASN.1 class.
-pub fn new_sequence_with_class(c Class) Sequence {
+pub fn new_sequence_with_class(c TagClass) Sequence {
 	seq := Sequence{
 		tag: new_tag(c, true, int(TagType.sequence))
 	}

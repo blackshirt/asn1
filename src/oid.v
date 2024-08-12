@@ -141,7 +141,7 @@ pub fn (oid Oid) encode(mut dst []u8, p Params) ! {
 
 pub fn Oid.decode(src []u8, loc i64, p Params) !(Oid, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
-	if raw.tag.class() != .universal || raw.tag.is_constructed()
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
 		|| raw.tag.tag_number() != int(TagType.oid) {
 		return error('Oid: bad tag of universal class type')
 	}

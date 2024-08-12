@@ -118,7 +118,7 @@ pub fn (s Set) encode(mut dst []u8, p Params) ! {
 pub fn Set.decode(src []u8, loc i64, p Params) !(Set, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
 
-	if raw.tag.class() != .universal && !raw.tag.is_constructed()
+	if raw.tag.tag_class() != .universal && !raw.tag.is_constructed()
 		&& raw.tag.tag_number() != int(TagType.set) {
 		return error('Set: bad set tag')
 	}
@@ -207,7 +207,7 @@ pub fn new_set() Set {
 }
 
 // new_set_with_class creates new set with specific ASN.1 class.
-pub fn new_set_with_class(c Class) Set {
+pub fn new_set_with_class(c TagClass) Set {
 	set := Set{
 		tag: new_tag(c, true, int(TagType.set))
 	}

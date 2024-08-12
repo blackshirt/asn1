@@ -37,7 +37,7 @@ fn test_universal_class_tag_length_handling() ! {
 
 struct TagUnpackTest {
 	bytes       []u8
-	class       Class
+	class       TagClass
 	constructed bool
 	number      int
 	lastpos     int
@@ -149,7 +149,7 @@ fn test_tagandlength_handling() ! {
 
 struct TagNumberTest {
 	num         int
-	class       Class
+	class       TagClass
 	constructed bool
 	exp         []u8
 	err         IError

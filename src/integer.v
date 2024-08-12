@@ -258,7 +258,7 @@ pub fn Integer.decode(src []u8, loc i64, p Params) !(Integer, i64) {
 		return error('IA5String: bad ia5string bytes length')
 	}
 	raw, next := RawElement.decode(src, loc, p)!
-	if raw.tag.class() != .universal || raw.tag.is_constructed()
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
 		|| raw.tag.tag_number() != int(TagType.integer) {
 		return error('Integer: bad tag of universal class type')
 	}

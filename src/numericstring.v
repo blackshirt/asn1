@@ -74,7 +74,7 @@ pub fn (ns NumericString) encode(mut dst []u8, p Params) ! {
 pub fn NumericString.decode(src []u8, loc i64, p Params) !(NumericString, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
 	// correct way to check if this NumericString is in constucted form
-	if raw.tag.class() != .universal || raw.tag.is_constructed()
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
 		|| raw.tag.tag_number() != int(TagType.numericstring) {
 		return error('NumericString: bad tag of universal class type')
 	}

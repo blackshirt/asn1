@@ -78,7 +78,7 @@ pub fn (v IA5String) encode(mut dst []u8, p Params) ! {
 pub fn IA5String.decode(src []u8, loc i64, p Params) !(IA5String, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
 	// TODO: checks tag for matching type
-	if raw.tag.class() != .universal || raw.tag.is_constructed()
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
 		|| raw.tag.tag_number() != int(TagType.ia5string) {
 		return error('IA5String: bad tag of universal class type')
 	}

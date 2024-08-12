@@ -15,7 +15,7 @@ fn test_encode_decode_numericstring_basic() {
 	// decode back
 	nsback, _ := NumericString.decode(out, 0)!
 
-	assert nsback.tag.class() == .universal
+	assert nsback.tag.tag_class() == .universal
 	assert nsback.tag.is_constructed() == false
 	assert nsback.tag.tag_number() == int(TagType.numericstring)
 	assert nsback.value == str
@@ -49,11 +49,11 @@ fn test_encode_decode_numericstring_advanced() ! {
 		ln.encode(mut dst)!
 
 		d := NumericalTest{
-			inp: s
-			exp_length: dst.len
+			inp:            s
+			exp_length:     dst.len
 			exp_bytelength: dst
-			exp_values: b
-			err: error('invalid_length_error')
+			exp_values:     b
+			err:            error('invalid_length_error')
 		}
 
 		exp << d

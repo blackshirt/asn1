@@ -19,7 +19,7 @@ fn test_encode_printablestring_basic() ! {
 
 	psback, _ := PrintableString.decode(buf, 0)!
 	assert psback.tag.tag_number() == int(TagType.printablestring)
-	assert psback.tag.class() == .universal
+	assert psback.tag.tag_class() == .universal
 
 	assert psback.value == s
 }

@@ -77,7 +77,7 @@ pub fn (vs VisibleString) encode(mut dst []u8, p Params) ! {
 
 pub fn VisibleString.decode(src []u8, loc i64, p Params) !(VisibleString, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
-	if raw.tag.class() != .universal || raw.tag.is_constructed()
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
 		|| raw.tag.tag_number() != int(TagType.visiblestring) {
 		return error('VisibleString: bad tag of universal class type')
 	}
