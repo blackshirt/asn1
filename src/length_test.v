@@ -3,56 +3,58 @@
 // that can be found in the LICENSE file.
 module asn1
 
-struct LengthEncodeTest {
-	inp int
-	exp []u8
+struct LengthPackTest {
+	value    i64
+	expected []u8
+	err      IError
 }
 
-fn test_serialize_length() ! {
+fn test_length_pack_and_unpack_tofrom_asn() ! {
 	edata := [
-		LengthEncodeTest{0, [u8(0x00)]},
-		LengthEncodeTest{10, [u8(0x0a)]},
-		LengthEncodeTest{127, [u8(0x7f)]},
-		LengthEncodeTest{255, [u8(0x81), 0xff]},
-		LengthEncodeTest{256, [u8(0x82), 0x01, 0x00]},
-		LengthEncodeTest{383, [u8(0x82), 0x01, 127]},
-		LengthEncodeTest{257, [u8(0x82), 0x01, 0x01]},
-		LengthEncodeTest{65535, [u8(0x82), 0xff, 0xff]},
-		LengthEncodeTest{65536, [u8(0x83), 0x01, 0x00, 0x00]},
-		LengthEncodeTest{16777215, [u8(0x83), 0xff, 0xff, 0xff]},
+		LengthPackTest{0, [u8(0x00)], none},
+		LengthPackTest{10, [u8(0x0a)], none},
+		LengthPackTest{127, [u8(0x7f)], none},
+		LengthPackTest{255, [u8(0x81), 0xff], none},
+		LengthPackTest{256, [u8(0x82), 0x01, 0x00], none},
+		LengthPackTest{383, [u8(0x82), 0x01, 127], none},
+		LengthPackTest{257, [u8(0x82), 0x01, 0x01], none},
+		LengthPackTest{65535, [u8(0x82), 0xff, 0xff], none},
+		LengthPackTest{65536, [u8(0x83), 0x01, 0x00, 0x00], none},
+		LengthPackTest{16777215, [u8(0x83), 0xff, 0xff, 0xff], none},
 	]
 	for i, c in edata {
 		mut dst := []u8{}
-		dump(i)
-		dst = serialize_length(mut dst, c.inp)
-		assert dst == c.exp
 
-		length, idx := decode_length(dst, 0)!
+		s := Length.from_i64(c.value)!
+		s.encode(mut dst)!
+		assert dst == c.expected
 
-		assert length == c.inp
-		assert idx == c.exp.len
+		length, idx := Length.decode(dst, 0)!
+
+		assert length == c.value
+		assert idx == c.expected.len
 	}
 }
 
 struct ByteLengthTest {
-	inp int
-	exp []u8
+	value    i64
+	expected []u8
 }
 
-fn test_decode_length() {
+fn test_basic_simple_length_unpack() {
 	data := [u8(0x82), 0x01, 0x7F]
+	n, pos := Length.decode(data, 0)!
 
-	n, pos := decode_length(data, 0)!
 	assert n == 383
 	assert pos == 3
 
 	data2 := [u8(0x82), 0x01, 0x31]
-	n2, pos2 := decode_length(data2, 0)!
+	n2, pos2 := Length.decode(data2, 0)!
 	assert n2 == 305
 	assert pos2 == 3
 }
 
-fn test_append_length() {
+fn test_length_pack_and_append() ! {
 	bdata := [
 		ByteLengthTest{1, [u8(1)]},
 		ByteLengthTest{127, [u8(0x7f)]},
@@ -66,21 +68,22 @@ fn test_append_length() {
 		ByteLengthTest{16777215, [u8(0xff), 0xff, 0xff]},
 	]
 
-	for i in bdata {
+	for v in bdata {
 		mut dst := []u8{}
-		dump(i)
-		out := append_length(mut dst, i.inp)
 
-		assert out == i.exp
+		ln := Length.from_i64(v.value)!
+		ln.pack_and_append(mut dst)
+
+		assert dst == v.expected
 	}
 }
 
 struct LengthTest {
-	inp int
-	exp int
+	value    i64
+	expected int
 }
 
-fn test_calc_length() {
+fn test_length_bytes_len() ! {
 	ldata := [
 		LengthTest{1, 1},
 		LengthTest{128, 1},
@@ -92,18 +95,18 @@ fn test_calc_length() {
 		LengthTest{16777215, 3},
 		LengthTest{16777216, 4},
 		LengthTest{2147483647, 4}, // math.max_i32
-		// LengthTest{4294967295, 4}, // math.max_u32, its silently overflow
 	]
 
 	for c in ldata {
-		out := calc_length(c.inp)
+		len := Length.from_i64(c.value)!
+		out := len.bytes_len()
 
-		assert out == c.exp
+		assert out == c.expected
 	}
 }
 
-fn test_calc_length_of_length() {
-	ldata := [
+fn test_calc_length_of_length() ! {
+	data := [
 		LengthTest{1, 1},
 		LengthTest{128, 2},
 		LengthTest{255, 2},
@@ -114,14 +117,13 @@ fn test_calc_length_of_length() {
 		LengthTest{16777215, 4},
 		LengthTest{16777216, 5},
 		LengthTest{2147483647, 5}, // math.max_i32
-		// LengthTest{4294967295, 4}, // math.max_u32, its silently overflow
 	]
 
-	for c in ldata {
-		// dump(i)
-		out := calc_length_of_length(c.inp)
+	for c in data {
+		len := Length.from_i64(c.value)!
+		out := len.packed_length()!
 
-		assert out == c.exp
+		assert out == c.expected
 	}
 }
 
@@ -129,24 +131,23 @@ fn test_calc_length_of_length() {
 fn test_tc3_absence_standard_length_block() ! {
 	value := []u8{}
 
-	_, _ := decode_length(value, 1) or {
-		assert err == error('truncated tag or length')
+	_, _ := Length.decode(value, 0) or {
+		assert err == error('Length: truncated length')
 		return
 	}
 }
 
 fn test_tc5_unnecessary_usage_long_of_length_form() ! {
-	// this tag above 5 bytes.
-	value := [u8(0x9f), 0xff, 0xff, 0xff, 0x7f, 0x81, 0x01, 0x40]
+	value := [u8(0x9f), 0xff, 0x7f, 0x81, 0x01, 0x40]
 
-	tag, pos := read_tag(value, 0)!
+	tag, pos := Tag.decode(value, 0)!
 	// 0x9f == 10011111
-	assert tag.class == .context
+	assert tag.class == .context_specific
 	assert tag.constructed == false
-	assert pos == 5
+	assert pos == 3
 	// the length bytes, [0x81, 0x01] dont needed in long form.
-	_, _ := decode_length(value, pos) or {
-		assert err == error('dont needed in long form')
+	_, _ := Length.decode(value, pos) or {
+		assert err == error('Length: dont needed in long form')
 		return
 	}
 }

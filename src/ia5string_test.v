@@ -9,25 +9,36 @@ struct IA5StringTest {
 	err IError
 }
 
-fn test_ia58string_handling() ! {
+fn test_ia5string_handling() ! {
 	data := [
 		IA5StringTest{'test', [u8(22), 4, 116, 101, 115, 116], none},
 		IA5StringTest{'abc', '\x16\x03abc'.bytes(), none},
-		IA5StringTest{`🚀`.str(), []u8{}, error('contains invalid char')},
+		IA5StringTest{`🚀`.str(), []u8{}, error('IA5String: contains non-ascii chars')},
 		IA5StringTest{')', '\x16\x01)'.bytes(), none},
-		IA5StringTest{'\x13\x03ab\x00', []u8{}, error('contains invalid char')},
+		IA5StringTest{'\x13\x03ab\x00', []u8{}, error('IA5String: contains non-ascii chars')},
 	]
 
 	for c in data {
-		out := serialize_ia5string(c.s) or {
+		s := IA5String.from_string(c.s) or {
+			assert err == c.err
+			continue
+		}
+		mut out := []u8{}
+		s.encode(mut out) or {
 			assert err == c.err
 			continue
 		}
 		assert out == c.out
 
-		tag, back := decode_ia5string(out)!
+		// unpack back
+		ret, next := IA5String.decode(out, 0) or {
+			assert err == c.err
+			continue
+		}
 
-		assert tag.number == int(TagType.ia5string)
-		assert back == c.s
+		assert ret.tag.tag_number() == 22
+		assert ret.tag.tag_class() == TagClass.universal
+		assert ret.tag.is_constructed() == false
+		assert ret.value == c.s
 	}
 }

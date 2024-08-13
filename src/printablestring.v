@@ -13,100 +13,88 @@ module asn1
 //
 const printable_symbols = r"(')+,-./:=?".bytes()
 
-type PrintableString = string
+pub struct PrintableString {
+	value string
+	tag   Tag = Tag{.universal, false, int(TagType.printablestring)}
+}
 
-// new_printable_string creates PrintableString from the string s
-pub fn new_printable_string(s string) !Encoder {
-	for c in s.bytes() {
-		if !is_printablestring(c) {
-			return error('invalid printable char')
-		}
+pub fn PrintableString.from_string(s string, p Params) !PrintableString {
+	return PrintableString.from_bytes(s.bytes(), p)!
+}
+
+pub fn PrintableString.from_bytes(src []u8, p Params) !PrintableString {
+	if !printable_chars(src, p) {
+		return error('PrintableString: contains non-printable string')
 	}
-	return PrintableString(s)
+	return PrintableString{
+		value: src.bytestr()
+	}
 }
 
 pub fn (ps PrintableString) tag() Tag {
-	return new_tag(.universal, false, int(TagType.printablestring))
+	return ps.tag
 }
 
-pub fn (ps PrintableString) length() int {
-	return ps.len
+pub fn (ps PrintableString) value() string {
+	return ps.value
 }
 
-pub fn (ps PrintableString) size() int {
-	mut size := 0
-	tag := ps.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	l := calc_length_of_length(ps.length())
-	size += int(l)
-
-	size += ps.length()
-
-	return size
+pub fn (ps PrintableString) payload(p Params) ![]u8 {
+	if !printable_chars(ps.value.bytes(), p) {
+		return error('PrintableString: contains non-printable string')
+	}
+	return ps.value.bytes()
 }
 
-pub fn (ps PrintableString) encode() ![]u8 {
-	return serialize_printablestring(ps)
+pub fn (ps PrintableString) length(p Params) !int {
+	return ps.value.len
 }
 
-pub fn PrintableString.decode(src []u8) !PrintableString {
-	_, v := decode_printablestring(src)!
+pub fn (ps PrintableString) packed_length(p Params) !int {
+	mut n := 0
+	n += ps.tag.packed_length(p)!
+	len := ps.length(p)!
+	pslen := Length.from_i64(len)!
+	n += pslen.packed_length(p)!
+	n += len
 
-	return PrintableString(v)
+	return n
 }
 
-fn (ps PrintableString) str() string {
-	return 'PRINTABLESTRING ${string(ps)}'
+pub fn (ps PrintableString) encode(mut dst []u8, p Params) ! {
+	// recheck
+	if !printable_chars(ps.value.bytes(), p) {
+		return error('PrintableString: contains non-printable string')
+	}
+	if p.mode != .der && p.mode != .ber {
+		return error('PrintableString: unsupported mode')
+	}
+	// pack in DER mode
+	ps.tag.encode(mut dst, p)!
+	length := Length.from_i64(ps.value.bytes().len)!
+	length.encode(mut dst, p)!
+	dst << ps.value.bytes()
+}
+
+pub fn PrintableString.decode(src []u8, loc i64, p Params) !(PrintableString, i64) {
+	raw, next := RawElement.decode(src, loc, p)!
+
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.printablestring) {
+		return error('PrintableString: bad tag of universal class type')
+	}
+	if raw.payload.len == 0 {
+		return PrintableString{}, next
+	}
+	ps := PrintableString.from_bytes(raw.payload)!
+	return ps, next
+}
+
+// utility function
+fn printable_chars(bytes []u8, p Params) bool {
+	return bytes.all(is_printablestring(it))
 }
 
 fn is_printablestring(c u8) bool {
 	return c.is_alnum() || c == u8(0x20) || c in asn1.printable_symbols
-}
-
-fn decode_printablestring(src []u8) !(Tag, string) {
-	if src.len < 2 {
-		return error('decode numeric: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	if tag.number != int(TagType.printablestring) {
-		return error('bad tag')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-
-	// mut length := 0
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-
-	// remaining data, ony slicing required parts
-	out := read_bytes(src, next, length)!
-	for c in out {
-		if !is_printablestring(c) {
-			return error('invalid char error')
-		}
-	}
-	return tag, out.bytestr()
-}
-
-fn serialize_printablestring(s string) ![]u8 {
-	p := s.bytes()
-	for c in s {
-		if !is_printablestring(c) {
-			return error('invalid char error')
-		}
-	}
-
-	t := new_tag(.universal, false, int(TagType.printablestring))
-	mut out := []u8{}
-
-	serialize_tag(mut out, t)
-	serialize_length(mut out, p.len)
-	out << p
-	return out
 }

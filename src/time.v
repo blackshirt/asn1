@@ -23,51 +23,92 @@ module asn1
 // TODO:
 // - check for invalid representation of date and hhmmss part.
 // - represented UTCTime in time.Time
-pub type UTCTime = string
+
+pub struct UTCTime {
+	value string
+	tag   Tag = Tag{.universal, false, int(TagType.utctime)}
+}
 
 // new_utctime creates new UTCTime from string s.
-pub fn new_utctime(s string) !Encoder {
-	valid := validate_utctime(s)!
+pub fn UTCTime.from_string(s string, p Params) !UTCTime {
+	valid := validate_utctime(s, p)!
+
 	if !valid {
-		return error('fail on validate utctime')
+		return error('UTCTime: fail on validate utctime')
 	}
-	return UTCTime(s)
+	return UTCTime{
+		value: s
+	}
 }
 
-pub fn (utc UTCTime) tag() Tag {
-	return new_tag(.universal, false, int(TagType.utctime))
+pub fn UTCTime.from_bytes(b []u8, p Params) !UTCTime {
+	return UTCTime.from_string(b.bytestr(), p)!
 }
 
-pub fn (utc UTCTime) length() int {
-	return utc.len
+pub fn (ut UTCTime) tag() Tag {
+	return ut.tag
 }
 
-pub fn (utc UTCTime) size() int {
-	mut size := 0
-	tag := utc.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	l := calc_length_of_length(utc.length())
-	size += int(l)
-
-	size += utc.length()
-
-	return size
+pub fn (ut UTCTime) value() string {
+	return ut.value
 }
 
-pub fn (utc UTCTime) encode() ![]u8 {
-	return serialize_utctime(utc)
+pub fn (ut UTCTime) payload(p Params) ![]u8 {
+	return ut.value.bytes()
 }
 
-pub fn UTCTime.decode(src []u8) !UTCTime {
-	_, s := decode_utctime(src)!
-	return UTCTime(s)
+pub fn (ut UTCTime) length(p Params) !int {
+	return ut.value.len
 }
 
-fn validate_utctime(s string) !bool {
+pub fn (ut UTCTime) packed_length(p Params) !int {
+	mut n := 0
+	n += ut.tag.packed_length(p)!
+	len := Length.from_i64(ut.value.bytes().len)!
+	n += len.packed_length(p)!
+
+	n += ut.value.bytes().len
+
+	return n
+}
+
+pub fn (t UTCTime) encode(mut dst []u8, p Params) ! {
+	valid := validate_utctime(t.value, p)!
+	if !valid {
+		return error('UTCTime: fail on validate utctime')
+	}
+	if p.mode != .der && p.mode != .ber {
+		return error('Integer: unsupported mode')
+	}
+	t.tag.encode(mut dst, p)!
+	bytes := t.value.bytes()
+	length := Length.from_i64(bytes.len)!
+	length.encode(mut dst, p)!
+	dst << bytes
+}
+
+pub fn UTCTime.decode(src []u8, loc i64, p Params) !(UTCTime, i64) {
+	if src.len < 13 {
+		return error('UTCTime: bad len')
+	}
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.utctime) {
+		return error('UTCTime: bad tag of universal class type')
+	}
+	if raw.payload.len == 0 {
+		return error('UTCTime: len==0')
+	}
+
+	ret := UTCTime.from_string(raw.payload.bytestr())!
+	return ret, next
+}
+
+// utility function for UTCTime
+//
+fn validate_utctime(s string, p Params) !bool {
 	if !basic_utctime_check(s) {
-		return error('fail basic utctime check')
+		return false
 	}
 	// read contents
 	src := s.bytes()
@@ -106,51 +147,6 @@ fn validate_utctime(s string) !bool {
 	return true
 }
 
-fn serialize_utctime(s string) ![]u8 {
-	valid := validate_utctime(s)!
-	if !valid {
-		return error('fail on validate utctime')
-	}
-	p := s.bytes()
-	t := new_tag(.universal, false, int(TagType.utctime))
-	mut out := []u8{}
-
-	serialize_tag(mut out, t)
-	serialize_length(mut out, p.len)
-	out << p
-	return out
-}
-
-fn decode_utctime(src []u8) !(Tag, string) {
-	if src.len < 2 {
-		return error('decode utctime: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	// check tag is matching utctime tag
-	if tag.number != int(TagType.utctime) {
-		return error('bad tag detected')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-
-	// mut length := 0
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	out := read_bytes(src, next, length)!
-
-	str := out.bytestr()
-	valid := validate_utctime(str)!
-	if !valid {
-		return error('invalid utctime string')
-	}
-
-	return tag, str
-}
-
 fn basic_utctime_check(s string) bool {
 	return s.len == 13 && valid_time_contents(s)
 }
@@ -172,46 +168,89 @@ fn valid_time_contents(s string) bool {
 // (i.e., times are `YYYYMMDDHHMMSSZ`), even where the number of seconds
 // is zero.
 // - GeneralizedTime values MUST NOT include fractional seconds.
-pub type GeneralizedTime = string
+pub struct GeneralizedTime {
+	value string
+	tag   Tag = Tag{.universal, false, int(TagType.generalizedtime)}
+}
 
-pub fn new_generalizedtime(s string) !Encoder {
-	valid := validate_generalizedtime(s)!
+pub fn GeneralizedTime.from_string(s string, p Params) !GeneralizedTime {
+	valid := validate_generalizedtime(s, p)!
 	if !valid {
-		return error('fail on validate generalizedtime')
+		return error('GeneralizedTime: failed on validate')
 	}
-	return GeneralizedTime(s)
+	return GeneralizedTime{
+		value: s
+	}
+}
+
+pub fn GeneralizedTime.from_bytes(b []u8, p Params) !GeneralizedTime {
+	return GeneralizedTime.from_string(b.bytestr(), p)!
 }
 
 pub fn (gt GeneralizedTime) tag() Tag {
-	return new_tag(.universal, false, int(TagType.generalizedtime))
+	return gt.tag
 }
 
-pub fn (gt GeneralizedTime) length() int {
-	return gt.len
+pub fn (gt GeneralizedTime) value() string {
+	return gt.value
 }
 
-pub fn (gt GeneralizedTime) size() int {
-	mut size := 0
-	tag := gt.tag()
-	t := calc_tag_length(tag)
-	size += t
+pub fn (gt GeneralizedTime) packed_length(p Params) !int {
+	mut n := 0
+	n += gt.tag.packed_length(p)!
+	len := Length.from_i64(gt.value.bytes().len)!
+	n += len.packed_length(p)!
 
-	l := calc_length(gt.length())
-	size += int(l)
+	n += gt.value.bytes().len
 
-	size += gt.length()
-
-	return size
+	return n
 }
 
-pub fn (gt GeneralizedTime) encode() ![]u8 {
-	return serialize_generalizedtime(gt)
+pub fn (gt GeneralizedTime) payload(p Params) ![]u8 {
+	return gt.value.bytes()
 }
 
-pub fn GeneralizedTime.decode(src []u8) !GeneralizedTime {
-	_, s := decode_generalizedtime(src)!
-	return GeneralizedTime(s)
+pub fn (gt GeneralizedTime) length(p Params) !int {
+	return gt.value.len
 }
+
+pub fn (gt GeneralizedTime) encode(mut dst []u8, p Params) ! {
+	valid := validate_generalizedtime(gt.value, p)!
+	if !valid {
+		return error('GeneralizedTime: fail on validate')
+	}
+	if p.mode != .der && p.mode != .ber {
+		return error('GeneralizedTime: unsupported mode')
+	}
+
+	gt.tag.encode(mut dst, p)!
+	bytes := gt.value.bytes()
+	length := Length.from_i64(bytes.len)!
+	length.encode(mut dst, p)!
+	dst << bytes
+}
+
+pub fn GeneralizedTime.decode(src []u8, loc i64, p Params) !(GeneralizedTime, i64) {
+	if src.len < 15 {
+		return error('GeneralizedTime: bad payload len')
+	}
+	raw, next := RawElement.decode(src, loc, p)!
+	// its only for universal class, maybe present with different context/class
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.generalizedtime) {
+		return error('GeneralizedTime: bad tag of universal class type')
+	}
+	if raw.payload.len == 0 {
+		// we dont allow null length
+		return error('GeneralizedTime: len==0')
+	}
+	ret := GeneralizedTime.from_string(raw.payload.bytestr())!
+
+	return ret, next
+}
+
+// utility function for GeneralizedTime
+// TODO: more clear and concise validation check
 
 fn min_generalizedtime_length(s string) bool {
 	// minimum length without fractional element
@@ -227,9 +266,9 @@ fn basic_generalizedtime_check(s string) bool {
 	return min_generalizedtime_length(s) && valid_time_contents(s)
 }
 
-fn validate_generalizedtime(s string) !bool {
+fn validate_generalizedtime(s string, p Params) !bool {
 	if !basic_generalizedtime_check(s) {
-		return error('fail basic generalizedtime check')
+		return false
 	}
 	// read contents
 	src := s.bytes()
@@ -261,48 +300,4 @@ fn validate_generalizedtime(s string) !bool {
 		return false
 	}
 	return true
-}
-
-fn serialize_generalizedtime(s string) ![]u8 {
-	valid := validate_generalizedtime(s)!
-	if !valid {
-		return error('fail on validate utctime')
-	}
-	p := s.bytes()
-	t := new_tag(.universal, false, int(TagType.generalizedtime))
-	mut out := []u8{}
-
-	serialize_tag(mut out, t)
-	serialize_length(mut out, p.len)
-	out << p
-	return out
-}
-
-fn decode_generalizedtime(src []u8) !(Tag, string) {
-	if src.len < 2 {
-		return error('decode utctime: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	// check tag is matching
-	if tag.number != int(TagType.generalizedtime) {
-		return error('bad tag detected')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-
-	// mut length := 0
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	out := read_bytes(src, next, length)!
-
-	str := out.bytestr()
-	valid := validate_generalizedtime(str)!
-	if !valid {
-		return error('invalid generalizedtime string')
-	}
-	return tag, str
 }

@@ -7,16 +7,18 @@ fn test_encode_decode_numericstring_basic() {
 	str := '98'
 	exp := [u8(0x12), 0x02, 57, 56]
 
-	out := serialize_numericstring(str)!
+	ns := NumericString.from_string(str)!
+	mut out := []u8{}
+	ns.encode(mut out)!
 	assert out == exp
 
 	// decode back
-	tag, sout := decode_numericstring(out)!
+	nsback, _ := NumericString.decode(out, 0)!
 
-	assert tag.class == .universal
-	assert tag.constructed == false
-	assert tag.number == int(TagType.numericstring)
-	assert str == sout
+	assert nsback.tag.tag_class() == .universal
+	assert nsback.tag.is_constructed() == false
+	assert nsback.tag.tag_number() == int(TagType.numericstring)
+	assert nsback.value == str
 }
 
 struct NumericalTest {
@@ -42,9 +44,9 @@ fn test_encode_decode_numericstring_advanced() ! {
 	for k, v in m {
 		s := k.repeat(v) // strings.repeat_string(k, v)
 		b := s.bytes()
-		l := b.len
+		ln := Length.from_i64(b.len)!
 		mut dst := []u8{}
-		serialize_length(mut dst, l)
+		ln.encode(mut dst)!
 
 		d := NumericalTest{
 			inp: s
@@ -61,15 +63,17 @@ fn test_encode_decode_numericstring_advanced() ! {
 		mut exp_out := [u8(TagType.numericstring)]
 		exp_out << c.exp_bytelength
 		exp_out << c.exp_values
-		out := serialize_numericstring(c.inp) or {
+		ns := NumericString.from_string(c.inp) or {
 			assert err == c.err
 			continue
 		}
+		mut out := []u8{}
+		ns.encode(mut out)!
 		assert out == exp_out
 
 		// decode back
-		tag, back := decode_numericstring(out)!
+		back, _ := NumericString.decode(out, 0)!
 
-		assert back == c.inp
+		assert back.value == c.inp
 	}
 }

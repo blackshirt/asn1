@@ -7,19 +7,21 @@ module asn1
 fn test_encode_printablestring_basic() ! {
 	s := 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 	mut buf := []u8{}
-	buf << u8(0x13)
-	serialize_length(mut buf, s.len)
-	buf << s.bytes()
-	out := serialize_printablestring(s)!
+	ps := PrintableString.from_string(s)!
+	ps.encode(mut buf)!
 
+	mut out := [u8(0x13)]
+	length := [u8(0x81), u8(s.len)]
+	out << length
+	out << s.bytes()
 	// dump(out)
 	assert out == buf
 
-	tag, str := decode_printablestring(out)!
-	assert tag.number == int(TagType.printablestring)
-	assert tag.class == .universal
+	psback, _ := PrintableString.decode(buf, 0)!
+	assert psback.tag.tag_number() == int(TagType.printablestring)
+	assert psback.tag.tag_class() == .universal
 
-	assert str == s
+	assert psback.value == s
 }
 
 struct EncodingTest[T] {
@@ -37,14 +39,17 @@ fn test_encode_printablestring_generic() {
 	]
 
 	for t in data {
-		out := serialize_printablestring(string(t.input))!
+		ps := PrintableString.from_string(string(t.input))!
+		mut out := []u8{}
+		ps.encode(mut out)!
+		// out := serialize_printablestring(string(t.input))!
 		assert out == t.exp
 
 		// decode back
-		tag, str := decode_printablestring(out)!
+		psback, _ := PrintableString.decode(out, 0)!
 
-		assert str == t.input
-		assert tag.number == int(TagType.printablestring)
-		assert tag.constructed == false
+		assert psback.value == t.input
+		assert psback.tag.tag_number() == int(TagType.printablestring)
+		assert psback.tag.is_constructed() == false
 	}
 }

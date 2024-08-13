@@ -4,78 +4,84 @@
 module asn1
 
 // OCTETSTRING
-//
-// octetstring handling
-type OctetString = string
+// The ASN.1 OCTET STRING type contains arbitrary strings of octets.
+// This type is very similar to BIT STRING, except that all values must be an integral number of eight bits.
+// You can use constraints to specify a maximum length for an OCTET STRING type.
+pub struct OctetString {
+mut:
+	tag   Tag = Tag{.universal, false, int(TagType.octetstring)}
+	value string
+}
 
 // new_octetstring creates new octet string
-pub fn new_octetstring(s string) Encoder {
-	return OctetString(s)
+pub fn OctetString.from_string(s string, p Params) !OctetString {
+	if !valid_octet_string(s) {
+		return error('not valid octet string')
+	}
+	return OctetString{
+		value: s
+	}
+}
+
+pub fn OctetString.from_bytes(src []u8, p Params) !OctetString {
+	return OctetString.from_string(src.bytestr(), p)!
+}
+
+fn valid_octet_string(s string) bool {
+	// just return true
+	return true
 }
 
 pub fn (os OctetString) tag() Tag {
-	return new_tag(.universal, false, int(TagType.octetstring))
+	return os.tag
 }
 
-pub fn (os OctetString) length() int {
-	return os.len
+pub fn (os OctetString) value() string {
+	return os.value
 }
 
-pub fn (os OctetString) size() int {
-	mut size := 0
-	tag := os.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	l := calc_length_of_length(os.length())
-	size += int(l)
-
-	size += os.length()
-
-	return size
+pub fn (os OctetString) payload(p Params) ![]u8 {
+	return os.value.bytes()
 }
 
-pub fn (os OctetString) encode() ![]u8 {
-	return serialize_octetstring(os)
+pub fn (os OctetString) length(p Params) !int {
+	return os.value.bytes().len
 }
 
-pub fn OctetString.decode(src []u8) !OctetString {
-	_, v := decode_octetstring(src)!
-	return OctetString(v)
+pub fn (os OctetString) packed_length(p Params) !int {
+	mut n := 0
+
+	n += os.tag.packed_length(p)!
+	len := Length.from_i64(os.value.bytes().len)!
+	n += len.packed_length(p)!
+	n += os.value.bytes().len
+
+	return n
 }
 
-fn serialize_octetstring(s string) ![]u8 {
-	tag := new_tag(.universal, false, int(TagType.octetstring))
-	mut out := []u8{}
-
-	serialize_tag(mut out, tag)
-
-	bs := s.bytes()
-	serialize_length(mut out, bs.len)
-	out << bs
-
-	return out
-}
-
-fn decode_octetstring(src []u8) !(Tag, string) {
-	if src.len < 2 {
-		return error('decode: bad payload len')
+// The encoding of an octetstring value shall be either primitive or constructed
+pub fn (os OctetString) encode(mut dst []u8, p Params) ! {
+	if p.mode != .der && p.mode != .ber {
+		return error('Integer: unsupported mode')
 	}
-	tag, pos := read_tag(src, 0)!
-	if tag.number != int(TagType.octetstring) {
-		return error('bad tag')
+	// packing in DER mode
+	os.tag.encode(mut dst, p)!
+	length := Length.from_i64(os.value.bytes().len)!
+	length.encode(mut dst, p)!
+	dst << os.value.bytes()
+}
+
+pub fn OctetString.decode(src []u8, loc i64, p Params) !(OctetString, i64) {
+	raw, next := RawElement.decode(src, loc, p)!
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.octetstring) {
+		return error('OctetString: bad tag of universal class type')
 	}
-	if pos > src.len {
-		return error('truncated input')
+	// no bytes
+	if raw.payload.len == 0 {
+		return OctetString{}, next
 	}
 
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	out := read_bytes(src, next, length)!
-	val := out.bytestr()
-
-	return tag, val
+	os := OctetString.from_bytes(raw.payload, p)!
+	return os, next
 }

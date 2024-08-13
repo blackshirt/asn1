@@ -14,12 +14,18 @@ fn test_visible_string_handling() {
 	vb := [
 		VisibleTest{'', [u8(26), 0], none},
 		VisibleTest{'abc', [u8(26), 0x03, 97, 98, 99], none},
-		VisibleTest{'abc\x1A', [u8(26), 0x03, 97, 98, 99, 26], error('contains invalid (control) char')},
+		VisibleTest{'abc\x1A', [u8(26), 0x03, 97, 98, 99, 26], error('VisibleString: contains control chars')},
 		VisibleTest{'abc\x5A', [u8(26), 0x04, 97, 98, 99, 0x5a], none},
 	]
 
-	for c in vb {
-		out := serialize_visiblestring(c.inp) or {
+	for i, c in vb {
+		dump(i)
+		vs := VisibleString.from_string(c.inp) or {
+			assert err == c.err
+			continue
+		}
+		mut out := []u8{}
+		vs.encode(mut out) or {
 			assert err == c.err
 			continue
 		}
@@ -27,9 +33,12 @@ fn test_visible_string_handling() {
 		assert out == c.out
 
 		// back
-		tag, back := decode_visiblestring(out)!
+		vsback, idx := VisibleString.decode(out, 0) or {
+			assert err == c.err
+			continue
+		}
 
-		assert tag.number == int(TagType.visiblestring)
-		assert back == c.inp
+		assert vsback.tag.tag_number() == int(TagType.visiblestring)
+		assert vsback.value == c.inp
 	}
 }

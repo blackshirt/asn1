@@ -14,24 +14,41 @@ struct BSTest {
 
 fn test_new_bitstring() ! {
 	ds := [
-		BSTest{'abc'.bytes(), 8, BitString{}, error('bad pad bits or zero length')},
-		BSTest{''.bytes(), 2, BitString{}, error('bad pad bits or zero length')},
-		BSTest{[u8(0xff)], 1, BitString{}, error('bad args')},
-		BSTest{[u8(0xff)], 0, BitString{[u8(0xff)], 0}, none},
-		BSTest{[u8(0xfe)], 0, BitString{[u8(0xfe)], 0}, none},
-		BSTest{[u8(0x8e)], 0, BitString{[u8(0x8e)], 0}, none},
-		BSTest{[u8(0x88)], 0, BitString{[u8(0x88)], 0}, none},
-		BSTest{[u8(0x03), 0x02, 0x00, 0x20], 0, BitString{[u8(0x03), 0x02, 0x00, 0x20], 0}, none},
-		BSTest{[u8(0x03), 0x02, 0x05, 0x80], 5, BitString{[u8(0x03), 0x02, 0x05, 0x80], 5}, none},
+		BSTest{'abc'.bytes(), 8, BitString{}, error('BitString: bad pad bits or zero length')},
+		BSTest{''.bytes(), 2, BitString{}, error('BitString: bad pad bits or zero length')},
+		BSTest{[u8(0xff)], 1, BitString{}, error('BitString: bad args')},
+		BSTest{[u8(0xff)], 0, BitString{
+			data: [u8(0xff)]
+			pad: 0
+		}, none},
+		BSTest{[u8(0xfe)], 0, BitString{
+			data: [u8(0xfe)]
+			pad: 0
+		}, none},
+		BSTest{[u8(0x8e)], 0, BitString{
+			data: [u8(0x8e)]
+			pad: 0
+		}, none},
+		BSTest{[u8(0x88)], 0, BitString{
+			data: [u8(0x88)]
+			pad: 0
+		}, none},
+		BSTest{[u8(0x03), 0x02, 0x00, 0x20], 0, BitString{
+			data: [u8(0x03), 0x02, 0x00, 0x20]
+			pad: 0
+		}, none},
+		BSTest{[u8(0x03), 0x02, 0x05, 0x80], 5, BitString{
+			data: [u8(0x03), 0x02, 0x05, 0x80]
+			pad: 5
+		}, none},
 	]
 	for c in ds {
-		out := new_bitstring_with_pad(c.inp, c.pad) or {
+		out := BitString.new_with_pad(c.inp, c.pad) or {
 			assert err == c.err
 			continue
 		}
-		if out is BitString {
-			assert out == c.out
-		}
+
+		assert out == c.out
 	}
 }
 
@@ -49,34 +66,33 @@ fn test_serialize_and_decode_bitstring() ! {
 		BSParse{[u8(0x03), 0x02, 0x07, 0x00], [u8(0)], 7, none},
 		BSParse{[u8(0x03), 0x02, 0x07, 0x80], [u8(0x80)], 7, none},
 		BSParse{[u8(0x03), 0x03, 0x04, 0x81, 0xf0], [u8(0x81), 0xf0], 4, none},
-		BSParse{[u8(0x03), 0x00], ''.bytes(), 0, error('zero length bit string')},
+		BSParse{[u8(0x03), 0x00], ''.bytes(), 0, error('BitString: zero length bit string')},
 		// bad length
-		BSParse{[u8(0x03), 0x02, 0x07, 0x01], [u8(0x81)], 0, error('bad args')},
+		BSParse{[u8(0x03), 0x02, 0x07, 0x01], [u8(0x81)], 0, error('BitString: bad args')},
 		// bad args
-		BSParse{[u8(0x03), 0x02, 0x07, 0x40], [u8(0x81)], 0, error('bad args')},
+		BSParse{[u8(0x03), 0x02, 0x07, 0x40], [u8(0x81)], 0, error('BitString: bad args')},
 		// bad args
-		BSParse{[u8(0x03), 0x02, 0x08, 0x00], [u8(0x81)], 0, error('bad pad bits or zero length')},
+		BSParse{[u8(0x03), 0x02, 0x08, 0x00], [u8(0x81)], 0, error('BitString: bad pad bits or zero length')},
 		// bad args
 	]
-	for c in ds {
-		tag, val := decode_bitstring(c.inp) or {
+	for i, c in ds {
+		bs, idx := BitString.decode(c.inp, 0) or {
 			assert err == c.err
 			continue
 		}
 
-		assert tag.number == int(TagType.bitstring)
+		assert bs.tag.tag_number() == int(TagType.bitstring)
 
-		b := new_bitstring_with_pad(c.src, c.pad)!
-
+		// b := new_bitstring_with_pad(c.src, c.pad)!
+		b := BitString.new_with_pad(c.src, c.pad)!
 		// b is Encoder, so lets smart cast it to real
-		if b is BitString {
-			assert val == b
+		assert bs == b
 
-			// back
-			s := serialize_bitstring(b)!
+		// back
+		mut s := []u8{}
+		b.encode(mut s)!
 
-			assert s == c.inp
-		}
+		assert s == c.inp
 	}
 }
 
@@ -92,8 +108,39 @@ fn test_bitstring_from_bytes() ! {
 		0x51, 0x14, 0x90, 0xb4, 0x0f, 0x06, 0x5e, 0x52, 0x88, 0x32, 0x7a, 0x95, 0x20, 0xa0, 0xfd,
 		0xf7, 0xe5, 0x7d, 0x60, 0xdd, 0x72, 0x68, 0x9b, 0xf5, 0x7b, 0x05, 0x8f, 0x6d, 0x1e]
 
-	tag, val := decode_bitstring(data)!
-	assert tag.number == int(TagType.bitstring)
-	assert val.length() == 0x81
-	assert val.padbits == 0x00
+	bs, idx := BitString.decode(data, 0)!
+
+	assert bs.tag.tag_number() == int(TagType.bitstring)
+	assert bs.bytes_len() == 0x81
+	assert bs.pad == 0x00
+}
+
+// test for BitString from binary string
+struct BinaryStringTest {
+	bits string
+	out  []u8
+	err  IError
+}
+
+const binstring_data = [
+	// empty bit string
+	BinaryStringTest{'', [u8(0x03), 0x01, 0x00], none},
+	// malformed bit string
+	BinaryStringTest{'aaa', []u8{}, error('not valid bit string')},
+	// taken examples from internet
+	BinaryStringTest{'011010001', [u8(0x03), 0x03, 0x07, 0x68, 0x80], none},
+	BinaryStringTest{'101100001001', [u8(0x03), 0x03, 0x04, 0xb0, 0x90], none},
+	BinaryStringTest{'011011100101110111', [u8(0x03), 0x04, 0x06, 0x6e, 0x5d, 0xc0], none},
+]
+
+fn test_bitstring_from_binary_string() ! {
+	for item in asn1.binstring_data {
+		bs := BitString.from_binary_string(item.bits) or {
+			assert err == item.err
+			continue
+		}
+		mut out := []u8{}
+		bs.encode(mut out)!
+		assert out == item.out
+	}
 }

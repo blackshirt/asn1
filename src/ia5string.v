@@ -5,91 +5,93 @@ module asn1
 
 // IA5String handling routine
 // Standard ASCII characters
-type IA5String = string
+pub struct IA5String {
+	tag   Tag = Tag{.universal, false, int(TagType.ia5string)}
+	value string
+}
 
-pub fn new_ia5string(s string) !Encoder {
-	if !is_ia5string(s) {
-		return error('bad ascii string')
+// from_string creates IA5String from string s
+pub fn IA5String.from_string(s string, p Params) !IA5String {
+	if !valid_ia5string(s) {
+		return error('IA5String: contains non-ascii chars')
 	}
-	return IA5String(s)
-}
-
-pub fn (a5 IA5String) tag() Tag {
-	return new_tag(.universal, false, int(TagType.ia5string))
-}
-
-pub fn (a5 IA5String) length() int {
-	return a5.len
-}
-
-pub fn (a5 IA5String) size() int {
-	mut size := 0
-	tag := a5.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	lol := calc_length_of_length(a5.length())
-	size += int(lol)
-
-	size += a5.length()
-
-	return size
-}
-
-pub fn (a5 IA5String) encode() ![]u8 {
-	return serialize_ia5string(a5)
-}
-
-pub fn IA5String.decode(src []u8) !IA5String {
-	_, val := decode_ia5string(src)!
-	return IA5String(val)
-}
-
-fn (a5 IA5String) str() string {
-	return 'IA5STRING ${string(a5)}'
-}
-
-fn is_ia5string(c string) bool {
-	return c.is_ascii()
-}
-
-fn serialize_ia5string(s string) ![]u8 {
-	if !is_ia5string(s) {
-		return error('contains invalid char')
+	return IA5String{
+		value: s
 	}
-
-	t := new_tag(.universal, false, int(TagType.ia5string))
-	mut out := []u8{}
-
-	serialize_tag(mut out, t)
-	p := s.bytes()
-	serialize_length(mut out, p.len)
-	out << p
-	return out
 }
 
-fn decode_ia5string(src []u8) !(Tag, string) {
-	if src.len < 2 {
-		return error('decode numeric: bad payload len')
+// from_bytes creates a new IA5String from bytes b
+pub fn IA5String.from_bytes(b []u8, p Params) !IA5String {
+	if b.any(it < u8(` `) || it > u8(`~`)) {
+		return error('IA5String: bytes contains non-ascii chars')
 	}
-	tag, pos := read_tag(src, 0)!
-	if tag.number != int(TagType.ia5string) {
-		return error('bad tag')
+	return IA5String{
+		value: b.bytestr()
 	}
-	if pos > src.len {
-		return error('truncated input')
+}
+
+pub fn (v IA5String) tag() Tag {
+	return v.tag
+}
+
+pub fn (v IA5String) value() string {
+	return v.value
+}
+
+pub fn (v IA5String) payload(p Params) ![]u8 {
+	if !v.value.is_ascii() {
+		return error('IA5String: contains non-ascii chars')
+	}
+	return v.value.bytes()
+}
+
+pub fn (v IA5String) length(p Params) !int {
+	return v.value.len
+}
+
+pub fn (v IA5String) packed_length(p Params) !int {
+	mut n := 0
+
+	n += v.tag.packed_length(p)!
+	len := Length.from_i64(v.value.bytes().len)!
+	n += len.packed_length(p)!
+	n += v.value.bytes().len
+
+	return n
+}
+
+pub fn (v IA5String) encode(mut dst []u8, p Params) ! {
+	if !v.value.is_ascii() {
+		return error('IA5String: contains non-ascii char')
+	}
+	if p.mode != .der && p.mode != .ber {
+		return error('IA5String: unsupported mode')
 	}
 
-	// mut length := 0
-	length, next := decode_length(src, pos)!
+	v.tag.encode(mut dst, p)!
+	bytes := v.value.bytes()
+	length := Length.from_i64(bytes.len)!
+	length.encode(mut dst, p)!
+	dst << bytes
+}
 
-	if next > src.len {
-		return error('truncated input')
+pub fn IA5String.decode(src []u8, loc i64, p Params) !(IA5String, i64) {
+	raw, next := RawElement.decode(src, loc, p)!
+	// TODO: checks tag for matching type
+	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
+		|| raw.tag.tag_number() != int(TagType.ia5string) {
+		return error('IA5String: bad tag of universal class type')
 	}
-	out := read_bytes(src, next, length)!
+	// no bytes
+	if raw.payload.len == 0 {
+		return IA5String{}, next
+	}
+	ret := IA5String.from_bytes(raw.payload, p)!
 
-	if !is_ia5string(out.bytestr()) {
-		return error('contains invalid char')
-	}
-	return tag, out.bytestr()
+	return ret, next
+}
+
+// Utility function
+fn valid_ia5string(s string) bool {
+	return s.is_ascii()
 }
