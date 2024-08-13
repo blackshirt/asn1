@@ -143,7 +143,7 @@ fn TagNumber.decode(bytes []u8, loc i64, p Params) !(TagNumber, i64) {
 	return error('TagNumber: truncated base 128 integer')
 }
 
-// `universal_tag_type` transforrms this TagNumber into available Universal class of TagType,
+// `universal_tag_type` transforrms this TagNumber into available UNIVERSAL class of TagType,
 // or return error if it is unknown number.
 pub fn (v TagNumber) universal_tag_type() !TagType {
 	// currently, only support Standard universal tag number
@@ -198,76 +198,50 @@ pub fn (v TagNumber) universal_tag_type() !TagType {
 // Standard UNIVERSAL tag number. Some of them was deprecated,
 // so its not going to be supported on this module.
 pub enum TagType {
-	//	reserved for BER
-	reserved = 0
-	// BOOLEAN type
-	boolean = 1
-	// INTEGER type
-	integer = 2
-	// BIT STRING
-	bitstring = 3
-	// OCTET STRING
-	octetstring = 4
-	// NULL
-	null = 5
-	// OBJECT IDENTIFIER
-	oid = 6
-	// ObjectDescriptor
-	objdesc = 7
-	//	INSTANCE OF, EXTERNAL
-	external = 8
-	// REAL
-	real = 9
-	// ENUMERATED
-	enumerated = 10
-	// EMBEDDED PDV
-	embedded = 11
-	// UTF8String
-	utf8string = 12
-	// RELATIVE-OID
-	relativeoid = 13
+	// vfmt off
+	reserved 			= 0 	// reserved for BER
+	boolean 			= 1 	// BOOLEAN type
+	integer 			= 2 	// INTEGER type
+	bitstring 			= 3 	// BIT STRING
+	octetstring 		= 4 	// OCTET STRING
+	null 				= 5 	// NULL
+	oid 				= 6		// OBJECT IDENTIFIER
+	objdesc 			= 7 	// OBJECT DESCRIPTOR
+	external 			= 8 	// INSTANCE OF, EXTERNAL
+	real 				= 9 	// REAL
+	enumerated 			= 10 	// ENUMERATED
+	embedded 			= 11 	// EMBEDDED PDV
+	utf8string 			= 12 	// UTF8STRING
+	relativeoid 		= 13 	// RELATIVE-OID
 	// deprecated
+	time 				= 14
 	// 0x0f is reserved
-	time = 14
-	// SEQUENCE, SEQUENCE OF, Constructed
-	sequence = 16
-	///SET, SET OF, Constructed
-	set = 17
-	// NumericString
-	numericstring = 18
-	// PrintableString
-	printablestring = 19
-	// TeletexString, T61String
-	t61string = 20
-	// VideotexString
-	videotexstring = 21
-	// IA5String
-	ia5string = 22
-	// UTCTime
-	utctime = 23
-	// GeneralizedTime
-	generalizedtime = 24
-	// GraphicString
-	graphicstring = 25
-	// VisibleString, ISO646String
-	visiblestring = 26
-	// GeneralString
-	generalstring = 27
-	// UniversalString
-	universalstring = 28
-	// CHARACTER STRING
-	characterstring = 29
-	// BMPString
-	bmpstring   = 30
-	date        = 0x1f
-	time_of_day = 0x20
-	date_time   = 0x21
-	duration    = 0x22
+	sequence 			= 16 	// SEQUENCE, SEQUENCE OF, Constructed
+	set 				= 17 	// SET, SET OF, Constructed
+	numericstring 		= 18 	// NUMERICSTRING
+	printablestring 	= 19 	// PRINTABLESTRING
+	t61string 			= 20 	// TELETEXSTRING, T61STRING
+	videotexstring 		= 21 	// VIDEOTEXSTRING
+	ia5string 			= 22 	// IA5STRING
+	utctime 			= 23 	// UTCTIME
+	generalizedtime 	= 24 	// GENERALIZEDTIME
+	graphicstring 		= 25 	// GRAPHICSTRING
+	visiblestring 		= 26 	// VISIBLESTRING, ISO646STRING
+	generalstring 		= 27 	// GENERALSTRING
+	universalstring 	= 28 	// UNIVERSALSTRING
+	characterstring 	= 29 	// CHARACTER STRING
+	bmpstring   		= 30 	// BMPSTRING
+	// unsupported 
+	date        		= 0x1f
+	time_of_day 		= 0x20
+	date_time   		= 0x21
+	duration    		= 0x22
 	// Internationalized OID
-	i18_oid = 0x23
+	i18_oid 			= 0x23
 	// Internationalized Relative OID
 	// Reserved 0x25 and above
-	relative_i18_oid = 0x24
+	relative_i18_oid 	= 0x24
+	// vfmt on
 }
 
 pub fn (t TagType) str() string {
@@ -278,7 +252,7 @@ pub fn (t TagType) str() string {
 		.octetstring { return 'OCTETSTRING' }
 		.null { return 'NULL' }
 		.oid { return 'OID' }
-		.objdesc { return 'OBJECT_DESCRIPTION' }
+		.objdesc { return 'OBJECT_DESCRIPTOR' }
 		.external { return 'EXTERNAL' }
 		.real { return 'REAL' }
 		.enumerated { return 'ENUMERATED' }
