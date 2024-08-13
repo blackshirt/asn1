@@ -50,6 +50,7 @@ pub fn (ps PrintableString) length(p Params) !int {
 	return ps.value.len
 }
 
+<<<<<<< HEAD
 pub fn (ps PrintableString) packed_length(p Params) !int {
 	mut n := 0
 	n += ps.tag.packed_length(p)!
@@ -93,6 +94,16 @@ pub fn PrintableString.decode(src []u8, loc i64, p Params) !(PrintableString, i6
 // utility function
 fn printable_chars(bytes []u8, p Params) bool {
 	return bytes.all(is_printablestring(it))
+=======
+pub fn PrintableString.decode(src []u8) !PrintableString {
+	_, v := decode_printablestring(src)!
+
+	return PrintableString(v)
+}
+
+fn (ps PrintableString) str() string {
+	return 'PRINTABLESTRING ${string(ps)}'
+>>>>>>> main
 }
 
 fn is_printablestring(c u8) bool {

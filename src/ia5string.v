@@ -45,8 +45,18 @@ pub fn (v IA5String) payload(p Params) ![]u8 {
 	return v.value.bytes()
 }
 
+<<<<<<< HEAD
 pub fn (v IA5String) length(p Params) !int {
 	return v.value.len
+=======
+pub fn IA5String.decode(src []u8) !IA5String {
+	_, val := decode_ia5string(src)!
+	return IA5String(val)
+}
+
+fn (a5 IA5String) str() string {
+	return 'IA5STRING ${string(a5)}'
+>>>>>>> main
 }
 
 pub fn (v IA5String) packed_length(p Params) !int {

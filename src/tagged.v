@@ -96,7 +96,16 @@ pub fn (tt TaggedType) length(p Params) !int {
 		// .implicit mode, just the payload
 		n += tt.inner_el.length(p)!
 	}
+<<<<<<< HEAD
 	return n
+=======
+	if !tag.is_constructed() {
+		return error('read in constructed tag')
+	}
+	element := der_decode(contents)!
+	ctx := new_implicit_context(element, tag.number)
+	return ctx
+>>>>>>> main
 }
 
 pub fn (tt TaggedType) packed_length(p Params) !int {
@@ -108,9 +117,72 @@ pub fn (tt TaggedType) packed_length(p Params) !int {
 			// inner_length also included length of tag and length of inner Element
 			inner_length := tt.inner_el.packed_length(p)!
 
+<<<<<<< HEAD
 			tt_length := Length.from_i64(inner_length)!
 			n += tt_length.packed_length(p)!
 			n += inner_length
+=======
+// size returns sizes of context specific tagged object.
+// When in explicit mode, the size of object was sum of length of the outer tag,
+// length of the length part and inner size.
+// and in implicit mode, the size was total (sum) of size of inner object,
+// and length of outer tag.
+pub fn (ctx Tagged) size() int {
+	match ctx.mode {
+		.explicit {
+			// size := expected tag length + length of context tagged object + size of inner object
+			mut size := 0
+			taglen := calc_tag_length(ctx.tag())
+			size += taglen
+
+			// length of length
+			lol := calc_length_of_length(ctx.length())
+			size += int(lol)
+
+			// plus size of inner object
+			size += ctx.length()
+
+			return size
+		}
+		// size := expected tag length + size of inner object
+		.implicit {
+			mut size := 0
+			taglen := calc_tag_length(ctx.tag())
+			size += taglen
+
+			// length of length
+			lol := calc_length_of_length(ctx.length())
+			size += int(lol)
+
+			// plus size of inner object
+			size += ctx.length()
+
+			return size
+		}
+	}
+}
+
+// encode serializes context tagged object to array of bytes.
+// Its different between tagged mode explicit and implicit.
+pub fn (ctx Tagged) encode() ![]u8 {
+	tag := ctx.tag()
+	match ctx.mode {
+		.explicit {
+			// make sure its context specific tag and constructed bit was set
+
+			if !tag.is_context() && !tag.is_constructed() {
+				return error('expected tag was not context or constructed bit not set')
+			}
+			mut dst := []u8{}
+
+			serialize_tag(mut dst, tag)
+			serialize_length(mut dst, ctx.length())
+
+			data := ctx.inner.encode()!
+			dst << data
+
+			return dst
+>>>>>>> main
 		}
 		.implicit {
 			// when in implicit mode, inner tag and length of inner element being replaced by outer tag and length
@@ -154,6 +226,7 @@ pub fn (tt TaggedType) encode(mut dst []u8, p Params) ! {
 	}
 }
 
+<<<<<<< HEAD
 pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Params) !(TaggedType, i64) {
 	// TaggedType without inner element is not make sense
 	if src.len < 4 {
@@ -221,3 +294,43 @@ pub fn (tt TaggedType) inner_element() Element {
 pub fn TaggedType.from_raw_element(r RawElement, m TaggedMode, inner_tag Tag, p Params) !TaggedType {
 	return r.as_tagged(m, inner_tag, p)!
 }
+=======
+pub fn Tagged.decode(src []u8, m Mode, inner_tag Tag) !Tagged {
+	tag, pos := read_tag(src, 0)!
+	if !tag.constructed {
+		return error('Tagged should be constructed')
+	}
+	length, idx := decode_length(src, pos)!
+	contents := read_bytes(src, idx, length)!
+	match m {
+		.explicit {
+			// when explicit, the contents is an asn1 structure
+			etag, epos := read_tag(contents, 0)!
+			if etag != inner_tag {
+				return error('unmatching explicit tag')
+			}
+			elength, eidx := decode_length(contents, epos)!
+			bytes := read_bytes(contents, eidx, elength)!
+			inner := new_asn_object(inner_tag.class, inner_tag.constructed, inner_tag.number,
+				bytes)
+			tt := Tagged{
+				expected: tag
+				mode: .explicit
+				inner: inner
+			}
+			return tt
+		}
+		.implicit {
+			// when implicit, contents is the real inner contents
+			inner := new_asn_object(inner_tag.class, inner_tag.constructed, inner_tag.number,
+				contents)
+			tt := Tagged{
+				expected: tag
+				mode: .implicit
+				inner: inner
+			}
+			return tt
+		}
+	}
+}
+>>>>>>> main

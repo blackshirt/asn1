@@ -115,3 +115,25 @@ fn (e Enumerated) enumerated_len() int {
 
 	return n
 }
+
+pub fn Enumerated.decode(src []u8) !Enumerated {
+	if src.len < 2 {
+		return error('bad payload len')
+	}
+	tag, pos := read_tag(src, 0)!
+	if tag.number != int(TagType.enumerated) {
+		return error('bad tag')
+	}
+	if pos > src.len {
+		return error('truncated input')
+	}
+	length, next := decode_length(src, pos)!
+
+	if next > src.len {
+		return error('truncated input')
+	}
+	out := read_bytes(src, next, length)!
+	val := read_i32(out)!
+
+	return Enumerated(val)
+}

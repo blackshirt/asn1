@@ -11,7 +11,11 @@ module asn1
 // Internal machinery of SET and SET OF was built using the same machinery with
 // SEQUENCE and SEQUENCE OF.
 pub struct Set {
+<<<<<<< HEAD
 	tag Tag = Tag{.universal, true, int(TagType.set)}
+=======
+	tag Tag = new_tag(Class.universal, true, int(TagType.set))
+>>>>>>> main
 mut:
 	setof    bool
 	elements []Element
@@ -258,11 +262,11 @@ pub fn (mut set Set) add_multi(objs []Encoder) Set {
 	return set
 }
 
-fn (set Set) tag() Tag {
+pub fn (set Set) tag() Tag {
 	return new_tag(.universal, true, int(TagType.set))
 }
 
-fn (set Set) length() int {
+pub fn (set Set) length() int {
 	mut length := 0
 	for obj in set.elements {
 		n := obj.size()
@@ -271,7 +275,7 @@ fn (set Set) length() int {
 	return length
 }
 
-fn (set Set) size() int {
+pub fn (set Set) size() int {
 	mut size := 0
 	tag := set.tag()
 	t := calc_tag_length(tag)
@@ -325,7 +329,7 @@ fn (mut objs []Encoder) sort_the_setof() ![]Encoder {
 	return objs
 }
 
-fn (set Set) encode() ![]u8 {
+pub fn (set Set) encode() ![]u8 {
 	mut dst := []u8{}
 	tag := set.tag()
 	serialize_tag(mut dst, tag)
@@ -348,8 +352,25 @@ fn (set Set) encode() ![]u8 {
 	return dst
 }
 
+pub fn Set.decode(src []u8) !Set {
+	if src.len < 2 {
+		return error('Set: underflow')
+	}
+	tag, pos := read_tag(src, 0)!
+	if !tag.is_set_tag() {
+		return error('bad tags n look like not a set tag=${tag}')
+	}
+
+	length, next := decode_length(src, pos)!
+	sub := read_bytes(src, next, length)!
+
+	set := parse_set(tag, sub)!
+
+	return set
+}
+
 // is_set_of checks whether the set holds the same elements (its a set of type)
-fn (set Set) is_set_of() bool {
+pub fn (set Set) is_set_of() bool {
 	tag := set.tag.number
 	if tag != int(TagType.set) {
 		return false

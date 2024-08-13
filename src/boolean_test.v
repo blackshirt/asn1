@@ -3,6 +3,28 @@
 // that can be found in the LICENSE file.
 module asn1
 
+<<<<<<< HEAD
+=======
+fn test_read_boolean() {
+	b1 := [u8(0x00)]
+	// tag := new_tag(.universal, false, int(TagType.boolean))
+	o1 := read_boolean(b1)!
+
+	assert o1 == false
+	b2 := [u8(0xff)]
+	o2 := read_boolean(b2)!
+
+	assert o2 == true
+}
+
+fn test_encode_boolean() {
+	f := encode_boolean(false)
+	assert f == [u8(TagType.boolean), 0x01, 0x00]
+	t := encode_boolean(true)
+	assert t == [u8(TagType.boolean), 0x01, 0xff]
+}
+
+>>>>>>> main
 struct BooleanTest {
 	inp []u8
 	out bool

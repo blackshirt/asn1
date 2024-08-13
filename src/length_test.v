@@ -24,9 +24,15 @@ fn test_length_pack_and_unpack_tofrom_asn() ! {
 	]
 	for i, c in edata {
 		mut dst := []u8{}
+<<<<<<< HEAD
 		s := Length.from_i64(c.value)!
 		s.encode(mut dst)!
 		assert dst == c.expected
+=======
+		dump(i)
+		dst = serialize_length(mut dst, c.inp)
+		assert dst == c.exp
+>>>>>>> main
 
 		length, idx := Length.decode(dst, 0)!
 
@@ -69,8 +75,13 @@ fn test_length_pack_and_append() ! {
 
 	for v in bdata {
 		mut dst := []u8{}
+<<<<<<< HEAD
 		ln := Length.from_i64(v.value)!
 		ln.pack_and_append(mut dst)
+=======
+		dump(i)
+		out := append_length(mut dst, i.inp)
+>>>>>>> main
 
 		assert dst == v.expected
 	}

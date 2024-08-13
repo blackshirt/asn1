@@ -48,8 +48,19 @@ pub fn (os OctetString) length(p Params) !int {
 	return os.value.bytes().len
 }
 
+<<<<<<< HEAD
 pub fn (os OctetString) packed_length(p Params) !int {
 	mut n := 0
+=======
+pub fn OctetString.decode(src []u8) !OctetString {
+	_, v := decode_octetstring(src)!
+	return OctetString(v)
+}
+
+fn serialize_octetstring(s string) ![]u8 {
+	tag := new_tag(.universal, false, int(TagType.octetstring))
+	mut out := []u8{}
+>>>>>>> main
 
 	n += os.tag.packed_length(p)!
 	len := Length.from_i64(os.value.bytes().len)!

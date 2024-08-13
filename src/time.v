@@ -23,6 +23,7 @@ module asn1
 // TODO:
 // - check for invalid representation of date and hhmmss part.
 // - represented UTCTime in time.Time
+<<<<<<< HEAD
 pub struct UTCTime {
 	value string
 	tag   Tag = Tag{.universal, false, int(TagType.utctime)}
@@ -31,12 +32,20 @@ pub struct UTCTime {
 // new_utctime creates new UTCTime from string s.
 pub fn UTCTime.from_string(s string, p Params) !UTCTime {
 	valid := validate_utctime(s, p)!
+=======
+pub type UTCTime = string
+
+// new_utctime creates new UTCTime from string s.
+pub fn new_utctime(s string) !Encoder {
+	valid := validate_utctime(s)!
+>>>>>>> main
 	if !valid {
 		return error('UTCTime: fail on validate utctime')
 	}
 	return UTCTime{
 		value: s
 	}
+<<<<<<< HEAD
 }
 
 pub fn UTCTime.from_bytes(b []u8, p Params) !UTCTime {
@@ -105,6 +114,43 @@ pub fn UTCTime.decode(src []u8, loc i64, p Params) !(UTCTime, i64) {
 // utility function for UTCTime
 //
 fn validate_utctime(s string, p Params) !bool {
+=======
+	return UTCTime(s)
+}
+
+pub fn (utc UTCTime) tag() Tag {
+	return new_tag(.universal, false, int(TagType.utctime))
+}
+
+pub fn (utc UTCTime) length() int {
+	return utc.len
+}
+
+pub fn (utc UTCTime) size() int {
+	mut size := 0
+	tag := utc.tag()
+	t := calc_tag_length(tag)
+	size += t
+
+	l := calc_length_of_length(utc.length())
+	size += int(l)
+
+	size += utc.length()
+
+	return size
+}
+
+pub fn (utc UTCTime) encode() ![]u8 {
+	return serialize_utctime(utc)
+}
+
+pub fn UTCTime.decode(src []u8) !UTCTime {
+	_, s := decode_utctime(src)!
+	return UTCTime(s)
+}
+
+fn validate_utctime(s string) !bool {
+>>>>>>> main
 	if !basic_utctime_check(s) {
 		return false
 	}
@@ -208,6 +254,7 @@ pub fn (gt GeneralizedTime) payload(p Params) ![]u8 {
 	return gt.value.bytes()
 }
 
+<<<<<<< HEAD
 pub fn (gt GeneralizedTime) length(p Params) !int {
 	return gt.value.len
 }
@@ -249,6 +296,13 @@ pub fn GeneralizedTime.decode(src []u8, loc i64, p Params) !(GeneralizedTime, i6
 
 // utility function for GeneralizedTime
 // TODO: more clear and concise validation check
+=======
+pub fn GeneralizedTime.decode(src []u8) !GeneralizedTime {
+	_, s := decode_generalizedtime(src)!
+	return GeneralizedTime(s)
+}
+
+>>>>>>> main
 fn min_generalizedtime_length(s string) bool {
 	// minimum length without fractional element
 	return s.len >= 15

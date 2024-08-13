@@ -14,6 +14,11 @@ module asn1
 // Sequence structure can represents both SEQUENCE and SEQUENCE OF type.
 // The encoding of a sequence value shall be constructed.
 pub struct Sequence {
+<<<<<<< HEAD
+=======
+	// should represents sequence tag
+	tag Tag = new_tag(Class.universal, true, int(TagType.sequence))
+>>>>>>> main
 mut:
 	// The tag should represents sequence or sequenceof tag, ie, 0x30
 	tag Tag = Tag{.universal, true, int(TagType.sequence)}
@@ -303,7 +308,7 @@ pub fn new_sequence_with_class(c TagClass) Sequence {
 	return seq
 }
 
-fn new_sequence_from_multiencoder(me []Encoder) !Sequence {
+pub fn new_sequence_from_multiencoder(me []Encoder) !Sequence {
 	mut seq := new_sequence()
 	seq.add_multi(me)
 	return seq
@@ -325,6 +330,13 @@ fn new_sequenceof_from_bytes(src []u8) !Sequence {
 	return seq
 }
 
+<<<<<<< HEAD
+=======
+pub fn (seq Sequence) tag() Tag {
+	return seq.tag
+}
+
+>>>>>>> main
 pub fn (seq Sequence) length() int {
 	mut length := 0
 	for obj in seq.elements {
@@ -362,16 +374,53 @@ pub fn (seq Sequence) encode() ![]u8 {
 	return dst
 }
 
-fn (mut seq Sequence) add(obj Encoder) Sequence {
+pub fn Sequence.decode(src []u8) !Sequence {
+	seq := decode_sequence(src)!
+	return seq
+}
+
+// elements returns sequence content in elements
+pub fn (seq Sequence) elements() []Encoder {
+	return seq.elements
+}
+
+pub fn (mut seq Sequence) add(obj Encoder) Sequence {
 	seq.elements.add(obj)
 	return seq
 }
 
-fn (mut seq Sequence) add_multi(elements []Encoder) Sequence {
+pub fn (mut seq Sequence) add_multi(elements []Encoder) Sequence {
 	seq.elements.add_multi(elements)
 	return seq
 }
 
+<<<<<<< HEAD
+=======
+// is_sequence_of checks whether the sequence `seq` holds the same elements (its a SEQUENCE OF type).
+pub fn is_sequence_of(seq Sequence) bool {
+	if !seq.tag.constructed {
+		// sequence should in constructed form
+		return false
+	}
+	if seq.tag.number != int(TagType.sequence) {
+		return false
+	}
+	if seq.elements.len != 0 {
+		// take the first obj's tag
+		tag0 := seq.elements[0].tag()
+		for obj in seq.elements {
+			if obj.tag() != tag0 {
+				return false
+			}
+		}
+		return true
+	}
+
+	// return seq.elements.all(it.tag() == tag0)
+	return false
+}
+
+>>>>>>> main
 fn decode_sequence(src []u8) !Sequence {
 	if src.len < 2 {
 		return error('invalid minimal length')
