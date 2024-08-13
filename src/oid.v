@@ -23,11 +23,7 @@ pub fn Oid.from_ints(src []int) !Oid {
 	// doing check for overflow
 	for k in src {
 		if k > max_i32 {
-<<<<<<< HEAD
 			return error('Oid: overflow parse_int result')
-=======
-			return error('overflow parse_int result')
->>>>>>> main
 		}
 	}
 	oid := Oid{
@@ -39,101 +35,7 @@ pub fn Oid.from_ints(src []int) !Oid {
 	return oid
 }
 
-<<<<<<< HEAD
 pub fn Oid.from_bytes(src []u8, p Params) !Oid {
-=======
-fn validate_oid(oid Oid) bool {
-	if oid.len > asn1.max_oid_length {
-		return false
-	}
-	if oid.len < 2 || oid[0] > 2 || (oid[0] < 2 && oid[1] >= 40) {
-		return false
-	}
-	return true
-}
-
-pub fn (oid Oid) tag() Tag {
-	return new_tag(.universal, false, int(TagType.oid))
-}
-
-pub fn (oid Oid) length() int {
-	return oid_length(oid)
-}
-
-pub fn (oid Oid) size() int {
-	mut size := 0
-	tag := oid.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	l := calc_length_of_length(oid.length())
-	size += int(l)
-
-	size += oid.length()
-
-	return size
-}
-
-pub fn (oid Oid) encode() ![]u8 {
-	return serialize_oid(oid)
-}
-
-fn Oid.decode(src []u8) !Oid {
-	_, oid := decode_oid(src)!
-	return oid
-}
-
-fn oid_length(oid Oid) int {
-	mut n := base128_int_length(i64(oid[0] * 40 + oid[1]))
-	for i := 2; i < oid.len; i++ {
-		n += base128_int_length(i64(oid[i]))
-	}
-	return n
-}
-
-fn serialize_oid(oid Oid) ![]u8 {
-	// TODO: doing oid check validity
-	tag := new_tag(.universal, false, int(TagType.oid))
-	mut out := []u8{}
-
-	serialize_tag(mut out, tag)
-	n := oid_length(oid)
-	serialize_length(mut out, n)
-
-	write_oid(mut out, oid)
-
-	return out
-}
-
-fn decode_oid(src []u8) !(Tag, Oid) {
-	if src.len < 2 {
-		return error('decode: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	// check tag match
-	if tag.number != int(TagType.oid) {
-		return error('bad tag')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-
-	// mut length := 0
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	// remaining data, ony slicing required parts
-	out := read_bytes(src, next, length)!
-
-	oid := read_oid(out)!
-
-	return tag, oid
-}
-
-fn read_oid(src []u8) !Oid {
->>>>>>> main
 	// maybe two integer fits in 1 bytes
 	if src.len == 0 {
 		return error('Oid: bad string oid length')
@@ -155,7 +57,7 @@ fn read_oid(src []u8) !Oid {
 		s[i] = val
 	}
 	s = unsafe { s[0..i] }
-<<<<<<< HEAD
+
 	oid := Oid{
 		value: s
 	}
@@ -163,9 +65,6 @@ fn read_oid(src []u8) !Oid {
 		return error('Oid: failed to validate')
 	}
 	return oid
-=======
-	return s
->>>>>>> main
 }
 
 pub fn Oid.from_string(s string, p Params) !Oid {

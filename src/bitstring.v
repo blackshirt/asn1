@@ -5,7 +5,6 @@ module asn1
 
 import arrays
 
-<<<<<<< HEAD
 // ASN.1 BIT STRING type handling
 // The BIT STRING type denotes an arbitrary string of bits (ones and zeroes).
 // A BIT STRING value can have any length, including zero. This type is a string type.
@@ -13,13 +12,6 @@ pub struct BitString {
 	tag  Tag = Tag{.universal, false, int(TagType.bitstring)}
 	data []u8
 	pad  u8 // numbers of unused bits
-=======
-// BITSTRING
-//
-pub struct BitString {
-	data    []u8
-	padbits u8
->>>>>>> main
 }
 
 // BitString.from_binary_string creates a new BitString from binary bits arrays in s,
@@ -35,15 +27,9 @@ pub fn BitString.from_binary_string(s string, p Params) !BitString {
 	return BitString.new_with_pad(res, u8(pad), p)!
 }
 
-<<<<<<< HEAD
 // from_string creates a new BitString from regular string s
 pub fn BitString.from_string(s string, p Params) !BitString {
 	return BitString.from_bytes(s.bytes(), p)
-=======
-pub fn new_bitstring_from_bytes(src []u8) !Encoder {
-	bs := read_bitstring(src)!
-	return bs
->>>>>>> main
 }
 
 // from_bytes creates a new BitString from bytes array in src
@@ -66,7 +52,7 @@ fn BitString.new_with_pad(src []u8, pad u8, p Params) !BitString {
 	}
 	return BitString{
 		data: src
-		pad:  pad
+		pad: pad
 	}
 }
 
@@ -78,84 +64,7 @@ pub fn (b BitString) tag() Tag {
 	return b.tag
 }
 
-<<<<<<< HEAD
 pub fn (bs BitString) payload(p Params) ![]u8 {
-=======
-pub fn (bs BitString) size() int {
-	mut size := 0
-	tag := bs.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	l := calc_length_of_length(bs.length())
-	size += int(l)
-
-	size += bs.length()
-
-	return size
-}
-
-pub fn (bs BitString) encode() ![]u8 {
-	return serialize_bitstring(bs)
-}
-
-pub fn BitString.decode(src []u8) !BitString {
-	_, v := decode_bitstring(src)!
-	return v
-}
-
-fn length_bitstring(b BitString) int {
-	return b.data.len + 1
-}
-
-fn (b BitString) bytes() []u8 {
-	return b.data
-}
-
-fn (b BitString) pad_bits() u8 {
-	return b.padbits
-}
-
-fn (b BitString) bit_length() int {
-	return (b.data.len - 1) * 8 - b.padbits
-}
-
-fn (b BitString) has_bit_set(n u32) bool {
-	idx := n / 8
-	v := 1 << (7 - (n & 0x07))
-	if b.data.len < (idx + 1) {
-		return false
-	}
-	return b.data[idx] & v != 0
-}
-
-fn read_bitstring(src []u8) !BitString {
-	if src.len == 0 {
-		return error('zero length bit string')
-	}
-
-	// bst := new_bst(src[1..], src[0])!
-	bst := new_bitstring_with_pad(src[1..], src[0])!
-
-	// check its held BitString type
-	if bst is BitString {
-		// WARNING: without unsafe *bst block, this error happens,
-		// fn `asn1.read_bitstring` expects you to return a non reference type `!asn1.BitString`,
-		// but you are returning `&asn1.BitString` instead
-		return unsafe { *bst }
-	}
-
-	return error('Not held BitString type')
-}
-
-fn write_bitstring(mut dst []u8, b BitString) {
-	dst << b.pad_bits()
-	dst << b.bytes()
-}
-
-fn serialize_bitstring(b BitString) ![]u8 {
-	tag := new_tag(.universal, false, int(TagType.bitstring))
->>>>>>> main
 	mut out := []u8{}
 	out << bs.pad
 	out << bs.data

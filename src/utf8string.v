@@ -18,48 +18,9 @@ pub fn UTF8String.from_string(s string, p Params) !UTF8String {
 	if !utf8.validate_str(s) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
-<<<<<<< HEAD
+
 	return UTF8String{
 		value: s
-=======
-	return UTF8String(s)
-}
-
-pub fn (ut UTF8String) tag() Tag {
-	return new_tag(.universal, false, int(TagType.utf8string))
-}
-
-pub fn (ut UTF8String) length() int {
-	return ut.len
-}
-
-pub fn (ut UTF8String) size() int {
-	mut size := 0
-	tag := ut.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	lol := calc_length_of_length(ut.length())
-	size += int(lol)
-
-	size += ut.length()
-
-	return size
-}
-
-pub fn (ut UTF8String) encode() ![]u8 {
-	return serialize_utf8string(ut)
-}
-
-pub fn UTF8String.decode(src []u8) !UTF8String {
-	_, s := decode_utf8string(src)!
-	return UTF8String(s)
-}
-
-fn serialize_utf8string(s string) ![]u8 {
-	if !utf8.validate_str(s) {
-		return error('invalid UTF-8 string')
->>>>>>> main
 	}
 }
 

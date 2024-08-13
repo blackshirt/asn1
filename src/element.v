@@ -18,7 +18,7 @@ pub interface Element {
 // Element.new creates a new Element from RawElement with tag and payload
 pub fn Element.new(tag Tag, payload []u8) !Element {
 	return RawElement{
-		tag:     tag
+		tag: tag
 		payload: payload
 	}
 }
@@ -161,7 +161,7 @@ pub mut:
 // RawElement.new creates a new raw ASN.1 Element
 pub fn RawElement.new(t Tag, payload []u8) RawElement {
 	el := RawElement{
-		tag:     t
+		tag: t
 		payload: payload
 	}
 	return el
@@ -259,13 +259,13 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 			if raw.payload.len == 0 {
 				// empty sub payload
 				inner := RawElement{
-					tag:     raw.tag
+					tag: raw.tag
 					payload: raw.payload
 				}
 				tt := TaggedType{
 					outer_tag: r.tag
-					mode:      .explicit
-					inner_el:  inner
+					mode: .explicit
+					inner_el: inner
 				}
 				return tt
 			}
@@ -281,8 +281,8 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 			}
 			tt := TaggedType{
 				outer_tag: r.tag
-				mode:      .explicit
-				inner_el:  inner_el
+				mode: .explicit
+				inner_el: inner_el
 			}
 			return tt
 		}
@@ -293,8 +293,8 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 		inner_el := RawElement.new(inner_tag, r.payload)
 		tt := TaggedType{
 			outer_tag: r.tag
-			mode:      .implicit
-			inner_el:  inner_el
+			mode: .implicit
+			inner_el: inner_el
 		}
 		return tt
 	}

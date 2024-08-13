@@ -14,11 +14,6 @@ module asn1
 // Sequence structure can represents both SEQUENCE and SEQUENCE OF type.
 // The encoding of a sequence value shall be constructed.
 pub struct Sequence {
-<<<<<<< HEAD
-=======
-	// should represents sequence tag
-	tag Tag = new_tag(Class.universal, true, int(TagType.sequence))
->>>>>>> main
 mut:
 	// The tag should represents sequence or sequenceof tag, ie, 0x30
 	tag Tag = Tag{.universal, true, int(TagType.sequence)}
@@ -40,7 +35,7 @@ fn Sequence.new_with_tag(tag Tag, seqof bool) !Sequence {
 		return error('Not a valid sequence tag')
 	}
 	return Sequence{
-		tag:   tag
+		tag: tag
 		seqof: seqof
 	}
 }
@@ -243,7 +238,7 @@ fn parse_primitive_element(tag Tag, contents []u8, p Params) !Element {
 		//   - relaxed parsing by return raw asn1 object.
 		else {
 			return RawElement{
-				tag:     tag
+				tag: tag
 				payload: contents
 			}
 		}
@@ -330,13 +325,8 @@ fn new_sequenceof_from_bytes(src []u8) !Sequence {
 	return seq
 }
 
-<<<<<<< HEAD
-=======
-pub fn (seq Sequence) tag() Tag {
-	return seq.tag
-}
 
->>>>>>> main
+
 pub fn (seq Sequence) length() int {
 	mut length := 0
 	for obj in seq.elements {
@@ -394,33 +384,8 @@ pub fn (mut seq Sequence) add_multi(elements []Encoder) Sequence {
 	return seq
 }
 
-<<<<<<< HEAD
-=======
-// is_sequence_of checks whether the sequence `seq` holds the same elements (its a SEQUENCE OF type).
-pub fn is_sequence_of(seq Sequence) bool {
-	if !seq.tag.constructed {
-		// sequence should in constructed form
-		return false
-	}
-	if seq.tag.number != int(TagType.sequence) {
-		return false
-	}
-	if seq.elements.len != 0 {
-		// take the first obj's tag
-		tag0 := seq.elements[0].tag()
-		for obj in seq.elements {
-			if obj.tag() != tag0 {
-				return false
-			}
-		}
-		return true
-	}
 
-	// return seq.elements.all(it.tag() == tag0)
-	return false
-}
 
->>>>>>> main
 fn decode_sequence(src []u8) !Sequence {
 	if src.len < 2 {
 		return error('invalid minimal length')

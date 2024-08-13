@@ -31,18 +31,7 @@ fn test_sort_the_set() {
 	// [valbol, val12, val32, valnull, valapp, valctx]}
 	objs.sort_the_set()
 	// dump(objs)
-<<<<<<< HEAD
 
-=======
-	mut exp := []Encoder{}
-	exp << valbol
-	exp << val12
-	exp << val32
-	exp << valnull
-	exp << valapp
-	exp << valctx 
-	//[valbol, val12, val32, valnull, valapp, valctx]
->>>>>>> main
 	assert awal != objs
 	assert objs == exp
 }

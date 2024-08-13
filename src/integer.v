@@ -317,59 +317,7 @@ fn (v IntValue) bytes() []u8 {
 	}
 }
 
-<<<<<<< HEAD
 // Utility function
-=======
-pub fn AsnInteger.decode(src []u8) !AsnInteger {
-	if src.len < 3 {
-		return error('AsnInteger: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	if tag.number != int(TagType.integer) {
-		return error('bad tag')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-
-	// mut length := 0
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	out := read_bytes(src, next, length)!
-
-	if out.len <= 4 {
-		ret := read_i32(out)!
-		return AsnInteger(ret)
-	}
-	if out.len <= 8 {
-		ret := read_i64(out)!
-		return AsnInteger(ret)
-	}
-
-	ret := read_bigint(src)!
-	return AsnInteger(ret)
-}
-
-fn (n AsnInteger) str() string {
-	match n {
-		int {
-			val := n as int
-			return 'INTEGER ${val}'
-		}
-		i64 {
-			val := n as i64
-			return 'INTEGER(64) ${val}'
-		}
-		big.Integer {
-			val := n as big.Integer
-			return 'INTEGER(BIG) ${val}'
-		}
-	}
-}
->>>>>>> main
 
 // valid_bytes validates bytes meets some requirement for BER/DER encoding.
 fn valid_bytes(src []u8, signed bool) bool {
@@ -395,7 +343,6 @@ fn valid_bytes(src []u8, signed bool) bool {
 	return true
 }
 
-<<<<<<< HEAD
 fn is_highest_bit_set(src []u8) bool {
 	if src.len > 0 {
 		return src[0] & 0x80 == 0
@@ -406,29 +353,6 @@ fn is_highest_bit_set(src []u8) bool {
 fn trim_bytes(src []u8) ![]u8 {
 	if src.len == 0 {
 		return error('bad src')
-=======
-// i64 handling
-
-// serialize i64
-pub fn serialize_i64(s i64) ![]u8 {
-	t := new_tag(.universal, false, int(TagType.integer))
-	mut out := []u8{}
-
-	serialize_tag(mut out, t)
-
-	n := length_i64(s)
-	mut src := []u8{len: n}
-
-	i64_to_bytes(mut src, s)
-	serialize_length(mut out, src.len)
-	out << src
-	return out
-}
-
-pub fn decode_i64(src []u8) !(Tag, i64) {
-	if src.len < 2 {
-		return error('decode: bad payload len')
->>>>>>> main
 	}
 	// TODO: removes prepended bytes when its meet criteria
 	// positive value but its prepended with 0x00
@@ -517,97 +441,10 @@ fn read_i32(src []u8) !int {
 	return int(ret)
 }
 
-<<<<<<< HEAD
 fn length_i32(v i32) int {
 	return length_i64(i64(v))
 }
 
 fn i32_to_bytes(v i32) []u8 {
 	return i64_to_bytes(i64(v))
-=======
-pub fn serialize_i32(s int) ![]u8 {
-	out := serialize_i64(i64(s))!
-	return out
-}
-
-pub fn decode_i32(src []u8) !(Tag, int) {
-	if src.len < 2 {
-		return error('decode: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	if tag.number != int(TagType.integer) {
-		return error('bad tag')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	out := read_bytes(src, next, length)!
-	val := read_i32(out)!
-
-	return tag, val
-}
-
-// big.Integer handling
-
-// read big.Integer
-fn read_bigint(src []u8) !big.Integer {
-	if !valid_integer(src, true) {
-		return error('big integer check return false')
-	}
-
-	if src.len > 0 && src[0] & 0x80 == 0x80 {
-		// this is negative number
-		// do two complements rule
-		mut notbytes := []u8{len: src.len}
-		for i, _ in notbytes {
-			notbytes[i] = ~src[i]
-		}
-		mut ret := big.integer_from_bytes(notbytes)
-		ret += big.one_int
-		ret = ret.neg()
-		return ret
-	}
-	s := big.integer_from_bytes(src)
-	return s
-}
-
-pub fn serialize_bigint(b big.Integer) ![]u8 {
-	tag := new_tag(.universal, false, int(TagType.integer))
-	mut out := []u8{}
-
-	serialize_tag(mut out, tag)
-
-	bs, _ := b.bytes()
-	serialize_length(mut out, bs.len)
-	out << bs
-
-	return out
-}
-
-pub fn decode_bigint(src []u8) !(Tag, big.Integer) {
-	if src.len < 2 {
-		return error('decode: bad payload len')
-	}
-	tag, pos := read_tag(src, 0)!
-	if tag.number != int(TagType.integer) {
-		return error('bad tag')
-	}
-	if pos > src.len {
-		return error('truncated input')
-	}
-	length, next := decode_length(src, pos)!
-
-	if next > src.len {
-		return error('truncated input')
-	}
-	out := read_bytes(src, next, length)!
-	val := read_bigint(out)!
-
-	return tag, val
->>>>>>> main
 }

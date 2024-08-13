@@ -52,17 +52,11 @@ fn (v Length) bytes_len() int {
 fn (v Length) pack_and_append(mut to []u8) {
 	mut n := v.bytes_len()
 	for ; n > 0; n-- {
-<<<<<<< HEAD
 		// pay attention to the brackets
 		to << u8(v >> ((n - 1) * 8))
-=======
-		v := i >> u32((n - 1) * 8)
-		dst << u8(v)
->>>>>>> main
 	}
 }
 
-<<<<<<< HEAD
 // packed_length calculates the length of bytes needed to store the Length value `v`
 // includes one byte marker for long definite form of length value, for value >= 128
 pub fn (v Length) packed_length(p Params) !int {
@@ -91,34 +85,12 @@ pub fn (v Length) encode(mut dst []u8, p Params) ! {
 		// of first byte tells exact count how many bytes following representing this length value.
 		dst << 0x80 | u8(count)
 		v.pack_and_append(mut dst)
-=======
-// calculates length of length bytes
-pub fn calc_length_of_length(value int) int {
-	mut length := 1
-	if value >= 128 {
-		s := calc_length(value)
-		// length += 1
-		length += s
-	}
-	return length
-}
-
-// serialize_length encodes value to dst
-pub fn serialize_length(mut dst []u8, value int) []u8 {
-	// mut dst := []u8{}
-	// long form
-	if value >= 128 {
-		length := calc_length(value)
-		dst << 0x80 | u8(length)
-		dst = append_length(mut dst, value)
->>>>>>> main
 	} else {
 		// short form, already tells the length value.
 		dst << u8(v)
 	}
 }
 
-<<<<<<< HEAD
 // decode decodes and deserializes buffer in src into Length form, start from offset loc in the buffer.
 // Its return Length and next offset in the buffer to process on, or return error on fails.
 pub fn Length.decode(src []u8, loc i64, p Params) !(Length, i64) {
@@ -134,11 +106,6 @@ pub fn Length.decode(src []u8, loc i64, p Params) !(Length, i64) {
 		return error('Length: invalid pos')
 	}
 
-=======
-// decode_length decodes bytes from positon `loc` and returns integer length value and
-// next offset to read bytes data from.
-pub fn decode_length(buf []u8, loc int) !(int, int) {
->>>>>>> main
 	mut pos := loc
 	mut b := src[pos]
 	pos += 1
@@ -172,15 +139,11 @@ pub fn decode_length(buf []u8, loc int) !(int, int) {
 			}
 			b = src[pos]
 			pos += 1
-<<<<<<< HEAD
+
 			// currently, we're only support limited length.
 			// The length is in i64 range
 			if length > asn1.max_definite_length_value {
 				return error('Length: length exceed limit value')
-=======
-			if length > (max_i32 >> 8) {
-				return error('integer overflow')
->>>>>>> main
 			}
 			length <<= 8
 			length |= b

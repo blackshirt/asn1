@@ -51,7 +51,6 @@ pub fn (vs VisibleString) length(p Params) !int {
 	return vs.value.len
 }
 
-<<<<<<< HEAD
 pub fn (vs VisibleString) packed_length(p Params) !int {
 	mut n := 0
 	n += vs.tag.packed_length(p)!
@@ -93,13 +92,7 @@ pub fn VisibleString.decode(src []u8, loc i64, p Params) !(VisibleString, i64) {
 
 // Utility function
 //
-=======
-pub fn VisibleString.decode(src []u8) !VisibleString {
-	_, s := decode_visiblestring(src)!
-	return VisibleString(s)
-}
 
->>>>>>> main
 fn is_ctrl_char(c u8) bool {
 	return (c >= 0 && c <= 0x1f) || c == 0x7f
 }

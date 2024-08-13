@@ -20,12 +20,10 @@ fn test_sequence_contains_other_seq() ! {
 	seq2.add_element(Boolean.new(true))!
 
 	// lets serialize it to bytes
-<<<<<<< HEAD
+
 	mut out := []u8{}
 	seq2.encode(mut out)!
-=======
-	out := seq2.encode()!
->>>>>>> main
+
 	expected := [u8(0x30), 16, u8(0x01), 0x01, 0x00, u8(0x30), 8, 0x01, 0x01, 0xff, u8(0x05), 0x00,
 		u8(0x01), 0x01, 0x00, u8(0x01), 0x01, 0xff]
 	// assert for right value
@@ -37,23 +35,17 @@ fn test_sequence_contains_other_seq() ! {
 fn test_sequence_der_decode() ! {
 	data := [u8(0x30), 16, u8(0x01), 0x01, 0x00, u8(0x30), 8, u8(0x01), 0x01, 0xff, u8(0x05), 0x00,
 		u8(0x01), 0x01, 0x00, u8(0x01), 0x01, 0xff]
-<<<<<<< HEAD
+
 	seq, n := Sequence.decode(data, 0)!
 	assert seq.tag.is_constructed() == true
 	assert seq.tag.tag_number() == int(TagType.sequence)
 	assert n == 18
 	assert seq.elements.len == 3
 	els := seq.elements()!
-=======
-	out := der_decode(data)!
-	// lets cast it to sequence
-	seq := out.as_sequence()!
->>>>>>> main
 
 	assert els[0].tag() == new_tag(.universal, false, int(TagType.boolean))!
 	assert els[0].payload()! == [u8(0x00)]
 
-<<<<<<< HEAD
 	el1 := els[1] as Sequence
 	assert el1.elements.len == 3 // [true, null, false]
 	el10 := el1.elements[0] as Boolean
@@ -65,13 +57,6 @@ fn test_sequence_der_decode() ! {
 
 	el2 := els[2] as Boolean
 	assert el2.value() == true
-=======
-	el1 := seq.elements[1].as_sequence()!
-	assert el1.elements.len == 3 // [boolean(true), null, boolean(false)]
-	// dump(el1)
-	el2 := seq.elements[2].as_boolean()!
-	assert el2 == Boolean(true)
->>>>>>> main
 }
 
 fn test_sequence_add_and_encode_boolean() {

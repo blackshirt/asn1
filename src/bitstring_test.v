@@ -19,27 +19,27 @@ fn test_new_bitstring() ! {
 		BSTest{[u8(0xff)], 1, BitString{}, error('BitString: bad args')},
 		BSTest{[u8(0xff)], 0, BitString{
 			data: [u8(0xff)]
-			pad:  0
+			pad: 0
 		}, none},
 		BSTest{[u8(0xfe)], 0, BitString{
 			data: [u8(0xfe)]
-			pad:  0
+			pad: 0
 		}, none},
 		BSTest{[u8(0x8e)], 0, BitString{
 			data: [u8(0x8e)]
-			pad:  0
+			pad: 0
 		}, none},
 		BSTest{[u8(0x88)], 0, BitString{
 			data: [u8(0x88)]
-			pad:  0
+			pad: 0
 		}, none},
 		BSTest{[u8(0x03), 0x02, 0x00, 0x20], 0, BitString{
 			data: [u8(0x03), 0x02, 0x00, 0x20]
-			pad:  0
+			pad: 0
 		}, none},
 		BSTest{[u8(0x03), 0x02, 0x05, 0x80], 5, BitString{
 			data: [u8(0x03), 0x02, 0x05, 0x80]
-			pad:  5
+			pad: 5
 		}, none},
 	]
 	for c in ds {
