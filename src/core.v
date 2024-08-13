@@ -278,16 +278,29 @@ pub fn (t TagType) str() string {
 		.octetstring { return 'OCTETSTRING' }
 		.null { return 'NULL' }
 		.oid { return 'OID' }
+		.objdesc { return 'OBJECT_DESCRIPTION' }
+		.external { return 'EXTERNAL' }
+		.real { return 'REAL' }
 		.enumerated { return 'ENUMERATED' }
+		.embedded { return 'EMBEDDED' }
 		.utf8string { return 'UTF8STRING' }
-		.sequence { return 'SEQUENCE OR SEQUENCE OF' }
-		.set { return 'SET OR SET OF' }
+		.relativeoid { return 'RELATIVEOID' }
+		.time { return 'TIME' }
+		.sequence { return 'SEQUENCE_OR_SEQUENCEOF' }
+		.set { return 'SET_OR_SET_OF' }
 		.numericstring { return 'NUMERICSTRING' }
 		.printablestring { return 'PRINTABLESTRING' }
+		.t61string { return 'T61STRING' }
+		.videotexstring { return 'VIDEOTEXSTRING' }
 		.ia5string { return 'IA5STRING' }
 		.utctime { return 'UTCTIME' }
 		.generalizedtime { return 'GENERALIZEDTIME' }
+		.graphicstring { return 'GRAPHICSTRING' }
 		.visiblestring { return 'VISIBLESTRING' }
+		.generalstring { return 'GENERALSTRING' }
+		.universalstring { return 'UNIVERSALSTRING' }
+		.characterstring { return 'CHARACTERSTRING' }
+		.bmpstring { return 'BMPSTRING' }
 		else { return 'UNSUPPORTED_TAG_TYPE' }
 	}
 }
