@@ -62,7 +62,6 @@ fn test_tag_unpack() ! {
 	]
 
 	for i, c in data {
-		dump(i)
 		tag, pos := Tag.decode(c.bytes, 0) or {
 			assert err == c.err
 			continue
@@ -129,8 +128,6 @@ fn test_tagandlength_handling() ! {
 	]
 
 	for i, c in bs {
-		dump(i)
-		dump(c.bytes.hex())
 		tag, pos := Tag.decode(c.bytes, 0) or {
 			assert err == c.err
 			continue

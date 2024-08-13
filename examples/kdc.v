@@ -91,12 +91,12 @@ const data = [u8(0x30), 0x82, 0x05, 0x4c, 0xa0, 0x03, 0x02, 0x01, 0x05, 0xa1, 0x
 
 fn main() {
 	seq := asn1.Sequence.decode(data)!
-    els := seq.elements()
-   	tt0 := els[0].as_tagged()!
-    dump(tt0.inner_tag())
+	els := seq.elements()
+	tt0 := els[0].as_tagged()!
+	dump(tt0.inner_tag())
 	inner := tt0.as_inner()
 	int0 := inner as asn1.AsnInteger
-    dump(int0.tag())
+	dump(int0.tag())
 }
 
 /* Output dump(seq)
