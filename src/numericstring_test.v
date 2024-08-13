@@ -49,11 +49,11 @@ fn test_encode_decode_numericstring_advanced() ! {
 		ln.encode(mut dst)!
 
 		d := NumericalTest{
-			inp: s
-			exp_length: dst.len
+			inp:            s
+			exp_length:     dst.len
 			exp_bytelength: dst
-			exp_values: b
-			err: error('invalid_length_error')
+			exp_values:     b
+			err:            error('invalid_length_error')
 		}
 
 		exp << d

@@ -19,7 +19,6 @@ fn test_visible_string_handling() {
 	]
 
 	for i, c in vb {
-		dump(i)
 		vs := VisibleString.from_string(c.inp) or {
 			assert err == c.err
 			continue

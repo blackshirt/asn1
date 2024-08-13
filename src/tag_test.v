@@ -26,7 +26,7 @@ fn test_universal_class_tag_length_handling() ! {
 	]
 
 	for i, c in tags {
-		t := new_tag(.universal, false, c.number) or {
+		t := Tag.new(.universal, false, c.number) or {
 			assert err == c.err
 			continue
 		}
@@ -172,7 +172,7 @@ fn test_serialize_tag() ! {
 
 	for c in data {
 		mut dst := []u8{}
-		tag := new_tag(c.class, c.constructed, c.num) or {
+		tag := Tag.new(c.class, c.constructed, c.num) or {
 			assert err == c.err
 			continue
 		}

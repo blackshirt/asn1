@@ -209,7 +209,7 @@ pub fn new_set() Set {
 // new_set_with_class creates new set with specific ASN.1 class.
 pub fn new_set_with_class(c TagClass) Set {
 	set := Set{
-		tag: new_tag(c, true, int(TagType.set))
+		tag: Tag.new(c, true, int(TagType.set))
 	}
 	return set
 }
@@ -259,7 +259,7 @@ pub fn (mut set Set) add_multi(objs []Encoder) Set {
 }
 
 pub fn (set Set) tag() Tag {
-	return new_tag(.universal, true, int(TagType.set))
+	return Tag.new(.universal, true, int(TagType.set))
 }
 
 pub fn (set Set) length() int {

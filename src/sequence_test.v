@@ -43,7 +43,7 @@ fn test_sequence_der_decode() ! {
 	assert seq.elements.len == 3
 	els := seq.elements()!
 
-	assert els[0].tag() == new_tag(.universal, false, int(TagType.boolean))!
+	assert els[0].tag() == Tag.new(.universal, false, int(TagType.boolean))!
 	assert els[0].payload()! == [u8(0x00)]
 
 	el1 := els[1] as Sequence
@@ -114,7 +114,7 @@ fn test_sequence_add_encode_oid() ! {
 	seq.add_element(o2)!
 	seq.add_element(o3)!
 
-	assert seq.tag() == new_tag(.universal, true, int(TagType.sequence))!
+	assert seq.tag() == Tag.new(.universal, true, int(TagType.sequence))!
 	assert seq.length()! == 11
 	assert seq.packed_length()! == 13
 
@@ -155,7 +155,7 @@ fn test_sequence_add_encode_integer() ! {
 	seq.add_element(o2)!
 	seq.add_element(o3)!
 
-	assert seq.tag() == new_tag(.universal, true, int(TagType.sequence))!
+	assert seq.tag() == Tag.new(.universal, true, int(TagType.sequence))!
 	assert seq.length()! == 16
 	assert seq.packed_length()! == 18
 

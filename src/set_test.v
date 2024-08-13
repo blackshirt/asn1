@@ -88,7 +88,7 @@ fn test_set_encode() ! {
 
 fn test_setof_encode() ! {
 	mut set1 := Set{
-		tag: new_tag(.universal, true, int(TagType.set))
+		tag: Tag.new(.universal, true, int(TagType.set))
 	}
 
 	set1.add_multi([Integer.from_i64(55), Integer.from_i64(4),

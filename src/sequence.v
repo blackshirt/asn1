@@ -24,7 +24,7 @@ mut:
 }
 
 pub fn Sequence.new(seqof bool) !Sequence {
-	tag := new_tag(.universal, true, int(TagType.sequence))!
+	tag := Tag.new(.universal, true, int(TagType.sequence))!
 	return Sequence.new_with_tag(tag, seqof)
 }
 
@@ -35,7 +35,7 @@ fn Sequence.new_with_tag(tag Tag, seqof bool) !Sequence {
 		return error('Not a valid sequence tag')
 	}
 	return Sequence{
-		tag: tag
+		tag:   tag
 		seqof: seqof
 	}
 }
@@ -238,7 +238,7 @@ fn parse_primitive_element(tag Tag, contents []u8, p Params) !Element {
 		//   - relaxed parsing by return raw asn1 object.
 		else {
 			return RawElement{
-				tag: tag
+				tag:     tag
 				payload: contents
 			}
 		}
@@ -298,7 +298,7 @@ pub fn new_sequence() Sequence {
 // new_sequence_with_class creates new empty sequence with specific ASN.1 class.
 pub fn new_sequence_with_class(c TagClass) Sequence {
 	seq := Sequence{
-		tag: new_tag(c, true, int(TagType.sequence))
+		tag: Tag.new(c, true, int(TagType.sequence))
 	}
 	return seq
 }

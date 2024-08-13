@@ -30,8 +30,8 @@ pub fn TaggedType.new(el Element, tagmode TaggedMode, outer_tag Tag) !TaggedType
 	}
 	return TaggedType{
 		outer_tag: outer_tag
-		mode: tagmode
-		inner_el: el
+		mode:      tagmode
+		inner_el:  el
 	}
 }
 
@@ -48,7 +48,7 @@ pub fn TaggedType.implicit(el Element, outer_tag Tag) !TaggedType {
 // explicit_context creates explicit mode of TaggedType for inner element el with tag has a .context_specific TagClass
 // and expected (outer) tag number is set into tagnum
 pub fn TaggedType.explicit_context(el Element, tagnum int) !TaggedType {
-	tag := new_tag(.context_specific, true, tagnum)!
+	tag := Tag.new(.context_specific, true, tagnum)!
 	tt := TaggedType.explicit(el, tag)!
 	return tt
 }
@@ -56,7 +56,7 @@ pub fn TaggedType.explicit_context(el Element, tagnum int) !TaggedType {
 // implicit_context creates implicit mode of TaggedType for inner element el with tag has a .context_specific TagClass
 // and expected (outer) tag number is set into tagnum
 pub fn TaggedType.implicit_context(el Element, tagnum int) !TaggedType {
-	tag := new_tag(.context_specific, true, tagnum)!
+	tag := Tag.new(.context_specific, true, tagnum)!
 	tt := TaggedType.implicit(el, tag)!
 	return tt
 }
@@ -192,8 +192,8 @@ pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Para
 			}
 			tt := TaggedType{
 				outer_tag: raw.tag
-				mode: .explicit
-				inner_el: inner_el
+				mode:      .explicit
+				inner_el:  inner_el
 			}
 			return tt, next
 		}
@@ -201,13 +201,13 @@ pub fn TaggedType.decode(src []u8, loc i64, tm TaggedMode, inner_tag Tag, p Para
 			// when in .implicit mode, inner tag is unknown, so we pass inner_tag as expected tag
 			// the bytes is the values of the element
 			inner := RawElement{
-				tag: inner_tag
+				tag:     inner_tag
 				payload: bytes
 			}
 			tt := TaggedType{
 				outer_tag: raw.tag
-				mode: .implicit
-				inner_el: inner
+				mode:      .implicit
+				inner_el:  inner
 			}
 			return tt, next
 		}

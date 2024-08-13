@@ -3,6 +3,8 @@
 // that can be found in the LICENSE file.
 module asn1
 
+// base128_int_length calculates the length of bytes needed to store
+// integer v encoded in base 128
 fn base128_int_length(v i64) int {
 	if v == 0 {
 		return 1

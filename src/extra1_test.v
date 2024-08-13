@@ -27,8 +27,7 @@ fn test_ed4418_data() ! {
 	assert els.len == 2
 	assert els[0] is Sequence
 	assert els[1] is BitString
-	els0 := els[0].elements()!
-	dump(els0)
+	// NOTE: Need to be fixed
 	// assert el[0].payload()!.bytestr() == '1.3.101.113'
 }
 

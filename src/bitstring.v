@@ -52,7 +52,7 @@ fn BitString.new_with_pad(src []u8, pad u8, p Params) !BitString {
 	}
 	return BitString{
 		data: src
-		pad: pad
+		pad:  pad
 	}
 }
 
