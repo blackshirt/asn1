@@ -14,9 +14,9 @@ module asn1
 // Sequence structure can represents both SEQUENCE and SEQUENCE OF type.
 // The encoding of a sequence value shall be constructed.
 pub struct Sequence {
+	tag Tag = Tag{.universal, true, int(TagType.sequence)}
 mut:
 	// The tag should represents sequence or sequenceof tag, ie, 0x30
-	tag Tag = Tag{.universal, true, int(TagType.sequence)}
 	// seqof should be set when this sequence is SequenceOf type
 	seqof bool
 	// elements of the sequence

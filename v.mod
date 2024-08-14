@@ -5,8 +5,4 @@ Module {
 	license: 'MIT'
 	repo_url: ''
 	dependencies: []
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> main

@@ -19,7 +19,7 @@ pub fn read_bytes(src []u8, pos int, size int) ![]u8 {
 }
 
 pub fn read_byte(src []u8, loc int) !(u8, int) {
-	if src.len == 0 || loc > src.len - 1 {
+	if src.len == 0 || loc + 1 > src.len {
 		return error('invalid loc or len')
 	}
 
@@ -43,7 +43,7 @@ fn read_digit(src []u8, loc int) !(u8, int) {
 }
 
 fn read_2_digits(src []u8, loc int) !(u8, int) {
-	if loc >= src.len || src.len - loc < 2 {
+	if loc >= src.len || src.len < 2 + loc {
 		return error('not enough bytes')
 	}
 	mut val, mut pos := read_digit(src, loc)!
@@ -57,7 +57,7 @@ fn read_2_digits(src []u8, loc int) !(u8, int) {
 }
 
 fn read_4_digits(src []u8, loc int) !(u16, int) {
-	if loc >= src.len || src.len - loc < 4 {
+	if loc >= src.len || src.len < 4 + loc {
 		return error('not enough bytes')
 	}
 	mut val, mut pos := read_digit(src, loc)!
