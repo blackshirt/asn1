@@ -22,6 +22,26 @@ pub fn VisibleString.from_string(s string, p Params) !VisibleString {
 	}
 }
 
+// VisibleString.from_raw_element transforms RawElement in `re` into VisibleString
+pub fn VisibleString.from_raw_element(re RawElement, p Params) !VisibleString {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .visiblestring {
+		return error('RawElement tag does not hold .VisibleString type')
+	}
+	bytes := re.payload(p)!
+	os := VisibleString.from_bytes(bytes, p)!
+
+	return os
+}
+
 // from_bytes creates a new VisibleString from bytes src
 pub fn VisibleString.from_bytes(src []u8, p Params) !VisibleString {
 	if contains_ctrl_chars(src) {

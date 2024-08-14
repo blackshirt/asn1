@@ -9,9 +9,9 @@ import encoding.utf8
 // UTF8 unicode charset
 //
 pub struct UTF8String {
-	tag Tag = Tag{.universal, false, int(TagType.utf8string)}
-mut:
 	value string
+mut:
+	tag Tag = Tag{.universal, false, int(TagType.utf8string)}
 }
 
 pub fn UTF8String.from_string(s string, p Params) !UTF8String {
@@ -22,6 +22,26 @@ pub fn UTF8String.from_string(s string, p Params) !UTF8String {
 	return UTF8String{
 		value: s
 	}
+}
+
+// UTF8String.from_raw_element transforms RawElement in `re` into UTF8String
+pub fn UTF8String.from_raw_element(re RawElement, p Params) !UTF8String {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .utf8string {
+		return error('RawElement tag does not hold .UTF8String type')
+	}
+	bytes := re.payload(p)!
+	os := UTF8String.from_bytes(bytes, p)!
+
+	return os
 }
 
 pub fn UTF8String.from_bytes(src []u8, p Params) !UTF8String {

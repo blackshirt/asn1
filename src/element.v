@@ -167,6 +167,19 @@ pub fn RawElement.new(t Tag, payload []u8) RawElement {
 	return el
 }
 
+fn (re RawElement) expect_class(c TagClass) bool {
+	return re.tag.tag_class() == c
+}
+
+fn (re RawElement) expect_form(constructed bool) bool {
+	return re.tag.is_constructed() == constructed
+}
+
+fn (re RawElement) expect_tag_number(number int) bool {
+	tagnum := re.tag.tag_number()
+	return int(tagnum) == number
+}
+
 // tag returns the tag of the RawElement
 pub fn (el RawElement) tag() Tag {
 	return el.tag

@@ -11,7 +11,8 @@ module asn1
 // We only treated GeneralString as an us-ascii charset
 pub struct GeneralString {
 	value string
-	tag   Tag = Tag{.universal, false, int(TagType.generalstring)}
+mut:
+	tag Tag = Tag{.universal, false, int(TagType.generalstring)}
 }
 
 // TODO: proper check GeneralString validation
@@ -25,8 +26,29 @@ pub fn GeneralString.from_string(s string) !GeneralString {
 	}
 }
 
+// GeneralString.from_raw_element transforms RawElement in `re` into GeneralString
+pub fn GeneralString.from_raw_element(re RawElement, p Params) !GeneralString {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .generalstring {
+		return error('RawElement tag does not hold .generalstring type')
+	}
+	bytes := re.payload(p)!
+	bs := GeneralString.from_bytes(bytes, p)!
+
+	return bs
+}
+
 // from_bytes creates GeneralString from bytes b
-pub fn GeneralString.from_bytes(b []u8) !GeneralString {
+pub fn GeneralString.from_bytes(b []u8, p Params) !GeneralString {
+	// Params p is not used here, but maybe to be implemented in future
 	if b.any(it < u8(` `) || it > u8(`~`)) {
 		return error('GeneralString: bytes contains non-ascii chars')
 	}

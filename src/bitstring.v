@@ -6,12 +6,20 @@ module asn1
 import arrays
 
 // ASN.1 BIT STRING type handling
+//
 // The BIT STRING type denotes an arbitrary string of bits (ones and zeroes).
 // A BIT STRING value can have any length, including zero. This type is a string type.
+// BIT STRING, OCTET STRING, UTCTime, GeneralizedTime, and the various string types can use
+// either primitive encoding or constructed encoding, at the sender’s discretion-- in BER.
+// However, in DER all types that have an encoding choice between primitive and constructed
+// must use the primitive encoding. DER restricts the encoding to primitive only.
+// The same applies for BITSTRING.
 pub struct BitString {
-	tag  Tag = Tag{.universal, false, int(TagType.bitstring)}
 	data []u8
 	pad  u8 // numbers of unused bits
+mut:
+	// make an immutable to be possible to set a tag form
+	tag Tag = Tag{.universal, false, int(TagType.bitstring)}
 }
 
 // BitString.from_binary_string creates a new BitString from binary bits arrays in s,
@@ -30,6 +38,26 @@ pub fn BitString.from_binary_string(s string, p Params) !BitString {
 // from_string creates a new BitString from regular string s
 pub fn BitString.from_string(s string, p Params) !BitString {
 	return BitString.from_bytes(s.bytes(), p)
+}
+
+// BitString.from_raw_element transforms RawElement in `re` into BitString
+pub fn BitString.from_raw_element(re RawElement, p Params) !BitString {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .bitstring {
+		return error('RawElement tag does not hold .bitstring type')
+	}
+	bytes := re.payload(p)!
+	bs := BitString.from_bytes(bytes, p)!
+
+	return bs
 }
 
 // from_bytes creates a new BitString from bytes array in src

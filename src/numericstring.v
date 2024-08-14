@@ -10,8 +10,9 @@ module asn1
 // specified collection of characters.
 // That was : digit : 0,1,..9 and spaces char (0x20)
 pub struct NumericString {
-	tag   Tag = Tag{.universal, false, int(TagType.numericstring)}
 	value string
+mut:
+	tag Tag = Tag{.universal, false, int(TagType.numericstring)}
 }
 
 // new_numeric_string creates new numeric string
@@ -22,6 +23,26 @@ pub fn NumericString.from_string(s string, p Params) !NumericString {
 	return NumericString{
 		value: s
 	}
+}
+
+// NumericString.from_raw_element transforms RawElement in `re` into NumericString
+pub fn NumericString.from_raw_element(re RawElement, p Params) !NumericString {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .numericstring {
+		return error('RawElement tag does not hold .numericstring type')
+	}
+	bytes := re.payload(p)!
+	ns := NumericString.from_bytes(bytes, p)!
+
+	return ns
 }
 
 pub fn NumericString.from_bytes(bytes []u8, p Params) !NumericString {

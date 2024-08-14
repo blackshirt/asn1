@@ -15,11 +15,32 @@ const printable_symbols = r"(')+,-./:=?".bytes()
 
 pub struct PrintableString {
 	value string
-	tag   Tag = Tag{.universal, false, int(TagType.printablestring)}
+mut:
+	tag Tag = Tag{.universal, false, int(TagType.printablestring)}
 }
 
 pub fn PrintableString.from_string(s string, p Params) !PrintableString {
 	return PrintableString.from_bytes(s.bytes(), p)!
+}
+
+// PrintableString.from_raw_element transforms RawElement in `re` into PrintableString
+pub fn PrintableString.from_raw_element(re RawElement, p Params) !PrintableString {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .printablestring {
+		return error('RawElement tag does not hold .printablestring type')
+	}
+	bytes := re.payload(p)!
+	os := PrintableString.from_bytes(bytes, p)!
+
+	return os
 }
 
 pub fn PrintableString.from_bytes(src []u8, p Params) !PrintableString {

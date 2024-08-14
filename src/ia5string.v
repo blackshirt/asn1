@@ -20,6 +20,26 @@ pub fn IA5String.from_string(s string, p Params) !IA5String {
 	}
 }
 
+// IA5String.from_raw_element transforms RawElement in `re` into IA5String
+pub fn IA5String.from_raw_element(re RawElement, p Params) !IA5String {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .ia5string {
+		return error('RawElement tag does not hold .ia5string type')
+	}
+	bytes := re.payload(p)!
+	bs := IA5String.from_bytes(bytes, p)!
+
+	return bs
+}
+
 // from_bytes creates a new IA5String from bytes b
 pub fn IA5String.from_bytes(b []u8, p Params) !IA5String {
 	if b.any(it < u8(` `) || it > u8(`~`)) {

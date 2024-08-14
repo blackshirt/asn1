@@ -21,7 +21,7 @@ fn base128_int_length(v i64) int {
 	return ret
 }
 
-// encode_base128_int serialize integer to bytes in base 128 integer.
+// encode_base128_int serializes integer to bytes array in base 128 integer.
 fn encode_base128_int(mut dst []u8, n i64) []u8 {
 	l := base128_int_length(n)
 
@@ -39,7 +39,7 @@ fn encode_base128_int(mut dst []u8, n i64) []u8 {
 }
 
 // decode_base128_int read bytes as base 128 integer for current position `loc`.
-// Its returns integer value and next offset to read from.
+// Its returns integer value and the next offset to read from.
 fn decode_base128_int(bytes []u8, loc int) !(int, int) {
 	mut pos := loc
 	mut r64 := i64(0)

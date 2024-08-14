@@ -26,7 +26,8 @@ module asn1
 
 pub struct UTCTime {
 	value string
-	tag   Tag = Tag{.universal, false, int(TagType.utctime)}
+mut:
+	tag Tag = Tag{.universal, false, int(TagType.utctime)}
 }
 
 // new_utctime creates new UTCTime from string s.
@@ -39,6 +40,26 @@ pub fn UTCTime.from_string(s string, p Params) !UTCTime {
 	return UTCTime{
 		value: s
 	}
+}
+
+// UTCTime.from_raw_element transforms RawElement in `re` into UTCTime
+pub fn UTCTime.from_raw_element(re RawElement, p Params) !UTCTime {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .utctime {
+		return error('RawElement tag does not hold .utctime type')
+	}
+	bytes := re.payload(p)!
+	os := UTCTime.from_bytes(bytes, p)!
+
+	return os
 }
 
 pub fn UTCTime.from_bytes(b []u8, p Params) !UTCTime {
@@ -181,6 +202,26 @@ pub fn GeneralizedTime.from_string(s string, p Params) !GeneralizedTime {
 	return GeneralizedTime{
 		value: s
 	}
+}
+
+// GeneralizedTime.from_raw_element transforms RawElement in `re` into GeneralizedTime
+pub fn GeneralizedTime.from_raw_element(re RawElement, p Params) !GeneralizedTime {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .generalizedtime {
+		return error('RawElement tag does not hold .generalizedtime type')
+	}
+	bytes := re.payload(p)!
+	os := GeneralizedTime.from_bytes(bytes, p)!
+
+	return os
 }
 
 pub fn GeneralizedTime.from_bytes(b []u8, p Params) !GeneralizedTime {

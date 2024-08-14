@@ -8,9 +8,9 @@ module asn1
 // This type is very similar to BIT STRING, except that all values must be an integral number of eight bits.
 // You can use constraints to specify a maximum length for an OCTET STRING type.
 pub struct OctetString {
-mut:
-	tag   Tag = Tag{.universal, false, int(TagType.octetstring)}
 	value string
+mut:
+	tag Tag = Tag{.universal, false, int(TagType.octetstring)}
 }
 
 // new_octetstring creates new octet string
@@ -21,6 +21,26 @@ pub fn OctetString.from_string(s string, p Params) !OctetString {
 	return OctetString{
 		value: s
 	}
+}
+
+// OctetString.from_raw_element transforms RawElement in `re` into OctetString
+pub fn OctetString.from_raw_element(re RawElement, p Params) !OctetString {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .octetstring {
+		return error('RawElement tag does not hold .octetstring type')
+	}
+	bytes := re.payload(p)!
+	os := OctetString.from_bytes(bytes, p)!
+
+	return os
 }
 
 pub fn OctetString.from_bytes(src []u8, p Params) !OctetString {

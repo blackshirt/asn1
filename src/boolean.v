@@ -43,6 +43,26 @@ pub fn (b Boolean) value() bool {
 	return ret
 }
 
+// Boolean.from_raw_element transforms RawElement in `re` into Boolean
+pub fn Boolean.from_raw_element(re RawElement, p Params) !Boolean {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but get ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .boolean {
+		return error('RawElement tag does not hold .boolean type')
+	}
+	bytes := re.payload(p)!
+	bs := Boolean.from_bytes(bytes, p)!
+
+	return bs
+}
+
 // from_bytes creates a new ASN.1 BOOLEAN type from bytes b.
 // Boolean type should fit in one byte length, otherwise it would return error.
 // by default, p.mode == .der to follow DER restriction

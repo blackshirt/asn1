@@ -8,9 +8,9 @@ const max_oid_length = 128
 
 // ObjectIdentifier
 pub struct Oid {
-mut:
-	tag   Tag = Tag{.universal, false, int(TagType.oid)}
 	value []int
+mut:
+	tag Tag = Tag{.universal, false, int(TagType.oid)}
 }
 
 pub fn Oid.from_ints(src []int) !Oid {
@@ -33,6 +33,26 @@ pub fn Oid.from_ints(src []int) !Oid {
 		return error('Oid: bad oid int array')
 	}
 	return oid
+}
+
+// Oid.from_raw_element transforms RawElement in `re` into Oid
+pub fn Oid.from_raw_element(re RawElement, p Params) !Oid {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .oid {
+		return error('RawElement tag does not hold .oid type')
+	}
+	bytes := re.payload(p)!
+	os := Oid.from_bytes(bytes, p)!
+
+	return os
 }
 
 pub fn Oid.from_bytes(src []u8, p Params) !Oid {

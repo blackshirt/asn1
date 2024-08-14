@@ -8,8 +8,9 @@ module asn1
 // The encoding of an enumerated value shall be that of the integer value with which it is associated.
 // NOTE: It is primitive.
 pub struct Enumerated {
-	tag   Tag = Tag{.universal, false, int(TagType.enumerated)}
 	value int
+mut:
+	tag Tag = Tag{.universal, false, int(TagType.enumerated)}
 }
 
 pub fn Enumerated.from_int(val int) Enumerated {
@@ -18,8 +19,28 @@ pub fn Enumerated.from_int(val int) Enumerated {
 	}
 }
 
-pub fn Enumerated.from_bytes(b []u8) !Enumerated {
-	return Enumerated.unpack(b)!
+// Enumerated.from_raw_element transforms RawElement in `re` into Enumerated
+pub fn Enumerated.from_raw_element(re RawElement, p Params) !Enumerated {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not an .universal, but get ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .enumerated {
+		return error('RawElement tag does not hold .enumerated type')
+	}
+	bytes := re.payload(p)!
+	bs := Enumerated.from_bytes(bytes, p)!
+
+	return bs
+}
+
+pub fn Enumerated.from_bytes(b []u8, p Params) !Enumerated {
+	return Enumerated.unpack(b, p)!
 }
 
 pub fn (e Enumerated) tag() Tag {
@@ -27,7 +48,7 @@ pub fn (e Enumerated) tag() Tag {
 }
 
 pub fn (e Enumerated) payload(p Params) ![]u8 {
-	return e.pack()!
+	return e.pack(p)!
 }
 
 pub fn (e Enumerated) length(p Params) !int {
@@ -48,7 +69,7 @@ pub fn (e Enumerated) encode(mut dst []u8, p Params) ! {
 		return error('Integer: unsupported mode')
 	}
 	e.tag.encode(mut dst, p)!
-	bytes := e.pack()!
+	bytes := e.pack(p)!
 	length := Length.from_i64(bytes.len)!
 	length.encode(mut dst, p)!
 	dst << bytes
@@ -64,11 +85,14 @@ pub fn Enumerated.decode(src []u8, loc i64, p Params) !(Enumerated, i64) {
 		|| raw.tag.tag_number() != int(TagType.enumerated) {
 		return error('Enumerated: bad tag of universal class type')
 	}
-	ret := Enumerated.unpack(raw.payload)!
+	ret := Enumerated.unpack(raw.payload, p)!
 	return ret, next
 }
 
-fn Enumerated.unpack(src []u8) !Enumerated {
+fn Enumerated.unpack(src []u8, p Params) !Enumerated {
+	if p.mode != .der || p.mode != .ber {
+		return error('Enumerated.unpack: unsupported mode')
+	}
 	if !valid_bytes(src, true) {
 		return error('Enumerated: failed check')
 	}
@@ -89,7 +113,10 @@ fn Enumerated.unpack(src []u8) !Enumerated {
 	}
 }
 
-fn (e Enumerated) pack() ![]u8 {
+fn (e Enumerated) pack(p Params) ![]u8 {
+	if p.mode != .der || p.mode != .ber {
+		return error('Enumerated.pack: unsupported mode')
+	}
 	mut n := e.enumerated_len()
 	mut dst := []u8{len: n}
 

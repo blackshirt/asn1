@@ -12,9 +12,31 @@ pub fn Null.new() Null {
 	return Null{}
 }
 
+pub fn Null.from_raw_element(re RawElement, p Params) !Null {
+	if re.payload(p)!.len != 0 {
+		return error('Non-null RawElement payload')
+	}
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .null {
+		return error('RawElement tag does not hold .null type')
+	}
+	bytes := re.payload(p)!
+	bs := Null.from_bytes(bytes, p)!
+
+	return bs
+}
+
 pub fn Null.from_bytes(b []u8, p Params) !Null {
 	if b.len != 0 {
-		return error('Null: bad bytes')
+		return error('Null: bad non-null bytes')
 	}
 	return Null{}
 }

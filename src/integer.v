@@ -72,6 +72,26 @@ pub fn Integer.from_hex(x string) !Integer {
 	}
 }
 
+// Integer.from_raw_element tries to transform RawElement in `re` into Integer
+pub fn Integer.from_raw_element(re RawElement, p Params) !Integer {
+	// check validity of the RawElement tag
+	if re.tag.tag_class() != .universal {
+		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+	}
+	if p.mode == .der {
+		if re.tag.is_constructed() {
+			return error('RawElement constructed is not allowed in .der')
+		}
+	}
+	if re.tag.number.universal_tag_type()! != .integer {
+		return error('RawElement tag does not hold .integer type')
+	}
+	bytes := re.payload(p)!
+	bs := Integer.from_bytes(bytes, p)!
+
+	return bs
+}
+
 // from_bytes creates a new ASN.1 Integer from bytes array in b.
 // Its try to parse bytes as in two's complement form. see `unpack_from_twoscomplement_bytes`
 pub fn Integer.from_bytes(b []u8, p Params) !Integer {
