@@ -4,7 +4,7 @@ import asn1
 
 // type KerberosString = GeneralString
 struct KerberosString {
-	tag   asn1.Tag = asn1.new_tag(.universal, false, int(asn1.TagType.generalstring)) or { panic(err) }
+	tag   asn1.Tag = asn1.Tag.new(.universal, false, int(asn1.TagType.generalstring)) or { panic(err) }
 	value string
 }
 
@@ -84,7 +84,7 @@ fn KerberosString.decode(src []u8, loc i64, p asn1.Params) !(KerberosString, i64
 //    name-string     [1] SEQUENCE OF KerberosString
 // }
 struct PrincipalName {
-	tag         asn1.Tag = asn1.new_tag(.universal, true, int(asn1.TagType.sequence)) or { panic(err) }
+	tag         asn1.Tag = asn1.Tag.new(.universal, true, int(asn1.TagType.sequence)) or { panic(err) }
 	name_type   asn1.Integer
 	name_string []KerberosString
 }
@@ -160,11 +160,11 @@ fn PrincipalName.decode(src []u8, loc i64, p asn1.Params) !(PrincipalName, i64) 
 	re0 := els[0] as asn1.RawElement
 	re1 := els[1] as asn1.RawElement
 
-	tag0 := asn1.new_tag(.universal, false, int(asn1.TagType.integer))!
+	tag0 := asn1.Tag.new(.universal, false, int(asn1.TagType.integer))!
 	tt0 := re0.as_tagged(.explicit, tag0)!
 	el0 := tt0.inner_element() as asn1.Integer
 
-	tag1 := asn1.new_tag(.universal, true, int(asn1.TagType.sequence))!
+	tag1 := asn1.Tag.new(.universal, true, int(asn1.TagType.sequence))!
 	tt1 := re1.as_tagged(.explicit, tag1)!
 	el1 := tt1.inner_element() as asn1.Sequence
 

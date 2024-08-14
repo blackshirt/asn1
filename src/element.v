@@ -96,6 +96,11 @@ pub fn (e Element) equal_with(other Element) bool {
 	return e.tag() == other.tag() && a == b
 }
 
+pub fn (el Element) as_raw_element(p Params) !RawElement {
+	re := RawElement.new(el.tag(), el.payload(p))
+	return re
+}
+
 // ElementList is arrays of ELement
 type ElementList = []Element
 
