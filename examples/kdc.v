@@ -93,7 +93,7 @@ fn main() {
 	seq, _ := asn1.Sequence.decode(data, 0)!
 	els := seq.elements()!
 	tt_0 := els[0].as_raw_element()
-    tt0 := tt_0.as_tagged()!
+	tt0 := tt_0.as_tagged()!
 	dump(tt0.inner_tag())
 	inner := tt0.as_inner()
 	int0 := inner as asn1.Integer

@@ -40,21 +40,22 @@ pub fn BitString.from_string(s string, p Params) !BitString {
 	return BitString.from_bytes(s.bytes(), p)
 }
 
-// BitString.from_raw_element transforms RawElement in `re` into BitString
-pub fn BitString.from_raw_element(re RawElement, p Params) !BitString {
-	// check validity of the RawElement tag
-	if re.tag.tag_class() != .universal {
-		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
+// BitString.from_element transforms and creates Element in `el` into BitString
+pub fn BitString.from_element(el Element, p Params) !BitString {
+	// check validity of the Element tag
+	if !el.expect_tag_class(.universal) {
+		return error('BitString Element class should in .universal')
+	}
+	if !el.expect_tag_type(.bitstring) {
+		return error('Element tag does not hold .bitstring type')
 	}
 	if p.mode == .der {
-		if re.tag.is_constructed() {
-			return error('RawElement constructed is not allowed in .der')
+		if el.tag().is_constructed() {
+			return error('BitString Element constructed is not allowed in .der')
 		}
 	}
-	if re.tag.number.universal_tag_type()! != .bitstring {
-		return error('RawElement tag does not hold .bitstring type')
-	}
-	bytes := re.payload(p)!
+
+	bytes := el.payload(p)!
 	bs := BitString.from_bytes(bytes, p)!
 
 	return bs

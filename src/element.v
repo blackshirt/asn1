@@ -97,8 +97,26 @@ pub fn (e Element) equal_with(other Element) bool {
 }
 
 pub fn (el Element) as_raw_element(p Params) !RawElement {
-	re := RawElement.new(el.tag(), el.payload(p))
+	re := RawElement.new(el.tag(), el.payload(p)!)
 	return re
+}
+
+fn (el Element) expect_tag_class(c TagClass) bool {
+	return el.tag().tag_class() == c
+}
+
+fn (el Element) expect_tag_form(constructed bool) bool {
+	return el.tag().is_constructed() == constructed
+}
+
+fn (el Element) expect_tag_type(t TagType) bool {
+	typ := el.tag().number.universal_tag_type() or { panic('unsupported tag type') }
+	return typ == t
+}
+
+fn (el Element) expect_tag_number(number int) bool {
+	tagnum := el.tag().tag_number()
+	return int(tagnum) == number
 }
 
 // ElementList is arrays of ELement
@@ -170,19 +188,6 @@ pub fn RawElement.new(t Tag, payload []u8) RawElement {
 		payload: payload
 	}
 	return el
-}
-
-fn (re RawElement) expect_class(c TagClass) bool {
-	return re.tag.tag_class() == c
-}
-
-fn (re RawElement) expect_form(constructed bool) bool {
-	return re.tag.is_constructed() == constructed
-}
-
-fn (re RawElement) expect_tag_number(number int) bool {
-	tagnum := re.tag.tag_number()
-	return int(tagnum) == number
 }
 
 // tag returns the tag of the RawElement
