@@ -1,11 +1,23 @@
+// Copyright (c) 2022, 2023 blackshirt. All rights reserved.
+// Use of this source code is governed by a MIT License
+// that can be found in the LICENSE file.
 module asn1
+
+// This file contains structures and routines for handling ASN.1 Element.
+// Its includes:
+// 	- basic Element interface, for support ASN.1 element in more generic way
+//	- arrays of ELement in the form of ElementList
+//	- basic raw element in the RawElement structure, for handling arbitrary class
+//	  and other undefined (unsupported) generic ASN.1 Element in this module.
+//	- others structures, likes an Choice, AnyDefinedBy, Optional for representing other
+//	  element
 
 // Element represents a generic ASN.1 Element.
 // Most of the standard Universal class element defined on this module
 // satisfies this interface. This interface was also expanded by methods
 // defined on this interface.
 pub interface Element {
-	// tag tells the identity tag of this Element
+	// tag tells the identity of this Element. See `tag.v` file for more details.
 	tag() Tag
 	// payload tells the raw payload (values) of this Element.
 	// Its accept Params parameter in p to allow extending
@@ -15,17 +27,11 @@ pub interface Element {
 	payload(p Params) ![]u8
 }
 
-// Element.new creates a new Element from RawElement with tag and payload
-pub fn Element.new(tag Tag, payload []u8) !Element {
-	return RawElement{
-		tag:     tag
-		payload: payload
-	}
-}
-
 // FIXME: its not tested
-// from_object creates a new element from raw type (maybe universal type, like OctetString)
-// examples:
+// from_object[T] transforms and creates a new Element from generic type (maybe universal type, like an OctetString).
+// Its accepts generic element t that you should pass to this function. You should make sure if this element implements
+// required methods of the Element, or an error would be returned.
+// Examples:
 // ```v
 // oc := asn1.OctetString.from_string("xxx")!
 // el := Element.from_object[OctetString](oc)!
@@ -43,7 +49,7 @@ pub fn Element.from_object[T](t T) !Element {
 // oc := asn1.OctetString.from_string("xxx")!
 // el := Element.from_object[OctetString](oc)!
 //
-// // cast back to OctetString
+// // cast back the element into OctetString
 // os := el.into_object[OctetString]()!
 // ```
 // and then treats os as an OctetString
@@ -55,27 +61,27 @@ pub fn (el Element) into_object[T]() !T {
 }
 
 // length returns the length of the payload of this element.
-pub fn (e Element) length(p Params) !int {
-	payload := e.payload(p)!
+pub fn (el Element) length(p Params) !int {
+	payload := el.payload(p)!
 	return payload.len
 }
 
-// encode serializes this e Element into bytes and appended to `dst`.
+// encode serializes this el Element into bytes and appended to `dst`.
 // Its accepts optional p Params.
-pub fn (e Element) encode(mut dst []u8, p Params) ! {
-	e.tag().encode(mut dst, p)!
-	payload := e.payload(p)!
+pub fn (el Element) encode(mut dst []u8, p Params) ! {
+	el.tag().encode(mut dst, p)!
+	payload := el.payload(p)!
 	length := Length.from_i64(payload.len)!
 	length.encode(mut dst, p)!
 	dst << payload
 }
 
-// packed_length informs us the length of how many bytes when this e Element
+// packed_length informs us the length of how many bytes when this el Element
 // was serialized into bytes.
-pub fn (e Element) packed_length(p Params) !int {
+pub fn (el Element) packed_length(p Params) !int {
 	mut n := 0
-	n += e.tag().packed_length(p)!
-	payload := e.payload(p)!
+	n += el.tag().packed_length(p)!
+	payload := el.payload(p)!
 	length := Length.from_i64(payload.len)!
 	n += length.packed_length(p)!
 	n += payload.len
@@ -104,15 +110,15 @@ pub fn Element.decode(src []u8, loc i64, p Params) !(Element, i64) {
 	}
 }
 
-fn (e Element) expect_tag(t Tag) bool {
-	return e.tag() == t
+fn (el Element) expect_tag(t Tag) bool {
+	return el.tag() == t
 }
 
 // equal_with checks whether this two element equal and holds the same tag and content
-fn (e Element) equal_with(other Element) bool {
-	a := e.payload() or { panic(err) }
+fn (el Element) equal_with(other Element) bool {
+	a := el.payload() or { panic(err) }
 	b := other.payload() or { panic(err) }
-	return e.tag() == other.tag() && a == b
+	return el.tag() == other.tag() && a == b
 }
 
 fn (el Element) as_raw_element(p Params) !RawElement {
@@ -182,7 +188,7 @@ pub fn (els []Element) hold_different_tag() bool {
 // contains checks whether this array of Element contains the Element el
 pub fn (els []Element) contains(el Element) bool {
 	for e in els {
-		if !e.equal_with(el) {
+		if !el.equal_with(el) {
 			return false
 		}
 	}
@@ -210,37 +216,37 @@ pub fn RawElement.new(t Tag, payload []u8) RawElement {
 }
 
 // tag returns the tag of the RawElement
-pub fn (el RawElement) tag() Tag {
-	return el.tag
+pub fn (re RawElement) tag() Tag {
+	return re.tag
 }
 
-pub fn (el RawElement) length(p Params) !int {
-	return el.payload.len
+pub fn (re RawElement) length(p Params) !int {
+	return re.payload.len
 }
 
 // payload is payload of this RawElement
-pub fn (el RawElement) payload(p Params) ![]u8 {
-	return el.payload
+pub fn (re RawElement) payload(p Params) ![]u8 {
+	return re.payload
 }
 
-pub fn (e RawElement) packed_length(p Params) !int {
+pub fn (re RawElement) packed_length(p Params) !int {
 	mut n := 0
-	n += e.tag.packed_length(p)!
-	length := Length.from_i64(e.payload.len)!
+	n += re.tag.packed_length(p)!
+	length := Length.from_i64(re.payload.len)!
 	n += length.packed_length(p)!
-	n += e.payload.len
+	n += re.payload.len
 
 	return n
 }
 
-pub fn (e RawElement) encode(mut dst []u8, p Params) ! {
+pub fn (re RawElement) encode(mut dst []u8, p Params) ! {
 	if p.mode != .der && p.mode != .ber {
 		return error('RawElement: unsupported mode')
 	}
-	e.tag.encode(mut dst, p)!
-	length := Length.from_i64(e.payload.len)!
+	re.tag.encode(mut dst, p)!
+	length := Length.from_i64(re.payload.len)!
 	length.encode(mut dst, p)!
-	dst << e.payload
+	dst << re.payload
 }
 
 pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
@@ -341,6 +347,15 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 		return tt
 	}
 	return error('This RawElement can not be treated as TaggedType')
+}
+
+// OPTIONAL
+//
+struct Optional {
+	// set to true when its should present
+	present bool
+	tag     Tag
+	value   []u8
 }
 
 // CHOICE
