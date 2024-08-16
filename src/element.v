@@ -35,6 +35,25 @@ pub fn Element.from_object[T](t T) !Element {
 	return t
 }
 
+// into_object[T] transforms and tries to cast element el into generic object T
+// if the element not holding object T, it would return error.
+// NOTE: Not tested
+// Examples:
+// ```v
+// oc := asn1.OctetString.from_string("xxx")!
+// el := Element.from_object[OctetString](oc)!
+//
+// // cast back to OctetString
+// os := el.into_object[OctetString]()!
+// ```
+// and then treats os as an OctetString
+pub fn (el Element) into_object[T]() !T {
+	if el is T {
+		return *el
+	}
+	return error('Not holding T')
+}
+
 // length returns the length of the payload of this element.
 pub fn (e Element) length(p Params) !int {
 	payload := e.payload(p)!
@@ -85,18 +104,18 @@ pub fn Element.decode(src []u8, loc i64, p Params) !(Element, i64) {
 	}
 }
 
-pub fn (e Element) expect_tag(t Tag) bool {
+fn (e Element) expect_tag(t Tag) bool {
 	return e.tag() == t
 }
 
 // equal_with checks whether this two element equal and holds the same tag and content
-pub fn (e Element) equal_with(other Element) bool {
+fn (e Element) equal_with(other Element) bool {
 	a := e.payload() or { panic(err) }
 	b := other.payload() or { panic(err) }
 	return e.tag() == other.tag() && a == b
 }
 
-pub fn (el Element) as_raw_element(p Params) !RawElement {
+fn (el Element) as_raw_element(p Params) !RawElement {
 	re := RawElement.new(el.tag(), el.payload(p)!)
 	return re
 }
