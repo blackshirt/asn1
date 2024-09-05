@@ -27,7 +27,7 @@ type Length = i64
 
 // from_i64 creates Length from i64  value. Passing negative value (<0) for length
 // is not make a sense, so just return error instead if it happen.
-pub fn Length.from_i64(v i64) !Length {
+fn Length.from_i64(v i64) !Length {
 	if v < 0 {
 		return error('Length: supply with positive i64')
 	}
@@ -57,21 +57,40 @@ fn (v Length) pack_and_append(mut to []u8) {
 	}
 }
 
-// packed_length calculates the length of bytes needed to store the Length value `v`
+// packed_length gets length of length v in .der mode
+fn (v Length) packed_length() !int {
+	p := Params{}
+	n := v.packed_length_with_params(p)!
+	return n
+}
+
+// packed_length_with_params calculates the length of bytes needed to store the Length value `v`
 // includes one byte marker for long definite form of length value, for value >= 128
-pub fn (v Length) packed_length(p Params) !int {
+fn (v Length) packed_length_with_params(p Params) !int {
+	// we currently only support .der or (stricter) .ber
+	if p.mode != .der && p.mode != .ber {
+		return error('Length: unsupported mode')
+	}
 	n := if v < 128 { 1 } else { v.bytes_len() + 1 }
 	return n
 }
 
-// encode serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
+// pack serializes Length v into bytes in .der mode
+fn (v Length) pack() ![]u8 {
+	p := Params{}
+	out := v.pack_with_params(p)!
+	return out
+}
+
+// pack_with_params serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
 // it would use p.mode of `EncodingMode` to drive how encode operation would be done.
 // By default the .der mode is only currently supported.
-pub fn (v Length) encode(mut dst []u8, p Params) ! {
+fn (v Length) pack_with_params(p Params) ![]u8 {
 	// we currently only support .der and (stricter) .ber
 	if p.mode != .der && p.mode != .ber {
 		return error('Length: unsupported mode')
 	}
+	mut dst := []u8{}
 	// TODO: add supports for undefinite form
 	// Long form
 	if v >= 128 {
@@ -89,11 +108,19 @@ pub fn (v Length) encode(mut dst []u8, p Params) ! {
 		// short form, already tells the length value.
 		dst << u8(v)
 	}
+	return dst
 }
 
-// decode decodes and deserializes buffer in src into Length form, start from offset loc in the buffer.
+// unpack tries to deserializes buffer in src into Length form or return error on fails.
+fn Length.unpack(src []u8) !(Length, i64) {
+	p := Params{}
+	ret, next := Length.unpack_with_params(src, 0, p)!
+	return ret, next
+}
+
+// unpack_with_params tries to decode and deserializes buffer in src into Length form, start from offset loc in the buffer.
 // Its return Length and next offset in the buffer to process on, or return error on fails.
-pub fn Length.decode(src []u8, loc i64, p Params) !(Length, i64) {
+fn Length.unpack_with_params(src []u8, loc i64, p Params) !(Length, i64) {
 	if src.len < 1 {
 		return error('Length: truncated length')
 	}

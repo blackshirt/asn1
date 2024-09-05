@@ -151,7 +151,7 @@ pub fn (mut t Tag) clone_with_tag(v int) !Tag {
 // packed_length calculates length of bytes needed to store the tag in .der mode.
 pub fn (t Tag) packed_length() !int {
 	p := Params{}
-	n := packed_length_with_params(p)!
+	n := t.packed_length_with_params(p)!
 	return n
 }
 

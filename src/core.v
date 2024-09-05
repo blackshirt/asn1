@@ -59,7 +59,7 @@ const max_tag_number = 16383
 // ASN.1 imposes no limit on the tag number, but the NIST Stable Implementation Agreements (1991)
 // and its European and Asian counterparts limit the size of tags to 16383.
 // see https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation
-type TagNumber = uint
+type TagNumber = usize
 
 // from_int creates TagNumber from integer v. Its does not support to pass
 // negative integer, its not make sense for now.
