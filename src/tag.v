@@ -7,6 +7,7 @@ module asn1
 // The short form for tag number below <= 30 and stored enough in single byte,
 // where long form for tag number > 30, and stored in two or more bytes.
 // See limit restriction comment above.
+@[noinit]
 pub struct Tag {
 mut:
 	class       TagClass = .universal
@@ -39,8 +40,14 @@ pub fn (t Tag) tag_number() int {
 	return t.number
 }
 
-// encode serializes tag t into bytes array and appended into dst
-pub fn (t Tag) encode(mut dst []u8, p Params) ! {
+// pack serializes tag t into bytes array
+pub fn (t Tag) pack() ![]u8 {
+	p := Params{}
+	out := t.pack_with_params(p)!
+	return out
+}
+
+fn (t Tag) pack_with_params(p Params) ![]u8 {
 	// we currently only support .der or (stricter) .ber
 	if p.mode != .der && p.mode != .ber {
 		return error('Tag: unsupported mode')
@@ -49,6 +56,7 @@ pub fn (t Tag) encode(mut dst []u8, p Params) ! {
 	if t.number > max_tag_number {
 		return error('Tag: tag number exceed limit')
 	}
+	mut dst := []u8{}
 	// get the class type and constructed bit and build the bytes tag.
 	// if the tag number > 0x1f, represented in long form required two or more bytes,
 	// otherwise, represented in short form, fit in single byte.
@@ -66,12 +74,21 @@ pub fn (t Tag) encode(mut dst []u8, p Params) ! {
 		b |= u8(t.number)
 		dst << b
 	}
+	return dst
 }
 
-// Tag.decode deserializes bytes back into Tag structure start from `loc` offset.
-// By default, its decodes in .der encoding mode, if you want more control, pass your `Params`.
-// Its return Tag and next offset to operate on, and return error if it fails to decode.
-pub fn Tag.decode(bytes []u8, loc i64, p Params) !(Tag, i64) {
+// Tag.unpack tries to deserializes bytes into Tag. its return error on fails.
+pub fn Tag.unpack(bytes []u8) !(Tag, i64) {
+	// default params
+	p := Params{}
+	tag, next := Tag.unpack_with_params(bytes, 0, p)!
+	return tag, next
+}
+
+// Tag.unpack_with_params deserializes bytes back into Tag structure start from `loc` offset.
+// By default, its unpacks in .der encoding mode, if you want more control, pass your `Params`.
+// Its return Tag and next offset to operate on, and return error if it fails to unpack.
+fn Tag.unpack_with_params(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	// preliminary check
 	if bytes.len < 1 {
 		return error('Tag: bytes underflow')
@@ -99,7 +116,7 @@ pub fn Tag.decode(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	// check if this `number` is in long (multibyte) form, and interpretes more bytes as a tag number.
 	if number == 0x1f {
 		// we only allowed `max_tag_length` bytes following to represent tag number.
-		number, pos = TagNumber.decode(bytes, pos)!
+		number, pos = TagNumber.unpack(bytes, pos)!
 
 		// pos is the next position to read next bytes, so check tag bytes length
 		if pos >= max_tag_length + loc + 1 {
@@ -112,11 +129,8 @@ pub fn Tag.decode(bytes []u8, loc i64, p Params) !(Tag, i64) {
 		}
 	}
 	// build the tag
-	tag := Tag{
-		class:       TagClass.from_int(class)!
-		constructed: constructed
-		number:      number
-	}
+	tag := Tag.new(TagClass.from_int(class)!, constructed, number)!
+
 	return tag, pos
 }
 
@@ -134,9 +148,19 @@ pub fn (mut t Tag) clone_with_tag(v int) !Tag {
 	return new
 }
 
-// `packed_length` calculates length of bytes needed to store tag number, include one byte
+// packed_length calculates length of bytes needed to store the tag in .der mode.
+pub fn (t Tag) packed_length() !int {
+	p := Params{}
+	n := packed_length_with_params(p)!
+	return n
+}
+
+// `packed_length_with_params` calculates length of bytes needed to store tag number, include one byte
 // marker that tells if the tag number is in long form (>= 0x1f)
-pub fn (t Tag) packed_length(p Params) !int {
+fn (t Tag) packed_length_with_params(p Params) !int {
+	if p.mode != .der && p.mode != .ber {
+		return error('Tag: unsupported mode')
+	}
 	n := if t.number < 0x1f { 1 } else { 1 + t.number.bytes_len() }
 	return n
 }

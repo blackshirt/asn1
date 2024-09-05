@@ -59,7 +59,7 @@ const max_tag_number = 16383
 // ASN.1 imposes no limit on the tag number, but the NIST Stable Implementation Agreements (1991)
 // and its European and Asian counterparts limit the size of tags to 16383.
 // see https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation
-type TagNumber = int
+type TagNumber = uint
 
 // from_int creates TagNumber from integer v. Its does not support to pass
 // negative integer, its not make sense for now.
@@ -70,7 +70,7 @@ pub fn TagNumber.from_int(v int) !TagNumber {
 	if v > asn1.max_tag_number {
 		return error('TagNumber: ${v} is too big, dont exceed ${asn1.max_tag_number}')
 	}
-	return TagNumber(v)
+	return TagNumber(uint(v))
 }
 
 // bytes_len tells amount of bytes needed to store v in base 128
@@ -96,25 +96,39 @@ fn (v TagNumber) tag_number_length() int {
 	return len
 }
 
-// pack_base128 serializes TagNumber v into bytes and append it into `to` in base 128
-// the p of Params is not make sense here, its only for places holder for expandable things,
+// pack_base128 serializes TagNumber v into bytes in base 128
+fn (v TagNumber) pack_base128() []u8 {
+	mut dst := []u8{}
+	v.pack_base128_with_params(mut dst)
+	return dst
+}
+
+// pack_base128_with_params serializes TagNumber v into bytes in base 128
+// The p params is not make sense here, its only for places holder for expandable things,
 // when its has different meaning with standard, just ignore them now.
-fn (v TagNumber) pack_base128(mut to []u8, p Params) {
+fn (v TagNumber) pack_base128_with_params(mut dst []u8, p Params) {
 	n := v.bytes_len()
+	// TODO: add support for other params
 	for i := n - 1; i >= 0; i-- {
 		mut o := u8(v >> u32(i * 7))
 		o &= 0x7f
 		if i != 0 {
 			o |= 0x80
 		}
-
-		to << o
+		dst << o
 	}
 }
 
-// unpack_from_asn1 deserializes bytes into TagNumber from loc offset in base 128.
+// TagNumber.unpack deserializes bytes into TagNumber from offset 0 in base 128.
 // Its return deserialized TagNumber and next offset to process on.
-fn TagNumber.decode(bytes []u8, loc i64, p Params) !(TagNumber, i64) {
+fn TagNumber.unpack(bytes []u8) !(TagNumber, i64) {
+	tnum, next := TagNUmber.unpack_with_params(bytes, 0)!
+	return tnum, next
+}
+
+// unpack_with_params deserializes bytes into TagNumber from loc offset in base 128.
+// Its return deserialized TagNumber and next offset to process on.
+fn TagNUmber.unpack_with_params(bytes []u8, loc i64, p Params) !(TagNumber, i64) {
 	if loc > bytes.len {
 		return error('TagNumber: invalid pos')
 	}

@@ -57,7 +57,7 @@ pub fn (el Element) into_object[T]() !T {
 	if el is T {
 		return *el
 	}
-	return error('Not holding T')
+	return error('Element el does not holding T')
 }
 
 // length returns the length of the payload of this element.
@@ -66,9 +66,15 @@ pub fn (el Element) length(p Params) !int {
 	return payload.len
 }
 
-// encode serializes this el Element into bytes and appended to `dst`.
+pub fn (el Element) encode() ![]u8 {
+	mut dst := []u8{}
+	el.encode_with_params(mut dst)!
+	return dst
+}
+
+// encode_with_params serializes this el Element into bytes and appended to `dst`.
 // Its accepts optional p Params.
-pub fn (el Element) encode(mut dst []u8, p Params) ! {
+fn (el Element) encode_with_params(mut dst []u8, p Params) ! {
 	el.tag().encode(mut dst, p)!
 	payload := el.payload(p)!
 	length := Length.from_i64(payload.len)!
@@ -347,15 +353,6 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 		return tt
 	}
 	return error('This RawElement can not be treated as TaggedType')
-}
-
-// OPTIONAL
-//
-struct Optional {
-	// set to true when its should present
-	present bool
-	tag     Tag
-	value   []u8
 }
 
 // CHOICE
