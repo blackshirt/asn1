@@ -20,10 +20,6 @@ pub interface Element {
 	// tag tells the identity of this Element. 
 	tag() ?Tag
 	// payload tells the raw payload (values) of this Element.
-	// Its accept Params parameter in p to allow extending
-	// behaviour how this raw bytes is produced by implementation.
-	// Its depends on tags part how interpretes this payload,
-	// whether the tag is in constructed or primitive form.
 	payload() []u8
 }
 
@@ -99,8 +95,10 @@ pub fn (el Element) packed_length() !int {
 // packed_length_with_params informs us the length of how many bytes when this el Element
 // was serialized into bytes.
 fn (el Element) packed_length_with_params(p Params) !int {
+	// when this element has none tag is set, its mean nothing,
+	// just return 0 instead
+	if el.tag() == none { return 0 }
 	mut n := 0
-	if el.tag() == none { return n }
 	n += el.tag().packed_length_with_params(p)!
 	payload := el.payload(p)!
 	length := Length.from_i64(payload.len)!
