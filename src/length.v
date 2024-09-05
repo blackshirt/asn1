@@ -78,19 +78,19 @@ fn (v Length) packed_length_with_params(p Params) !int {
 // pack serializes Length v into bytes in .der mode
 fn (v Length) pack() ![]u8 {
 	p := Params{}
-	out := v.pack_with_params(p)!
+	mut out := []u8{}
+	v.pack_with_params(mut out, p)!
 	return out
 }
 
 // pack_with_params serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
 // it would use p.mode of `EncodingMode` to drive how encode operation would be done.
 // By default the .der mode is only currently supported.
-fn (v Length) pack_with_params(p Params) ![]u8 {
+fn (v Length) pack_with_params(mut dst []u8, p Params) ! {
 	// we currently only support .der and (stricter) .ber
 	if p.mode != .der && p.mode != .ber {
 		return error('Length: unsupported mode')
 	}
-	mut dst := []u8{}
 	// TODO: add supports for undefinite form
 	// Long form
 	if v >= 128 {
@@ -108,7 +108,6 @@ fn (v Length) pack_with_params(p Params) ![]u8 {
 		// short form, already tells the length value.
 		dst << u8(v)
 	}
-	return dst
 }
 
 // unpack tries to deserializes buffer in src into Length form or return error on fails.

@@ -17,14 +17,14 @@ module asn1
 // satisfies this interface. This interface was also expanded by methods
 // defined on this interface.
 pub interface Element {
-	// tag tells the identity of this Element. See `tag.v` file for more details.
-	tag() Tag
+	// tag tells the identity of this Element. 
+	tag() ?Tag
 	// payload tells the raw payload (values) of this Element.
 	// Its accept Params parameter in p to allow extending
 	// behaviour how this raw bytes is produced by implementation.
 	// Its depends on tags part how interpretes this payload,
 	// whether the tag is in constructed or primitive form.
-	payload(p Params) ![]u8
+	payload() []u8
 }
 
 // FIXME: its not tested
@@ -61,34 +61,33 @@ pub fn (el Element) into_object[T]() !T {
 }
 
 // length returns the length of the payload of this element.
-pub fn (el Element) length(p Params) !int {
-	payload := el.payload(p)!
-	return payload.len
+pub fn (el Element) length() int {
+	return el.payload().len
 }
 
 pub fn (el Element) encode() ![]u8 {
 	p := Params{}
-	out := el.encode_with_params(p)!
-	return out
+	return el.encode_with_params(p)!
 }
 
 // encode_with_params serializes this el Element into bytes and appended to `dst`.
 // Its accepts optional p Params.
-fn (el Element) encode_with_params(p Params) ![]u8 {
+fn (el Element) encode_with_params(mut dst []u8, p Params) ! {
 	// we currently only support .der or (stricter) .ber
 	if p.mode != .der && p.mode != .ber {
 		return error('Element: unsupported mode')
 	}
-	mut dst := []u8{}
+	if el.tag() == none {
+		// optional element, do nothing
+		return
+	}
 	elt := el.tag().pack_with_params(p)!
 	dst << elt
-	payload := el.payload(p)!
+	payload := el.payload()
 	length := Length.from_i64(payload.len)!
 	lout := length.pack_with_params(p)!
 	dst << lout
 	dst << payload
-
-	return dst
 }
 
 pub fn (el Element) packed_length() !int {
@@ -101,6 +100,7 @@ pub fn (el Element) packed_length() !int {
 // was serialized into bytes.
 fn (el Element) packed_length_with_params(p Params) !int {
 	mut n := 0
+	if el.tag() == none { return n }
 	n += el.tag().packed_length_with_params(p)!
 	payload := el.payload(p)!
 	length := Length.from_i64(payload.len)!
@@ -110,10 +110,16 @@ fn (el Element) packed_length_with_params(p Params) !int {
 	return n
 }
 
+pub fn Element.decode(src []u8) !(Element, i64) !(Element, i64) {
+	p := Params{}
+	el, pos := Element.decode_with_params(src, 0, p)!
+	return el, pos 
+}
+
 // decode deserializes back bytes in src from offet `loc` into Element.
 // Basically, its tries to parse a Universal class Elememt when it is possible.
 // Other class parsed as a RawElement.
-pub fn Element.decode(src []u8, loc i64, p Params) !(Element, i64) {
+fn Element.decode_with_params(src []u8, loc i64, p Params) !(Element, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
 	bytes := raw.payload
 
