@@ -7,7 +7,8 @@ module asn1
 //
 // SET and SET OF contains an unordered series of fields of one or more types.
 // This differs from a SEQUENCE which contains an ordered list.
-//
+// in DER encoding, SET types elements are sorted into tag order, and,
+// for SET OF types elements are sorted into ascending order of encoding.
 // Internal machinery of SET and SET OF was built using the same machinery with
 // SEQUENCE and SEQUENCE OF.
 pub struct Set {

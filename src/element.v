@@ -17,7 +17,7 @@ module asn1
 // satisfies this interface. This interface was also expanded by methods
 // defined on this interface.
 pub interface Element {
-	// tag tells the identity of this Element. 
+	// tag tells the identity of this Element.
 	tag() ?Tag
 	// payload tells the raw payload (values) of this Element.
 	payload() []u8
@@ -97,10 +97,12 @@ pub fn (el Element) packed_length() !int {
 fn (el Element) packed_length_with_params(p Params) !int {
 	// when this element has none tag is set, its mean nothing,
 	// just return 0 instead
-	if el.tag() == none { return 0 }
+	if el.tag() == none {
+		return 0
+	}
 	mut n := 0
 	n += el.tag().packed_length_with_params(p)!
-	payload := el.payload(p)!
+	payload := el.payload()
 	length := Length.from_i64(payload.len)!
 	n += length.packed_length_with_params(p)!
 	n += payload.len
@@ -108,10 +110,10 @@ fn (el Element) packed_length_with_params(p Params) !int {
 	return n
 }
 
-pub fn Element.decode(src []u8) !(Element, i64) !(Element, i64) {
+pub fn Element.decode(src []u8) (Element, i64) {
 	p := Params{}
 	el, pos := Element.decode_with_params(src, 0, p)!
-	return el, pos 
+	return el, pos
 }
 
 // decode deserializes back bytes in src from offet `loc` into Element.
@@ -141,8 +143,8 @@ fn (el Element) expect_tag(t Tag) bool {
 
 // equal_with checks whether this two element equal and holds the same tag and content
 fn (el Element) equal_with(other Element) bool {
-	a := el.payload() or { panic(err) }
-	b := other.payload() or { panic(err) }
+	a := el.payload() 
+	b := other.payload()
 	return el.tag() == other.tag() && a == b
 }
 

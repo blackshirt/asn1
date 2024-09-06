@@ -6,7 +6,7 @@ module asn1
 // ASN.1 length handling routines.
 //
 // The standard of X.690 ITU document defines two length types - definite and indefinite.
-// DER encoding only uses the definite length.
+// In DER encoding only uses the definite length. The length field must be encoded in the minimum number of octets.
 // There are two forms of definite length octets: short (for lengths value between 0 and 127),
 // and long definite (for lengths value between 0 and 2^1008 -1).
 // In short form contains one octet. Bit 8 has value "0" and bits 7-1 give the length (length value from 0 to 127)

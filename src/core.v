@@ -30,7 +30,7 @@ pub fn TagClass.from_int(v int) !TagClass {
 	}
 }
 
-pub fn (c TagClass) str() string {
+fn (c TagClass) str() string {
 	match c {
 		.universal { return 'UNIVERSAL' }
 		.application { return 'APPLICATION' }
@@ -72,10 +72,47 @@ mut:
 // `Tag.new` creates new ASN.1 tag identifier. Its accepts params of TagClass `cls`,
 // the tag form in the form of constructed or primitive in `constructed` boolean flag, and the integer tag `number`.
 pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
-	return Tag{
-		class:       cls
-		constructed: constructed
-		number:      TagNumber.from_int(number)!
+	match cls {
+		.universal {
+			tnum := TagNumber.from_int(number)!
+			if !tnum.valid_supported_universal_tagnum() {
+				return error('Not a valid tag number for universal class=${number}')
+			}
+			univ_type := tnum.universal_tag_type()!
+			// SEQUENCE (OF) or SET (OF) should constructed bit was set
+			if univ_type == TagType.sequence || univ_type == TagType.set {
+				if !constructed {
+					return error('For SEQUENCE(OF) or SET(OF) type, should be in constructed form')
+				}
+			}
+			tag := Tag{
+				class:       cls
+				constructed: constructed
+				number:      tnum
+			}
+			return tag
+		}
+		.context_specific {
+			// in .context_specific class, treats is as TaggedType in constructed form
+			if !constructed {
+				return error('Context Specific should be in constructed form')
+			}
+			tag := Tag{
+				class:       cls
+				constructed: constructed
+				number:      TagNumber.from_int(number)!
+			}
+			return tag
+		}
+		else {
+			// Otherwise, just returns as is
+			tag := Tag{
+				class:       cls
+				constructed: constructed
+				number:      TagNumber.from_int(number)!
+			}
+			return tag
+		}
 	}
 }
 
@@ -324,11 +361,18 @@ fn TagNUmber.unpack_with_params(bytes []u8, loc i64, p Params) !(TagNumber, i64)
 	return error('TagNumber: truncated base 128 integer')
 }
 
+// Maximaum value of known universal type tag number, see `TagType`
+const max_universal_tagnumber = 36
+
+fn (v TagNUmber) valid_supported_universal_tagnum() bool {
+	return v < asn1.max_universal_tagnumber
+}
+
 // `universal_tag_type` transforrms this TagNumber into available UNIVERSAL class of TagType,
 // or return error if it is unknown number.
-pub fn (v TagNumber) universal_tag_type() !TagType {
+fn (v TagNumber) universal_tag_type() !TagType {
 	// currently, only support Standard universal tag number
-	if v > 36 {
+	if v > asn1.max_universal_tagnumber {
 		return error('TagNumber: unknown TagType number=${v}')
 	}
 	match v {

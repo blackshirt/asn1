@@ -13,7 +13,8 @@ import arrays
 // either primitive encoding or constructed encoding, at the sender’s discretion-- in BER.
 // However, in DER all types that have an encoding choice between primitive and constructed
 // must use the primitive encoding. DER restricts the encoding to primitive only.
-// The same applies for BITSTRING.
+// The same applies for BITSTRING. ie, For BIT STRING and OCTET STRING types,
+// DER does not allow the constructed form (breaking a string into multiple TLVs) or the indefinite length form.
 pub struct BitString {
 	data []u8
 	pad  u8 // numbers of unused bits

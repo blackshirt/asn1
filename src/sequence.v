@@ -13,6 +13,7 @@ module asn1
 // This is analogous to an array or a list in a programming language.
 // Sequence structure can represents both SEQUENCE and SEQUENCE OF type.
 // The encoding of a sequence value shall be constructed.
+// in DER encoded of SEQUENCE or SET, never encode a default value.
 pub struct Sequence {
 	tag Tag = Tag{.universal, true, int(TagType.sequence)}
 mut:
