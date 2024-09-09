@@ -547,6 +547,7 @@ fn syntax_error(msg string, opts &FieldOptions) &SyntaxError {
 }
 
 // Context keeps options that affect the ASN.1 encoding and decoding
+@[params]
 struct Context {
 mut:
 	logger &log.Logger = log.new_thread_safe_log()
@@ -584,4 +585,35 @@ mut:
 	time_type     int
 	choice        &string = unsafe { nil }
 	omit_empty    bool
+}
+
+// encode_with_context encode with context
+fn encode_with_context(el Element, ctx Context) ![]u8 {
+}
+
+// encode_with_context encodes element with default context
+fn encode(el Element) ![]u8 {
+}
+
+// decode_with_context decodes bytes with context
+fn decode_with_context[T](src []u8, ctx Context) !(T, i64) {}
+
+// decode_with_context decodes bytes with default context
+fn decode[T](src []u8, ctx Context) !(T, i64) {}
+
+fn parse_optional[T](src []u8) ?(T, i64) {}
+
+// is_fullfill_asn1_element checks whether a generic element T meet required method of Element interface
+fn is_fullfill_asn1_element[T]() bool {
+	mut t := false
+	mut p := false
+	$for m in T.methods {
+		$if m.name == 'tag' && m.return_type is Tag {
+			t = true
+		}
+		$if m.name == 'payload' && m.return_type is $array && m.return_type is []u8 {
+			p = true
+		}
+	}
+	return t && p
 }
