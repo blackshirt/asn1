@@ -78,7 +78,7 @@ pub fn Integer.from_raw_element(re RawElement, p Params) !Integer {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -255,11 +255,11 @@ pub fn (v Integer) length(p Params) !int {
 }
 
 // encode serializes and encodes Integer v into bytes and appended into `dst`.
-// Its accepts encoding mode params, where its currently only suppport `.der` DER mode.
+// Its accepts encoding rule params, where its currently only suppport `.der` DER rule.
 // If `dst.len != 0`, it act as append semantic, otherwise the `dst` bytes stores the result.
 pub fn (v Integer) encode(mut dst []u8, p Params) ! {
-	if p.mode != .der && p.mode != .ber {
-		return error('Integer: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Integer: unsupported rule')
 	}
 
 	v.tag.encode(mut dst, p)!
@@ -271,8 +271,8 @@ pub fn (v Integer) encode(mut dst []u8, p Params) ! {
 
 // decode deserializes and decodes bytes src back into ASN.1 Integer.
 // Its accepts `loc` params, the location (offset) within bytes src where the unpack
-// process start form, if not sure set to 0 and optional mode in `Params` to drive unpacking.
-// see `EncodingMode` for availables values. Currently only support`.der`.
+// process start form, if not sure set to 0 and optional rule in `Params` to drive unpacking.
+// see `Encodingrule` for availables values. Currently only support`.der`.
 pub fn Integer.decode(src []u8, loc i64, p Params) !(Integer, i64) {
 	if src.len < 3 {
 		return error('IA5String: bad ia5string bytes length')

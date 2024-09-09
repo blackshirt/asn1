@@ -118,14 +118,14 @@ pub fn (s Sequence) packed_length(p Params) !int {
 }
 
 pub fn (s Sequence) encode(mut dst []u8, p Params) ! {
-	if p.mode != .der && p.mode != .ber {
-		return error('Sequence: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Sequence: unsupported rule')
 	}
 	// recheck
 	if !s.tag().is_constructed() && s.tag().tag_number() != int(TagType.sequence) {
 		return error('Not a valid sequence tag')
 	}
-	// pack in DER mode
+	// pack in DER rule
 	s.tag().encode(mut dst, p)!
 	payload := s.payload(p)!
 	length := Length.from_i64(payload.len)!

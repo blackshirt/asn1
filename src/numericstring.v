@@ -31,7 +31,7 @@ pub fn NumericString.from_raw_element(re RawElement, p Params) !NumericString {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -82,8 +82,8 @@ pub fn (ns NumericString) packed_length(p Params) !int {
 }
 
 pub fn (ns NumericString) encode(mut dst []u8, p Params) ! {
-	if p.mode != .der && p.mode != .ber {
-		return error('Integer: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Integer: unsupported rule')
 	}
 
 	ns.tag.encode(mut dst, p)!

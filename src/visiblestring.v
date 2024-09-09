@@ -28,7 +28,7 @@ pub fn VisibleString.from_raw_element(re RawElement, p Params) !VisibleString {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -86,8 +86,8 @@ pub fn (vs VisibleString) encode(mut dst []u8, p Params) ! {
 	if contains_ctrl_chars(vs.value.bytes()) {
 		return error('VisibleString: contains control chars')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('VisibleString: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('VisibleString: unsupported rule')
 	}
 	vs.tag.encode(mut dst, p)!
 	length := Length.from_i64(vs.value.bytes().len)!

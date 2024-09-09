@@ -57,7 +57,7 @@ fn (v Length) pack_and_append(mut to []u8) {
 	}
 }
 
-// packed_length gets length of length v in .der mode
+// packed_length gets length of length v in .der rule
 fn (v Length) packed_length() !int {
 	p := Params{}
 	n := v.packed_length_with_params(p)!
@@ -68,14 +68,14 @@ fn (v Length) packed_length() !int {
 // includes one byte marker for long definite form of length value, for value >= 128
 fn (v Length) packed_length_with_params(p Params) !int {
 	// we currently only support .der or (stricter) .ber
-	if p.mode != .der && p.mode != .ber {
-		return error('Length: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Length: unsupported rule')
 	}
 	n := if v < 128 { 1 } else { v.bytes_len() + 1 }
 	return n
 }
 
-// pack serializes Length v into bytes in .der mode
+// pack serializes Length v into bytes in .der rule
 fn (v Length) pack() ![]u8 {
 	p := Params{}
 	mut out := []u8{}
@@ -84,12 +84,12 @@ fn (v Length) pack() ![]u8 {
 }
 
 // pack_with_params serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
-// it would use p.mode of `EncodingMode` to drive how encode operation would be done.
-// By default the .der mode is only currently supported.
+// it would use p.rule of `Encodingrule` to drive how encode operation would be done.
+// By default the .der rule is only currently supported.
 fn (v Length) pack_with_params(mut dst []u8, p Params) ! {
 	// we currently only support .der and (stricter) .ber
-	if p.mode != .der && p.mode != .ber {
-		return error('Length: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Length: unsupported rule')
 	}
 	// TODO: add supports for undefinite form
 	// Long form
@@ -124,8 +124,8 @@ fn Length.unpack_with_params(src []u8, loc i64, p Params) !(Length, i64) {
 		return error('Length: truncated length')
 	}
 	// preliminary check
-	if p.mode != .der && p.mode != .ber {
-		return error('Length: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Length: unsupported rule')
 	}
 	// consider b := src[loc] would lead to panic
 	if loc >= src.len {

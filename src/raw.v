@@ -45,8 +45,8 @@ pub fn (re RawElement) packed_length(p Params) !int {
 }
 
 pub fn (re RawElement) encode(mut dst []u8, p Params) ! {
-	if p.mode != .der && p.mode != .ber {
-		return error('RawElement: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('RawElement: unsupported rule')
 	}
 	re.tag.encode(mut dst, p)!
 	length := Length.from_i64(re.payload.len)!
@@ -60,8 +60,8 @@ pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
 		return error('RawElement: bytes underflow')
 	}
 	// guard check
-	if p.mode != .der && p.mode != .ber {
-		return error('RawElement: bad mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('RawElement: bad rule')
 	}
 	mut raw := RawElement{}
 	tag, pos := Tag.decode(src, loc, p)!
@@ -96,14 +96,14 @@ pub fn RawElement.decode(src []u8, loc i64, p Params) !(RawElement, i64) {
 
 // as_tagged treats and parse the RawElement r as TaggedType element with inner_tag is
 // an expected tag of inner Element being tagged.
-pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !TaggedType {
+pub fn (r RawElement) as_tagged(rule Taggedrule, inner_tag Tag, p Params) !TaggedType {
 	// make sure the tag is in constructed form, when it true, the r.payload is an ASN.1 Element
-	// when mode is explicit or the r.payload is bytes content by itself when mode is implicit.
+	// when rule is explicit or the r.payload is bytes content by itself when rule is implicit.
 	if r.tag.is_constructed() {
 		if r.payload.len == 0 {
 			return error('tag is constructed but no payload')
 		}
-		if mode == .explicit {
+		if rule == .explicit {
 			raw, _ := RawElement.decode(r.payload, 0, p)!
 			if raw.tag != inner_tag {
 				return error('expected inner_tag != parsed tag')
@@ -117,7 +117,7 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 				}
 				tt := TaggedType{
 					outer_tag: r.tag
-					mode:      .explicit
+					rule:      .explicit
 					inner_el:  inner
 				}
 				return tt
@@ -134,19 +134,19 @@ pub fn (r RawElement) as_tagged(mode TaggedMode, inner_tag Tag, p Params) !Tagge
 			}
 			tt := TaggedType{
 				outer_tag: r.tag
-				mode:      .explicit
+				rule:      .explicit
 				inner_el:  inner_el
 			}
 			return tt
 		}
-		// as in implicit mode, r.payload is a contents payload by itself
+		// as in implicit rule, r.payload is a contents payload by itself
 		// TODO: should we can treat r.payload as ASN1 element when inner_tag is constructed
 		// FIXME:
 		// otherwise, its just RawElement
 		inner_el := RawElement.new(inner_tag, r.payload)
 		tt := TaggedType{
 			outer_tag: r.tag
-			mode:      .implicit
+			rule:      .implicit
 			inner_el:  inner_el
 		}
 		return tt

@@ -41,7 +41,7 @@ pub fn Oid.from_raw_element(re RawElement, p Params) !Oid {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -149,10 +149,10 @@ fn (oid Oid) pack() ![]u8 {
 }
 
 pub fn (oid Oid) encode(mut dst []u8, p Params) ! {
-	if p.mode != .der && p.mode != .ber {
-		return error('Oid: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Oid: unsupported rule')
 	}
-	// packing in DER mode
+	// packing in DER rule
 	bytes := oid.pack()!
 	oid.tag.encode(mut dst, p)!
 	length := Length.from_i64(bytes.len)!

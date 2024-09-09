@@ -5,8 +5,8 @@ module asn1
 
 // EXPLICIT and IMPLICIT
 //
-// mode of context specific wrapping. explicit mode add new tag
-// to the existing object, implicit mode replaces tag of original object.
+// rule of context specific wrapping. explicit rule add new tag
+// to the existing object, implicit rule replaces tag of original object.
 pub enum TaggedMode {
 	implicit
 	explicit
@@ -132,8 +132,8 @@ pub fn (tt TaggedType) encode(mut dst []u8, p Params) ! {
 	if !tt.outer_tag.is_constructed() {
 		return error('TaggedType tag should in constructed form')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('TaggedType: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('TaggedType: unsupported rule')
 	}
 	match tt.mode {
 		.explicit {

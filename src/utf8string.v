@@ -30,7 +30,7 @@ pub fn UTF8String.from_raw_element(re RawElement, p Params) !UTF8String {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -88,8 +88,8 @@ pub fn (us UTF8String) encode(mut dst []u8, p Params) ! {
 	if !utf8.validate_str(us.value) {
 		return error('UTF8String: invalid UTF-8 string')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('UTF8String: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('UTF8String: unsupported rule')
 	}
 	us.tag.encode(mut dst, p)!
 	length := Length.from_i64(us.value.bytes().len)!

@@ -32,7 +32,7 @@ pub fn GeneralString.from_raw_element(re RawElement, p Params) !GeneralString {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -91,8 +91,8 @@ pub fn (g GeneralString) encode(mut dst []u8, p Params) ! {
 	if !g.value.is_ascii() {
 		return error('GeneralString: contains non-ascii char')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('GeneralString: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('GeneralString: unsupported rule')
 	}
 
 	g.tag.encode(mut dst, p)!

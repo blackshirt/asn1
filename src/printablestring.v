@@ -29,7 +29,7 @@ pub fn PrintableString.from_raw_element(re RawElement, p Params) !PrintableStrin
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -87,10 +87,10 @@ pub fn (ps PrintableString) encode(mut dst []u8, p Params) ! {
 	if !printable_chars(ps.value.bytes(), p) {
 		return error('PrintableString: contains non-printable string')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('PrintableString: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('PrintableString: unsupported rule')
 	}
-	// pack in DER mode
+	// pack in DER rule
 	ps.tag.encode(mut dst, p)!
 	length := Length.from_i64(ps.value.bytes().len)!
 	length.encode(mut dst, p)!

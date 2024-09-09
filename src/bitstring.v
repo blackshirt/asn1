@@ -50,7 +50,7 @@ pub fn BitString.from_element(el Element, p Params) !BitString {
 	if !el.expect_tag_type(.bitstring) {
 		return error('Element tag does not hold .bitstring type')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if el.tag().is_constructed() {
 			return error('BitString Element constructed is not allowed in .der')
 		}
@@ -119,8 +119,8 @@ pub fn (bs BitString) packed_length(p Params) !int {
 
 pub fn (bs BitString) encode(mut dst []u8, p Params) ! {
 	// we currently only support .der and (stricter) .ber
-	if p.mode != .der && p.mode != .ber {
-		return error('BitString: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('BitString: unsupported rule')
 	}
 
 	bs.tag.encode(mut dst, p)!

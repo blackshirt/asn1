@@ -25,7 +25,7 @@ pub fn Enumerated.from_raw_element(re RawElement, p Params) !Enumerated {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not an .universal, but get ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -65,8 +65,8 @@ pub fn (e Enumerated) packed_length(p Params) !int {
 }
 
 pub fn (e Enumerated) encode(mut dst []u8, p Params) ! {
-	if p.mode != .der && p.mode != .ber {
-		return error('Integer: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Integer: unsupported rule')
 	}
 	e.tag.encode(mut dst, p)!
 	bytes := e.pack(p)!
@@ -90,8 +90,8 @@ pub fn Enumerated.decode(src []u8, loc i64, p Params) !(Enumerated, i64) {
 }
 
 fn Enumerated.unpack(src []u8, p Params) !Enumerated {
-	if p.mode != .der || p.mode != .ber {
-		return error('Enumerated.unpack: unsupported mode')
+	if p.rule != .der || p.rule != .ber {
+		return error('Enumerated.unpack: unsupported rule')
 	}
 	if !valid_bytes(src, true) {
 		return error('Enumerated: failed check')
@@ -114,8 +114,8 @@ fn Enumerated.unpack(src []u8, p Params) !Enumerated {
 }
 
 fn (e Enumerated) pack(p Params) ![]u8 {
-	if p.mode != .der || p.mode != .ber {
-		return error('Enumerated.pack: unsupported mode')
+	if p.rule != .der || p.rule != .ber {
+		return error('Enumerated.pack: unsupported rule')
 	}
 	mut n := e.enumerated_len()
 	mut dst := []u8{len: n}

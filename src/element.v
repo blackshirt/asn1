@@ -70,8 +70,8 @@ pub fn (el Element) encode() ![]u8 {
 // Its accepts optional p Params.
 fn (el Element) encode_with_params(mut dst []u8, p Params) ! {
 	// we currently only support .der or (stricter) .ber
-	if p.mode != .der && p.mode != .ber {
-		return error('Element: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Element: unsupported rule')
 	}
 	if el.tag() == none {
 		// optional element, do nothing
@@ -143,7 +143,7 @@ fn (el Element) expect_tag(t Tag) bool {
 
 // equal_with checks whether this two element equal and holds the same tag and content
 fn (el Element) equal_with(other Element) bool {
-	a := el.payload() 
+	a := el.payload()
 	b := other.payload()
 	return el.tag() == other.tag() && a == b
 }

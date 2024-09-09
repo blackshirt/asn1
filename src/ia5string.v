@@ -26,7 +26,7 @@ pub fn IA5String.from_raw_element(re RawElement, p Params) !IA5String {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -84,8 +84,8 @@ pub fn (v IA5String) encode(mut dst []u8, p Params) ! {
 	if !v.value.is_ascii() {
 		return error('IA5String: contains non-ascii char')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('IA5String: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('IA5String: unsupported rule')
 	}
 
 	v.tag.encode(mut dst, p)!

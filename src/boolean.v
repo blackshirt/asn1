@@ -49,7 +49,7 @@ pub fn Boolean.from_raw_element(re RawElement, p Params) !Boolean {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but get ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -65,7 +65,7 @@ pub fn Boolean.from_raw_element(re RawElement, p Params) !Boolean {
 
 // from_bytes creates a new ASN.1 BOOLEAN type from bytes b.
 // Boolean type should fit in one byte length, otherwise it would return error.
-// by default, p.mode == .der to follow DER restriction
+// by default, p.rule == .der to follow DER restriction
 pub fn Boolean.from_bytes(b []u8, p Params) !Boolean {
 	if b.len != 1 {
 		return error('Boolean: bad bytes')
@@ -84,7 +84,7 @@ pub fn Boolean.from_bytes(b []u8, p Params) !Boolean {
 		}
 		else {
 			// other non-null value is treated as TRUE boolean value
-			if p.mode == .der {
+			if p.rule == .der {
 				return error('Boolean: in DER, other than 0xff is not allowed for true value')
 			}
 			return Boolean.from_u8(b[0])
@@ -102,7 +102,7 @@ pub fn (v Boolean) length(p Params) !int {
 
 pub fn (v Boolean) payload(p Params) ![]u8 {
 	// by default, true value is encoded to 0xff
-	if p.mode == .der {
+	if p.rule == .der {
 		if v.value != u8(0xff) && v.value != u8(0x00) {
 			return error('Boolean: in .der, only 0xff or 0x00 are allowed')
 		}
@@ -121,15 +121,15 @@ pub fn (v Boolean) packed_length(p Params) !int {
 }
 
 pub fn (v Boolean) encode(mut dst []u8, p Params) ! {
-	if p.mode != .der && p.mode != .ber {
-		return error('Boolean: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Boolean: unsupported rule')
 	}
 
 	// in DER, true or false value packed into single byte of 0xff or 0x00 respectively
 	v.tag.encode(mut dst, p)!
 	length := Length.from_i64(1)!
 	length.encode(mut dst, p)!
-	// when mode != .der payload may contains not 0xff bytes
+	// when rule != .der payload may contains not 0xff bytes
 	payload := v.payload()!
 
 	dst << payload

@@ -3,11 +3,12 @@
 // that can be found in the LICENSE file.
 module asn1
 
+import log
 // TagClass is ASN.1 tag class.
-//
 // To make sure ASN.1 encodings are not ambiguous, every ASN.1 type is associated with a tag.
 // A tag consists of three parts: the tag class, tag form and the tag number.
 // The following classes are defined in the standard.
+
 pub enum TagClass {
 	universal        = 0x00 // 0b00
 	application      = 0x01 // 0b01
@@ -142,8 +143,8 @@ pub fn (t Tag) pack() ![]u8 {
 // pack_with_params serializes tag into bytes array
 fn (t Tag) pack_with_params(mut dst []u8, p Params) ! {
 	// we currently only support .der or (stricter) .ber
-	if p.mode != .der && p.mode != .ber {
-		return error('Tag: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Tag: unsupported rule')
 	}
 	// makes sure TagNumber is valid
 	if t.number > asn1.max_tag_number {
@@ -178,15 +179,15 @@ pub fn Tag.unpack(bytes []u8) !(Tag, i64) {
 }
 
 // Tag.unpack_with_params deserializes bytes back into Tag structure start from `loc` offset.
-// By default, its unpacks in .der encoding mode, if you want more control, pass your `Params`.
+// By default, its unpacks in .der encoding rule, if you want more control, pass your `Params`.
 // Its return Tag and next offset to operate on, and return error if it fails to unpack.
 fn Tag.unpack_with_params(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	// preliminary check
 	if bytes.len < 1 {
 		return error('Tag: bytes underflow')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('Tag: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Tag: unsupported rule')
 	}
 	// when accessing byte at ofset `loc` within bytes, ie, `b := bytes[loc]`,
 	// its maybe can lead to panic when the loc is not be checked.
@@ -240,7 +241,7 @@ fn (mut t Tag) clone_with_tag(v int) !Tag {
 	return new
 }
 
-// packed_length calculates length of bytes needed to store the tag in .der mode.
+// packed_length calculates length of bytes needed to store the tag in .der rule.
 fn (t Tag) packed_length() !int {
 	p := Params{}
 	n := t.packed_length_with_params(p)!
@@ -250,8 +251,8 @@ fn (t Tag) packed_length() !int {
 // `packed_length_with_params` calculates length of bytes needed to store tag number, include one byte
 // marker that tells if the tag number is in long form (>= 0x1f)
 fn (t Tag) packed_length_with_params(p Params) !int {
-	if p.mode != .der && p.mode != .ber {
-		return error('Tag: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Tag: unsupported rule')
 	}
 	n := if t.number < 0x1f { 1 } else { 1 + t.number.bytes_len() }
 	return n
@@ -509,11 +510,11 @@ pub fn (t TagType) str() string {
 @[params]
 pub struct Params {
 pub mut:
-	mode EncodingMode = .der
+	rule EncodingRule = .der
 }
 
-// encoding mode
-pub enum EncodingMode {
+// encoding rule
+pub enum EncodingRule {
 	// Distinguished Encoding Rules (DER)
 	der = 0
 	// Basic Encoding Rules (BER)
@@ -524,4 +525,63 @@ pub enum EncodingMode {
 	per = 3
 	// XML Encoding Rules (XER)
 	xer = 4
+}
+
+// custom Error
+struct SyntaxError {
+	Error
+mut:
+	msg string
+}
+
+fn (se &SyntaxError) msg() string {
+	return se.msg
+}
+
+// syntaxError allocates a new ParseError,
+fn syntax_error(msg string, opts &FieldOptions) &SyntaxError {
+	se := &SyntaxError{
+		msg: msg
+	}
+	return se
+}
+
+// Context keeps options that affect the ASN.1 encoding and decoding
+struct Context {
+mut:
+	logger &log.Logger = log.new_thread_safe_log()
+	// rule drive the ASN.1 context
+	rule EncodingRule  = .der
+	opt  &FieldOptions = unsafe { nil }
+}
+
+fn Context.new() &Context {
+	return &Context{}
+}
+
+fn (mut ctx Context) with_logger(logger &log.Logger) &Context {
+	ctx.logger = logger
+	return ctx
+}
+
+fn (mut ctx Context) with_rule(rule EncodingRule) &Context {
+	ctx.rule = rule
+	return ctx
+}
+
+struct FieldOptions {
+mut:
+	universal     bool
+	application   bool
+	explicit      bool
+	private       bool
+	indefinite    bool
+	optional      bool
+	set           bool
+	tagnum        &int = unsafe { nil }
+	default_value &int = unsafe { nil }
+	string_type   int
+	time_type     int
+	choice        &string = unsafe { nil }
+	omit_empty    bool
 }

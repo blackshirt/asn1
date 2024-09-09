@@ -48,7 +48,7 @@ pub fn UTCTime.from_raw_element(re RawElement, p Params) !UTCTime {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -98,8 +98,8 @@ pub fn (t UTCTime) encode(mut dst []u8, p Params) ! {
 	if !valid {
 		return error('UTCTime: fail on validate utctime')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('Integer: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Integer: unsupported rule')
 	}
 	t.tag.encode(mut dst, p)!
 	bytes := t.value.bytes()
@@ -210,7 +210,7 @@ pub fn GeneralizedTime.from_raw_element(re RawElement, p Params) !GeneralizedTim
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -260,8 +260,8 @@ pub fn (gt GeneralizedTime) encode(mut dst []u8, p Params) ! {
 	if !valid {
 		return error('GeneralizedTime: fail on validate')
 	}
-	if p.mode != .der && p.mode != .ber {
-		return error('GeneralizedTime: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('GeneralizedTime: unsupported rule')
 	}
 
 	gt.tag.encode(mut dst, p)!

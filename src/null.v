@@ -20,7 +20,7 @@ pub fn Null.from_raw_element(re RawElement, p Params) !Null {
 	if re.tag.tag_class() != .universal {
 		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
 	}
-	if p.mode == .der {
+	if p.rule == .der {
 		if re.tag.is_constructed() {
 			return error('RawElement constructed is not allowed in .der')
 		}
@@ -58,8 +58,8 @@ pub fn (n Null) packed_length(p Params) !int {
 }
 
 pub fn (n Null) encode(mut dst []u8, p Params) ! {
-	if p.mode != .der && p.mode != .ber {
-		return error('Integer: unsupported mode')
+	if p.rule != .der && p.rule != .ber {
+		return error('Integer: unsupported rule')
 	}
 
 	n.tag.encode(mut dst, p)!

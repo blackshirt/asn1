@@ -9,7 +9,7 @@ struct BooleanTest {
 	err IError
 }
 
-fn test_encode_decode_boolean_in_der_mode() {
+fn test_encode_decode_boolean_in_der_rule() {
 	bd := [
 		BooleanTest{[u8(1), 0x01, 0xff], true, none},
 		BooleanTest{[u8(1), 0x01, 0x00], false, none},
