@@ -572,12 +572,11 @@ fn (mut ctx Context) with_rule(rule EncodingRule) &Context {
 
 struct FieldOptions {
 mut:
-	universal     bool
-	application   bool
 	explicit      bool
+	application   bool
 	private       bool
-	indefinite    bool
 	optional      bool
+	has_default   bool
 	set           bool
 	tagnum        &int = unsafe { nil }
 	default_value &int = unsafe { nil }
@@ -593,6 +592,7 @@ fn encode_with_context(el Element, ctx Context) ![]u8 {
 
 // encode_with_context encodes element with default context
 fn encode(el Element) ![]u8 {
+	return el.encode()!
 }
 
 // decode_with_context decodes bytes with context
@@ -605,15 +605,8 @@ fn parse_optional[T](src []u8) ?(T, i64) {}
 
 // is_fullfill_asn1_element checks whether a generic element T meet required method of Element interface
 fn is_fullfill_asn1_element[T]() bool {
-	mut t := false
-	mut p := false
-	$for m in T.methods {
-		$if m.name == 'tag' && m.return_type is Tag {
-			t = true
-		}
-		$if m.name == 'payload' && m.return_type is $array && m.return_type is []u8 {
-			p = true
-		}
+	$if T is Element {
+		return true
 	}
-	return t && p
+	return false
 }
