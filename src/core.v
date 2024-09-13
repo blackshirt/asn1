@@ -133,17 +133,15 @@ pub fn (t Tag) tag_number() int {
 }
 
 // pack serializes tag t into bytes array
-pub fn (t Tag) pack() ![]u8 {
-	p := Params{}
-	mut dst := []u8{}
-	t.pack_with_params(mut dst, p)!
-	return dst
+pub fn (t Tag) pack(mut dst []u8) ! {
+	ctx := Context{}
+	t.encode_with_context(mut dst, ctx)!
 }
 
-// pack_with_params serializes tag into bytes array
-fn (t Tag) pack_with_params(mut dst []u8, p Params) ! {
+// encode_with_context serializes tag into bytes array
+fn (t Tag) encode_with_context(mut dst []u8, ctx Context) ! {
 	// we currently only support .der or (stricter) .ber
-	if p.rule != .der && p.rule != .ber {
+	if ctx.rule != .der && ctx.rule != .ber {
 		return error('Tag: unsupported rule')
 	}
 	// makes sure TagNumber is valid
@@ -170,23 +168,23 @@ fn (t Tag) pack_with_params(mut dst []u8, p Params) ! {
 	}
 }
 
-// Tag.unpack tries to deserializes bytes into Tag. its return error on fails.
-pub fn Tag.unpack(bytes []u8) !(Tag, i64) {
+// Tag.decode tries to deserializes bytes into Tag. its return error on fails.
+pub fn Tag.decode(bytes []u8) !(Tag, i64) {
 	// default params
-	p := Params{}
-	tag, next := Tag.unpack_with_params(bytes, 0, p)!
+	ctx := Context{}
+	tag, next := Tag.decode_with_context(bytes, 0, ctx)!
 	return tag, next
 }
 
-// Tag.unpack_with_params deserializes bytes back into Tag structure start from `loc` offset.
-// By default, its unpacks in .der encoding rule, if you want more control, pass your `Params`.
-// Its return Tag and next offset to operate on, and return error if it fails to unpack.
-fn Tag.unpack_with_params(bytes []u8, loc i64, p Params) !(Tag, i64) {
+// Tag.decode_with_context deserializes bytes back into Tag structure start from `loc` offset.
+// By default, its decodes in .der encoding rule, if you want more control, pass your `Params`.
+// Its return Tag and next offset to operate on, and return error if it fails to decode.
+fn Tag.decode_with_context(bytes []u8, loc i64, ctx Context) !(Tag, i64) {
 	// preliminary check
 	if bytes.len < 1 {
 		return error('Tag: bytes underflow')
 	}
-	if p.rule != .der && p.rule != .ber {
+	if ctx.rule != .der && ctx.rule != .ber {
 		return error('Tag: unsupported rule')
 	}
 	// when accessing byte at ofset `loc` within bytes, ie, `b := bytes[loc]`,
@@ -209,7 +207,7 @@ fn Tag.unpack_with_params(bytes []u8, loc i64, p Params) !(Tag, i64) {
 	// check if this `number` is in long (multibyte) form, and interpretes more bytes as a tag number.
 	if number == 0x1f {
 		// we only allowed `max_tag_length` bytes following to represent tag number.
-		number, pos = TagNumber.unpack(bytes, pos)!
+		number, pos = TagNumber.decode(bytes, pos)!
 
 		// pos is the next position to read next bytes, so check tag bytes length
 		if pos >= asn1.max_tag_length + loc + 1 {
@@ -243,15 +241,15 @@ fn (mut t Tag) clone_with_tag(v int) !Tag {
 
 // packed_length calculates length of bytes needed to store the tag in .der rule.
 fn (t Tag) packed_length() !int {
-	p := Params{}
-	n := t.packed_length_with_params(p)!
+	ctx := Context{}
+	n := t.packed_length_with_context(ctx)!
 	return n
 }
 
-// `packed_length_with_params` calculates length of bytes needed to store tag number, include one byte
+// `packed_length_with_context` calculates length of bytes needed to store tag number, include one byte
 // marker that tells if the tag number is in long form (>= 0x1f)
-fn (t Tag) packed_length_with_params(p Params) !int {
-	if p.rule != .der && p.rule != .ber {
+fn (t Tag) packed_length_with_context(ctx Context) !int {
+	if ctx.rule != .der && ctx.rule != .ber {
 		return error('Tag: unsupported rule')
 	}
 	n := if t.number < 0x1f { 1 } else { 1 + t.number.bytes_len() }
@@ -303,14 +301,14 @@ fn (v TagNumber) tag_number_length() int {
 // pack_base128 serializes TagNumber v into bytes in base 128
 fn (v TagNumber) pack_base128() ![]u8 {
 	mut dst := []u8{}
-	v.pack_base128_with_params(mut dst)!
+	v.pack_base128_with_context(mut dst)!
 	return dst
 }
 
-// pack_base128_with_params serializes TagNumber v into bytes in base 128
-// The p params is not make sense here, its only for places holder for expandable things,
+// pack_base128_with_context serializes TagNumber v into bytes in base 128
+// The ctx params is not make sense here, its only for places holder for expandable things,
 // when its has different meaning with standard, just ignore them now.
-fn (v TagNumber) pack_base128_with_params(mut dst []u8, p Params) ! {
+fn (v TagNumber) pack_base128_with_context(mut dst []u8, ctx Context) ! {
 	n := v.bytes_len()
 	// TODO: add support for other params
 	for i := n - 1; i >= 0; i-- {
@@ -323,17 +321,17 @@ fn (v TagNumber) pack_base128_with_params(mut dst []u8, p Params) ! {
 	}
 }
 
-// TagNumber.unpack deserializes bytes into TagNumber from offset 0 in base 128.
+// TagNumber.decode deserializes bytes into TagNumber from offset 0 in base 128.
 // Its return deserialized TagNumber and next offset to process on.
-fn TagNumber.unpack(bytes []u8) !(TagNumber, i64) {
-	p := Params{}
-	tnum, next := TagNUmber.unpack_with_params(bytes, 0, p)!
+fn TagNumber.decode(bytes []u8) !(TagNumber, i64) {
+	ctx := Context{}
+	tnum, next := TagNUmber.decode_with_context(bytes, 0, ctx)!
 	return tnum, next
 }
 
-// unpack_with_params deserializes bytes into TagNumber from loc offset in base 128.
+// decode_with_context deserializes bytes into TagNumber from loc offset in base 128.
 // Its return deserialized TagNumber and next offset to process on.
-fn TagNUmber.unpack_with_params(bytes []u8, loc i64, p Params) !(TagNumber, i64) {
+fn TagNUmber.decode_with_context(bytes []u8, loc i64, ctx Context) !(TagNumber, i64) {
 	if loc > bytes.len {
 		return error('TagNumber: invalid pos')
 	}
@@ -344,10 +342,11 @@ fn TagNUmber.unpack_with_params(bytes []u8, loc i64, p Params) !(TagNumber, i64)
 		b := bytes[pos]
 
 		if s == 0 && b == 0x80 {
-			// requirement for DER encoding
-			return error('TagNumber: integer is not minimally encoded')
+			if ctx.rule == .der {
+				// requirement for DER encoding
+				return error('TagNumber: integer is not minimally encoded')
+			}
 		}
-
 		ret |= b & 0x7f
 		pos += 1
 
@@ -505,7 +504,7 @@ pub fn (t TagType) str() string {
 	}
 }
 
-// Params is optional params passed to pack or unpacking
+// Params is optional params passed to pack or decodeing
 // of tag, length or ASN.1 element to drive how encoding works.
 @[params]
 pub struct Params {

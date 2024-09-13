@@ -20,7 +20,7 @@ pub interface Element {
 	// tag tells the identity of this Element.
 	tag() Tag
 	// payload tells the raw payload (values) of this Element.
-	payload() []u8
+	payload() ![]u8
 }
 
 // FIXME: its not tested
@@ -34,6 +34,9 @@ pub interface Element {
 // ```
 // and then treats your OctetString as an Element
 pub fn Element.from_object[T](t T) !Element {
+	$if T !is Element {
+		return error('Not holding element')
+	}
 	return t
 }
 
