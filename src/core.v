@@ -70,16 +70,18 @@ pub struct Tag {
 mut:
 	class       TagClass = .universal
 	constructed bool
-	number      TagNumber
+	number      u32
 }
 
 // `Tag.new` creates new ASN.1 tag identifier. Its accepts params of TagClass `cls`,
 // the tag form in the form of constructed or primitive in `constructed` boolean flag, and the integer tag `number`.
 pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
+	if number < 0 && number > max_tag_number {
+		return error("Unallowed tag number")
+	}
 	match cls {
 		.universal {
-			tnum := TagNumber.from_int(number)!
-			if !tnum.valid_supported_universal_tagnum() {
+			if number > max_universal_tagnumber {
 				return error('Not a valid tag number for universal class=${number}')
 			}
 			univ_type := tnum.universal_tag_type()!
@@ -104,7 +106,7 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 			tag := Tag{
 				class:       cls
 				constructed: constructed
-				number:      TagNumber.from_int(number)!
+				number:      Tag.tagnum_from_int(number)!
 			}
 			return tag
 		}
@@ -113,11 +115,21 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 			tag := Tag{
 				class:       cls
 				constructed: constructed
-				number:      TagNumber.from_int(number)!
+				number:      Tag.tagnum_from_int(number)!
 			}
 			return tag
 		}
 	}
+}
+
+fn Tag.tagnum_from_int(v int) !u32 {
+	if v < 0 {
+		return error('Negative number for tag number was not allowed')
+	}
+	if v > asn1.max_tag_number {
+		return error('Number bigger than max allowed tag number')
+	}
+	return u32(v)
 }
 
 // tag_class return the ASN.1 class of this tag
@@ -205,7 +217,7 @@ fn Tag.decode_with_context(bytes []u8, loc i64, ctx Context) !(Tag, i64) {
 	// in multibyte (long form), or short form otherwise.
 	class := int((b & asn1.tag_class_mask) >> 6)
 	constructed := b & asn1.constructed_mask == asn1.constructed_mask
-	mut number := TagNumber.from_int(int(b & asn1.tag_numher_mask))!
+	mut number := Tag.tagnum_from_int(int(b & asn1.tag_numher_mask))!
 
 	// check if this `number` is in long (multibyte) form, and interpretes more bytes as a tag number.
 	if number == 0x1f {
@@ -237,7 +249,7 @@ fn (mut t Tag) clone_with_class(c TagClass) Tag {
 
 fn (mut t Tag) clone_with_tag(v int) !Tag {
 	mut new := t
-	val := TagNumber.from_int(v)!
+	val := Tag.tagnum_from_int(v)!
 	t.number = val
 	return new
 }
@@ -297,7 +309,7 @@ fn (t Tag) pack_tagnum_in_base128(mut dst []u8) ! {
 }
 
 // Tag.read_tagnum read tag number from bytes from offset 0 in base 128.
-// Its return deserialized TagNumber and next offset to process on.
+// Its return deserialized Tag number and next offset to process on.
 fn Tag.read_tagnum(bytes []u8) !(u32, i64) {
 	ctx := Context{}
 	tnum, next := Tag.read_tagnum_with_context(bytes, 0, ctx)!
@@ -308,7 +320,7 @@ fn Tag.read_tagnum(bytes []u8) !(u32, i64) {
 // Its return deserialized TagNumber and next offset to process on.
 fn Tag.read_tagnum_with_context(bytes []u8, loc i64, ctx Context) !(u32, i64) {
 	if loc > bytes.len {
-		return error('TagNumber: invalid pos')
+		return error('Tag number: invalid pos')
 	}
 	mut pos := loc
 	mut ret := 0
@@ -342,58 +354,65 @@ fn Tag.read_tagnum_with_context(bytes []u8, loc i64, ctx Context) !(u32, i64) {
 // Maximaum value of known universal type tag number, see `TagType`
 const max_universal_tagnumber = 36
 
-fn (v TagNUmber) valid_supported_universal_tagnum() bool {
-	return v < asn1.max_universal_tagnumber
+fn (t Tag) valid_supported_universal_tagnum() bool {
+	return t.class == .universal && t.number < asn1.max_universal_tagnumber
 }
 
 // `universal_tag_type` transforrms this TagNumber into available UNIVERSAL class of TagType,
 // or return error if it is unknown number.
-fn (v TagNumber) universal_tag_type() !TagType {
+fn (t Tag) universal_tag_type() !TagType {
 	// currently, only support Standard universal tag number
-	if v > asn1.max_universal_tagnumber {
-		return error('TagNumber: unknown TagType number=${v}')
+	if t.number > asn1.max_universal_tagnumber {
+		return error('Tag number: unknown TagType number=${v}')
 	}
-	match v {
-		// vfmt off
-		0 { return .reserved } 
-		1 {	return .boolean } 
-		2 { return .integer	} 
-		3 { return .bitstring } 
-		4 { return .octetstring } 
-		5 { return .null } 
-		6 { return .oid } 
-		7 { return .objdesc } 
-		8 { return .external } 
-		9 { return .real } 
-		10 { return .enumerated } 
-		11 { return .embedded } 
-		12 { return .utf8string } 
-		13 { return .relativeoid } 
-		14 { return .time } 
-		16 { return .sequence } 
-		17 { return .set } 
-		18 { return .numericstring } 
-		19 { return .printablestring } 
-		20 { return .t61string } 
-		21 { return .videotexstring } 
-		22 { return .ia5string } 
-		23 { return .utctime } 
-		24 { return .generalizedtime } 
-		25 { return .graphicstring } 
-		26 { return .visiblestring } 
-		27 { return .generalstring } 
-		28 { return .universalstring } 
-		29 { return .characterstring } 
-		30 { return .bmpstring } 
-		31 { return .date } 
-		32 { return .time_of_day } 
-		33 { return .date_time } 
-		34 { return .duration } 
-		35 { return .i18_oid } 
-		36 { return .relative_i18_oid } 
-		// vfmt on
+	match t.class {
+		.universal {
+			match t.number {
+				// vfmt off
+				0 { return .reserved }
+				1 { return .boolean }
+				2 { return .integer }
+				3 { return .bitstring }
+				4 { return .octetstring }
+				5 { return .null }
+				6 { return .oid }
+				7 { return .objdesc }
+				8 { return .external }
+				9 { return .real }
+				10 { return .enumerated }
+				11 { return .embedded }
+				12 { return .utf8string }
+				13 { return .relativeoid }
+				14 { return .time }
+				16 { return .sequence }
+				17 { return .set }
+				18 { return .numericstring }
+				19 { return .printablestring }
+				20 { return .t61string }
+				21 { return .videotexstring }
+				22 { return .ia5string }
+				23 { return .utctime }
+				24 { return .generalizedtime }
+				25 { return .graphicstring }
+				26 { return .visiblestring }
+				27 { return .generalstring }
+				28 { return .universalstring }
+				29 { return .characterstring }
+				30 { return .bmpstring }
+				31 { return .date }
+				32 { return .time_of_day }
+				33 { return .date_time }
+				34 { return .duration }
+				35 { return .i18_oid }
+				36 { return .relative_i18_oid }
+				else {
+					return error('reserved or unknonw number')
+				}
+				// vfmt on
+			}
+		}
 		else {
-			return error('reserved or unknonw number')
+			return error('Not universal class type')
 		}
 	}
 }
