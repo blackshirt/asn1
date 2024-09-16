@@ -48,15 +48,18 @@ const tag_numher_mask 	= 0x1f //  32, bits 1-5
 // vfmt on
 
 // Maximum number of bytes to represent tag number, includes the tag byte.
-// We impose limit on the tag number to be in range 0..16383. See comment on `TagNumber` type below.
+// ASN.1 imposes no limit on the tag number, but the NIST Stable Implementation Agreements (1991)
+// and its European and Asian counterparts limit the size of tags to 16383.
+// see https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation
+// We impose limit on the tag number to be in range 0..16383.
 // Its big enough to accomodate and represent different of yours own tag number.
 // Its represents 2 bytes length where maximum bytes arrays to represent tag number
 // in multibyte (long) form is `[u8(0x1f), 0xff, 0x7f]` or 16383 in base 128.
 const max_tag_length = 3
 const max_tag_number = 16383
 
-// ASN1 Tag identifier handling
-
+// ASN.1 Tag identifier handling
+//
 // Tag represents identifier of the ASN1 element (object)
 // ASN.1 Tag number can be represented in two form, short form and long form.
 // The short form for tag number below <= 30 and stored enough in single byte,
@@ -207,7 +210,7 @@ fn Tag.decode_with_context(bytes []u8, loc i64, ctx Context) !(Tag, i64) {
 	// check if this `number` is in long (multibyte) form, and interpretes more bytes as a tag number.
 	if number == 0x1f {
 		// we only allowed `max_tag_length` bytes following to represent tag number.
-		number, pos = TagNumber.decode(bytes, pos)!
+		number, pos = Tag.read_tagnum(bytes, pos)!
 
 		// pos is the next position to read next bytes, so check tag bytes length
 		if pos >= asn1.max_tag_length + loc + 1 {
@@ -256,31 +259,12 @@ fn (t Tag) packed_length_with_context(ctx Context) !int {
 	return n
 }
 
-// ASN.1 Tag Number
-//
-// ASN.1 imposes no limit on the tag number, but the NIST Stable Implementation Agreements (1991)
-// and its European and Asian counterparts limit the size of tags to 16383.
-// see https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation
-type TagNumber = u32
-
-// from_int creates TagNumber from integer v. Its does not support to pass
-// negative integer, its not make sense for now.
-pub fn TagNumber.from_int(v int) !TagNumber {
-	if v < 0 {
-		return error('TagNumber: negative number')
-	}
-	if v > asn1.max_tag_number {
-		return error('TagNumber: ${v} is too big, dont exceed ${asn1.max_tag_number}')
-	}
-	return TagNumber(u32(v))
-}
-
 // bytes_len tells amount of bytes needed to store v in base 128
-fn (v TagNumber) bytes_len() int {
-	if v == 0 {
+fn (t Tag) tagnum_bytes_len() int {
+	if t.number == 0 {
 		return 1
 	}
-	mut n := v
+	mut n := t.number
 	mut ret := 0
 
 	for n > 0 {
@@ -291,28 +275,19 @@ fn (v TagNumber) bytes_len() int {
 	return ret
 }
 
-fn (v TagNumber) tag_number_length() int {
+fn (t Tag) tagnum_length() int {
 	// when number is greater than 31 (0x1f), its more bytes
 	// to represent this number.
-	len := if v < 0x1f { 1 } else { v.bytes_len() + 1 }
+	len := if t.number < 0x1f { 1 } else { t.tagnum_bytes_len() + 1 }
 	return len
 }
 
-// pack_base128 serializes TagNumber v into bytes in base 128
-fn (v TagNumber) pack_base128() ![]u8 {
-	mut dst := []u8{}
-	v.pack_base128_with_context(mut dst)!
-	return dst
-}
-
-// pack_base128_with_context serializes TagNumber v into bytes in base 128
-// The ctx params is not make sense here, its only for places holder for expandable things,
-// when its has different meaning with standard, just ignore them now.
-fn (v TagNumber) pack_base128_with_context(mut dst []u8, ctx Context) ! {
-	n := v.bytes_len()
+// pack_tagnum_in_base128 serializes tag number into bytes in base 128
+fn (t Tag) pack_tagnum_in_base128(mut dst []u8) ! {
+	n := t.tagnum_bytes_len()
 	// TODO: add support for other params
 	for i := n - 1; i >= 0; i-- {
-		mut o := u8(v >> u32(i * 7))
+		mut o := u8(t.number >> u32(i * 7))
 		o &= 0x7f
 		if i != 0 {
 			o |= 0x80
@@ -321,17 +296,17 @@ fn (v TagNumber) pack_base128_with_context(mut dst []u8, ctx Context) ! {
 	}
 }
 
-// TagNumber.decode deserializes bytes into TagNumber from offset 0 in base 128.
+// Tag.read_tagnum read tag number from bytes from offset 0 in base 128.
 // Its return deserialized TagNumber and next offset to process on.
-fn TagNumber.decode(bytes []u8) !(TagNumber, i64) {
+fn Tag.read_tagnum(bytes []u8) !(u32, i64) {
 	ctx := Context{}
-	tnum, next := TagNUmber.decode_with_context(bytes, 0, ctx)!
+	tnum, next := Tag.read_tagnum_with_context(bytes, 0, ctx)!
 	return tnum, next
 }
 
-// decode_with_context deserializes bytes into TagNumber from loc offset in base 128.
+// read_tagnum_with_context deserializes bytes into tag number from loc offset in base 128.
 // Its return deserialized TagNumber and next offset to process on.
-fn TagNUmber.decode_with_context(bytes []u8, loc i64, ctx Context) !(TagNumber, i64) {
+fn Tag.read_tagnum_with_context(bytes []u8, loc i64, ctx Context) !(u32, i64) {
 	if loc > bytes.len {
 		return error('TagNumber: invalid pos')
 	}
@@ -344,7 +319,7 @@ fn TagNUmber.decode_with_context(bytes []u8, loc i64, ctx Context) !(TagNumber, 
 		if s == 0 && b == 0x80 {
 			if ctx.rule == .der {
 				// requirement for DER encoding
-				return error('TagNumber: integer is not minimally encoded')
+				return error('Tag number: integer is not minimally encoded')
 			}
 		}
 		ret |= b & 0x7f
@@ -352,13 +327,16 @@ fn TagNUmber.decode_with_context(bytes []u8, loc i64, ctx Context) !(TagNumber, 
 
 		if b & 0x80 == 0 {
 			if ret > asn1.max_tag_number {
-				return error('TagNumber: base 128 integer too large')
+				return error('Tag number: base 128 integer too large')
 			}
-			val := TagNumber.from_int(ret)!
+			if ret < 0 {
+				return error('Negative tag number')
+			}
+			val := u23(ret)
 			return val, pos
 		}
 	}
-	return error('TagNumber: truncated base 128 integer')
+	return error('Tag: truncated base 128 integer')
 }
 
 // Maximaum value of known universal type tag number, see `TagType`
