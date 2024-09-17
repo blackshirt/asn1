@@ -123,14 +123,6 @@ fn test_tag_decode() ! {
 	}
 }
 
-struct TagAndLengthTest {
-	bytes   []u8
-	tag     Tag
-	length  i64
-	lastpos int
-	err     IError
-}
-
 struct TagNumberTest {
 	num         int
 	class       TagClass

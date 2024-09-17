@@ -48,7 +48,7 @@ fn (v Length) bytes_len() int {
 	return num
 }
 
-// to_bytes packs v into bytes and apends it into `dst` bytes.
+// to_bytes packs Length v into bytes and apends it into `dst` bytes.
 fn (v Length) to_bytes(mut dst []u8) {
 	mut n := v.bytes_len()
 	for ; n > 0; n-- {
@@ -57,16 +57,16 @@ fn (v Length) to_bytes(mut dst []u8) {
 	}
 }
 
-// packed_length gets length of length v in .der rule
-fn (v Length) packed_length() !int {
+// length_size gets length of length v in .der rule
+fn (v Length) length_size() !int {
 	ctx := Context{}
-	n := v.packed_length_with_context(ctx)!
+	n := v.length_size_with_context(ctx)!
 	return n
 }
 
-// packed_length_with_context calculates the length of bytes needed to store the Length value `v`
+// length_size_with_context calculates the length of bytes needed to store the Length value `v`
 // includes one byte marker for long definite form of length value, for value >= 128
-fn (v Length) packed_length_with_context(ctx Context) !int {
+fn (v Length) length_size_with_context(ctx Context) !int {
 	// we currently only support .der or (stricter) .ber
 	if ctx.rule != .der && ctx.rule != .ber {
 		return error('Length: unsupported rule')

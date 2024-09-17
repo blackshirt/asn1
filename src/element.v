@@ -17,10 +17,77 @@ module asn1
 // satisfies this interface. This interface was also expanded by methods
 // defined on this interface.
 pub interface Element {
-	// tag tells the identity of this Element.
+	// tag tells the ASN.1 identity of this Element.
 	tag() Tag
-	// payload tells the raw payload (values) of this Element.
-	payload() ![]u8
+	// payload tells the payload (values) of this Element.
+	// The element's size was calculated implicitly from payload.len
+	// Its depends on the tag how interpretes this payload.
+	payload() []u8
+}
+
+// length returns the length of the payload of this element.
+pub fn (el Element) length() int {
+	return el.payload().len
+}
+
+// encode serializes this element into bytes arrays with default context
+pub fn (el Element) encode() ![]u8 {
+	ctx := Context{}
+	mut dst := []u8{}
+	el.encode_with_context(mut dst, ctx)!
+	return dst
+}
+
+// encode_with_context serializes this el Element into bytes and appended to `dst`.
+// Its accepts optional ctx Context.
+fn (el Element) encode_with_context(mut dst []u8, ctx Context) ! {
+	// we currently only support .der or (stricter) .ber
+	if ctx.rule != .der && ctx.rule != .ber {
+		return error('Element: unsupported rule')
+	}
+	// serialize the tag
+	el.tag().encode_with_context(mut dst, ctx)!
+	// calculates the length of element,  and serialize this length
+	payload := el.payload()
+	length := Length.from_i64(payload.len)!
+	length.encode_with_context(mut dst, ctx)!
+	// append the element payload to destionation
+	dst << payload
+}
+
+pub fn (el Element) element_size() !int {
+	ctx := Context{}
+	return el.element_size_with_context(ctx)!
+}
+
+// element_size_with_context informs us the length of bytes when this element serialized into bytes.
+// Different context maybe produces different result.
+fn (el Element) element_size_with_context(ctx Context) !int {
+	mut n := 0
+	n += el.tag().tag_size()
+	length := Length.from_i64(el.payload().len)!
+	n += length.length_size_with_context(ctx)!
+	n += el.payload().len
+
+	return n
+}
+
+// wrap wraps this element into another element, think of TaggedType with default context.
+// you should provide different class for wrapping.
+fn (el Element) wrap(cls TagClass, tagnum int) !Element {
+	// do nothing when the class is same
+	if el.tag().tag_class() == cls {
+		return
+	}
+	if cls == .universal {
+		return error('No need wrap into universal class')
+	}
+	// new element payload's is the serialized the wrapped element
+	payload := el.encode()!
+	new_tag := Tag.new(cls, true, tagnum)!
+	raw := RawElement.new(new_tag, payload)
+
+	return raw
 }
 
 // FIXME: its not tested
@@ -59,70 +126,16 @@ pub fn (el Element) into_object[T]() !T {
 	return error('Element el does not holding T')
 }
 
-// length returns the length of the payload of this element.
-pub fn (el Element) length() int {
-	return el.payload().len
-}
-
-pub fn (el Element) encode() ![]u8 {
-	ctx := Context{}
-	return el.encode_with_params(ctx)!
-}
-
-// encode_with_params serializes this el Element into bytes and appended to `dst`.
-// Its accepts optional ctx Context.
-fn (el Element) encode_with_params(mut dst []u8, ctx Context) ! {
-	// we currently only support .der or (stricter) .ber
-	if ctx.rule != .der && ctx.rule != .ber {
-		return error('Element: unsupported rule')
-	}
-	if el.tag() == none {
-		// optional element, do nothing
-		return
-	}
-	elt := el.tag().pack_with_params(ctx)!
-	dst << elt
-	payload := el.payload()
-	length := Length.from_i64(payload.len)!
-	lout := length.pack_with_params(ctx)!
-	dst << lout
-	dst << payload
-}
-
-pub fn (el Element) packed_length() !int {
-	ctx := Context{}
-	n := el.packed_length_with_params(ctx)!
-	return n
-}
-
-// packed_length_with_params informs us the length of how many bytes when this el Element
-// was serialized into bytes.
-fn (el Element) packed_length_with_params(ctx Context) !int {
-	// when this element has none tag is set, its mean nothing,
-	// just return 0 instead
-	if el.tag() == none {
-		return 0
-	}
-	mut n := 0
-	n += el.tag().packed_length_with_params(ctx)!
-	payload := el.payload()
-	length := Length.from_i64(payload.len)!
-	n += length.packed_length_with_params(ctx)!
-	n += payload.len
-
-	return n
-}
-
 pub fn Element.decode(src []u8) (Element, i64) {
 	ctx := Context{}
-	el, pos := Element.decode_with_params(src, 0, ctx)!
+	el, pos := Element.decode_with_context(src, 0, ctx)!
 	return el, pos
 }
 
 // decode deserializes back bytes in src from offet `loc` into Element.
 // Basically, its tries to parse a Universal class Elememt when it is possible.
 // Other class parsed as a RawElement.
-fn Element.decode_with_params(src []u8, loc i64, ctx Context) !(Element, i64) {
+fn Element.decode_with_context(src []u8, loc i64, ctx Context) !(Element, i64) {
 	raw, next := RawElement.decode(src, loc, ctx)!
 	bytes := raw.payload
 

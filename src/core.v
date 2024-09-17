@@ -281,7 +281,8 @@ fn (t Tag) bytes_len() int {
 	return ret
 }
 
-fn (t Tag) length() int {
+// tag_size informs us how many bytes needed to store this tag includes one byte marker if in long form.
+fn (t Tag) tag_size() int {
 	// when number is greater than 31 (0x1f), its need more bytes
 	// to represent this number, includes one byte marker for long form tag
 	len := if t.number < 0x1f { 1 } else { t.bytes_len() + 1 }
@@ -309,8 +310,8 @@ fn Tag.read_tagnum(bytes []u8, pos i64) !(u32, i64) {
 	return tnum, next
 }
 
-// read_tagnum_with_context read the tag number part from bytes from loc offset in base 128.
-// Its return deserialized tag number and next offset to process on.
+// read_tagnum_with_context is the main routine to read the tag number part in the bytes source,
+// start from offset loc in base 128. Its return the tag number and next offset to process on, or error on fails.
 fn Tag.read_tagnum_with_context(bytes []u8, loc i64, ctx Context) !(u32, i64) {
 	if loc > bytes.len {
 		return error('Tag number: invalid pos')
