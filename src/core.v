@@ -7,7 +7,7 @@ import log
 // TagClass is ASN.1 tag class.
 // To make sure ASN.1 encodings are not ambiguous, every ASN.1 type is associated with a tag.
 // A tag consists of three parts: the tag class, tag form and the tag number.
-// The following classes are defined in the standard.
+// The following classes are defined in the ASN.1 standard.
 
 pub enum TagClass {
 	universal        = 0x00 // 0b00
@@ -17,7 +17,7 @@ pub enum TagClass {
 }
 
 // from_int creates TagClass from integer v
-pub fn TagClass.from_int(v int) !TagClass {
+fn TagClass.from_int(v int) !TagClass {
 	match v {
 		// vfmt off
 		0x00 { return .universal }
@@ -44,7 +44,7 @@ fn (c TagClass) str() string {
 // bit masking values for ASN.1 tag header
 const tag_class_mask 	= 0xc0 // 192, bits 8-7
 const constructed_mask 	= 0x20 //  32, bits 6
-const tag_number_mask 	= 0x1f //  32, bits 1-5
+const tag_number_mask 	= 0x1f //  31, bits 1-5
 // vfmt on
 
 // Maximum number of bytes to represent tag number, includes the tag byte.
@@ -58,7 +58,8 @@ const tag_number_mask 	= 0x1f //  32, bits 1-5
 const max_tag_length = 3
 const max_tag_number = 16383
 
-// Maximum value of known universal type tag number, see `TagType`
+// Maximum value for UNIVERSAL class tag number, see `TagType`, 
+// Tag number above this number should be considered to other class, private, context_specific or application class.
 const max_universal_tagnumber = 255
 
 // ASN.1 Tag identifier handling
@@ -232,7 +233,7 @@ fn Tag.decode_with_context(bytes []u8, loc i64, ctx Context) !(Tag, i64) {
 		if pos >= asn1.max_tag_length + loc + 1 {
 			return error('Tag: tag bytes is too long')
 		}
-		if number < 0x1f {
+		if number < 0x1f && ctx.rule == .der {
 			// requirement for DER encoding.
 			// TODO: the other encoding may remove this restriction
 			return error('Tag: non-minimal tag')
@@ -275,8 +276,8 @@ fn (t Tag) tagnum_bytes_len() int {
 }
 
 fn (t Tag) tagnum_length() int {
-	// when number is greater than 31 (0x1f), its more bytes
-	// to represent this number.
+	// when number is greater than 31 (0x1f), its need more bytes
+	// to represent this number, includes one byte marker for long form tag
 	len := if t.number < 0x1f { 1 } else { t.tagnum_bytes_len() + 1 }
 	return len
 }
@@ -284,7 +285,6 @@ fn (t Tag) tagnum_length() int {
 // encode_tagnum_in_base128 serializes tag number into bytes in base 128
 fn (t Tag) encode_tagnum_in_base128(mut dst []u8) ! {
 	n := t.tagnum_bytes_len()
-	// TODO: add support for other params
 	for i := n - 1; i >= 0; i-- {
 		mut o := u8(t.number >> u32(i * 7))
 		o &= 0x7f
@@ -304,7 +304,7 @@ fn Tag.read_tagnum(bytes []u8, pos i64) !(u32, i64) {
 }
 
 // read_tagnum_with_context read the tag number part from bytes from loc offset in base 128.
-// Its return deserialized Tag number and next offset to process on.
+// Its return deserialized tag number and next offset to process on.
 fn Tag.read_tagnum_with_context(bytes []u8, loc i64, ctx Context) !(u32, i64) {
 	if loc > bytes.len {
 		return error('Tag number: invalid pos')
