@@ -58,7 +58,7 @@ const tag_number_mask 	= 0x1f //  31, bits 1-5
 const max_tag_length = 3
 const max_tag_number = 16383
 
-// Maximum value for UNIVERSAL class tag number, see `TagType`, 
+// Maximum value for UNIVERSAL class tag number, see `TagType`,
 // Tag number above this number should be considered to other class, private, context_specific or application class.
 const max_universal_tagnumber = 255
 
@@ -180,7 +180,7 @@ fn (t Tag) encode_with_context(mut dst []u8, ctx Context) ! {
 	if t.number >= 0x1f {
 		b |= asn1.tag_number_mask // 0x1f
 		dst << b
-		t.encode_tagnum_in_base128(mut dst)!
+		t.to_bytes_in_base128(mut dst)!
 	} else {
 		// short form
 		b |= u8(t.number)
@@ -190,9 +190,15 @@ fn (t Tag) encode_with_context(mut dst []u8, ctx Context) ! {
 
 // Tag.decode tries to deserializes bytes into Tag. its return error on fails.
 pub fn Tag.decode(bytes []u8) !(Tag, i64) {
+	tag, next := Tag.decode_from_offset(bytes, 0)!
+	return tag, next
+}
+
+// Tag.decode tries to deserializes bytes into Tag. its return error on fails.
+fn Tag.decode_from_offset(bytes []u8, pos i64) !(Tag, i64) {
 	// default params
 	ctx := Context{}
-	tag, next := Tag.decode_with_context(bytes, 0, ctx)!
+	tag, next := Tag.decode_with_context(bytes, pos, ctx)!
 	return tag, next
 }
 
@@ -260,7 +266,7 @@ fn (mut t Tag) clone_with_tag(v int) !Tag {
 }
 
 // bytes_len tells amount of bytes needed to store tag in base 128
-fn (t Tag) tagnum_bytes_len() int {
+fn (t Tag) bytes_len() int {
 	if t.number == 0 {
 		return 1
 	}
@@ -275,16 +281,16 @@ fn (t Tag) tagnum_bytes_len() int {
 	return ret
 }
 
-fn (t Tag) tagnum_length() int {
+fn (t Tag) length() int {
 	// when number is greater than 31 (0x1f), its need more bytes
 	// to represent this number, includes one byte marker for long form tag
-	len := if t.number < 0x1f { 1 } else { t.tagnum_bytes_len() + 1 }
+	len := if t.number < 0x1f { 1 } else { t.bytes_len() + 1 }
 	return len
 }
 
-// encode_tagnum_in_base128 serializes tag number into bytes in base 128
-fn (t Tag) encode_tagnum_in_base128(mut dst []u8) ! {
-	n := t.tagnum_bytes_len()
+// to_bytes_in_base128 serializes tag number into bytes in base 128
+fn (t Tag) to_bytes_in_base128(mut dst []u8) ! {
+	n := t.bytes_len()
 	for i := n - 1; i >= 0; i-- {
 		mut o := u8(t.number >> u32(i * 7))
 		o &= 0x7f
@@ -295,7 +301,7 @@ fn (t Tag) encode_tagnum_in_base128(mut dst []u8) ! {
 	}
 }
 
-// Tag.read_tagnum read the tag number from bytes from offset 0 in base 128.
+// Tag.read_tagnum read the tag number from bytes from offset pos in base 128.
 // Its return deserialized Tag number and next offset to process on.
 fn Tag.read_tagnum(bytes []u8, pos i64) !(u32, i64) {
 	ctx := Context{}

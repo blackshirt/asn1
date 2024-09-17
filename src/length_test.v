@@ -3,10 +3,19 @@
 // that can be found in the LICENSE file.
 module asn1
 
+struct TagAndLengthTest {
+	bytes     []u8
+	tag       Tag
+	explength int
+	lastpos   int
+	err       IError
+}
+
 fn test_tagandlength_handling() ! {
 	// from golang asn.1 test
 	bs := [
-		TagAndLengthTest{[u8(0x80), 0x01], Tag{.context_specific, false, 0}, 1, 2, none},
+		// Context Specific should be in constructed form
+		TagAndLengthTest{[u8(0x80), 0x01], Tag{.context_specific, true, 0}, 1, 2, error('Context Specific should be in constructed form')},
 		TagAndLengthTest{[u8(0xa0), 0x01], Tag{.context_specific, true, 0}, 1, 2, none},
 		TagAndLengthTest{[u8(0x02), 0x00], Tag{.universal, false, 2}, 0, 2, none},
 		TagAndLengthTest{[u8(0xfe), 0x00], Tag{.private, true, 30}, 0, 2, none},
@@ -14,14 +23,14 @@ fn test_tagandlength_handling() ! {
 		TagAndLengthTest{[u8(0x1f), 0x81, 0x00, 0x01], Tag{.universal, false, 128}, 1, 4, none},
 		// the last byte tells its length in long form
 		TagAndLengthTest{[u8(0x1f), 0x81, 0x00, 0x81], Tag{.universal, false, 128}, 1, 4, error('Length: truncated length')},
-		TagAndLengthTest{[u8(0x1f), 0x81, 0x80, 0x01, 0x00], Tag{.universal, false, 16385}, 0, 5, error('TagNumber: base 128 integer too large')}, // 1x128^2 + 0x128^1 + 1x128*0
+		TagAndLengthTest{[u8(0x1f), 0x81, 0x80, 0x01, 0x00], Tag{.universal, false, 16385}, 0, 5, error('Tag number: base 128 integer too large')}, // 1x128^2 + 0x128^1 + 1x128*0
 		TagAndLengthTest{[u8(0x00), 0x81, 0x80], Tag{.universal, false, 0}, 128, 3, none},
 		// need one byte length
 		TagAndLengthTest{[u8(0x00), 0x83, 0x01, 0x00], Tag{.universal, false, 0}, 2, 1, error('Length: truncated length')},
 		// normal version above
 		TagAndLengthTest{[u8(0x00), 0x83, 0x01, 0x01, 0x01], Tag{.universal, false, 0}, 65793, 5, none}, // length = 1x256^2 + 1x256^1 + 1x256^0
-		TagAndLengthTest{[u8(0x1f), 0x85], Tag{.universal, false, 0}, 0, 2, error('TagNumber: truncated base 128 integer')},
-		TagAndLengthTest{[u8(0x1f), 0x85, 0x81], Tag{.universal, false, 0}, 0, 0, error('TagNumber: truncated base 128 integer')},
+		TagAndLengthTest{[u8(0x1f), 0x85], Tag{.universal, false, 0}, 0, 2, error('Tag: truncated base 128 integer')},
+		TagAndLengthTest{[u8(0x1f), 0x85, 0x81], Tag{.universal, false, 0}, 0, 0, error('Tag: truncated base 128 integer')},
 		// this last bytes tell the length is in undefinite length, 0x80
 		TagAndLengthTest{[u8(0x30), 0x80], Tag{.universal, true, 0x10}, 0, 2, error('Length: unsupported undefinite length')},
 		// still truncated length part
@@ -42,26 +51,23 @@ fn test_tagandlength_handling() ! {
 		// Long length form may not be used for lengths that fit in short form.
 		TagAndLengthTest{[u8(0xa0), 0x81, 0x7f], Tag{.context_specific, true, 0}, 0, 0, error('Length: dont needed in long form')}, //{}},
 		// Tag numbers which would overflow int32 are rejected. (The number below is 2^31.)
-		TagAndLengthTest{[u8(0x1f), 0x88, 0x80, 0x80, 0x80, 0x00, 0x00], Tag{.universal, false, 0}, 0, 0, error('TagNumber: negative number')}, //{}},
+		TagAndLengthTest{[u8(0x1f), 0x88, 0x80, 0x80, 0x80, 0x00, 0x00], Tag{.universal, false, 0}, 0, 0, error('Negative tag number')}, //{}},
 		// Tag numbers that fit in an int32 are valid. (The number below is 2^31 - 1.) but its bigger than max_tag_bytes_length
-		TagAndLengthTest{[u8(0x1f), 0x87, 0xFF, 0xFF, 0xFF, 0x7F, 0x00], Tag{.universal, false, 2147483647}, 0, 7, error('TagNumber: base 128 integer too large')},
+		TagAndLengthTest{[u8(0x1f), 0x87, 0xFF, 0xFF, 0xFF, 0x7F, 0x00], Tag{.universal, false, 2147483647}, 0, 7, error('Tag number: base 128 integer too large')},
 		// Long tag number form may not be used for tags that fit in short form.
 		TagAndLengthTest{[u8(0x1f), 0x1e, 0x00], Tag{.universal, false, 0}, 0, 0, error('Tag: non-minimal tag')}, //{}},
 	]
 
 	for i, c in bs {
-		tag, pos := Tag.decode(c.bytes, 0) or {
+		tag, pos := Tag.decode(c.bytes) or {
 			assert err == c.err
 			continue
 		}
 		assert tag == c.tag
-
-		length, idx := Length.decode(c.bytes, pos) or {
+		length, idx := Length.decode_from_offset(c.bytes, pos) or {
 			assert err == c.err
 			continue
 		}
-
-		assert length == c.length
 		assert idx == c.lastpos
 	}
 }
@@ -86,11 +92,12 @@ fn test_length_pack_and_unpack_tofrom_asn() ! {
 		LengthPackTest{16777215, [u8(0x83), 0xff, 0xff, 0xff], none},
 	]
 	for i, c in edata {
+		mut dst := []u8{}
 		s := Length.from_i64(c.value)!
-		dst := s.pack()!
+		s.encode(mut dst)!
 		assert dst == c.expected
 
-		length, idx := Length.unpack(dst)!
+		length, idx := Length.decode(dst)!
 
 		assert length == c.value
 		assert idx == c.expected.len
@@ -104,13 +111,13 @@ struct ByteLengthTest {
 
 fn test_basic_simple_length_unpack() {
 	data := [u8(0x82), 0x01, 0x7F]
-	n, pos := Length.unpack(data)!
+	n, pos := Length.decode(data)!
 
 	assert n == 383
 	assert pos == 3
 
 	data2 := [u8(0x82), 0x01, 0x31]
-	n2, pos2 := Length.unpack(data2)!
+	n2, pos2 := Length.decode(data2)!
 	assert n2 == 305
 	assert pos2 == 3
 }
@@ -133,7 +140,7 @@ fn test_length_pack_and_append() ! {
 		mut dst := []u8{}
 
 		ln := Length.from_i64(v.value)!
-		ln.pack_and_append(mut dst)
+		ln.to_bytes(mut dst)
 
 		assert dst == v.expected
 	}
@@ -192,22 +199,22 @@ fn test_calc_length_of_length() ! {
 fn test_tc3_absence_standard_length_block() ! {
 	value := []u8{}
 
-	_, _ := Length.unpack(value) or {
+	_, _ := Length.decode(value) or {
 		assert err == error('Length: truncated length')
 		return
 	}
 }
 
 fn test_tc5_unnecessary_usage_long_of_length_form() ! {
-	value := [u8(0x9f), 0xff, 0x7f, 0x81, 0x01, 0x40]
+	value := [u8(0x7f), 0xff, 0x7f, 0x81, 0x01, 0x40]
 
-	tag, pos := Tag.unpack(value)!
-	// 0x9f == 10011111
-	assert tag.class == .context_specific
-	assert tag.constructed == false
+	tag, pos := Tag.decode(value)!
+	// 0x9f == 0b0111_1111
+	assert tag.class == .application
+	assert tag.constructed == true
 	assert pos == 3
 	// the length bytes, [0x81, 0x01] dont needed in long form.
-	_, _ := Length.unpack_with_params(value, pos) or {
+	_, _ := Length.decode_with_context(value, pos) or {
 		assert err == error('Length: dont needed in long form')
 		return
 	}

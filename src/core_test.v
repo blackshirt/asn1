@@ -79,7 +79,7 @@ fn test_class_tag_length_handling() ! {
 			assert err == c.err
 			continue
 		}
-		n := t.tagnum_length()
+		n := t.length()
 		assert n == c.explength
 	}
 }
