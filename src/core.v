@@ -44,7 +44,7 @@ fn (c TagClass) str() string {
 // bit masking values for ASN.1 tag header
 const tag_class_mask 	= 0xc0 // 192, bits 8-7
 const constructed_mask 	= 0x20 //  32, bits 6
-const tag_numher_mask 	= 0x1f //  32, bits 1-5
+const tag_number_mask 	= 0x1f //  32, bits 1-5
 // vfmt on
 
 // Maximum number of bytes to represent tag number, includes the tag byte.
@@ -57,6 +57,9 @@ const tag_numher_mask 	= 0x1f //  32, bits 1-5
 // in multibyte (long) form is `[u8(0x1f), 0xff, 0x7f]` or 16383 in base 128.
 const max_tag_length = 3
 const max_tag_number = 16383
+
+// Maximum value of known universal type tag number, see `TagType`
+const max_universal_tagnumber = 255
 
 // ASN.1 Tag identifier handling
 //
@@ -76,17 +79,16 @@ mut:
 // `Tag.new` creates new ASN.1 tag identifier. Its accepts params of TagClass `cls`,
 // the tag form in the form of constructed or primitive in `constructed` boolean flag, and the integer tag `number`.
 pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
-	if number < 0 && number > max_tag_number {
-		return error("Unallowed tag number")
+	if number < 0 || number > asn1.max_tag_number {
+		return error('Unallowed tag number, ${number} exceed limit')
 	}
 	match cls {
 		.universal {
-			if number > max_universal_tagnumber {
+			if number > asn1.max_universal_tagnumber {
 				return error('Not a valid tag number for universal class=${number}')
 			}
-			univ_type := tnum.universal_tag_type()!
-			// SEQUENCE (OF) or SET (OF) should constructed bit was set
-			if univ_type == TagType.sequence || univ_type == TagType.set {
+			// SEQUENCE (OF) or SET (OF) should be in constructed form
+			if number == int(TagType.sequence) || number == int(TagType.set) {
 				if !constructed {
 					return error('For SEQUENCE(OF) or SET(OF) type, should be in constructed form')
 				}
@@ -94,7 +96,7 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 			tag := Tag{
 				class:       cls
 				constructed: constructed
-				number:      tnum
+				number:      tagnum_from_int(number)!
 			}
 			return tag
 		}
@@ -106,7 +108,7 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 			tag := Tag{
 				class:       cls
 				constructed: constructed
-				number:      Tag.tagnum_from_int(number)!
+				number:      tagnum_from_int(number)!
 			}
 			return tag
 		}
@@ -115,14 +117,16 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 			tag := Tag{
 				class:       cls
 				constructed: constructed
-				number:      Tag.tagnum_from_int(number)!
+				number:      tagnum_from_int(number)!
 			}
 			return tag
 		}
 	}
 }
 
-fn Tag.tagnum_from_int(v int) !u32 {
+// tagnum_from_int creates tag number from regular integer.
+// Its just doing check and wrapping on the passed integer
+fn tagnum_from_int(v int) !u32 {
 	if v < 0 {
 		return error('Negative number for tag number was not allowed')
 	}
@@ -147,8 +151,8 @@ pub fn (t Tag) tag_number() int {
 	return t.number
 }
 
-// pack serializes tag t into bytes array
-pub fn (t Tag) pack(mut dst []u8) ! {
+// encode serializes tag t into bytes array with default context
+pub fn (t Tag) encode(mut dst []u8) ! {
 	ctx := Context{}
 	t.encode_with_context(mut dst, ctx)!
 }
@@ -159,7 +163,7 @@ fn (t Tag) encode_with_context(mut dst []u8, ctx Context) ! {
 	if ctx.rule != .der && ctx.rule != .ber {
 		return error('Tag: unsupported rule')
 	}
-	// makes sure TagNumber is valid
+	// makes sure tag number is valid
 	if t.number > asn1.max_tag_number {
 		return error('Tag: tag number exceed limit')
 	}
@@ -173,9 +177,9 @@ fn (t Tag) encode_with_context(mut dst []u8, ctx Context) ! {
 	}
 	// The tag is in long form
 	if t.number >= 0x1f {
-		b |= asn1.tag_numher_mask // 0x1f
+		b |= asn1.tag_number_mask // 0x1f
 		dst << b
-		t.number.pack_base128(mut dst)
+		t.encode_tagnum_in_base128(mut dst)!
 	} else {
 		// short form
 		b |= u8(t.number)
@@ -217,7 +221,7 @@ fn Tag.decode_with_context(bytes []u8, loc i64, ctx Context) !(Tag, i64) {
 	// in multibyte (long form), or short form otherwise.
 	class := int((b & asn1.tag_class_mask) >> 6)
 	constructed := b & asn1.constructed_mask == asn1.constructed_mask
-	mut number := Tag.tagnum_from_int(int(b & asn1.tag_numher_mask))!
+	mut number := tagnum_from_int(int(b & asn1.tag_number_mask))!
 
 	// check if this `number` is in long (multibyte) form, and interpretes more bytes as a tag number.
 	if number == 0x1f {
@@ -249,29 +253,12 @@ fn (mut t Tag) clone_with_class(c TagClass) Tag {
 
 fn (mut t Tag) clone_with_tag(v int) !Tag {
 	mut new := t
-	val := Tag.tagnum_from_int(v)!
+	val := tagnum_from_int(v)!
 	t.number = val
 	return new
 }
 
-// packed_length calculates length of bytes needed to store the tag in .der rule.
-fn (t Tag) packed_length() !int {
-	ctx := Context{}
-	n := t.packed_length_with_context(ctx)!
-	return n
-}
-
-// `packed_length_with_context` calculates length of bytes needed to store tag number, include one byte
-// marker that tells if the tag number is in long form (>= 0x1f)
-fn (t Tag) packed_length_with_context(ctx Context) !int {
-	if ctx.rule != .der && ctx.rule != .ber {
-		return error('Tag: unsupported rule')
-	}
-	n := if t.number < 0x1f { 1 } else { 1 + t.number.bytes_len() }
-	return n
-}
-
-// bytes_len tells amount of bytes needed to store v in base 128
+// bytes_len tells amount of bytes needed to store tag in base 128
 fn (t Tag) tagnum_bytes_len() int {
 	if t.number == 0 {
 		return 1
@@ -294,8 +281,8 @@ fn (t Tag) tagnum_length() int {
 	return len
 }
 
-// pack_tagnum_in_base128 serializes tag number into bytes in base 128
-fn (t Tag) pack_tagnum_in_base128(mut dst []u8) ! {
+// encode_tagnum_in_base128 serializes tag number into bytes in base 128
+fn (t Tag) encode_tagnum_in_base128(mut dst []u8) ! {
 	n := t.tagnum_bytes_len()
 	// TODO: add support for other params
 	for i := n - 1; i >= 0; i-- {
@@ -308,16 +295,16 @@ fn (t Tag) pack_tagnum_in_base128(mut dst []u8) ! {
 	}
 }
 
-// Tag.read_tagnum read tag number from bytes from offset 0 in base 128.
+// Tag.read_tagnum read the tag number from bytes from offset 0 in base 128.
 // Its return deserialized Tag number and next offset to process on.
-fn Tag.read_tagnum(bytes []u8) !(u32, i64) {
+fn Tag.read_tagnum(bytes []u8, pos i64) !(u32, i64) {
 	ctx := Context{}
-	tnum, next := Tag.read_tagnum_with_context(bytes, 0, ctx)!
+	tnum, next := Tag.read_tagnum_with_context(bytes, pos, ctx)!
 	return tnum, next
 }
 
-// read_tagnum_with_context deserializes bytes into tag number from loc offset in base 128.
-// Its return deserialized TagNumber and next offset to process on.
+// read_tagnum_with_context read the tag number part from bytes from loc offset in base 128.
+// Its return deserialized Tag number and next offset to process on.
 fn Tag.read_tagnum_with_context(bytes []u8, loc i64, ctx Context) !(u32, i64) {
 	if loc > bytes.len {
 		return error('Tag number: invalid pos')
@@ -344,15 +331,12 @@ fn Tag.read_tagnum_with_context(bytes []u8, loc i64, ctx Context) !(u32, i64) {
 			if ret < 0 {
 				return error('Negative tag number')
 			}
-			val := u23(ret)
+			val := u32(ret)
 			return val, pos
 		}
 	}
 	return error('Tag: truncated base 128 integer')
 }
-
-// Maximaum value of known universal type tag number, see `TagType`
-const max_universal_tagnumber = 36
 
 fn (t Tag) valid_supported_universal_tagnum() bool {
 	return t.class == .universal && t.number < asn1.max_universal_tagnumber
@@ -363,7 +347,7 @@ fn (t Tag) valid_supported_universal_tagnum() bool {
 fn (t Tag) universal_tag_type() !TagType {
 	// currently, only support Standard universal tag number
 	if t.number > asn1.max_universal_tagnumber {
-		return error('Tag number: unknown TagType number=${v}')
+		return error('Tag number: unknown TagType number=${t.number}')
 	}
 	match t.class {
 		.universal {
@@ -501,7 +485,7 @@ pub fn (t TagType) str() string {
 	}
 }
 
-// Params is optional params passed to pack or decodeing
+// Params is optional params passed to encode or decodeing
 // of tag, length or ASN.1 element to drive how encoding works.
 @[params]
 pub struct Params {
@@ -556,16 +540,6 @@ fn Context.new() &Context {
 	return &Context{}
 }
 
-fn (mut ctx Context) with_logger(logger &log.Logger) &Context {
-	ctx.logger = logger
-	return ctx
-}
-
-fn (mut ctx Context) with_rule(rule EncodingRule) &Context {
-	ctx.rule = rule
-	return ctx
-}
-
 struct FieldOptions {
 mut:
 	explicit      bool
@@ -582,6 +556,7 @@ mut:
 	omit_empty    bool
 }
 
+/*
 // encode_with_context encode with context
 fn encode_with_context(el Element, ctx Context) ![]u8 {
 }
@@ -606,3 +581,4 @@ fn is_fullfill_asn1_element[T]() bool {
 	}
 	return false
 }
+*/
