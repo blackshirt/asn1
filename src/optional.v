@@ -2,14 +2,15 @@ module asn1
 
 // OPTIONAL
 //
-struct Optional {
-	el ?Element
+struct Optional[T] {
+	// set to true when its should present
+	present bool
+	// when present, its should be T type
+	el            T
+	has_default   bool
+	default_value &T = unsafe { nil }
 }
 
-struct FieldParams {
-	optional    bool
-	has_default bool
-}
 
 fn Optional.from_element(el Element) Optional {
 	return Optional{
