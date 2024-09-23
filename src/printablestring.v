@@ -117,5 +117,5 @@ fn printable_chars(bytes []u8, p Params) bool {
 }
 
 fn is_printablestring(c u8) bool {
-	return c.is_alnum() || c == u8(0x20) || c in asn1.printable_symbols
+	return c.is_alnum() || c == u8(0x20) || c in printable_symbols
 }

@@ -36,7 +36,7 @@ const string_data = [
 ]
 
 fn test_integer_pack_n_unpack_from_n_into_2form() ! {
-	for i, c in asn1.string_data {
+	for i, c in string_data {
 		v := Integer.from_string(c.value)!
 		out, _ := v.pack_into_twoscomplement_form()!
 
@@ -73,7 +73,7 @@ const unpack_data = [
 ]
 
 fn test_asn1_integer_unencode() ! {
-	for i, c in asn1.unpack_data {
+	for i, c in unpack_data {
 		n := Integer.from_i64(c.val)
 		mut to := []u8{}
 		n.encode(mut to)!
@@ -117,7 +117,7 @@ const integer_test_data = [
 
 // from golang encoding/asn1 test
 fn test_asn1_unpack_and_validate() {
-	for i, v in asn1.integer_test_data {
+	for i, v in integer_test_data {
 		ret := Integer.unpack_and_validate(v.bytes) or {
 			assert err == v.err
 			continue

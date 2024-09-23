@@ -11,7 +11,6 @@ struct Optional[T] {
 	default_value &T = unsafe { nil }
 }
 
-
 fn Optional.from_element(el Element) Optional {
 	return Optional{
 		el: el

@@ -134,7 +134,7 @@ const binstring_data = [
 ]
 
 fn test_bitstring_from_binary_string() ! {
-	for item in asn1.binstring_data {
+	for item in binstring_data {
 		bs := BitString.from_binary_string(item.bits) or {
 			assert err == item.err
 			continue

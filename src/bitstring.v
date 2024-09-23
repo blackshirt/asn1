@@ -156,7 +156,7 @@ const max_bitstring_len = 8192
 
 // valid_bitstring checks whether this s string is a valid of arrays of binary string `0` and `1`.
 fn valid_bitstring(s string) bool {
-	return s.contains_only('01') && s.len <= asn1.max_bitstring_len
+	return s.contains_only('01') && s.len <= max_bitstring_len
 }
 
 // parse_into_u8 parses arrays of binary bits of `0` and '1' with length == 8 into single byte (u8)
