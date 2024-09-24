@@ -1,0 +1,158 @@
+module asn1
+
+// Field options attributes handling
+const max_string_option_length = 255
+
+// parse_string_option parses string as an attribute of field options
+// Its allows string similar to `application:4; optional; has_default` to be treated as an field options
+fn parse_string_option(s string) ![]string {
+	if s.len > max_string_option_length {
+		return error('string option exceed limit')
+	}
+	if s.len == 0 {
+		return []string{}
+	}
+	mut res := []string{}
+	trimmed := s.trim_space()
+	out := trimmed.split(';')
+	validate_attrs(out)!
+	for item in out {
+		res << item
+	}
+	return out
+}
+
+fn parse_string_to_field_optipns(s string) !&FieldOptions {
+	attrs := parse_string_option(s)!
+	out := parse_attrs(attrs)!
+	return out
+}
+
+fn parse_attrs(attrs []string) !&FieldOptions {
+	validate_attrs(attrs)!
+
+	mut opts := &FieldOptions{}
+
+	if attrs_has_optional_flag(attrs) {
+		opts.optional = true
+	}
+	if attrs_has_default_flag(attrs) {
+		opts.has_default = true
+	}
+
+	return opts
+}
+
+fn validate_attrs(attrs []string) ! {
+	if attrs.len == 0 {
+		// do nothing
+		return 
+	}
+	// tagclass is present
+	tcls_present, wrapkey := attrs_has_tagclass_wrapper(attrs)
+	if tcls_present {
+		wrapped := wrapkey.trim_space()
+		if !valid_tagclass_format(wrapped) {
+			return error('not valid tag wrapper ')
+		}
+	}
+}
+
+// when this present, treat the field as an optional element
+fn attrs_has_optional_flag(attrs []string) bool {
+	return 'optional' in attrs
+}
+
+// handles has_default attribute
+fn attrs_has_default_flag(attrs []string) bool {
+	return 'has_default' in attrs
+}
+
+// Tag
+//
+// treats as an tag class wrapper
+fn attrs_has_tagclass_wrapper(attrs []string) (bool, string) {
+	if attrs.len == 0 {
+		return false, ''
+	}
+	for attr in attrs {
+		// even its not in 'application:tagnum' format
+		if attr.starts_with('application') || attr.starts_with('context_specific')
+			|| attr.starts_with('private') || attr.starts_with('universal') {
+			return true, attr
+		}
+	}
+	return false, ''
+}
+
+fn valid_tagclass_attr_name(s string) bool {
+	return s == 'application' || s == 'private' || s == 'context_specific' || s == 'universal'
+}
+
+fn valid_tagclass_attr_number(s string) bool {
+	return s.is_int() || s.is_hex()
+}
+
+// valid tag class 'application: 5' format
+fn valid_tagclass_format(attr string) bool {
+	if attr.starts_with('application') || attr.starts_with('context_specific')
+		|| attr.starts_with('private') {
+		res := attr.split(';')
+		// should be in 'application:number' format
+		if res.len != 2 {
+			return false
+		}
+		// first is the tag class wrapper
+		first := res[0]
+		if !valid_tagclass_attr_name(first) {
+			return false
+		}
+		// the second parts is should be a tag number
+		// ie, valid int (or hex) number
+		second := res[1]
+		if !valid_tagclass_attr_number(second) {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+fn tag_class_from_string(s string) !TagClass {
+	match s {
+		'application' { return .application }
+		'universal' { return .universal }
+		'private' { return .private }
+		'context_specific' { return .context_specific }
+		else { return error('not valid tag') }
+	}
+}
+
+// get the tag class and tag number
+fn tag_class_and_number(s string) !(TagClass, u32) {
+	if !valid_tagclass_format(s) {
+		return error('Not valid tag class format')
+	}
+	res := s.split(';')
+	tc := res[0]
+	tn := res[1]
+	if !valid_tagclass_attr_name(tc) {
+		return error('Not valid class name')
+	}
+	tclass := tag_class_from_string(tc)!
+	if !valid_tagclass_attr_number(tn) {
+		return error('not valid tag num format')
+	}
+	if tn.is_int() {
+		tnum := tn.u32()
+		return tclass, tnum
+	}
+	tnum := tagnum_from_int(tn.int())!
+	return tclass, tnum
+}
+
+// is_element check whethers T is fullfills Element
+fn is_element[T]() bool {
+	s := $if T is Element { true } $else { false }
+	return s
+}
