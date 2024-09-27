@@ -1,7 +1,7 @@
 module asn1
 
 // This file is for supporting configure through string options.
-// so, you can tag your struct field with attributes, for example @[application:10; optional; has_default]
+// so, you can tag your struct field with attributes, for example @[context_specific:10; optional; has_default. tagged: explicit]
 // Field options attributes handling
 
 // limit of string option length
@@ -21,14 +21,39 @@ mut:
 	// default value for optional element when has_default value is true
 	default_value &Element = unsafe { nil }
 	// make sense in explicit context, when wrapper != nil and wrapper == .context_specific
-	explicit bool
+	tagged &TaggedMode = unsafe { nil }
+}
+
+fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
+	if fo.has_default {
+		if fo.default_value == unsafe { nil } {
+			fo.default_value = el
+			return
+		}
+		// not nil
+		if !force {
+			return error('set force to overide')
+		}
+		// replace the old one, or should we check its matching tag ?
+		fo.default_value = el
+	}
+	return error('you can not install default value when has_default being not set')
 }
 
 // validate validates FieldOptions to meet criteria
 fn (fo &FieldOptions) validate() ! {
 	// if wrapper != nil, the tagnum should be provided ( != nil )
-	if fo.wrapper != unsafe { nil } && fo.tagnum == unsafe { nil } {
-		return error('non nill fo.wrapper, but fo.tagnume not specified')
+	if fo.wrapper != unsafe { nil } {
+		// tagnum should be set
+		if fo.tagnum == unsafe { nil } {
+			return error('non nill fo.wrapper, but fo.tagnume not specified')
+		}
+		// for .context_specific class, provides with tagged mode, explicit or implicit
+		if fo.wrapper == .context_specific {
+			if fo.tagged == unsafe { nil } {
+				return error('for .context_specific class, provides with tagged mode, explicit or implicit')
+			}
+		}
 	}
 	if fo.has_default && fo.default_value == unsafe { nil } {
 		return error('fo.has_default without default_value')
@@ -51,12 +76,13 @@ fn field_options_from_string(s string) !&FieldOptions {
 // parse_string_option parses string as an attribute of field options
 // Its allows string similar to `application:4; optional; has_default` to be treated as an field options
 fn parse_string_option(s string) ![]string {
-	if s.len > max_string_option_length {
-		return error('string option exceed limit')
-	}
 	if s.len == 0 {
 		return []string{}
 	}
+	if s.len > max_string_option_length {
+		return error('string option exceed limit')
+	}
+
 	mut res := []string{}
 	trimmed := s.trim_space()
 	out := trimmed.split(';')
@@ -70,16 +96,49 @@ fn parse_string_option(s string) ![]string {
 fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 	validate_attrs(attrs)!
 
-	mut opts := &FieldOptions{}
-
+	mut fo := &FieldOptions{}
 	if attrs_has_optional_flag(attrs) {
-		opts.optional = true
+		fo.optional = true
 	}
 	if attrs_has_default_flag(attrs) {
-		opts.has_default = true
+		fo.has_default = true
 	}
 
-	return opts
+	// check for tag class
+	tc, wrapkey := attrs_has_tagclass_wrapper(attrs)
+	if tc {
+		wrapper := wrapkey.trim_space()
+		if !valid_tagclass_format(wrapped) {
+			return error('not valid tag wrapper ')
+		}
+		res := wrapper.split(':')
+		// should be in 'application:number' format
+		if res.len != 2 {
+			return error('not valid tag class length')
+		}
+		// first is the tag class wrapper
+		first := res[0]
+		if !valid_tagclass_attr_name(first) {
+			return error('not valid tag class name')
+		}
+		// the second parts is should be a tag number
+		// ie, valid int (or hex) number
+		second := res[1]
+		if !valid_tagclass_attr_number(second) {
+			return error('not a valid tag number')
+		}
+		match first {
+			'application' { fo.tagclass = .application }
+			'context_specific' { fo.tagclass = .context_specific }
+			'private' { fo.tagclass = .private }
+			'universal' { fo.tagclass = .universal }
+			else {}
+		}
+		tnum := second.int()
+		fo.tagnum = tnum
+	}
+
+	return fo
 }
 
 fn validate_attrs(attrs []string) ! {
@@ -100,6 +159,35 @@ fn validate_attrs(attrs []string) ! {
 // when this present, treat the field as an optional element
 fn attrs_has_optional_flag(attrs []string) bool {
 	return 'optional' in attrs
+}
+
+// when this present, treat the field as an optional element
+fn attrs_has_tagged_mode_flag(attrs []string) (bool, string) {
+	for field in attrs {
+		if field.starts_with('tagged') {
+			return true, field
+		}
+	}
+	return false, ''
+}
+
+// support for context_specific tagged mode: 'tagged: explicit [or implicit]'
+fn validate_tagged_mode(s string) ! {
+	tagged := s.trim_space()
+	if !tagged.starts_with('tagged') {
+		return error('not start with tagged key')
+	}
+	mode := tagged.split(':')
+	if mode.len != 2 {
+		return error('tagged not fully defined')
+	}
+	// tagged: explicit [or implicit]
+	if mode[0] != 'tagged' {
+		return error('wrong key for tagged, get: ${mode[0].str()}')
+	}
+	if mode[1] != 'explicit' || mode[1] != 'implicit' {
+		return error('wrong tagged mode ${mode[1].str()}')
+	}
 }
 
 // handles has_default attribute
@@ -137,7 +225,7 @@ fn valid_tagclass_attr_number(s string) bool {
 fn valid_tagclass_format(attr string) bool {
 	if attr.starts_with('application') || attr.starts_with('context_specific')
 		|| attr.starts_with('private') || attr.starts_with('universal') {
-		res := attr.split(';')
+		res := attr.split(':')
 		// should be in 'application:number' format
 		if res.len != 2 {
 			return false
@@ -173,7 +261,7 @@ fn tag_class_and_number(s string) !(TagClass, u32) {
 	if !valid_tagclass_format(s) {
 		return error('Not valid tag class format')
 	}
-	res := s.split(';')
+	res := s.split('')
 	tc := res[0]
 	tn := res[1]
 	if !valid_tagclass_attr_name(tc) {
