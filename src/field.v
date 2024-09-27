@@ -197,6 +197,33 @@ fn attrs_has_default_flag(attrs []string) bool {
 
 // Tag
 //
+
+fn find_tag_marker(attrs []string) !(bool, string) {
+	if attrs.len == 0 {
+		return false,''
+	}
+    for item in attrs {
+		if item.starts_with('application') {
+			field := item.trim_space()
+			src := field.split(':')
+			if src.len != 2 {
+				return error('bad tag format')
+			}
+			first :=src[0]
+			if !valid_tagclass_attr_name(first) {
+				return error('bad tag name')
+			}
+			second := src[1]
+			if !valid_tag_class_attr_number(second) {
+				return error('bad tag number')
+			}
+			// we found it
+			return true, item
+		}
+	}
+	return false, ''
+}
+
 // treats as an tag class wrapper
 fn attrs_has_tagclass_wrapper(attrs []string) (bool, string) {
 	if attrs.len == 0 {
@@ -244,16 +271,6 @@ fn valid_tagclass_format(attr string) bool {
 		return true
 	}
 	return false
-}
-
-fn tag_class_from_string(s string) !TagClass {
-	match s {
-		'application' { return .application }
-		'universal' { return .universal }
-		'private' { return .private }
-		'context_specific' { return .context_specific }
-		else { return error('not valid tag') }
-	}
 }
 
 // get the tag class and tag number

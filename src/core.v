@@ -31,6 +31,18 @@ fn TagClass.from_int(v int) !TagClass {
 	}
 }
 
+fn TagClass.from_string(s string) !TagClass {
+	match s {
+		'universal' {
+			return .universal
+		}
+		'private' { return .private }
+		.application {return .application}
+		'context_specific'  {return .Context}
+		else {return error('bad class string')}
+	}
+}
+
 fn (c TagClass) str() string {
 	match c {
 		.universal { return 'UNIVERSAL' }
