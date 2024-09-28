@@ -36,10 +36,18 @@ fn TagClass.from_string(s string) !TagClass {
 		'universal' {
 			return .universal
 		}
-		'private' { return .private }
-		.application {return .application}
-		'context_specific'  {return .Context}
-		else {return error('bad class string')}
+		'private' {
+			return .private
+		}
+		.application {
+			return .application
+		}
+		'context_specific' {
+			return .Context
+		}
+		else {
+			return error('bad class string')
+		}
 	}
 }
 

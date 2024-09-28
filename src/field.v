@@ -97,7 +97,7 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 	validate_attrs(attrs)!
 
 	mut fo := &FieldOptions{}
-	if attrs_has_optional_flag(attrs) {
+	if find_optional_marker(attrs) {
 		fo.optional = true
 	}
 	if attrs_has_default_flag(attrs) {
@@ -105,7 +105,7 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 	}
 
 	// check for tag class
-	tc, wrapkey := attrs_has_tagclass_wrapper(attrs)
+	tc, wrapkey := find_tag_marker(attrs)!
 	if tc {
 		wrapper := wrapkey.trim_space()
 		if !valid_tagclass_format(wrapped) {
@@ -118,13 +118,13 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 		}
 		// first is the tag class wrapper
 		first := res[0]
-		if !valid_tagclass_attr_name(first) {
+		if !valid_tagclass_name(first) {
 			return error('not valid tag class name')
 		}
 		// the second parts is should be a tag number
 		// ie, valid int (or hex) number
 		second := res[1]
-		if !valid_tagclass_attr_number(second) {
+		if !valid_tagclass_number(second) {
 			return error('not a valid tag number')
 		}
 		match first {
@@ -147,7 +147,7 @@ fn validate_attrs(attrs []string) ! {
 		return
 	}
 	// tagclass is present
-	tcls_present, wrapkey := attrs_has_tagclass_wrapper(attrs)
+	tcls_present, wrapkey := find_tag_marker(attrs)!
 	if tcls_present {
 		wrapped := wrapkey.trim_space()
 		if !valid_tagclass_format(wrapped) {
@@ -157,14 +157,59 @@ fn validate_attrs(attrs []string) ! {
 }
 
 // when this present, treat the field as an optional element
-fn attrs_has_optional_flag(attrs []string) bool {
-	return 'optional' in attrs
+fn find_optional_marker(attrs []string) !(bool, string) {
+	if attrs.len == 0 {
+		return false, ''
+	}
+	for field in attrs {
+		if field.starts_with('optional') {
+			item := field.trim_space()
+			if item != 'optional' {
+				return error('bad optional marker')
+			}
+			return true, field 
+		}
+	}
+	return false, ''
 }
 
-// when this present, treat the field as an optional element
-fn attrs_has_tagged_mode_flag(attrs []string) (bool, string) {
+// has_default
+fn find_has_default_marker(attrs []string) !(bool, string) {
+	if attrs.len == 0 {
+		return false, ''
+	}
+	for field in attrs {
+		if field.starts_with('has_default') {
+			item := field.trim_space()
+			if item != 'has_default' {
+				return error('bad has_default marker')
+			}
+			return true, field 
+		}
+	}
+	return false, ''
+}
+
+// 
+fn find_tagged_marker(attrs []string) !(bool, string) {
+	if attrs.len == 0 {
+		return false, ''
+	}
 	for field in attrs {
 		if field.starts_with('tagged') {
+			item := field.trim_space()
+			src := item.split(':')
+			if src.len != 2 {
+				return error('bad tagged mode format')
+			}
+			first := src[0]
+			if first != 'tagged' {
+				return error('malformed tagged key')
+			}
+			second := src[1]
+			if second != 'explicit' && second != 'implicit' {
+				return error('malformed tagged key')
+			}
 			return true, field
 		}
 	}
@@ -185,36 +230,32 @@ fn validate_tagged_mode(s string) ! {
 	if mode[0] != 'tagged' {
 		return error('wrong key for tagged, get: ${mode[0].str()}')
 	}
-	if mode[1] != 'explicit' || mode[1] != 'implicit' {
+	if mode[1] != 'explicit' && mode[1] != 'implicit' {
 		return error('wrong tagged mode ${mode[1].str()}')
 	}
 }
 
-// handles has_default attribute
-fn attrs_has_default_flag(attrs []string) bool {
-	return 'has_default' in attrs
-}
-
-// Tag
+// Tag "application: number" option format handling
 //
-
+// find_tag_marker find and validates "application: number" format when we found it
 fn find_tag_marker(attrs []string) !(bool, string) {
 	if attrs.len == 0 {
-		return false,''
+		return false, ''
 	}
-    for item in attrs {
-		if item.starts_with('application') {
+	for item in attrs {
+		if item.starts_with('application') || item.starts_with('private')
+			|| item.starts_with('context_specific') || item.starts_with('universal') {
 			field := item.trim_space()
 			src := field.split(':')
 			if src.len != 2 {
 				return error('bad tag format')
 			}
-			first :=src[0]
-			if !valid_tagclass_attr_name(first) {
+			first := src[0]
+			if !valid_tagclass_name(first) {
 				return error('bad tag name')
 			}
 			second := src[1]
-			if !valid_tag_class_attr_number(second) {
+			if !valid_tagclass_name(second) {
 				return error('bad tag number')
 			}
 			// we found it
@@ -224,72 +265,13 @@ fn find_tag_marker(attrs []string) !(bool, string) {
 	return false, ''
 }
 
-// treats as an tag class wrapper
-fn attrs_has_tagclass_wrapper(attrs []string) (bool, string) {
-	if attrs.len == 0 {
-		return false, ''
-	}
-	for attr in attrs {
-		// even its not in 'application:tagnum' format
-		if attr.starts_with('application') || attr.starts_with('context_specific')
-			|| attr.starts_with('private') || attr.starts_with('universal') {
-			return true, attr
-		}
-	}
-	return false, ''
+fn valid_tagclass_name(tag string) bool {
+	return tag == 'application' || tag == 'private' || tag == 'context_specific'
+		|| tag == 'universal'
 }
 
-fn valid_tagclass_attr_name(s string) bool {
-	return src == 'application' || src == 'private' || src == 'context_specific'
-		|| src == 'universal'
-}
-
-fn valid_tagclass_attr_number(s string) bool {
+fn valid_tagclass_number(s string) bool {
 	return s.is_int() || s.is_hex()
-}
-
-// valid tag class 'application: 5' format
-fn valid_tagclass_format(attr string) bool {
-	if attr.starts_with('application') || attr.starts_with('context_specific')
-		|| attr.starts_with('private') || attr.starts_with('universal') {
-		res := attr.split(':')
-		// should be in 'application:number' format
-		if res.len != 2 {
-			return false
-		}
-		// first is the tag class wrapper
-		first := res[0]
-		if !valid_tagclass_attr_name(first) {
-			return false
-		}
-		// the second parts is should be a tag number
-		// ie, valid int (or hex) number
-		second := res[1]
-		if !valid_tagclass_attr_number(second) {
-			return false
-		}
-		return true
-	}
-	return false
-}
-
-// get the tag class and tag number
-fn tag_class_and_number(s string) !(TagClass, u32) {
-	if !valid_tagclass_format(s) {
-		return error('Not valid tag class format')
-	}
-	res := s.split('')
-	tc := res[0]
-	tn := res[1]
-	if !valid_tagclass_attr_name(tc) {
-		return error('Not valid class name')
-	}
-	if !valid_tagclass_attr_number(tn) {
-		return error('not valid tag num format')
-	}
-	tcls := tag_class_from_string(tc)!
-	tnum := tagnum_from_int(tn.int())!
-	return tcls, tnum
 }
 
 // is_element check whethers T is fullfills Element
