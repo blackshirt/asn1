@@ -1,5 +1,35 @@
 module asn1
 
+@[heap]
+struct StringOption {
+	src         string
+	err         IError
+	cls         TagClass
+	num         int
+	optional    bool
+	has_default bool
+	mode        string
+}
+
+fn test_parse_string_option() ! {
+	data := [
+		StringOption{'application:20', none, TagClass.from_string('application')!, 20, false, false, ''},
+		StringOption{'private:0x20', none, TagClass.from_string('private')!, 32, false, false, ''},
+		StringOption{'context_specific:0x20;optional;has_default;mode:explicit', none, TagClass.from_string('context_specific')!, 32, true, true, 'explicit'},
+	]
+	for item in data {
+		fo := parse_string_option(item.src) or {
+			assert err == item.err
+			continue
+		}
+		assert *fo.wrapper == item.cls
+		assert *fo.tagnum == item.num
+		assert fo.optional == item.optional
+		assert fo.has_default == item.has_default
+		assert fo.mode.str() == item.mode
+	}
+}
+
 struct OptionalMarker {
 	attr string
 	err  IError

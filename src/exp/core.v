@@ -605,3 +605,13 @@ fn TaggedMode.from_string(s string) !TaggedMode {
 		else { return error('Bad string for tagged mode') }
 	}
 }
+
+fn (m &TaggedMode) str() string {
+	if m == unsafe { nil } {
+		return ''
+	}
+	match *m {
+		.explicit { return 'explicit' }
+		.implicit { return 'implicit' }
+	}
+}
