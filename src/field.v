@@ -28,7 +28,7 @@ mut:
 fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 	if fo.has_default {
 		if fo.default_value == unsafe { nil } {
-			fo.default_value = el
+			fo.default_value = &el
 			return
 		}
 		// not nil
@@ -36,7 +36,7 @@ fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 			return error('set force to overide')
 		}
 		// replace the old one, or should we check its matching tag ?
-		fo.default_value = el
+		fo.default_value = &el
 	}
 	return error('you can not install default value when has_default being not set')
 }
@@ -65,7 +65,7 @@ fn (fo &FieldOptions) validate() ! {
 // Its allows string similar to `application:4; optional; has_default` to be treated as an field options
 fn parse_string_option(s string) !&FieldOptions {
 	if s.len == 0 {
-		return
+		return &FieldOptions{}
 	}
 	if s.len > max_string_option_length {
 		return error('string option exceed limit')
@@ -74,20 +74,19 @@ fn parse_string_option(s string) !&FieldOptions {
 	trimmed := s.trim_space()
 	attrs := trimmed.split(';')
 
-	fo = parse_attrs_to_field_options(attrs)!
+	fo := parse_attrs_to_field_options(attrs)!
 
 	return fo
 }
 
 fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
+	mut fo := &FieldOptions{}
 	if attrs.len == 0 {
-		return
+		return fo
 	}
 	if attrs.len > max_attributes_length {
 		return error('max allowed attrs.len')
 	}
-
-	mut fo := &FieldOptions{}
 
 	mut tag_cnt := 0
 	mut opt_cnt := 0
@@ -105,8 +104,10 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 			if tag_cnt > 1 {
 				return error('multiple tag format defined')
 			}
-			fo.wrapper = TagClass.from_string(cls)!
-			fo.tagnum = num.int()
+			wrapper := TagClass.from_string(cls)!
+			tnum := num.int()
+			fo.wrapper = &wrapper
+			fo.tagnum = &tnum
 		}
 		if is_optional_marker(attr) {
 			_ := parse_optional_marker(attr)!
@@ -131,7 +132,7 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 				return error('multiples mode key defined')
 			}
 			tmode := TaggedMode.from_string(value)!
-			fo.mode = tmode
+			fo.mode = &tmode
 		}
 	}
 
@@ -265,6 +266,7 @@ fn has_tag_method[T]() bool {
 	return false
 }
 
+/*
 fn make_payload[T]() ![]u8 {
 }
 
@@ -287,8 +289,8 @@ fn (el Element) encode_with_options(opt &FieldOptions) ![]u8 {
 			// make optional object from element
 			obj := make_optional_from_element(el)!
 			// is this need wrapped ?
-			if opt.tagclass != unsafe { nil } {
-				if el.tag().tag_class() == opt.tagclass {
+			if opt.wrapper != unsafe { nil } {
+				if el.tag().tag_class() == opt.wrapper {
 					// no need to wrap
 					return
 				}
@@ -309,3 +311,4 @@ fn (el Element) encode_with_options(opt &FieldOptions) ![]u8 {
 }
 
 fn make_optional_from_element(el Element) ()
+*/

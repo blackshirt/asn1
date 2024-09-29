@@ -33,21 +33,15 @@ fn TagClass.from_int(v int) !TagClass {
 
 fn TagClass.from_string(s string) !TagClass {
 	match s {
-		'universal' {
-			return .universal
+		// vfmt off
+		'universal' { return .universal }
+		'private' { return .private }
+		'application' { return .application }
+		'context_specific' { return .context_specific }
+		else { 
+			return error('bad class string') 
 		}
-		'private' {
-			return .private
-		}
-		.application {
-			return .application
-		}
-		'context_specific' {
-			return .Context
-		}
-		else {
-			return error('bad class string')
-		}
+		// vfmt on
 	}
 }
 
@@ -568,24 +562,6 @@ fn Context.new() &Context {
 	return &Context{}
 }
 
-@[noinit]
-struct FieldOptions {
-mut:
-	// wrapper class
-	wrapper TagClass
-	// set to true when should be optional element
-	optional bool
-	// set to true when optional element has default value
-	has_default bool
-	// treated as set / set of
-	set bool
-	// tag number for wrapper element
-	tagnum &int = unsafe { nil }
-	// default value for optional element when has_default value is true
-	default_value &Element = unsafe { nil }
-	omit_empty    bool
-}
-
 /*
 // encode_with_context encode with context
 fn encode_with_context(el Element, ctx Context) ![]u8 {
@@ -612,3 +588,20 @@ fn is_fullfill_asn1_element[T]() bool {
 	return false
 }
 */
+
+// EXPLICIT and IMPLICIT
+//
+// rule of context specific wrapping. explicit rule add new tag
+// to the existing object, implicit rule replaces tag of original object.
+pub enum TaggedMode {
+	implicit
+	explicit
+}
+
+fn TaggedMode.from_string(s string) !TaggedMode {
+	match s {
+		'explicit' { return .explicit }
+		'implicit' { return .implicit }
+		else { return error('Bad string for tagged mode') }
+	}
+}

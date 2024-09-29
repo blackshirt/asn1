@@ -3,23 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// EXPLICIT and IMPLICIT
-//
-// rule of context specific wrapping. explicit rule add new tag
-// to the existing object, implicit rule replaces tag of original object.
-pub enum TaggedMode {
-	implicit
-	explicit
-}
-
-fn TaggedMode.from_string(s string) !TaggedMode {
-	match s {
-		'explicit' { return .explicit }
-		'implicit' { return .implicit }
-		else { return error('Bad string for tagged mode') }
-	}
-}
-
 // Tagged type element
 pub struct TaggedType {
 mut:
