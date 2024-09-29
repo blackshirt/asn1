@@ -142,17 +142,17 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 
 // parse 'application:number' format
 fn parse_tag_marker(attr string) !(string, string) {
-	if is_tag_marker(attr) {
-		src := attr.trim_space()
+	src := attr.trim_space()
+	if is_tag_marker(src) {
 		field := src.split(':')
 		if field.len != 2 {
 			return error('bad tag marker length')
 		}
-		first := field[0]
+		first := field[0].trim_space()
 		if !valid_tagclass_name(first) {
 			return error('bad tag name')
 		}
-		second := field[1]
+		second := field[1].trim_space()
 		if !valid_tagclass_number(second) {
 			return error('bad tag number')
 		}
@@ -179,18 +179,18 @@ fn valid_tagclass_number(s string) bool {
 // parse 'mode:explicit [or implicit]' format
 //
 fn parse_mode_marker(s string) !(string, string) {
-	if is_mode_marker(s) {
-		src := s.trim_space()
+	src := s.trim_space()
+	if is_mode_marker(src) {
 		item := src.split(':')
 		if item.len != 2 {
 			return error('bad mode marker')
 		}
-		key := item[0]
-		value := item[1]
-		if !valid_mode_key(item[0]) {
+		key := item[0].trim_space()
+		value := item[1].trim_space()
+		if !valid_mode_key(key) {
 			return error('bad mode key')
 		}
-		if !valid_mode_value(item[1]) {
+		if !valid_mode_value(value) {
 			return error('bad mode value')
 		}
 
@@ -213,10 +213,10 @@ fn is_mode_marker(attr string) bool {
 
 // parse 'has_default' marker
 fn parse_default_marker(attr string) !string {
-	if is_default_marker(attr) {
-		s := attr.trim_space()
-		if valid_default_marker(s) {
-			return s
+	src := attr.trim_space()
+	if is_default_marker(src) {
+		if valid_default_marker(src) {
+			return src
 		}
 		return error('bad has_default marker')
 	}
@@ -233,10 +233,10 @@ fn valid_default_marker(attr string) bool {
 
 // parse 'optional' marker
 fn parse_optional_marker(attr string) !string {
-	if is_optional_marker(attr) {
-		s := attr.trim_space()
-		if valid_optional_marker(s) {
-			return s
+	src := attr.trim_space()
+	if is_optional_marker(src) {
+		if valid_optional_marker(src) {
+			return src
 		}
 		return error('bad optional marker')
 	}
@@ -266,11 +266,6 @@ fn has_tag_method[T]() bool {
 		}
 	}
 	return false
-}
-
-fn wraps(el Element, cls TagClass, num int) !Element {
-   newtag := Tag.new(cls, true, num)!
-   
 }
 
 /*
