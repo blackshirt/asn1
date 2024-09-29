@@ -12,6 +12,14 @@ pub enum TaggedMode {
 	explicit
 }
 
+fn TaggedMode.from_string(s string) !TaggedMode {
+	match s {
+		'explicit' { return .explicit }
+		'implicit' { return .implicit }
+		else { return error('Bad string for tagged mode') }
+	}
+}
+
 // Tagged type element
 pub struct TaggedType {
 mut:

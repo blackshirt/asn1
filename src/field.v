@@ -6,6 +6,7 @@ module asn1
 
 // limit of string option length
 const max_string_option_length = 255
+const max_attributes_length = 4
 
 @[noinit]
 struct FieldOptions {
@@ -21,7 +22,7 @@ mut:
 	// default value for optional element when has_default value is true
 	default_value &Element = unsafe { nil }
 	// make sense in explicit context, when wrapper != nil and wrapper == .context_specific
-	tagged &TaggedMode = unsafe { nil }
+	mode &TaggedMode = unsafe { nil }
 }
 
 fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
@@ -48,10 +49,10 @@ fn (fo &FieldOptions) validate() ! {
 		if fo.tagnum == unsafe { nil } {
 			return error('non nill fo.wrapper, but fo.tagnume not specified')
 		}
-		// for .context_specific class, provides with tagged mode, explicit or implicit
+		// for .context_specific class, provides with mode mode, explicit or implicit
 		if fo.wrapper == .context_specific {
-			if fo.tagged == unsafe { nil } {
-				return error('for .context_specific class, provides with tagged mode, explicit or implicit')
+			if fo.mode == unsafe { nil } {
+				return error('for .context_specific class, provides with mode mode, explicit or implicit')
 			}
 		}
 	}
@@ -60,209 +61,107 @@ fn (fo &FieldOptions) validate() ! {
 	}
 }
 
-// creates empty field options
-fn empty_field_options() &FieldOptions {
-	return &FieldOptions{}
-}
-
-// field_options_from_string parses and creates FieldOptions from string s
-fn field_options_from_string(s string) !&FieldOptions {
-	attrs := parse_string_option(s)!
-	out := parse_attrs_to_field_options(attrs)!
-	fo.validate()!
-	return fo
-}
-
 // parse_string_option parses string as an attribute of field options
 // Its allows string similar to `application:4; optional; has_default` to be treated as an field options
-fn parse_string_option(s string) ![]string {
+fn parse_string_option(s string) !&FieldOptions {
 	if s.len == 0 {
-		return []string{}
+		return
 	}
 	if s.len > max_string_option_length {
 		return error('string option exceed limit')
 	}
 
-	mut res := []string{}
 	trimmed := s.trim_space()
-	out := trimmed.split(';')
-	validate_attrs(out)!
-	for item in out {
-		res << item
-	}
-	return out
+	attrs := trimmed.split(';')
+
+	fo = parse_attrs_to_field_options(attrs)!
+
+	return fo
 }
 
 fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
-	validate_attrs(attrs)!
+	if attrs.len == 0 {
+		return
+	}
+	if attrs.len > max_attributes_length {
+		return error('max allowed attrs.len')
+	}
 
 	mut fo := &FieldOptions{}
-	if find_optional_marker(attrs) {
-		fo.optional = true
-	}
-	if attrs_has_default_flag(attrs) {
-		fo.has_default = true
-	}
 
-	// check for tag class
-	tc, wrapkey := find_tag_marker(attrs)!
-	if tc {
-		wrapper := wrapkey.trim_space()
-		if !valid_tagclass_format(wrapped) {
-			return error('not valid tag wrapper ')
+	mut tag_cnt := 0
+	mut opt_cnt := 0
+	mut def_cnt := 0
+	mut mod_cnt := 0
+
+	for attr in attrs {
+		if !is_tag_marker(attr) && !is_optional_marker(attr) && !is_default_marker(attr)
+			&& !is_mode_marker(attr) {
+			return error('unsuppported keyword')
 		}
-		res := wrapper.split(':')
-		// should be in 'application:number' format
-		if res.len != 2 {
-			return error('not valid tag class length')
+		if is_tag_marker(attr) {
+			cls, num := parse_tag_marker(attr)!
+			tag_cnt += 1
+			if tag_cnt > 1 {
+				return error('multiple tag format defined')
+			}
+			fo.wrapper = TagClass.from_string(cls)!
+			fo.tagnum = num.int()
 		}
-		// first is the tag class wrapper
-		first := res[0]
-		if !valid_tagclass_name(first) {
-			return error('not valid tag class name')
+		if is_optional_marker(attr) {
+			_ := parse_optional_marker(attr)!
+			opt_cnt += 1
+			if opt_cnt > 1 {
+				return error('multiples optional tag')
+			}
+			fo.optional = true
 		}
-		// the second parts is should be a tag number
-		// ie, valid int (or hex) number
-		second := res[1]
-		if !valid_tagclass_number(second) {
-			return error('not a valid tag number')
+		if is_default_marker(attr) {
+			_ := parse_default_marker(attr)!
+			def_cnt += 1
+			if def_cnt > 1 {
+				return error('multiples has_default flag')
+			}
+			fo.has_default = true
 		}
-		match first {
-			'application' { fo.tagclass = .application }
-			'context_specific' { fo.tagclass = .context_specific }
-			'private' { fo.tagclass = .private }
-			'universal' { fo.tagclass = .universal }
-			else {}
+		if is_mode_marker(attr) {
+			_, value := parse_mode_marker(attr)!
+			mod_cnt += 1
+			if mod_cnt > 1 {
+				return error('multiples mode key defined')
+			}
+			tmode := TaggedMode.from_string(value)!
+			fo.mode = tmode
 		}
-		tnum := second.int()
-		fo.tagnum = tnum
 	}
 
 	return fo
 }
 
-fn validate_attrs(attrs []string) ! {
-	if attrs.len == 0 {
-		// do nothing
-		return
-	}
-	// tagclass is present
-	tcls_present, wrapkey := find_tag_marker(attrs)!
-	if tcls_present {
-		wrapped := wrapkey.trim_space()
-		if !valid_tagclass_format(wrapped) {
-			return error('not valid tag wrapper ')
+// parse 'optional:number' format
+fn parse_tag_marker(attr string) !(string, string) {
+	if is_tag_marker(attr) {
+		src := attr.trim_space()
+		field := src.split(':')
+		if src.len != 2 {
+			return error('bad tag marker length')
 		}
+		first := field[0]
+		if !valid_tagclass_name(first) {
+			return error('bad tag name')
+		}
+		second := field[1]
+		if !valid_tagclass_number(second) {
+			return error('bad tag number')
+		}
+		return first, second
 	}
+	return error('not a tag marker')
 }
 
-// when this present, treat the field as an optional element
-fn find_optional_marker(attrs []string) !(bool, string) {
-	if attrs.len == 0 {
-		return false, ''
-	}
-	for field in attrs {
-		if field.starts_with('optional') {
-			item := field.trim_space()
-			if item != 'optional' {
-				return error('bad optional marker')
-			}
-			return true, field 
-		}
-	}
-	return false, ''
-}
-
-// has_default
-fn find_has_default_marker(attrs []string) !(bool, string) {
-	if attrs.len == 0 {
-		return false, ''
-	}
-	for field in attrs {
-		if field.starts_with('has_default') {
-			item := field.trim_space()
-			if item != 'has_default' {
-				return error('bad has_default marker')
-			}
-			return true, field 
-		}
-	}
-	return false, ''
-}
-
-// 
-fn find_tagged_marker(attrs []string) !(bool, string) {
-	if attrs.len == 0 {
-		return false, ''
-	}
-	for field in attrs {
-		if field.starts_with('tagged') {
-			item := field.trim_space()
-			src := item.split(':')
-			if src.len != 2 {
-				return error('bad tagged mode format')
-			}
-			first := src[0]
-			if first != 'tagged' {
-				return error('malformed tagged key')
-			}
-			second := src[1]
-			if second != 'explicit' && second != 'implicit' {
-				return error('malformed tagged key')
-			}
-			return true, field
-		}
-	}
-	return false, ''
-}
-
-// support for context_specific tagged mode: 'tagged: explicit [or implicit]'
-fn validate_tagged_mode(s string) ! {
-	tagged := s.trim_space()
-	if !tagged.starts_with('tagged') {
-		return error('not start with tagged key')
-	}
-	mode := tagged.split(':')
-	if mode.len != 2 {
-		return error('tagged not fully defined')
-	}
-	// tagged: explicit [or implicit]
-	if mode[0] != 'tagged' {
-		return error('wrong key for tagged, get: ${mode[0].str()}')
-	}
-	if mode[1] != 'explicit' && mode[1] != 'implicit' {
-		return error('wrong tagged mode ${mode[1].str()}')
-	}
-}
-
-// Tag "application: number" option format handling
-//
-// find_tag_marker find and validates "application: number" format when we found it
-fn find_tag_marker(attrs []string) !(bool, string) {
-	if attrs.len == 0 {
-		return false, ''
-	}
-	for item in attrs {
-		if item.starts_with('application') || item.starts_with('private')
-			|| item.starts_with('context_specific') || item.starts_with('universal') {
-			field := item.trim_space()
-			src := field.split(':')
-			if src.len != 2 {
-				return error('bad tag format')
-			}
-			first := src[0]
-			if !valid_tagclass_name(first) {
-				return error('bad tag name')
-			}
-			second := src[1]
-			if !valid_tagclass_name(second) {
-				return error('bad tag number')
-			}
-			// we found it
-			return true, item
-		}
-	}
-	return false, ''
+fn is_tag_marker(attr string) bool {
+	return attr.starts_with('application') || attr.starts_with('private')
+		|| attr.starts_with('context_specific') || attr.starts_with('universal')
 }
 
 fn valid_tagclass_name(tag string) bool {
@@ -272,6 +171,81 @@ fn valid_tagclass_name(tag string) bool {
 
 fn valid_tagclass_number(s string) bool {
 	return s.is_int() || s.is_hex()
+}
+
+// parse 'mode:explicit [or implicit]'
+//
+fn parse_mode_marker(s string) !(string, string) {
+	if is_mode_marker(s) {
+		src := s.trim_space()
+		item := src.split(':')
+		if item.len != 2 {
+			return error('bad mode marker')
+		}
+		key := item[0]
+		value := item[1]
+		if !valid_mode_key(item[0]) {
+			return error('bad mode key')
+		}
+		if !valid_mode_value(item[1]) {
+			return error('bad mode value')
+		}
+
+		return key, value
+	}
+	return error('not mode marker')
+}
+
+fn valid_mode_key(s string) bool {
+	return s == 'mode'
+}
+
+fn valid_mode_value(s string) bool {
+	return s == 'explicit' || s == 'implicit'
+}
+
+fn is_mode_marker(attr string) bool {
+	return attr.starts_with('mode')
+}
+
+// parse 'has_default'
+fn parse_default_marker(attr string) !string {
+	if is_default_marker(attr) {
+		s := attr.trim_space()
+		if valid_default_marker(s) {
+			return s
+		}
+		return error('bad has_default marker')
+	}
+	return error('not has_default marker')
+}
+
+fn is_default_marker(attr string) bool {
+	return attr.starts_with('has_default')
+}
+
+fn valid_default_marker(attr string) bool {
+	return attr == 'has_default'
+}
+
+// parse 'optional' marker
+fn parse_optional_marker(attr string) !string {
+	if is_optional_marker(attr) {
+		s := attr.trim_space()
+		if valid_optional_marker(s) {
+			return s
+		}
+		return error('bad optional marker')
+	}
+	return error('not optional marker')
+}
+
+fn is_optional_marker(attr string) bool {
+	return attr.starts_with('optional')
+}
+
+fn valid_optional_marker(attr string) bool {
+	return attr == 'optional'
 }
 
 // is_element check whethers T is fullfills Element
