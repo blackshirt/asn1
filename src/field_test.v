@@ -2,13 +2,12 @@ module asn1
 
 struct OptionalMarker {
     attr string
-    out string
     err IError
 }
 
 fn test_optional_marker_parsing() ! {
     data := [
-        OptionalMarker{},
+        OptionalMarker{'', error('not optional marker')},
         OptionalMarker{}
     ]
     for item in data {
@@ -16,7 +15,7 @@ fn test_optional_marker_parsing() ! {
             assert err.item.err
             continue
         }
-        assert item.out == res
+        assert valid_optional_marker(res) == res
     }
 }
 
@@ -74,7 +73,7 @@ fn test_mode_marker_parsing()! {
         TaggedModeMarker{}
     ]
     for item in data {
-        k, v := parse_mode_parsing(item.attr) or {
+        k, v := parse_mode_marker(item.attr) or {
             assert err == item.err
             continue 
         }

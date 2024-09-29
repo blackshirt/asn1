@@ -79,6 +79,7 @@ fn parse_string_option(s string) !&FieldOptions {
 	return fo
 }
 
+// parses and validates []string into FieldOptions
 fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 	mut fo := &FieldOptions{}
 	if attrs.len == 0 {
@@ -139,7 +140,7 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 	return fo
 }
 
-// parse 'optional:number' format
+// parse 'application:number' format
 fn parse_tag_marker(attr string) !(string, string) {
 	if is_tag_marker(attr) {
 		src := attr.trim_space()
@@ -170,11 +171,12 @@ fn valid_tagclass_name(tag string) bool {
 		|| tag == 'universal'
 }
 
+// it should be represented in int or hex number
 fn valid_tagclass_number(s string) bool {
 	return s.is_int() || s.is_hex()
 }
 
-// parse 'mode:explicit [or implicit]'
+// parse 'mode:explicit [or implicit]' format
 //
 fn parse_mode_marker(s string) !(string, string) {
 	if is_mode_marker(s) {
@@ -209,7 +211,7 @@ fn is_mode_marker(attr string) bool {
 	return attr.starts_with('mode')
 }
 
-// parse 'has_default'
+// parse 'has_default' marker
 fn parse_default_marker(attr string) !string {
 	if is_default_marker(attr) {
 		s := attr.trim_space()
@@ -264,6 +266,11 @@ fn has_tag_method[T]() bool {
 		}
 	}
 	return false
+}
+
+fn wraps(el Element, cls TagClass, num int) !Element {
+   newtag := Tag.new(cls, true, num)!
+   
 }
 
 /*
