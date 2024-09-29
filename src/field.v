@@ -145,7 +145,7 @@ fn parse_tag_marker(attr string) !(string, string) {
 	if is_tag_marker(attr) {
 		src := attr.trim_space()
 		field := src.split(':')
-		if src.len != 2 {
+		if field.len != 2 {
 			return error('bad tag marker length')
 		}
 		first := field[0]
