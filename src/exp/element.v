@@ -31,31 +31,6 @@ pub fn (el Element) length() int {
 	return p.len
 }
 
-// encode serializes this element into bytes arrays with default context
-pub fn (el Element) encode() ![]u8 {
-	ctx := Context{}
-	mut dst := []u8{}
-	el.encode_with_context(mut dst, ctx)!
-	return dst
-}
-
-// encode_with_context serializes this el Element into bytes and appended to `dst`.
-// Its accepts optional ctx Context.
-fn (el Element) encode_with_context(mut dst []u8, ctx Context) ! {
-	// we currently only support .der or (stricter) .ber
-	if ctx.rule != .der && ctx.rule != .ber {
-		return error('Element: unsupported rule')
-	}
-	// serialize the tag
-	el.tag().encode_with_rule(mut dst, ctx.rule)!
-	// calculates the length of element,  and serialize this length
-	payload := el.payload()!
-	length := Length.from_i64(payload.len)!
-	length.encode_with_rule(mut dst, ctx.rule)!
-	// append the element payload to destionation
-	dst << payload
-}
-
 pub fn (el Element) element_size() !int {
 	ctx := Context{}
 	return el.element_size_with_context(ctx)!
@@ -109,53 +84,26 @@ pub fn (el Element) into_object[T]() !T {
 	return error('Element el does not holding T')
 }
 
-fn encode(el Element) ![]u8 {
+pub fn encode(el Element) ![]u8 {
 	return encode_with_options(el, '')!
 }
 
-fn encode_with_options(el Element, opt string) ![]u8 {
-	fo := parse_string_option(opt)!
+pub fn encode_with_options(el Element, opt string) ![]u8 {
 	mut out := []u8{}
+	fo := parse_string_option(opt)!
 	el.encode_with_options(mut out, fo)!
 	return out
 }
 
-fn wrap(el Element, cls TagClass, num int, mode TaggedMode) ![]u8 {
-	if cls == .universal {
-		return error('no need to wrap into universal class')
-	}
-	// error when in the same class
-	if el.tag().tag_class() == cls {
-		return error('no need to wrap into same class')
-	}
-	newtag := Tag.new(cls, true, num)!
-	mut dst := []u8{}
-	match mode {
-		.explicit {
-			// explicit add the new tag to serialized element
-			newtag.encode(mut dst)!
-			dst << el.encode()!
-		}
-		.implicit {
-			// implicit replaces the el tag with the new one
-			newtag.encode(mut dst)!
-			dst << el.payload()!
-		}
-	}
-	return dst
-}
-
-fn (el Element) encode_as_optional(mut out []u8, present bool) ! {
-	if !present {
-		return
-	}
-	out << el.encode()!
-}
-
 fn (el Element) encode_with_options(mut out []u8, opt &FieldOptions) ! {
+	ctx := default_context()
+	el.encode_with_options_context(mut out, opt, ctx)!
+}
+
+fn (el Element) encode_with_options_context(mut out []u8, opt &FieldOptions, ctx Context) ! {
 	// treated as without option when nil
 	if opt == unsafe { nil } {
-		out << el.encode()!
+		el.encode_with_context(mut out, ctx)!
 		return
 	}
 	opt.validate()!
@@ -164,7 +112,6 @@ fn (el Element) encode_with_options(mut out []u8, opt &FieldOptions) ! {
 	if opt.optional {
 		if !opt.present {
 			// not present, do nothing
-			out << []u8{}
 			return
 		}
 		// check for other flag
@@ -178,11 +125,11 @@ fn (el Element) encode_with_options(mut out []u8, opt &FieldOptions) ! {
 				cls := TagClass.from_string(opt.cls)!
 				match opt.mode {
 					'explicit' {
-						wrapped := wrap(el, cls, opt.tagnum, .explicit)!
+						wrapped := wrap_with_context(el, cls, opt.tagnum, .explicit, ctx)!
 						dst << wrapped
 					}
 					'implicit' {
-						wrapped := wrap(el, cls, opt.tagnum, .implicit)!
+						wrapped := wrap_with_context(el, cls, opt.tagnum, .implicit, ctx)!
 						dst << wrapped
 					}
 					else {}
@@ -199,29 +146,84 @@ fn (el Element) encode_with_options(mut out []u8, opt &FieldOptions) ! {
 			cls := TagClass.from_string(opt.cls)!
 			if opt.mode != '' {
 				mode := TaggedMode.from_string(opt.mode)!
-				wrapped := wrap(el, cls, opt.tagnum, mode)!
+				wrapped := wrap_with_context(el, cls, opt.tagnum, mode, ctx)!
 				out << wrapped
 			} else {
 				// otherwise treat with .explicit
-				wrapped := wrap(el, cls, opt.tagnum, .explicit)!
+				wrapped := wrap_with_context(el, cls, opt.tagnum, .explicit, ctx)!
 				out << wrapped
 			}
 		}
 	}
 }
 
+fn wrap(el Element, cls TagClass, num int, mode TaggedMode) ![]u8 {
+	ctx := default_context()
+	return wrap_with_context(el, cls, num, mode, ctx)!
+}
+
+fn wrap_with_context(el Element, cls TagClass, num int, mode TaggedMode, ctx Context) ![]u8 {
+	if cls == .universal {
+		return error('no need to wrap into universal class')
+	}
+	// error when in the same class
+	if el.tag().tag_class() == cls {
+		return error('no need to wrap into same class')
+	}
+	newtag := Tag.new(cls, true, num)!
+	mut dst := []u8{}
+	match mode {
+		.explicit {
+			// explicit add the new tag to serialized element
+			newtag.encode_with_rule(mut dst, ctx.rule)!
+			el.encode_with_context(mut dst, ctx)!
+		}
+		.implicit {
+			// implicit replaces the el tag with the new one
+			newtag.encode_with_rule(mut dst, ctx.rule)!
+			dst << el.payload()!
+		}
+	}
+	return dst
+}
+
+// encode serializes this element into bytes arrays with default context
+fn (el Element) encode() ![]u8 {
+	ctx := default_context()
+	mut dst := []u8{}
+	el.encode_with_context(mut dst, ctx)!
+	return dst
+}
+
+// encode_with_context serializes this el Element into bytes and appended to `dst`.
+// Its accepts optional ctx Context.
+fn (el Element) encode_with_context(mut dst []u8, ctx Context) ! {
+	// we currently only support .der or (stricter) .ber
+	if ctx.rule != .der && ctx.rule != .ber {
+		return error('Element: unsupported rule')
+	}
+	// serialize the tag
+	el.tag().encode_with_rule(mut dst, ctx.rule)!
+	// calculates the length of element,  and serialize this length
+	payload := el.payload()!
+	length := Length.from_i64(payload.len)!
+	length.encode_with_rule(mut dst, ctx.rule)!
+	// append the element payload to destionation
+	dst << payload
+}
+
 struct ContextElement {
-	RawElement
+	Asn1Element
 	mode TaggedMode
 	num  int
 }
 
 struct ApplicationElement {
-	RawElement
+	Asn1Element
 }
 
 struct PrivateELement {
-	RawElement
+	Asn1Element
 }
 
 struct Asn1Element {

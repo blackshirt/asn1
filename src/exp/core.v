@@ -550,8 +550,14 @@ mut:
 	rule EncodingRule = .der
 }
 
-fn new_context() &Context {
+fn default_context() &Context {
 	return &Context{}
+}
+
+fn ctx_with_rule(rule EncodingRule) &Context {
+	return &Context{
+		rule: rule
+	}
 }
 
 /*
