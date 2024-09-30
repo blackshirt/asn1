@@ -554,8 +554,6 @@ mut:
 	logger &log.Logger = log.new_thread_safe_log()
 	// rule drive the ASN.1 encoding/decoding
 	rule EncodingRule = .der
-	// make sense when encoding or decoding ASN.1 Element
-	opt &FieldOptions = unsafe { nil }
 }
 
 fn Context.new() &Context {
@@ -606,11 +604,8 @@ fn TaggedMode.from_string(s string) !TaggedMode {
 	}
 }
 
-fn (m &TaggedMode) str() string {
-	if m == unsafe { nil } {
-		return ''
-	}
-	match *m {
+fn (m TaggedMode) str() string {
+	match m {
 		.explicit { return 'explicit' }
 		.implicit { return 'implicit' }
 	}

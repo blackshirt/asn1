@@ -8,23 +8,43 @@ module asn1
 const max_string_option_length = 255
 const max_attributes_length = 4
 
-@[noinit]
+@[heap; noinit]
 struct FieldOptions {
 mut:
 	// wrapper class
 	cls string
-	// set to true when should be optional element
+	// set to true when this should be optional element
 	optional bool
-	// when optional should present, if unsure, just set to false
-	present bool 
-	// set to true when optional element has default value
+	// set to true when optional should present, if unsure, set to false
+	present bool
+	// set to true when element has default value
 	has_default bool
-	// tag number for wrapper element tagnum when wrapper != ''
+	// tag number for wrapper element tagnum when cls != ''
 	tagnum int = -1
 	// default value for element when has_default value is true
-	default_value Element = unsafe { nil }
+	default_value &Element = unsafe { nil }
 	// make sense in explicit context, when cls != '' and cls == .context_specific
 	mode string
+}
+
+// validate validates FieldOptions to meet criteria
+fn (fo &FieldOptions) validate() ! {
+	// if fo.cls != '' the tagnum should provide correct value
+	if valid_tagclass_name(fo.cls) {
+		// tagnum should be set up correctly
+		if fo.tagnum <= 0 {
+			return error('fo.cls is being set but fo.tagnum not specified')
+		}
+		// for .context_specific class, provides with mode explicit or implicit
+		if fo.cls == 'context_specific' {
+			if !valid_mode_value(fo.mode) {
+				return error('for .context_specific class, provides with explicit or implicit mode')
+			}
+		}
+	}
+	if fo.has_default && fo.default_value == unsafe { nil } {
+		return error('fo.has_default without default_value')
+	}
 }
 
 fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
@@ -43,26 +63,6 @@ fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 	return error('you can not install default value when has_default being not set')
 }
 
-// validate validates FieldOptions to meet criteria
-fn (fo &FieldOptions) validate() ! {
-	// if wrapper != '' the tagnum should provide correct value
-	if valid_tagclass_name(fo.cls) {
-		// tagnum should be set up correctly
-		if fo.tagnum <= 0 {
-			return error('fo.cls is being set but fo.tagnume not specified')
-		}
-		// for .context_specific class, provides with mode mode, explicit or implicit
-		if fo.cls == 'context_specific' {
-			if !valid_mode_value(fo.mode) {
-				return error('for .context_specific class, provides with explicit or implicit mode')
-			}
-		}
-	}
-	if fo.has_default && fo.default_value == unsafe { nil } {
-		return error('fo.has_default without default_value')
-	}
-}
-
 // parse_string_option parses string as an attribute of field options
 // Its allows string similar to `application:4; optional; has_default` to be treated as an field options
 fn parse_string_option(s string) !&FieldOptions {
@@ -76,9 +76,9 @@ fn parse_string_option(s string) !&FieldOptions {
 	trimmed := s.trim_space()
 	attrs := trimmed.split(';')
 
-	fo := parse_attrs_to_field_options(attrs)!
+	opt := parse_attrs_to_field_options(attrs)!
 
-	return fo
+	return opt
 }
 
 // parses and validates []string into FieldOptions
@@ -91,10 +91,10 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 		return error('max allowed attrs.len')
 	}
 
-	mut tag_cnt := 0
-	mut opt_cnt := 0
-	mut def_cnt := 0
-	mut mod_cnt := 0
+	mut tag_ctr := 0 // tag marker counter
+	mut opt_ctr := 0 // optional marker counter
+	mut def_ctr := 0 // has_default marker counter
+	mut mod_ctr := 0 // mode marker counter
 
 	for attr in attrs {
 		if !is_tag_marker(attr) && !is_optional_marker(attr) && !is_default_marker(attr)
@@ -103,37 +103,38 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 		}
 		if is_tag_marker(attr) {
 			cls, num := parse_tag_marker(attr)!
-			tag_cnt += 1
-			if tag_cnt > 1 {
-				return error('multiple tag format defined')
+			tag_ctr += 1
+			if tag_ctr > 1 {
+				return error('multiples tag format defined')
 			}
 			tnum := num.int()
-			if tnun < 0 {
+			if tnum < 0 {
 				return error('bad tag number')
 			}
 			fo.cls = cls
 			fo.tagnum = tnum
 		}
 		if is_optional_marker(attr) {
-			_ := parse_optional_marker(attr)!
-			opt_cnt += 1
-			if opt_cnt > 1 {
+			_, present := parse_optional_marker(attr)!
+			opt_ctr += 1
+			if opt_ctr > 1 {
 				return error('multiples optional tag')
 			}
 			fo.optional = true
+			fo.present = present
 		}
 		if is_default_marker(attr) {
 			_ := parse_default_marker(attr)!
-			def_cnt += 1
-			if def_cnt > 1 {
+			def_ctr += 1
+			if def_ctr > 1 {
 				return error('multiples has_default flag')
 			}
 			fo.has_default = true
 		}
 		if is_mode_marker(attr) {
 			_, value := parse_mode_marker(attr)!
-			mod_cnt += 1
-			if mod_cnt > 1 {
+			mod_ctr += 1
+			if mod_ctr > 1 {
 				return error('multiples mode key defined')
 			}
 			fo.mode = value
@@ -234,14 +235,31 @@ fn valid_default_marker(attr string) bool {
 	return attr == 'has_default'
 }
 
-// parse 'optional' marker
-fn parse_optional_marker(attr string) !string {
+// parse 'optional' or 'optional:true [false]' marker
+fn parse_optional_marker(attr string) !(string, bool) {
 	src := attr.trim_space()
 	if is_optional_marker(src) {
-		if valid_optional_marker(src) {
-			return src
+		item := src.split(':')
+		// only allow 'optional' or 'optional:true'
+		if item.len != 1 && item.len != 2 {
+			return error('bad optional marker length')
 		}
-		return error('bad optional marker')
+		mut present := false
+		if item.len == 2 {
+			value := item[1].trim_space()
+			if !valid_optional_present_value(value) {
+				return error('bad optional value')
+			}
+			if value == 'true' {
+				present = true
+			}
+		}
+		key := item[0].trim_space()
+		if !valid_optional_key(key) {
+			return error('bad optional key')
+		}
+
+		return key, present
 	}
 	return error('not optional marker')
 }
@@ -250,8 +268,12 @@ fn is_optional_marker(attr string) bool {
 	return attr.starts_with('optional')
 }
 
-fn valid_optional_marker(attr string) bool {
+fn valid_optional_key(attr string) bool {
 	return attr == 'optional'
+}
+
+fn valid_optional_present_value(attr string) bool {
+	return attr == 'true' || attr == 'false'
 }
 
 // is_element check whethers T is fullfills Element
@@ -271,20 +293,144 @@ fn has_tag_method[T]() bool {
 	return false
 }
 
-/*
-fn make_payload[T]() ![]u8 {
+fn encode(el Element) ![]u8 {
+	return encode_with_options(el, '')!
 }
 
-fn encode_element(el Element) ![]u8 {
-	return encode_element_with_options(el, '')!
-}
-
-fn encode_element_with_options(el Element, opts string) ![]u8 {
-	opt := field_options_from_string(opts)!
+fn encode_with_options(el Element, opt string) ![]u8 {
+	fo := parse_string_option(opt)!
 	mut out := []u8{}
-	el.encode_with_options(mut out, opt)!
+	el.encode_with_options(mut out, fo)!
 	return out
 }
+
+fn (el Element) raw_encode(mut dst []u8) ! {
+	out := el.encode()!
+	dst << out
+}
+
+fn wrap(el Element, cls TagClass, num int, mode TaggedMode) ![]u8 {
+	if cls == .universal {
+		return error('no need to wrap into universal class')
+	}
+	// error when in the same class
+	if el.tag().tag_class() == cls {
+		return error('no need to wrap into same class')
+	}
+	newtag := Tag.new(cls, true, num)!
+	mut dst := []u8{}
+	match mode {
+		.explicit {
+			// explicit add the new tag to serialized element
+			newtag.encode(mut dst)!
+			el.raw_encode(mut dst)!
+		}
+		.implicit {
+			// implicit replaces the el tag with the new one
+			newtag.encode(mut dst)!
+			dst << el.payload()!
+		}
+	}
+	return dst
+}
+
+fn (el Element) encode_as_optional(mut out []u8, present bool) ! {
+	if !present {
+		return
+	}
+	el.raw_encode(mut out)!
+}
+
+fn (el Element) encode_with_options(mut out []u8, opt &FieldOptions) ! {
+	// treated as without option when nil
+	if opt == unsafe { nil } {
+		el.raw_encode(mut out)!
+		return
+	}
+	opt.validate()!
+	// when optional is true, treated differently when present or not
+	// in some rules, optional element should not be included in encoding
+	if opt.optional {
+		if !opt.present {
+			// not present, do nothing
+			out << []u8{}
+			return
+		}
+		// check for other flag
+		if opt.cls != '' {
+			if opt.tagnum <= 0 {
+				return error('provides with the correct tagnum')
+			}
+			class := el.tag().tag_class().str().to_lower()
+			if class != opt.cls {
+				mut dst := []u8{}
+				cls := TagClass.from_string(opt.cls)!
+				match opt.mode {
+					'explicit' {
+						wrapped := wrap(el, cls, opt.tagnum, .explicit)!
+						dst << wrapped
+					}
+					'implicit' {
+						wrapped := wrap(el, cls, opt.tagnum, .implicit)!
+						dst << wrapped
+					}
+					else {}
+				} // endof match
+			}
+			// endof opt.cls != cls
+		}
+	} else {
+		// not an optional
+		if opt.cls != '' {
+			if opt.tagnum <= 0 {
+				return error('provides with correct tagnum')
+			}
+			cls := TagClass.from_string(opt.cls)!
+			if opt.mode != '' {
+				mode := TaggedMode.from_string(opt.mode)!
+				wrapped := wrap(el, cls, opt.tagnum, mode)!
+				out << wrapped
+			} else {
+				// otherwise treat with .explicit
+				wrapped := wrap(el, cls, opt.tagnum, .explicit)!
+				out << wrapped
+			}
+		}
+	}
+}
+
+struct Asn1Element {
+mut:
+	tag     Tag
+	payload []u8
+	opt     &FieldOptions = unsafe { nil }
+}
+
+fn (ae Asn1Element) tag() Tag {
+	return ae.tag
+}
+
+fn (ae Asn1Element) payload() ![]u8 {
+	return ae.payload
+}
+
+fn (ae Asn1Element) encode(mut dst []u8) ! {
+	// no options, regular encode with default ctx
+	ctx := Context{}
+	if ae.opt == unsafe { nil } {
+		ae.tag().encode_with_context(mut dst, ctx)!
+		payload := ae.payload()!
+		length := Length.from_i64(payload.len)!
+		length.encode_with_context(mut dst, ctx)!
+		// append the element payload to destionation
+		dst << payload
+		return
+	}
+	return error('not implemented')
+}
+
+/*
+
 
 fn (el Element) encode_with_options(opt &FieldOptions) ![]u8 {
 	opt.validate()!

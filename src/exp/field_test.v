@@ -4,26 +4,27 @@ module asn1
 struct StringOption {
 	src         string
 	err         IError
-	cls         TagClass
+	cls         string
 	num         int
 	optional    bool
 	has_default bool
 	mode        string
+	present     bool
 }
 
 fn test_parse_string_option() ! {
 	data := [
-		StringOption{'application:20', none, TagClass.from_string('application')!, 20, false, false, ''},
-		StringOption{'private:0x20', none, TagClass.from_string('private')!, 32, false, false, ''},
-		StringOption{'context_specific:0x20;optional;has_default;mode:explicit', none, TagClass.from_string('context_specific')!, 32, true, true, 'explicit'},
+		StringOption{'application:20', none, 'application', 20, false, false, '', false},
+		StringOption{'private:0x20', none, 'private', 32, false, false, '', false},
+		StringOption{'context_specific:0x20;optional;has_default;mode:explicit', none, 'context_specific', 32, true, true, 'explicit', false},
 	]
 	for item in data {
 		fo := parse_string_option(item.src) or {
 			assert err == item.err
 			continue
 		}
-		assert *fo.wrapper == item.cls
-		assert *fo.tagnum == item.num
+		assert fo.cls == item.cls
+		assert fo.tagnum == item.num
 		assert fo.optional == item.optional
 		assert fo.has_default == item.has_default
 		assert fo.mode.str() == item.mode
@@ -31,30 +32,40 @@ fn test_parse_string_option() ! {
 }
 
 struct OptionalMarker {
-	attr string
-	err  IError
+	attr    string
+	present bool
+	err     IError
 }
 
 fn test_optional_marker_parsing() ! {
 	data := [
 		// exactly matching key
-		OptionalMarker{'optional', none},
+		OptionalMarker{'optional', false, none},
 		// matching key contains spaces is allowed
-		OptionalMarker{'optional ', none},
-		OptionalMarker{'      optional ', none},
+		OptionalMarker{'optional ', false, none},
+		OptionalMarker{'      optional ', false, none},
+		// optional with present flag
+		OptionalMarker{'optional: true ', true, none},
+		OptionalMarker{'optional: false ', false, none},
 		// this should not allowed
-		OptionalMarker{'', error('not optional marker')},
-		OptionalMarker{'optional:', error('bad optional marker')},
-		OptionalMarker{'optional:dd', error('bad optional marker')},
-		OptionalMarker{'optional_aaa', error('bad optional marker')},
-		OptionalMarker{'opt', error('not optional marker')},
+		OptionalMarker{'', false, error('not optional marker')},
+		// need the present value should be set
+		OptionalMarker{'optional:', false, error('bad optional value')},
+		OptionalMarker{'optional:dd', false, error('bad optional value')},
+		OptionalMarker{'optional_aaa', false, error('bad optional key')},
+		OptionalMarker{'opt', false, error('not optional marker')},
+		// present flag is set but not valid one
+		OptionalMarker{'optional: trueorfalse ', false, error('bad optional value')},
+		// multiples values is not allowed
+		OptionalMarker{'optional: true:false ', false, error('bad optional marker length')},
 	]
 	for item in data {
-		res := parse_optional_marker(item.attr) or {
+		res, present := parse_optional_marker(item.attr) or {
 			assert err == item.err
 			continue
 		}
-		assert valid_optional_marker(res) == true
+		assert valid_optional_key(res) == true
+		assert present == item.present
 	}
 }
 
@@ -124,9 +135,12 @@ struct TaggedModeMarker {
 
 fn test_mode_marker_parsing() ! {
 	data := [
+		// the normal right thing
 		TaggedModeMarker{'mode:explicit', 'explicit', none},
 		TaggedModeMarker{'mode:implicit', 'implicit', none},
+		// with spaces is allowed
 		TaggedModeMarker{'   mode  : implicit ', 'implicit', none},
+		// bad key or value
 		TaggedModeMarker{'model:implicit', '', error('bad mode key')},
 		TaggedModeMarker{'mode:implicitkey', '', error('bad mode value')},
 		TaggedModeMarker{'modelimplicit', '', error('bad mode marker')},
