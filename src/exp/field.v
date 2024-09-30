@@ -12,17 +12,19 @@ const max_attributes_length = 4
 struct FieldOptions {
 mut:
 	// wrapper class
-	wrapper &TagClass = unsafe { nil }
+	cls string
 	// set to true when should be optional element
 	optional bool
+	// when optional should present, if unsure, just set to false
+	present bool 
 	// set to true when optional element has default value
 	has_default bool
-	// tag number for wrapper element tagnum != nil when wrapper != nil
-	tagnum &int = unsafe { nil }
-	// default value for optional element when has_default value is true
-	default_value &Element = unsafe { nil }
-	// make sense in explicit context, when wrapper != nil and wrapper == .context_specific
-	mode &TaggedMode = unsafe { nil }
+	// tag number for wrapper element tagnum when wrapper != ''
+	tagnum int = -1
+	// default value for element when has_default value is true
+	default_value Element = unsafe { nil }
+	// make sense in explicit context, when cls != '' and cls == .context_specific
+	mode string
 }
 
 fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
@@ -43,16 +45,16 @@ fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 
 // validate validates FieldOptions to meet criteria
 fn (fo &FieldOptions) validate() ! {
-	// if wrapper != nil, the tagnum should be provided ( != nil )
-	if fo.wrapper != unsafe { nil } {
-		// tagnum should be set
-		if fo.tagnum == unsafe { nil } {
-			return error('non nill fo.wrapper, but fo.tagnume not specified')
+	// if wrapper != '' the tagnum should provide correct value
+	if valid_tagclass_name(fo.cls) {
+		// tagnum should be set up correctly
+		if fo.tagnum <= 0 {
+			return error('fo.cls is being set but fo.tagnume not specified')
 		}
 		// for .context_specific class, provides with mode mode, explicit or implicit
-		if fo.wrapper == .context_specific {
-			if fo.mode == unsafe { nil } {
-				return error('for .context_specific class, provides with mode mode, explicit or implicit')
+		if fo.cls == 'context_specific' {
+			if !valid_mode_value(fo.mode) {
+				return error('for .context_specific class, provides with explicit or implicit mode')
 			}
 		}
 	}
@@ -105,10 +107,12 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 			if tag_cnt > 1 {
 				return error('multiple tag format defined')
 			}
-			wrapper := TagClass.from_string(cls)!
 			tnum := num.int()
-			fo.wrapper = &wrapper
-			fo.tagnum = &tnum
+			if tnun < 0 {
+				return error('bad tag number')
+			}
+			fo.cls = cls
+			fo.tagnum = tnum
 		}
 		if is_optional_marker(attr) {
 			_ := parse_optional_marker(attr)!
@@ -132,8 +136,7 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 			if mod_cnt > 1 {
 				return error('multiples mode key defined')
 			}
-			tmode := TaggedMode.from_string(value)!
-			fo.mode = &tmode
+			fo.mode = value
 		}
 	}
 
