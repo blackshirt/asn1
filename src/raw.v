@@ -9,8 +9,6 @@ mut:
 	// when the tag is primitive, its represents real value of this RawElement.
 	// otherwise, if its a constructed, its contains another unparsed RawElement
 	payload []u8
-	// field options
-	opts &FieldOptions = unsafe { nil }
 }
 
 // RawElement.new creates a new raw ASN.1 Element

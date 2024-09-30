@@ -59,16 +59,15 @@ fn (v Length) to_bytes(mut dst []u8) {
 
 // length_size gets length of length v in .der rule
 fn (v Length) length_size() !int {
-	ctx := Context{}
-	n := v.length_size_with_context(ctx)!
+	n := v.length_size_with_rule(.der)!
 	return n
 }
 
-// length_size_with_context calculates the length of bytes needed to store the Length value `v`
+// length_size_with_rule calculates the length of bytes needed to store the Length value `v`
 // includes one byte marker for long definite form of length value, for value >= 128
-fn (v Length) length_size_with_context(ctx Context) !int {
+fn (v Length) length_size_with_rule(rule EncodingRule) !int {
 	// we currently only support .der or (stricter) .ber
-	if ctx.rule != .der && ctx.rule != .ber {
+	if rule != .der && rule != .ber {
 		return error('Length: unsupported rule')
 	}
 	n := if v < 128 { 1 } else { v.bytes_len() + 1 }
@@ -77,16 +76,15 @@ fn (v Length) length_size_with_context(ctx Context) !int {
 
 // encode serializes Length v into bytes in .der rule
 fn (v Length) encode(mut dst []u8) ! {
-	ctx := Context{}
-	v.encode_with_context(mut dst, ctx)!
+	v.encode_with_rule(mut dst, .der)!
 }
 
-// encode_with_context serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
-// it would use ctx.rule of `Encodingrule` to drive how encode operation would be done.
+// encode_with_rule serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
+// it would use rule of `Encodingrule` to drive how encode operation would be done.
 // By default the .der rule is only currently supported.
-fn (v Length) encode_with_context(mut dst []u8, ctx Context) ! {
+fn (v Length) encode_with_rule(mut dst []u8, rule EncodingRule) ! {
 	// we currently only support .der and (stricter) .ber
-	if ctx.rule != .der && ctx.rule != .ber {
+	if rule != .der && rule != .ber {
 		return error('Length: unsupported rule')
 	}
 	// TODO: add supports for undefinite form
@@ -116,19 +114,18 @@ fn Length.decode(src []u8) !(Length, i64) {
 
 // decode_from_offset read length from src bytes start from offset pos or return error on fails.
 fn Length.decode_from_offset(src []u8, pos i64) !(Length, i64) {
-	ctx := Context{}
-	ret, next := Length.decode_with_context(src, pos, ctx)!
+	ret, next := Length.decode_with_rule(src, pos, .der)!
 	return ret, next
 }
 
-// decode_with_context tries to decode and deserializes buffer in src into Length form, start from offset loc in the buffer.
+// decode_with_rule tries to decode and deserializes buffer in src into Length form, start from offset loc in the buffer.
 // Its return Length and next offset in the buffer to process on, or return error on fails.
-fn Length.decode_with_context(src []u8, loc i64, ctx Context) !(Length, i64) {
+fn Length.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Length, i64) {
 	if src.len < 1 {
 		return error('Length: truncated length')
 	}
 	// preliminary check
-	if ctx.rule != .der && ctx.rule != .ber {
+	if rule != .der && rule != .ber {
 		return error('Length: unsupported rule')
 	}
 	// consider b := src[loc] would lead to panic
@@ -180,7 +177,7 @@ fn Length.decode_with_context(src []u8, loc i64, ctx Context) !(Length, i64) {
 			if length == 0 {
 				// TODO: leading zeros is allowed in Long form of BER encoding, but
 				// not allowed in DER encoding
-				if ctx.rule == .der {
+				if rule == .der {
 					return error('Length: leading zeros')
 				}
 			}

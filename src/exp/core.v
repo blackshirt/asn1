@@ -3,7 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-import log
 // TagClass is ASN.1 tag class.
 // To make sure ASN.1 encodings are not ambiguous, every ASN.1 type is associated with a tag.
 // A tag consists of three parts: the tag class, tag form and the tag number.
@@ -168,14 +167,13 @@ pub fn (t Tag) tag_number() int {
 
 // encode serializes tag t into bytes array with default context
 pub fn (t Tag) encode(mut dst []u8) ! {
-	ctx := Context{}
-	t.encode_with_context(mut dst, ctx)!
+	t.encode_with_rule(mut dst, .der)!
 }
 
-// encode_with_context serializes tag into bytes array
-fn (t Tag) encode_with_context(mut dst []u8, ctx Context) ! {
+// encode_with_rule serializes tag into bytes array
+fn (t Tag) encode_with_rule(mut dst []u8, rule EncodingRule) ! {
 	// we currently only support .der or (stricter) .ber
-	if ctx.rule != .der && ctx.rule != .ber {
+	if rule != .der && rule != .ber {
 		return error('Tag: unsupported rule')
 	}
 	// makes sure tag number is valid
@@ -210,21 +208,20 @@ pub fn Tag.decode(bytes []u8) !(Tag, i64) {
 
 // Tag.decode tries to deserializes bytes into Tag. its return error on fails.
 fn Tag.decode_from_offset(bytes []u8, pos i64) !(Tag, i64) {
-	// default params
-	ctx := Context{}
-	tag, next := Tag.decode_with_context(bytes, pos, ctx)!
+	// default rule
+	tag, next := Tag.decode_with_rule(bytes, pos, .der)!
 	return tag, next
 }
 
-// Tag.decode_with_context deserializes bytes back into Tag structure start from `loc` offset.
+// Tag.decode_with_rule deserializes bytes back into Tag structure start from `loc` offset.
 // By default, its decodes in .der encoding rule, if you want more control, pass your `Params`.
 // Its return Tag and next offset to operate on, and return error if it fails to decode.
-fn Tag.decode_with_context(bytes []u8, loc i64, ctx Context) !(Tag, i64) {
+fn Tag.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Tag, i64) {
 	// preliminary check
 	if bytes.len < 1 {
 		return error('Tag: bytes underflow')
 	}
-	if ctx.rule != .der && ctx.rule != .ber {
+	if rule != .der && rule != .ber {
 		return error('Tag: unsupported rule')
 	}
 	// when accessing byte at ofset `loc` within bytes, ie, `b := bytes[loc]`,
@@ -253,7 +250,7 @@ fn Tag.decode_with_context(bytes []u8, loc i64, ctx Context) !(Tag, i64) {
 		if pos >= max_tag_length + loc + 1 {
 			return error('Tag: tag bytes is too long')
 		}
-		if number < 0x1f && ctx.rule == .der {
+		if number < 0x1f && rule == .der {
 			// requirement for DER encoding.
 			// TODO: the other encoding may remove this restriction
 			return error('Tag: non-minimal tag')
@@ -319,14 +316,13 @@ fn (t Tag) to_bytes_in_base128(mut dst []u8) ! {
 // Tag.read_tagnum read the tag number from bytes from offset pos in base 128.
 // Its return deserialized Tag number and next offset to process on.
 fn Tag.read_tagnum(bytes []u8, pos i64) !(u32, i64) {
-	ctx := Context{}
-	tnum, next := Tag.read_tagnum_with_context(bytes, pos, ctx)!
+	tnum, next := Tag.read_tagnum_with_rule(bytes, pos, .der)!
 	return tnum, next
 }
 
-// read_tagnum_with_context is the main routine to read the tag number part in the bytes source,
+// read_tagnum_with_rule is the main routine to read the tag number part in the bytes source,
 // start from offset loc in base 128. Its return the tag number and next offset to process on, or error on fails.
-fn Tag.read_tagnum_with_context(bytes []u8, loc i64, ctx Context) !(u32, i64) {
+fn Tag.read_tagnum_with_rule(bytes []u8, loc i64, rule EncodingRule) !(u32, i64) {
 	if loc > bytes.len {
 		return error('Tag number: invalid pos')
 	}
@@ -337,7 +333,7 @@ fn Tag.read_tagnum_with_context(bytes []u8, loc i64, ctx Context) !(u32, i64) {
 		b := bytes[pos]
 
 		if s == 0 && b == 0x80 {
-			if ctx.rule == .der {
+			if rule == .der {
 				// requirement for DER encoding
 				return error('Tag number: integer is not minimally encoded')
 			}
@@ -551,30 +547,28 @@ fn syntax_error(msg string, opts &FieldOptions) &SyntaxError {
 @[params]
 struct Context {
 mut:
-	logger &log.Logger = log.new_thread_safe_log()
-	// rule drive the ASN.1 encoding/decoding
 	rule EncodingRule = .der
 }
 
-fn Context.new() &Context {
+fn new_context() &Context {
 	return &Context{}
 }
 
 /*
-// encode_with_context encode with context
-fn encode_with_context(el Element, ctx Context) ![]u8 {
+// encode_with_rule encode with context
+fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
 }
 
-// encode_with_context encodes element with default context
+// encode_with_rule encodes element with default context
 fn encode(el Element) ![]u8 {
 	return el.encode()!
 }
 
-// decode_with_context decodes bytes with context
-fn decode_with_context[T](src []u8, ctx Context) !(T, i64) {}
+// decode_with_rule decodes bytes with context
+fn decode_with_rule[T](src []u8, rule EncodingRule) !(T, i64) {}
 
-// decode_with_context decodes bytes with default context
-fn decode[T](src []u8, ctx Context) !(T, i64) {}
+// decode_with_rule decodes bytes with default context
+fn decode[T](src []u8, rule EncodingRule) !(T, i64) {}
 
 fn parse_optional[T](src []u8) ?(T, i64) {}
 
