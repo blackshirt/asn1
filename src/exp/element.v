@@ -210,6 +210,20 @@ fn (el Element) encode_with_options(mut out []u8, opt &FieldOptions) ! {
 	}
 }
 
+struct ContextElement {
+	RawElement
+	mode TaggedMode
+	num  int
+}
+
+struct ApplicationElement {
+	RawElement
+}
+
+struct PrivateELement {
+	RawElement
+}
+
 struct Asn1Element {
 mut:
 	tag     Tag
