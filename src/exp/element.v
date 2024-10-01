@@ -194,7 +194,7 @@ fn (el Element) wrap_with_context(cls TagClass, num int, mode TaggedMode, ctx Pa
 		return error('no need to wrap into same class')
 	}
 	newtag := Tag.new(cls, true, num)!
-	mut new_element := Asn1Element{
+	mut new_element := RawElement{
 		tag: newtag
 	}
 	mut payload := []u8{}
@@ -213,36 +213,130 @@ fn (el Element) wrap_with_context(cls TagClass, num int, mode TaggedMode, ctx Pa
 	return new_element
 }
 
+fn Element.decode(src []u8) !(Element, i64) {
+	ctx := default_params()
+	el, pos := Element.decode_with_context(src, 0, ctx)!
+	return el, pos
+}
+
+// decode deserializes back bytes in src from offet `loc` into Element.
+// Basically, its tries to parse a Universal class Elememt when it is possible.
+// Other class parsed as a RawElement.
+fn Element.decode_with_context(src []u8, loc i64, ctx &Params) !(Element, i64) {
+	raw, next := RawElement.decode_with_context(src, loc, ctx)!
+	bytes := raw.payload
+
+	match raw.tag.tag_class() {
+		.universal {
+			if raw.tag.is_constructed() {
+				return parse_constructed_element(raw.tag, bytes)!, next
+			}
+			return parse_primitive_element(raw.tag, bytes)!, next
+		}
+		// other classes parsed as a RawElement
+		else {
+			return RawElement.new(raw.tag, bytes), next
+		}
+	}
+}
+
+fn (el Element) expect_tag(t Tag) bool {
+	return el.tag() == t
+}
+
+// equal_with checks whether this two element equal and holds the same tag and content
+fn (el Element) equal_with(other Element) bool {
+	a := el.payload() or { return false }
+	b := other.payload() or { return false }
+	return el.tag() == other.tag() && a == b
+}
+
+fn (el Element) as_raw_element(ctx &Params) !RawElement {
+	re := RawElement.new(el.tag(), el.payload(ctx)!)
+	return re
+}
+
+fn (el Element) expect_tag_class(c TagClass) bool {
+	return el.tag().tag_class() == c
+}
+
+fn (el Element) expect_tag_form(constructed bool) bool {
+	return el.tag().is_constructed() == constructed
+}
+
+fn (el Element) expect_tag_type(t TagType) bool {
+	typ := el.tag().number.universal_tag_type() or { panic('unsupported tag type') }
+	return typ == t
+}
+
+fn (el Element) expect_tag_number(number int) bool {
+	tagnum := el.tag().tag_number()
+	return int(tagnum) == number
+}
+
+// ElementList is arrays of ELement
+type ElementList = []Element
+
+// ElementList.from_bytes parses bytes in src as series of Element or return error on fails
+fn ElementList.from_bytes(src []u8, ctx &Params) ![]Element {
+	mut els := []Element{}
+	if src.len == 0 {
+		// empty list
+		return els
+	}
+	mut i := i64(0)
+	for i < src.len {
+		el, pos := Element.decode(src, i)!
+		els << el
+		i += pos
+	}
+	if i > src.len {
+		return error('i > src.len')
+	}
+	if i < src.len {
+		return error('The src contains unprocessed bytes')
+	}
+	return els
+}
+
+// hold_different_tag checks whether this array of Element
+// contains any different tag, benefit for checking whether the type
+// with this elements is sequence or sequence of type.
+fn (els []Element) hold_different_tag() bool {
+	// if els has empty length we return false, so we can treat
+	// it as a regular sequence or set.
+	if els.len == 0 {
+		return false
+	}
+	// when this return true, there is nothing in elements
+	// has same tag for all items, ie, there are some item
+	// in the elements hold the different tag.
+	tag0 := els[0].tag()
+	return els.any(it.tag() != tag0)
+}
+
+// contains checks whether this array of Element contains the Element el
+fn (els []Element) contains(el Element) bool {
+	for e in els {
+		if !el.equal_with(el) {
+			return false
+		}
+	}
+	return true
+}
+
 struct ContextElement {
-	// implicitly the class == .context_specific with constructed bit set
-	Asn1Element // inner element
-	mode TaggedMode
-	// outer tag number
+	RawElement // inner element
+	cls TagClass = .context_specific
 	num int
+mut:
+	mode TaggedMode
 }
 
 struct ApplicationElement {
-	Asn1Element
+	RawElement
 }
 
 struct PrivateELement {
-	Asn1Element
-}
-
-struct Asn1Element {
-mut:
-	tag     Tag
-	payload []u8
-}
-
-fn (ae Asn1Element) tag() Tag {
-	return ae.tag
-}
-
-fn (ae Asn1Element) payload() ![]u8 {
-	return ae.payload
-}
-
-fn (ae Asn1Element) encode(mut dst []u8) ! {
-	return error('not implemented')
+	RawElement
 }

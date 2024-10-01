@@ -12,6 +12,7 @@ pub fn Null.new() Null {
 	return Null{}
 }
 
+/*
 pub fn Null.from_raw_element(re RawElement, p Params) !Null {
 	if re.payload(p)!.len != 0 {
 		return error('Non-null RawElement payload')
@@ -33,7 +34,7 @@ pub fn Null.from_raw_element(re RawElement, p Params) !Null {
 
 	return bs
 }
-
+*/
 pub fn Null.from_bytes(b []u8, p Params) !Null {
 	if b.len != 0 {
 		return error('Null: bad non-null bytes')
@@ -45,7 +46,7 @@ pub fn (n Null) tag() Tag {
 	return n.tag
 }
 
-pub fn (n Null) length(p Params) !int {
+fn (n Null) length(p Params) !int {
 	return 0
 }
 
@@ -53,7 +54,7 @@ pub fn (n Null) payload(p Params) ![]u8 {
 	return []u8{}
 }
 
-pub fn (n Null) packed_length(p Params) !int {
+fn (n Null) packed_length(p Params) !int {
 	return 2
 }
 
@@ -62,7 +63,7 @@ pub fn (n Null) encode(mut dst []u8, p Params) ! {
 		return error('Integer: unsupported rule')
 	}
 
-	n.tag.encode(mut dst, p)!
+	n.tag.encode_with_rule(mut dst, p.rule)!
 	// the length is 0
 	dst << [u8(0x00)]
 }
