@@ -506,8 +506,18 @@ pub fn (t TagType) str() string {
 // of tag, length or ASN.1 element to drive how encoding works.
 @[params]
 pub struct Params {
-pub mut:
+mut:
 	rule EncodingRule = .der
+}
+
+fn default_params() &Params {
+	return &Params{}
+}
+
+fn params_with_rule(rule EncodingRule) &Params {
+	return &Params{
+		rule: .der
+	}
 }
 
 // encoding rule
@@ -542,50 +552,6 @@ fn syntax_error(msg string, opts &FieldOptions) &SyntaxError {
 	}
 	return se
 }
-
-// Context keeps options that affect the ASN.1 encoding and decoding
-@[params]
-struct Context {
-mut:
-	rule EncodingRule = .der
-}
-
-fn default_context() &Context {
-	return &Context{}
-}
-
-fn ctx_with_rule(rule EncodingRule) &Context {
-	return &Context{
-		rule: rule
-	}
-}
-
-/*
-// encode_with_rule encode with context
-fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
-}
-
-// encode_with_rule encodes element with default context
-fn encode(el Element) ![]u8 {
-	return el.encode()!
-}
-
-// decode_with_rule decodes bytes with context
-fn decode_with_rule[T](src []u8, rule EncodingRule) !(T, i64) {}
-
-// decode_with_rule decodes bytes with default context
-fn decode[T](src []u8, rule EncodingRule) !(T, i64) {}
-
-fn parse_optional[T](src []u8) ?(T, i64) {}
-
-// is_fullfill_asn1_element checks whether a generic element T meet required method of Element interface
-fn is_fullfill_asn1_element[T]() bool {
-	$if T is Element {
-		return true
-	}
-	return false
-}
-*/
 
 // EXPLICIT and IMPLICIT
 //

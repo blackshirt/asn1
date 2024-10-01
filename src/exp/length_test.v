@@ -214,7 +214,7 @@ fn test_tc5_unnecessary_usage_long_of_length_form() ! {
 	assert tag.constructed == true
 	assert pos == 3
 	// the length bytes, [0x81, 0x01] dont needed in long form.
-	_, _ := Length.decode_with_context(value, pos) or {
+	_, _ := Length.decode_with_rule(value, pos, .der) or {
 		assert err == error('Length: dont needed in long form')
 		return
 	}
