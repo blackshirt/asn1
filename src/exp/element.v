@@ -103,16 +103,30 @@ pub fn (el Element) into_object[T]() !T {
 
 fn (el Element) encode_with_options(mut out []u8, opt string) ! {
 	ctx := default_params()
-	el.encode_with_options_context(mut out, opt, ctx)!
+	el.encode_with_string_options_context(mut out, opt, ctx)!
 }
 
-fn (el Element) encode_with_options_context(mut out []u8, opt string, ctx Params) ! {
+fn (el Element) encode_with_field_options(mut out []u8, fo &FieldOptions) ! {
+	ctx := default_params()
+	el.encode_with_field_options_context(mut out, fo, ctx)!
+}
+
+fn (el Element) encode_with_string_options_context(mut out []u8, opt string, ctx Params) ! {
 	// treated as without option when nil
 	if opt.len == 0 {
 		el.encode_with_context(mut out, ctx)!
 		return
 	}
 	fo := parse_string_option(opt)!
+	el.encode_with_field_options_context(mut out, fo, ctx)!
+}
+
+fn (el Element) encode_with_field_options_context(mut out []u8, fo &FieldOptions, ctx &Params) ! {
+	// treated as without option when nil
+	if fo == unsafe { nil } {
+		el.encode_with_context(mut out, ctx)!
+		return
+	}
 	fo.validate()!
 	// when optional is true, treated differently when present or not
 	// in some rules, optional element should not be included in encoding
@@ -197,10 +211,10 @@ fn (el Element) wrap_with_context(cls TagClass, num int, mode TaggedMode, ctx Pa
 	mut new_element := RawElement{
 		tag: newtag
 	}
-	mut payload := []u8{}
 	match mode {
 		.explicit {
 			// explicit add the new tag to serialized element
+			mut payload := []u8{}
 			el.encode_with_context(mut payload, ctx)!
 			new_element.payload = payload
 		}
@@ -213,6 +227,27 @@ fn (el Element) wrap_with_context(cls TagClass, num int, mode TaggedMode, ctx Pa
 	return new_element
 }
 
+fn payload[T](val T) ![]u8 {
+	mut out := []u8{}
+	$for field in val.fields {
+		// only serialiaze field that implement interfaces
+		println('${field.typ}')
+		$if field.typ is Element {
+			// there are attributes option
+			$if field.attrs.len != 0 {
+				fo := parse_attrs_to_field_options(field.attrs)!
+
+				field.$(encode_with_field_options(mut out, fo)!)
+			} $else {
+				// without field option
+				field.encode(mut out)!
+			}
+		}
+	}
+	return out
+}
+
+/*
 fn Element.decode(src []u8) !(Element, i64) {
 	ctx := default_params()
 	el, pos := Element.decode_with_context(src, 0, ctx)!
@@ -340,3 +375,4 @@ struct ApplicationElement {
 struct PrivateELement {
 	RawElement
 }
+*/

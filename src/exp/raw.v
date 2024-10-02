@@ -18,23 +18,15 @@ pub fn (re RawElement) tag() Tag {
 
 // payload is payload of this RawElement
 pub fn (re RawElement) payload() ![]u8 {
-	return re.payload
-}
-
-fn (re RawElement) rawelement_size() !int {
 	ctx := default_params()
-	return re.rawelement_size_with_context(ctx)!
+	return re.payload_with_context(ctx)!
 }
 
-fn (re RawElement) rawelement_size_with_context(ctx &Params) !int {
-	mut n := 0
-	n += re.tag.tag_size()!
-	payload := re.payload_with_context(ctx)!
-	length := Length.from_i64(payload.len)!
-	n += length.length_size_with_rule(ctx.rule)!
-	n += payload.len
-
-	return n
+fn (re RawElement) payload_with_context(ctx &Params) ![]u8 {
+	if ctx.rule != .der && ctx.rule != .ber {
+		return error('bad rule')
+	}
+	return re.payload
 }
 
 // encode writes RawElement to dst with default context
@@ -103,6 +95,22 @@ fn RawElement.decode_with_context(src []u8, loc i64, ctx &Params) !(RawElement, 
 	return raw, idx + len
 }
 
+fn (re RawElement) rawelement_size() !int {
+	ctx := default_params()
+	return re.rawelement_size_with_context(ctx)!
+}
+
+fn (re RawElement) rawelement_size_with_context(ctx &Params) !int {
+	mut n := 0
+	n += re.tag.tag_size()
+	payload := re.payload_with_context(ctx)!
+	length := Length.from_i64(payload.len)!
+	n += length.length_size_with_rule(ctx.rule)!
+	n += payload.len
+
+	return n
+}
+
 /*
 // as_tagged treats and parse the RawElement r as TaggedType element with inner_tag is
 // an expected tag of inner Element being tagged.
@@ -163,7 +171,7 @@ pub fn (r RawElement) as_tagged(rule Taggedrule, inner_tag Tag, ctx &Params) !Ta
 	}
 	return error('This RawElement can not be treated as TaggedType')
 }
-*/
+
 
 // CHOICE
 // Note: not tested
@@ -240,3 +248,5 @@ pub fn AnyDefinedBy.decode(src []u8, loc i64, ctx &Params) !(AnyDefinedBy, i64) 
 	ret := AnyDefinedBy.from_element(el, ctx)!
 	return ret, pos
 }
+
+*/
