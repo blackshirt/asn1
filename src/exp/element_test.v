@@ -21,7 +21,8 @@ fn (ms MyStr) payload() ![]u8 {
 }
 
 struct TestStruct {
-	a MyOct
+	n int
+	a MyOct @[application: 5]
 	b MyStr
 }
 

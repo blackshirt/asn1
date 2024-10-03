@@ -35,6 +35,12 @@ pub fn encode_with_options(el Element, opt string) ![]u8 {
 	return out
 }
 
+fn encode_with_field_options(el Element, fo &FieldOptions) ![]u8 {
+	mut out := []u8{}
+	el.encode_with_field_options(mut out, fo)!
+	return out
+}
+
 // encode serializes this element into bytes arrays with default context
 pub fn (el Element) encode() ![]u8 {
 	mut dst := []u8{}
@@ -231,16 +237,16 @@ fn payload[T](val T) ![]u8 {
 	mut out := []u8{}
 	$for field in val.fields {
 		// only serialiaze field that implement interfaces
-		println('${field.typ}')
 		$if field.typ is Element {
-			// there are attributes option
-			$if field.attrs.len != 0 {
+			// if there attributes option
+			if field.attrs.len != 0 {
 				fo := parse_attrs_to_field_options(field.attrs)!
-
-				field.$(encode_with_field_options(mut out, fo)!)
-			} $else {
-				// without field option
-				field.encode(mut out)!
+				current := encode_with_field_options(val.$(field.name), fo)!
+				out << current
+			} else {
+				// without  option
+				current := encode(val.$(field.name))!
+				out << current
 			}
 		}
 	}
