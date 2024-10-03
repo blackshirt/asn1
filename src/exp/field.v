@@ -45,6 +45,10 @@ fn (fo &FieldOptions) validate() ! {
 	if fo.has_default && fo.default_value == unsafe { nil } {
 		return error('fo.has_default without default_value')
 	}
+	// mode present without class wrapper present is error
+	if fo.cls == '' && fo.mode != '' {
+		return error('mode key presents without cls being setted')
+	}
 }
 
 fn (mut fo FieldOptions) install_default(el Element, force bool) ! {

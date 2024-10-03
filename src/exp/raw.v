@@ -16,63 +16,44 @@ pub fn (re RawElement) tag() Tag {
 	return re.tag
 }
 
-// payload is payload of this RawElement
+// payload is payload of this RawElement with .der rule
 pub fn (re RawElement) payload() ![]u8 {
-	ctx := default_params()
-	return re.payload_with_context(ctx)!
+	return re.payload_with_rule(.der)!
 }
 
-fn (re RawElement) payload_with_context(ctx &Params) ![]u8 {
-	if ctx.rule != .der && ctx.rule != .ber {
+fn (re RawElement) payload_with_rule(rule EncodingRule) ![]u8 {
+	if rule != .der && rule != .ber {
 		return error('bad rule')
 	}
 	return re.payload
 }
 
-// encode writes RawElement to dst with default context
-pub fn (re RawElement) encode(mut dst []u8) ! {
-	ctx := default_params()
-	re.encode_with_context(mut dst, ctx)!
-}
-
-fn (re RawElement) encode_with_context(mut dst []u8, ctx &Params) ! {
-	if ctx.rule != .der && ctx.rule != .ber {
-		return error('RawElement: unsupported rule')
-	}
-	re.tag.encode_with_rule(mut dst, ctx.rule)!
-	payload := re.payload_with_context(ctx)!
-	length := Length.from_i64(payload.len)!
-	length.encode_with_rule(mut dst, ctx.rule)!
-	dst << payload
-}
-
-pub fn RawElement.decode(src []u8) !(RawElement, i64) {
+fn RawElement.decode(src []u8) !(RawElement, i64) {
 	return RawElement.decode_from_offset(src, 0)!
 }
 
 fn RawElement.decode_from_offset(src []u8, loc i64) !(RawElement, i64) {
-	ctx := default_params()
-	return RawElement.decode_with_context(src, loc, ctx)!
+	return RawElement.decode_with_rule(src, loc, .der)!
 }
 
-fn RawElement.decode_with_context(src []u8, loc i64, ctx &Params) !(RawElement, i64) {
+fn RawElement.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(RawElement, i64) {
 	// minimal length bytes contains tag and the length is two bytes
 	if src.len < 2 {
 		return error('RawElement: bytes underflow')
 	}
 	// guard check
-	if ctx.rule != .der && ctx.rule != .ber {
+	if rule != .der && rule != .ber {
 		return error('RawElement: bad rule')
 	}
 	mut raw := RawElement{}
-	tag, pos := Tag.decode_with_rule(src, loc, ctx.rule)!
+	tag, pos := Tag.decode_with_rule(src, loc, rule)!
 	raw.tag = tag
 	// check if the offset position is not overflowing src.len
 	if pos >= src.len {
 		return error('RawElement: pos overflow')
 	}
 	// read the length part
-	len, idx := Length.decode_with_rule(src, pos, ctx.rule)!
+	len, idx := Length.decode_with_rule(src, pos, rule)!
 	// check if len == 0, its mean this parsed element has no content bytes
 	// on last offset
 	if len == 0 {
@@ -96,16 +77,15 @@ fn RawElement.decode_with_context(src []u8, loc i64, ctx &Params) !(RawElement, 
 }
 
 fn (re RawElement) rawelement_size() !int {
-	ctx := default_params()
-	return re.rawelement_size_with_context(ctx)!
+	return re.rawelement_size_with_rule(.der)!
 }
 
-fn (re RawElement) rawelement_size_with_context(ctx &Params) !int {
+fn (re RawElement) rawelement_size_with_rule(rule EncodingRule) !int {
 	mut n := 0
 	n += re.tag.tag_size()
-	payload := re.payload_with_context(ctx)!
+	payload := re.payload_with_rule(rule)!
 	length := Length.from_i64(payload.len)!
-	n += length.length_size_with_rule(ctx.rule)!
+	n += length.length_size_with_rule(rule)!
 	n += payload.len
 
 	return n
@@ -229,7 +209,7 @@ pub fn AnyDefinedBy.from_bytes(b []u8) AnyDefinedBy {
 
 // as_element interpretes this AnyDefinedBy params as an ASN.1 Element
 pub fn (a AnyDefinedBy) as_element(ctx &Params) !Element {
-	el, pos := Element.decode_with_context(a.params, 0, ctx)!
+	el, pos := Element.decode_with_rule(a.params, 0, ctx)!
 	if pos != a.params.len {
 		return error('AnyDefinedBy params contains unprocessed bytes')
 	}
@@ -244,7 +224,7 @@ pub fn (a AnyDefinedBy) as_raw() []u8 {
 // AnyDefinedBy.decode parses and decodes bytes in src into AnyDefinedBy.
 // Its try to interprete the bytes as an encoded ASN.1 Element
 pub fn AnyDefinedBy.decode(src []u8, loc i64, ctx &Params) !(AnyDefinedBy, i64) {
-	el, pos := Element.decode_with_context(src, loc, ctx)!
+	el, pos := Element.decode_with_rule(src, loc, ctx)!
 	ret := AnyDefinedBy.from_element(el, ctx)!
 	return ret, pos
 }
