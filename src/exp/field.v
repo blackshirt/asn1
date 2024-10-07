@@ -22,7 +22,7 @@ mut:
 	// tag number for wrapper element tagnum when cls != ''
 	tagnum int = -1
 	// default value for element when has_default value is true
-	default_value &Element = unsafe { nil }
+	default_value ?Element
 	// make sense in explicit context, when cls != '' and cls == .context_specific
 	mode string
 }
@@ -42,7 +42,7 @@ fn (fo &FieldOptions) validate() ! {
 			}
 		}
 	}
-	if fo.has_default && fo.default_value == unsafe { nil } {
+	if fo.has_default && fo.default_value == none {
 		return error('fo.has_default without default_value')
 	}
 	// mode present without class wrapper present is error
@@ -53,8 +53,8 @@ fn (fo &FieldOptions) validate() ! {
 
 fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 	if fo.has_default {
-		if fo.default_value == unsafe { nil } {
-			fo.default_value = &el
+		if fo.default_value == none {
+			fo.default_value = el
 			return
 		}
 		// not nil
@@ -62,7 +62,7 @@ fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 			return error('set force to overide')
 		}
 		// replace the old one, or should we check its matching tag ?
-		fo.default_value = &el
+		fo.default_value = el
 	}
 	return error('you can not install default value when has_default being not set')
 }

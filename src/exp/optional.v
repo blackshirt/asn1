@@ -70,3 +70,10 @@ fn (opt Optional) payload() ![]u8 {
 	opt.validate()!
 	return opt.elem.payload()!
 }
+
+fn (opt Optional) into_t[T]() !T {
+	$if T !is Element {
+		return error('T is not element')
+	}
+	return el.into_object[T]()!
+}

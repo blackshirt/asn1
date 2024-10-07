@@ -131,10 +131,15 @@ fn (el Element) encode_with_field_options(fo &FieldOptions, rule EncodingRule) !
 	}
 }
 
+// wrap only universal class, and other class that has primitive form
 fn (el Element) wrap(cls TagClass, num int, mode TaggedMode) !Element {
 	return el.wrap_with_rule(cls, num, mode, .der)!
 }
 
+// we prohibit dan defines some rules when its happen and  returns an error instead
+// 1. wrapping into .universal class is not allowed
+// 2. wrapping with the same class is not allowed too
+// 3. wrapping non-universal class element is not allowed (maybe removed on futures.)
 fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule EncodingRule) !Element {
 	if cls == .universal {
 		return error('no need to wrap into universal class')
@@ -142,6 +147,11 @@ fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule Enco
 	// error when in the same class
 	if el.tag().tag_class() == cls {
 		return error('no need to wrap into same class')
+	}
+	// we dont allow .application, .context_specific, .and private to be wrapped
+	el_cls := el.tag().tag_class()
+	if el_cls == .application || el_cls == .context_specific || el_cls == .private {
+		return error('No need to wrap non-universal class')
 	}
 	newtag := Tag.new(cls, true, num)!
 	mut new_element := RawElement{
@@ -353,21 +363,7 @@ fn (els []Element) contains(el Element) bool {
 	return true
 }
 
-struct ContextElement {
-	RawElement // inner element
-	cls TagClass = .context_specific
-	num int
-mut:
-	mode TaggedMode
-}
 
-struct ApplicationElement {
-	RawElement
-}
-
-struct PrivateELement {
-	RawElement
-}
 */
 
 // decode_single decodes single element from bytes, its not allowing trailing data
@@ -378,4 +374,67 @@ fn decode_single(src []u8) !Element {
 // decode_single decodes single element from bytes with options support, its not allowing trailing data
 fn decode_single_with_option(src []u8, opt string) !Element {
 	return error('not implemented')
+}
+
+@[noinit]
+struct BaseElement {
+	constructed bool
+	num         int
+	content     []u8
+}
+
+@[noinit]
+struct Asn1Element {
+	cls         TagClass
+	constructed bool
+	num         int
+	content     []u8
+}
+
+fn (a Asn1Element) tag() Tag {
+	tag := Tag.new(a.cls, a.constructed, a.num) or { panic('bad tag number of asn1 element') }
+	return tag
+}
+
+fn (a Asn1Element) payload() ![]u8 {
+	return a.content
+}
+
+@[noinit]
+struct ContextElement {
+	inner Asn1Element // inner element
+	cls   TagClass = .context_specific
+	num   int
+mut:
+	mode TaggedMode
+}
+
+@[noinit]
+struct ApplicationElement {
+	BaseElement
+	cls TagClass = .application
+}
+
+fn (app ApplicationElement) tag() Tag {
+	tag := Tag.new(app.cls, app.constructed, app.num) or { panic(err) }
+	return tag
+}
+
+fn (app ApplicationElement) payload() ![]u8 {
+	return app.content
+}
+
+@[noinit]
+struct PrivateELement {
+	BaseElement
+	cls TagClass = .private
+}
+
+fn (prv PrivateELement) tag() Tag {
+	tag := Tag.new(prv.cls, prv.constructed, prv.num) or { panic(err) }
+	return tag
+}
+
+fn (prv PrivateELement) payload() ![]u8 {
+	return prv.content
 }

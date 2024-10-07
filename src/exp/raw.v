@@ -9,6 +9,8 @@ mut:
 	// when the tag is primitive, its represents real value of this RawElement.
 	// otherwise, if its a constructed, its contains another unparsed RawElement
 	payload []u8
+	// default value for this raw element if its availables
+	default ?Element
 }
 
 // tag returns the tag of the RawElement
