@@ -36,7 +36,7 @@ fn (fo &FieldOptions) validate() ! {
 			return error('fo.cls is being set but fo.tagnum not specified')
 		}
 		// for .context_specific class, provides with mode explicit or implicit
-		if fo.cls == 'context_specific' {
+		if fo.cls != '' {
 			if !valid_mode_value(fo.mode) {
 				return error('for .context_specific class, provides with explicit or implicit mode')
 			}
@@ -146,6 +146,27 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 	}
 
 	return fo
+}
+
+// parse 'application:100;mode:explicit'
+fn parse_wrapper(attr string) !(string, string) {
+	if attr.len == 0 {
+		return '', ''
+	}
+	src := attr.trim_space()
+	if is_tag_marker(src) {
+		field := src.split(';')
+		if field.len != 2 {
+			return error('not complete marker')
+		}
+		first := field[0].trim_space()
+		_, _ := parse_tag_marker(first)!
+
+		second := field[1].trim_space()
+		_, _ := parse_mode_marker(second)!
+		return first, second
+	}
+	return error('not a tag mode wrapper')
 }
 
 // parse 'application:number' format

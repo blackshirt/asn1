@@ -68,6 +68,55 @@ fn (el Element) encode_with_string_options(opt string, rule EncodingRule) ![]u8 
 	return out
 }
 
+fn (el Element) validate_wrapper(fo &FieldOptions) ! {
+	// wrapper into the same class is not allowed
+	el_cls := el.tag().tag_class().str().to_lower()
+	if el_cls == fo.cls.to_lower() {
+		return error('wraps into same class is not allowed')
+	}
+	if fo.cls == 'universal' {
+		return error('wraps into universal class is not allowed')
+	}
+}
+
+fn (el Element) apply_field_options(fo &FieldOptions, rule EncodingRule) !Element {
+	if fo == unsafe { nil } {
+		return el
+	}
+	fo.validate()!
+	el.validate_wrapper(fo)!
+	// there are wrapper
+	return error('not fully implemented')
+}
+
+fn (el Element) apply_wrappers(wrapper string, mode string, rule EncodingRule) !Element {
+	if wrapper.len == 0 {
+		// do not wraps
+		return el
+	}
+	if mode.len == 0 {
+		return error('provides your mode')
+	}
+	if mode != 'explicit' && mode != 'implicit' {
+		return error('bad mode value')
+	}
+	cls, num := parse_tag_marker(wrapper)!
+	//
+	el_cls := TagClass.from_string(cls)!
+	el_num := num.int()
+	el_mode := TaggedMode.from_string(mode)!
+
+	new_el := el.wrap_with_rule(el_cls, el_num, el_mode, rule)!
+
+	return new_el
+}
+
+// if not sure, just to false
+fn (el Element) into_optional(present bool) !Optional {
+	mut opt := new_optional(el)
+	return opt.with_present(present)
+}
+
 fn (el Element) encode_with_field_options(fo &FieldOptions, rule EncodingRule) ![]u8 {
 	if rule != .der && rule != .ber {
 		return error('unsupported rule')
@@ -78,6 +127,17 @@ fn (el Element) encode_with_field_options(fo &FieldOptions, rule EncodingRule) !
 		return out
 	}
 	fo.validate()!
+	el.validate_wrapper(fo)!
+	el_class := el.tag().tag_class().str().to_lower()
+	if fo.cls != '' {
+		// wrap it
+		match fo.mode {
+			'explicit' {}
+			'implicit' {}
+			else {}
+		}
+	} else {
+	}
 	// when optional is true, treated differently when present or not
 	// in some rules, optional element should not be included in encoding
 	if fo.optional {
@@ -136,11 +196,18 @@ fn (el Element) wrap(cls TagClass, num int, mode TaggedMode) !Element {
 	return el.wrap_with_rule(cls, num, mode, .der)!
 }
 
+// wrap_with_rule wraps universal element into another constructed class.
 // we prohibit dan defines some rules when its happen and  returns an error instead
 // 1. wrapping into .universal class is not allowed
 // 2. wrapping with the same class is not allowed too
 // 3. wrapping non-universal class element is not allowed (maybe removed on futures.)
 fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule EncodingRule) !Element {
+	// we dont allow other than .universal class to be wrapped
+	el_cls := el.tag().tag_class()
+	if el_cls != .universal {
+		return error('No need to wrap non-universal class')
+	}
+	// wraps into .universal is not allowed
 	if cls == .universal {
 		return error('no need to wrap into universal class')
 	}
@@ -148,11 +215,7 @@ fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule Enco
 	if el.tag().tag_class() == cls {
 		return error('no need to wrap into same class')
 	}
-	// we dont allow .application, .context_specific, .and private to be wrapped
-	el_cls := el.tag().tag_class()
-	if el_cls == .application || el_cls == .context_specific || el_cls == .private {
-		return error('No need to wrap non-universal class')
-	}
+
 	newtag := Tag.new(cls, true, num)!
 	mut new_element := RawElement{
 		tag: newtag

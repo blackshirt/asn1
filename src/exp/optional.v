@@ -14,13 +14,11 @@ struct Optional {
 	elem Element
 mut:
 	// set to true when its should present, default to false
-	present       bool
-	has_default   bool
-	default_value ?Element
+	present bool
 }
 
 fn (opt Optional) validate() ! {
-	if opt.has_default && opt.default_value == none {
+	/* if opt.has_default && opt.default_value == none {
 		return error('Optional with has_default but default_value is none')
 	}
 	if opt.has_default && opt.default_value != none {
@@ -28,16 +26,16 @@ fn (opt Optional) validate() ! {
 		if opt.elem.tag() != val.tag() {
 			return error('default value with different tag is not allowed')
 		}
-	}
+	} */
 }
 
-fn new_optional(el Element) &Optional {
-	return &Optional{
+fn new_optional(el Element) Optional {
+	return Optional{
 		elem: el
 	}
 }
 
-fn (mut opt Optional) set_default(el Element) ! {
+/* fn (mut opt Optional) set_default(el Element) ! {
 	if !opt.has_default {
 		return
 	}
@@ -55,9 +53,10 @@ fn (mut opt Optional) with_default(el Element) !&Optional {
 fn (mut opt Optional) with_has_default(flag bool) &Optional {
 	opt.has_default = flag
 	return opt
-}
+} 
+*/
 
-fn (mut opt Optional) with_present(present bool) &Optional {
+fn (mut opt Optional) with_present(present bool) Optional {
 	opt.present = present
 	return opt
 }
@@ -67,7 +66,7 @@ fn (opt Optional) tag() Tag {
 }
 
 fn (opt Optional) payload() ![]u8 {
-	opt.validate()!
+	// opt.validate()!
 	return opt.elem.payload()!
 }
 
