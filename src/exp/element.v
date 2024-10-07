@@ -6,7 +6,7 @@ module asn1
 // This file contains structures and routines for handling ASN.1 Element.
 // Its includes:
 // 	- basic Element interface, for support ASN.1 element in more generic way
-//	- arrays of ELement in the form of ElementList
+//	- arrays of Element in the form of ElementList
 //	- basic raw element in the RawElement structure, for handling arbitrary class
 //	  and other undefined (unsupported) generic ASN.1 Element in this module.
 //	- others structures, likes an Choice, AnyDefinedBy, Optional for representing other
@@ -68,9 +68,65 @@ fn (el Element) encode_with_string_options(opt string, rule EncodingRule) ![]u8 
 	return out
 }
 
+fn (el Element) encode_with_field_options(fo &FieldOptions, rule EncodingRule) ![]u8 {
+	if rule != .der && rule != .ber {
+		return error('unsupported rule')
+	}
+	// treated as without option when nil
+	if fo == unsafe { nil } {
+		out := encode_with_rule(el, rule)!
+		return out
+	}
+
+	new_element := el.apply_field_options(fo)!
+	out := encode_with_rule(new_element, rule)!
+	return out
+}
 
 // UTILITY HELPER FOR ELEMENT
-// 
+//
+
+// into_optional turns this element into Optional
+fn (el Element) into_optional() !Optional {
+	return el.into_optional_with_present(false)!
+}
+
+// if not sure, just to false
+fn (el Element) into_optional_with_present(present bool) !Optional {
+	// maybe removed in the future
+	if el is Optional {
+		return error('already optional element')
+	}
+	mut opt := new_optional(el)
+	return opt.with_present(present)
+}
+
+fn (el Element) apply_optional_options(fo &FieldOptions) !Element {
+	if fo.optional {
+		if fo.present {
+			return el.into_optional_with_present(fo.present)!
+		}
+		return el.into_optional()!
+	}
+	return el
+}
+
+fn (el Element) apply_wrappers_options(fo &FieldOptions) !Element {
+	// no wraps, and discard other wrappe options
+	if fo.cls == '' {
+		return el
+	}
+	// validates class wrapper
+	fo.validate_wrapper_part()!
+	el.validate_wrapper(fo)!
+
+	cls := TagClass.from_string(fo.cls)!
+	mode := TaggedMode.from_string(fo.mode)!
+
+	new_el := el.wrap(cls, fo.tagnum, mode)!
+
+	return new_el
+}
 
 fn (el Element) validate_wrapper(fo &FieldOptions) ! {
 	// wrapper into the same class is not allowed
@@ -83,106 +139,12 @@ fn (el Element) validate_wrapper(fo &FieldOptions) ! {
 	}
 }
 
-fn (el Element) apply_wrappers(wrapper string, mode string, rule EncodingRule) !Element {
-	if wrapper.len == 0 {
-		// do not wraps
-		return el
-	}
-	if mode.len == 0 {
-		return error('provides your mode')
-	}
-	if mode != 'explicit' && mode != 'implicit' {
-		return error('bad mode value')
-	}
-	cls, num := parse_tag_marker(wrapper)!
-	//
-	el_cls := TagClass.from_string(cls)!
-	el_num := num.int()
-	el_mode := TaggedMode.from_string(mode)!
-
-	new_el := el.wrap_with_rule(el_cls, el_num, el_mode, rule)!
-
+fn (el Element) apply_field_options(fo &FieldOptions) !Element {
+	wrapped := el.apply_wrappers_options(fo)!
+	// optional options take precedence over wrapper
+	// wehen fo.optional is false, new_el is current wrapped element
+	new_el := wrapped.apply_optional_options(fo)!
 	return new_el
-}
-
-// if not sure, just to false
-fn (el Element) into_optional(present bool) !Optional {
-	mut opt := new_optional(el)
-	return opt.with_present(present)
-}
-
-fn (el Element) encode_with_field_options(fo &FieldOptions, rule EncodingRule) ![]u8 {
-	if rule != .der && rule != .ber {
-		return error('unsupported rule')
-	}
-	// treated as without option when nil
-	if fo == unsafe { nil } {
-		out := encode_with_rule(el, rule)!
-		return out
-	}
-	fo.validate()!
-	el.validate_wrapper(fo)!
-	el_class := el.tag().tag_class().str().to_lower()
-	if fo.cls != '' {
-		// wrap it
-		match fo.mode {
-			'explicit' {}
-			'implicit' {}
-			else {}
-		}
-	} else {
-	}
-	// when optional is true, treated differently when present or not
-	// in some rules, optional element should not be included in encoding
-	if fo.optional {
-		if !fo.present {
-			// not present, return empty
-			return []u8{}
-		}
-		// check for other flag
-		if fo.cls != '' {
-			if fo.tagnum <= 0 {
-				return error('provides with the correct tagnum')
-			}
-			class := el.tag().tag_class().str().to_lower()
-			if class != fo.cls {
-				cls := TagClass.from_string(fo.cls)!
-				match fo.mode {
-					'explicit' {
-						wrapped := el.wrap_with_rule(cls, fo.tagnum, .explicit, rule)!
-						out := encode_with_rule(wrapped, rule)!
-						return out
-					}
-					'implicit' {
-						wrapped := el.wrap_with_rule(cls, fo.tagnum, .implicit, rule)!
-						out := encode_with_rule(wrapped, rule)!
-						return out
-					}
-					else {}
-				} // endof match
-			}
-			// endof opt.cls != cls
-		}
-	} else {
-		// not an optional
-		if fo.cls != '' {
-			if fo.tagnum <= 0 {
-				return error('provides with correct tagnum')
-			}
-			cls := TagClass.from_string(fo.cls)!
-			if fo.mode != '' {
-				mode := TaggedMode.from_string(fo.mode)!
-				wrapped := el.wrap_with_rule(cls, fo.tagnum, mode, rule)!
-				out := encode_with_rule(wrapped, rule)!
-				return out
-			} else {
-				// otherwise treat with .explicit
-				wrapped := el.wrap_with_rule(cls, fo.tagnum, .explicit, rule)!
-				out := encode_with_rule(wrapped, rule)!
-				return out
-			}
-		}
-	}
 }
 
 // wrap only universal class, and other class that has primitive form
@@ -369,7 +331,7 @@ fn (el Element) expect_tag_number(number int) bool {
 	return int(tagnum) == number
 }
 
-// ElementList is arrays of ELement
+// ElementList is arrays of Element
 type ElementList = []Element
 
 // ElementList.from_bytes parses bytes in src as series of Element or return error on fails

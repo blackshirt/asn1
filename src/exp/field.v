@@ -12,49 +12,54 @@ const max_attributes_length = 5
 struct FieldOptions {
 mut:
 	// wrapper class
-	cls string
+	cls    string
+	tagnum int = -1 // tag number for wrapper element when cls != ''
+	mode   string // mode in 'explicit' or 'implicit' when cls !+ ''
+	inner  int = -1 // set to some value when mode = 'impllcit'
 	// set to true when this should be optional element
 	optional bool
-	// set to true when optional should present, if unsure, set to false
+	// set to true when optional should present, if unsure, just set to false
 	present bool
 	// set to true when element has default value
 	has_default bool
-	// tag number for wrapper element tagnum when cls != ''
-	tagnum int = -1
 	// default value for element when has_default value is true
 	default_value ?Element
-	// make sense in explicit context
-	mode string
-	// inner tag number when in implicit mode, should .universal and primitive form, ie Tag{universal, false, inner}
-	inner int = -1
 }
 
 // validate validates FieldOptions to meet criteria
 fn (fo &FieldOptions) validate() ! {
-	// if fo.cls != '' the tagnum should provide correct value
-	if valid_tagclass_name(fo.cls) {
-		// tagnum should be set up correctly
-		if fo.tagnum <= 0 {
-			return error('fo.cls is being set but fo.tagnum not specified')
-		}
-		// for .context_specific class, provides with mode explicit or implicit
-		if fo.cls != '' {
-			if !valid_mode_value(fo.mode) {
-				return error('for .context_specific class, provides with explicit or implicit mode')
-			}
-			if fo.mode == 'implicit' {
-				if fo.inner <= 0 {
-					return error('inner tag number not set in implicit mode')
-				}
-			}
-		}
-	}
+	fo.validate_wrapper_part()!
 	if fo.has_default && fo.default_value == none {
 		return error('fo.has_default without default_value')
 	}
 	// mode present without class wrapper present is error
 	if fo.cls == '' && fo.mode != '' {
 		return error('mode key presents without cls being setted')
+	}
+}
+
+fn (fo &FieldOptions) validate_wrapper_part() ! {
+	if fo.cls != '' {
+		if !valid_tagclass_name(fo.cls) {
+			return error('you provides invalid cls')
+		}
+		// provides the tag number
+		if fo.tagnum <= 0 {
+			return error('provides with the correct tagnum')
+		}
+		// yous should provide the mode
+		if fo.mode == '' {
+			return error('mode not set')
+		}
+		if !valid_mode_value(fo.mode) {
+			return error('bad mode value provided')
+		}
+		// check when implicit
+		if fo.mode == 'implicit' {
+			if fo.inner <= 0 {
+				return error('inner tag number was not set in implicit mode')
+			}
+		}
 	}
 }
 
@@ -106,7 +111,7 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 	mut opt_ctr := 0 // optional marker counter
 	mut def_ctr := 0 // has_default marker counter
 	mut mod_ctr := 0 // mode marker counter
-	mut inn_ctr := 0
+	mut inn_ctr := 0 // inner counter
 
 	for attr in attrs {
 		if !is_tag_marker(attr) && !is_optional_marker(attr) && !is_default_marker(attr)
@@ -181,7 +186,7 @@ fn parse_tag_marker(attr string) !(string, string) {
 			return error('bad tag name')
 		}
 		second := field[1].trim_space()
-		if !valid_tagclass_number(second) {
+		if !valid_string_tag_number(second) {
 			return error('bad tag number')
 		}
 		return first, second
@@ -200,7 +205,7 @@ fn valid_tagclass_name(tag string) bool {
 }
 
 // it should be represented in int or hex number
-fn valid_tagclass_number(s string) bool {
+fn valid_string_tag_number(s string) bool {
 	return s.is_int() || s.is_hex()
 }
 
@@ -252,7 +257,7 @@ fn parse_inner_tag_marker(attr string) !(string, string) {
 			return error('bad inner key')
 		}
 		second := item[0].trim_space()
-		if !valid_inner_tag_number(second) {
+		if !valid_string_tag_number(second) {
 			return error('bad inner tag number')
 		}
 		return first, second
@@ -274,10 +279,6 @@ fn valid_inner_tag_class(s string) bool {
 
 fn valii_inner_tag_form(s string) bool {
 	return s == 'false' || s == 'true'
-}
-
-fn valid_inner_tag_number(s string) bool {
-	return s.is_int() || s.is_hex()
 }
 
 // parse 'has_default' marker
