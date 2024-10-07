@@ -68,6 +68,10 @@ fn (el Element) encode_with_string_options(opt string, rule EncodingRule) ![]u8 
 	return out
 }
 
+
+// UTILITY HELPER FOR ELEMENT
+// 
+
 fn (el Element) validate_wrapper(fo &FieldOptions) ! {
 	// wrapper into the same class is not allowed
 	el_cls := el.tag().tag_class().str().to_lower()
@@ -77,16 +81,6 @@ fn (el Element) validate_wrapper(fo &FieldOptions) ! {
 	if fo.cls == 'universal' {
 		return error('wraps into universal class is not allowed')
 	}
-}
-
-fn (el Element) apply_field_options(fo &FieldOptions, rule EncodingRule) !Element {
-	if fo == unsafe { nil } {
-		return el
-	}
-	fo.validate()!
-	el.validate_wrapper(fo)!
-	// there are wrapper
-	return error('not fully implemented')
 }
 
 fn (el Element) apply_wrappers(wrapper string, mode string, rule EncodingRule) !Element {

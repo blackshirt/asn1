@@ -6,7 +6,7 @@ module asn1
 
 // limit of string option length
 const max_string_option_length = 255
-const max_attributes_length = 4
+const max_attributes_length = 5
 
 @[heap; noinit]
 struct FieldOptions {
@@ -23,8 +23,10 @@ mut:
 	tagnum int = -1
 	// default value for element when has_default value is true
 	default_value ?Element
-	// make sense in explicit context, when cls != '' and cls == .context_specific
+	// make sense in explicit context
 	mode string
+	// inner tag number when in implicit mode, should .universal and primitive form, ie Tag{universal, false, inner}
+	inner int = -1
 }
 
 // validate validates FieldOptions to meet criteria
@@ -39,6 +41,11 @@ fn (fo &FieldOptions) validate() ! {
 		if fo.cls != '' {
 			if !valid_mode_value(fo.mode) {
 				return error('for .context_specific class, provides with explicit or implicit mode')
+			}
+			if fo.mode == 'implicit' {
+				if fo.inner <= 0 {
+					return error('inner tag number not set in implicit mode')
+				}
 			}
 		}
 	}
@@ -99,10 +106,11 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 	mut opt_ctr := 0 // optional marker counter
 	mut def_ctr := 0 // has_default marker counter
 	mut mod_ctr := 0 // mode marker counter
+	mut inn_ctr := 0
 
 	for attr in attrs {
 		if !is_tag_marker(attr) && !is_optional_marker(attr) && !is_default_marker(attr)
-			&& !is_mode_marker(attr) {
+			&& !is_mode_marker(attr) && !is_inner_tag_marker(attr) {
 			return error('unsuppported keyword')
 		}
 		if is_tag_marker(attr) {
@@ -143,30 +151,21 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 			}
 			fo.mode = value
 		}
+		if is_inner_tag_marker(attr) {
+			_, value := parse_inner_tag_marker(attr)!
+			if inn_ctr > 1 {
+				return error('multiples inner tag format defined')
+			}
+			inn_tnum := value.int()
+			if inn_tnum < 0 {
+				return error('bad inner tag number')
+			}
+
+			fo.inner = inn_tnum
+		}
 	}
 
 	return fo
-}
-
-// parse 'application:100;mode:explicit'
-fn parse_wrapper(attr string) !(string, string) {
-	if attr.len == 0 {
-		return '', ''
-	}
-	src := attr.trim_space()
-	if is_tag_marker(src) {
-		field := src.split(';')
-		if field.len != 2 {
-			return error('not complete marker')
-		}
-		first := field[0].trim_space()
-		_, _ := parse_tag_marker(first)!
-
-		second := field[1].trim_space()
-		_, _ := parse_mode_marker(second)!
-		return first, second
-	}
-	return error('not a tag mode wrapper')
 }
 
 // parse 'application:number' format
@@ -238,6 +237,47 @@ fn valid_mode_value(s string) bool {
 
 fn is_mode_marker(attr string) bool {
 	return attr.starts_with('mode')
+}
+
+// parse inner tag when in implicit mode, inner: 100
+fn parse_inner_tag_marker(attr string) !(string, string) {
+	src := attr.trim_space()
+	if is_inner_tag_marker(src) {
+		item := src.split(':')
+		if item.len != 2 {
+			return error('bad inner tag marker length')
+		}
+		first := item[0].trim_space()
+		if !valid_inner_tag_key(first) {
+			return error('bad inner key')
+		}
+		second := item[0].trim_space()
+		if !valid_inner_tag_number(second) {
+			return error('bad inner tag number')
+		}
+		return first, second
+	}
+	return error('not inner tag marker')
+}
+
+fn is_inner_tag_marker(s string) bool {
+	return s.starts_with('inner')
+}
+
+fn valid_inner_tag_key(s string) bool {
+	return s == 'inner'
+}
+
+fn valid_inner_tag_class(s string) bool {
+	return s == 'universal'
+}
+
+fn valii_inner_tag_form(s string) bool {
+	return s == 'false' || s == 'true'
+}
+
+fn valid_inner_tag_number(s string) bool {
+	return s.is_int() || s.is_hex()
 }
 
 // parse 'has_default' marker
