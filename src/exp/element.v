@@ -46,6 +46,14 @@ fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
 		return error('Element: unsupported rule')
 	}
 	mut dst := []u8{}
+	// when this element is optional without presence flag, by default would
+	// serialize this element into empty bytes
+	if el is Optional {
+		if !el.present {
+			return []u8{}
+		}
+	}
+	// otherwise, just serializes as normal
 	el.tag().encode_with_rule(mut dst, rule)!
 	// calculates the length of element,  and serialize this length
 	payload := el.payload()!
@@ -158,37 +166,65 @@ fn (el Element) wrap(cls TagClass, num int, mode TaggedMode) !Element {
 // 2. wrapping with the same class is not allowed too
 // 3. wrapping non-universal class element is not allowed (maybe removed on futures.)
 fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule EncodingRule) !Element {
-	// we dont allow other than .universal class to be wrapped
-	el_cls := el.tag().tag_class()
-	if el_cls != .universal {
-		return error('No need to wrap non-universal class')
+	// we dont allow optional element to be wrapped
+	if el is Optional {
+		return error('optional is not allowed to be wrapped')
 	}
 	// wraps into .universal is not allowed
 	if cls == .universal {
 		return error('no need to wrap into universal class')
 	}
+
+	el_cls := el.tag().tag_class()
 	// error when in the same class
-	if el.tag().tag_class() == cls {
+	if el_cls == cls {
 		return error('no need to wrap into same class')
 	}
+	// we dont allow other than .universal class to be wrapped
+	if el_cls != .universal {
+		return error('No need to wrap non-universal class')
+	}
 
-	newtag := Tag.new(cls, true, num)!
-	mut new_element := RawElement{
-		tag: newtag
-	}
-	match mode {
-		.explicit {
-			// explicit add the new tag to serialized element
-			newpayload := encode_with_rule(el, rule)!
-			new_element.payload = newpayload
+	full_payload := encode_with_rule(el, rule)!
+	only_payload := el.payload()!
+
+	match cls {
+		.context_specific {
+			// should be constructed
+			return ContextElement{
+				inner: el // inner element
+				num:   num
+				mode:  mode
+			}
 		}
-		.implicit {
-			// implicit replaces the el tag with the new one
-			payload := el.payload()!
-			new_element.payload = payload
+		.application {
+			mut app := ApplicationElement{
+				constructed: true
+				num:         num
+			}
+			if mode == .explicit {
+				app.content = full_payload
+			} else {
+				app.content = only_payload
+			}
+			return app
+		}
+		.private {
+			mut priv := PrivateELement{
+				constructed: true
+				num:         num
+			}
+			if mode == .explicit {
+				priv.content = full_payload
+			} else {
+				priv.content = only_payload
+			}
+			return priv
+		}
+		else {
+			return error('class wrapper not allowed')
 		}
 	}
-	return new_element
 }
 
 fn build_payload[T](val T) ![]u8 {
@@ -397,6 +433,7 @@ fn decode_single_with_option(src []u8, opt string) !Element {
 
 @[noinit]
 struct BaseElement {
+mut:
 	constructed bool
 	num         int
 	content     []u8
@@ -404,10 +441,8 @@ struct BaseElement {
 
 @[noinit]
 struct Asn1Element {
-	cls         TagClass
-	constructed bool
-	num         int
-	content     []u8
+	BaseElement
+	cls TagClass
 }
 
 fn (a Asn1Element) tag() Tag {
@@ -421,11 +456,26 @@ fn (a Asn1Element) payload() ![]u8 {
 
 @[noinit]
 struct ContextElement {
-	inner Asn1Element // inner element
+	inner Element // inner element
 	cls   TagClass = .context_specific
 	num   int
 mut:
 	mode TaggedMode
+}
+
+fn (ce ContextElement) tag() Tag {
+	return Tag.new(ce.cls, true, ce.num) or { panic(err) }
+}
+
+fn (ce ContextElement) payload() ![]u8 {
+	match ce.mode {
+		.explicit {
+			return encode_with_rule(ce.inner, .der)!
+		}
+		.implicit {
+			return ce.inner.payload()!
+		}
+	}
 }
 
 @[noinit]

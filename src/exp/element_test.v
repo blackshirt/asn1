@@ -46,3 +46,61 @@ fn test_struct_build_payload() ! {
 	// without field option passed, its should be expected value
 	assert out == expected
 }
+
+fn test_into_optional() ! {
+	// boolean raw, id = 1
+	el := RawElement{
+		tag:     Tag.new(.universal, false, int(TagType.boolean))!
+		payload: [u8(0xff)]
+	}
+	orig_exp := [u8(0x01), 0x01, 0xff]
+
+	without_option := encode(el)!
+	assert without_option == orig_exp
+
+	// marked this element as optional, make its serialized into empty bytes
+	with_option_1 := encode_with_options(el, 'optional')!
+	assert with_option_1 == []u8{}
+
+	// the same meaning with above 'optional'
+	with_option_2 := encode_with_options(el, 'optional:false')!
+	assert with_option_2 == []u8{}
+
+	// presences of true flag tells this optional to be serializable
+	with_option_3 := encode_with_options(el, 'optional:true')!
+	assert with_option_3 == orig_exp
+}
+
+// test for wrapping functionality
+struct WrapperTest {
+	attr string
+	err  IError
+	out  []u8
+}
+
+fn test_wraps_functionality() ! {
+	elem := RawElement{
+		tag:     Tag.new(.universal, false, int(TagType.boolean))!
+		payload: [u8(0xff)]
+	}
+	orig_exp := [u8(0x01), 0x01, 0xff]
+	data := [WrapperTest{'', none, orig_exp},
+	// Tag{.contex_specific, true, 1} = 0b1010_0001
+		WrapperTest{'context_specific:1;mode:explicit', none, [u8(0xa1), 0x03, 0x01, 0x01, 0xff]},
+		WrapperTest{'context_specific:1;mode:implicit;inner:1', none, [u8(0xa1), 0x01, 0xff]},
+		// inner is not make sense when encoding
+		WrapperTest{'context_specific:1;mode:implicit;inner:2', none, [
+			u8(0xa1), 0x01, 0xff]},
+		// empty mode treated as an explicit
+		WrapperTest{'application:10', none, orig_exp}, WrapperTest{'', none, orig_exp},
+		WrapperTest{'', none, orig_exp}, WrapperTest{'', none, orig_exp},
+		WrapperTest{'', none, orig_exp}]
+	for i, item in data {
+		dump(i)
+		out := encode_with_options(elem, item.attr) or {
+			assert item.err == err
+			continue
+		}
+		assert out == item.out
+	}
+}

@@ -566,6 +566,8 @@ fn TaggedMode.from_string(s string) !TaggedMode {
 	match s {
 		'explicit' { return .explicit }
 		'implicit' { return .implicit }
+		// empty string marked as .explicit
+		'' { return .explicit }
 		else { return error('Bad string for tagged mode') }
 	}
 }

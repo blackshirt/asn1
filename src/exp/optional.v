@@ -70,9 +70,23 @@ fn (opt Optional) payload() ![]u8 {
 	return opt.elem.payload()!
 }
 
+fn (opt Optional) encode_with_rule(rule EncodingRule) ![]u8 {
+	if opt.present {
+		return encode_with_rule(opt.elem, .der)!
+	}
+	// not present
+	return []u8{}
+}
+
 fn (opt Optional) into_t[T]() !T {
 	$if T !is Element {
 		return error('T is not element')
 	}
-	return el.into_object[T]()!
+	$if T is Optional {
+		return error('T is optional')
+	}
+	if opt.elem is Optional {
+		return error('Optional.elem is also optional')
+	}
+	return opt.elem.into_object[T]()!
 }

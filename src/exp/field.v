@@ -12,10 +12,14 @@ const max_attributes_length = 5
 struct FieldOptions {
 mut:
 	// wrapper class
-	cls    string
-	tagnum int = -1 // tag number for wrapper element when cls != ''
-	mode   string // mode in 'explicit' or 'implicit' when cls !+ ''
-	inner  int = -1 // set to some value when mode = 'impllcit'
+	cls string
+	// tag number for wrapper element when cls != ''
+	tagnum int = -1
+	// mode in 'explicit' or 'implicit' when cls !+ '', default to explicit
+	mode string = 'explicit'
+	// set to some value when mode = 'impllcit'
+	// make sense when you doing decode from implicitly wrapped element
+	inner int = -1
 	// set to true when this should be optional element
 	optional bool
 	// set to true when optional should present, if unsure, just set to false
@@ -47,13 +51,7 @@ fn (fo &FieldOptions) validate_wrapper_part() ! {
 		if fo.tagnum <= 0 {
 			return error('provides with the correct tagnum')
 		}
-		// yous should provide the mode
-		if fo.mode == '' {
-			return error('mode not set')
-		}
-		if !valid_mode_value(fo.mode) {
-			return error('bad mode value provided')
-		}
+
 		// check when implicit
 		if fo.mode == 'implicit' {
 			if fo.inner <= 0 {
@@ -215,14 +213,18 @@ fn parse_mode_marker(s string) !(string, string) {
 	src := s.trim_space()
 	if is_mode_marker(src) {
 		item := src.split(':')
-		if item.len != 2 {
+		if item.len != 1 && item.len != 2 {
 			return error('bad mode marker')
 		}
 		key := item[0].trim_space()
-		value := item[1].trim_space()
 		if !valid_mode_key(key) {
 			return error('bad mode key')
 		}
+		if item.len == 1 {
+			// without mode, just set to explicit
+			return key, 'explicit'
+		}
+		value := item[1].trim_space()
 		if !valid_mode_value(value) {
 			return error('bad mode value')
 		}
@@ -256,7 +258,7 @@ fn parse_inner_tag_marker(attr string) !(string, string) {
 		if !valid_inner_tag_key(first) {
 			return error('bad inner key')
 		}
-		second := item[0].trim_space()
+		second := item[1].trim_space()
 		if !valid_string_tag_number(second) {
 			return error('bad inner tag number')
 		}
