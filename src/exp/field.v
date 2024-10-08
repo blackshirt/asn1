@@ -33,9 +33,7 @@ mut:
 // validate validates FieldOptions to meet criteria
 fn (fo &FieldOptions) validate() ! {
 	fo.validate_wrapper_part()!
-	if fo.has_default && fo.default_value == none {
-		return error('fo.has_default without default_value')
-	}
+	fo.validate_default_part()!
 	// mode present without class wrapper present is error
 	if fo.cls == '' && fo.mode != '' {
 		return error('mode key presents without cls being setted')
@@ -57,6 +55,14 @@ fn (fo &FieldOptions) validate_wrapper_part() ! {
 			if fo.inner <= 0 {
 				return error('inner tag number was not set in implicit mode')
 			}
+		}
+	}
+}
+
+fn (fo &FieldOptions) validate_default_part() ! {
+	if fo.has_default {
+		if fo.default_value == none {
+			return error('has_default withoud default value')
 		}
 	}
 }
@@ -112,12 +118,13 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 	mut inn_ctr := 0 // inner counter
 
 	for attr in attrs {
-		if !is_tag_marker(attr) && !is_optional_marker(attr) && !is_default_marker(attr)
-			&& !is_mode_marker(attr) && !is_inner_tag_marker(attr) {
-			return error('unsuppported keyword')
+		item := attr.trim_space()
+		if !is_tag_marker(item) && !is_optional_marker(item) && !is_default_marker(item)
+			&& !is_mode_marker(item) && !is_inner_tag_marker(item) {
+			return error('unsupported keyword')
 		}
-		if is_tag_marker(attr) {
-			cls, num := parse_tag_marker(attr)!
+		if is_tag_marker(item) {
+			cls, num := parse_tag_marker(item)!
 			tag_ctr += 1
 			if tag_ctr > 1 {
 				return error('multiples tag format defined')
@@ -129,33 +136,34 @@ fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 			fo.cls = cls
 			fo.tagnum = tnum
 		}
-		if is_optional_marker(attr) {
-			_, present := parse_optional_marker(attr)!
+		if is_optional_marker(item) {
+			_, status := parse_optional_marker(item)!
 			opt_ctr += 1
 			if opt_ctr > 1 {
 				return error('multiples optional tag')
 			}
+			present := if status == 'true' { true } else { false }
 			fo.optional = true
 			fo.present = present
 		}
-		if is_default_marker(attr) {
-			_ := parse_default_marker(attr)!
+		if is_default_marker(item) {
+			_ := parse_default_marker(item)!
 			def_ctr += 1
 			if def_ctr > 1 {
 				return error('multiples has_default flag')
 			}
 			fo.has_default = true
 		}
-		if is_mode_marker(attr) {
-			_, value := parse_mode_marker(attr)!
+		if is_mode_marker(item) {
+			_, value := parse_mode_marker(item)!
 			mod_ctr += 1
 			if mod_ctr > 1 {
 				return error('multiples mode key defined')
 			}
 			fo.mode = value
 		}
-		if is_inner_tag_marker(attr) {
-			_, value := parse_inner_tag_marker(attr)!
+		if is_inner_tag_marker(item) {
+			_, value := parse_inner_tag_marker(item)!
 			if inn_ctr > 1 {
 				return error('multiples inner tag format defined')
 			}
@@ -304,7 +312,7 @@ fn valid_default_marker(attr string) bool {
 }
 
 // parse 'optional' or 'optional:true [false]' marker
-fn parse_optional_marker(attr string) !(string, bool) {
+fn parse_optional_marker(attr string) !(string, string) {
 	src := attr.trim_space()
 	if is_optional_marker(src) {
 		item := src.split(':')
@@ -312,19 +320,20 @@ fn parse_optional_marker(attr string) !(string, bool) {
 		if item.len != 1 && item.len != 2 {
 			return error('bad optional marker length')
 		}
-		mut present := false
+		key := item[0].trim_space()
+		if !valid_optional_key(key) {
+			return error('bad optional key')
+		}
+
+		mut present := 'false'
 		if item.len == 2 {
 			value := item[1].trim_space()
 			if !valid_optional_present_value(value) {
 				return error('bad optional value')
 			}
 			if value == 'true' {
-				present = true
+				present = 'true'
 			}
-		}
-		key := item[0].trim_space()
-		if !valid_optional_key(key) {
-			return error('bad optional key')
 		}
 
 		return key, present

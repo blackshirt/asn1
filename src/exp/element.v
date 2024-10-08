@@ -128,6 +128,10 @@ fn (el Element) apply_wrappers_options(fo &FieldOptions) !Element {
 	fo.validate_wrapper_part()!
 	el.validate_wrapper(fo)!
 
+	if fo.has_default {
+		el.validate_default(fo)!
+	}
+
 	cls := TagClass.from_string(fo.cls)!
 	mode := TaggedMode.from_string(fo.mode)!
 
@@ -147,12 +151,29 @@ fn (el Element) validate_wrapper(fo &FieldOptions) ! {
 	}
 }
 
+fn (el Element) validate_default(fo &FieldOptions) ! {
+	fo.validate_default_part()!
+	default := fo.default_value or { return err }
+	if el.tag() != default.tag() {
+		return error('unmatching tag of default value with the current element tag')
+	}
+}
+
 fn (el Element) apply_field_options(fo &FieldOptions) !Element {
 	wrapped := el.apply_wrappers_options(fo)!
 	// optional options take precedence over wrapper
 	// wehen fo.optional is false, new_el is current wrapped element
 	new_el := wrapped.apply_optional_options(fo)!
 	return new_el
+}
+
+fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
+	// the default tag should match with the current tag
+	if el.tag() != value.tag() {
+		return error('unmatching tag of default value')
+	}
+	fo.install_default(el, false)!
+	el.validate_default(fo)!
 }
 
 // wrap only universal class, and other class that has primitive form
@@ -456,15 +477,16 @@ fn (a Asn1Element) payload() ![]u8 {
 
 @[noinit]
 struct ContextElement {
-	inner Element // inner element
-	cls   TagClass = .context_specific
-	num   int
+	inner       Element // inner element
+	constructed bool     = true
+	cls         TagClass = .context_specific
+	num         int
 mut:
 	mode TaggedMode
 }
 
 fn (ce ContextElement) tag() Tag {
-	return Tag.new(ce.cls, true, ce.num) or { panic(err) }
+	return Tag.new(ce.cls, ce.constructed, ce.num) or { panic(err) }
 }
 
 fn (ce ContextElement) payload() ![]u8 {

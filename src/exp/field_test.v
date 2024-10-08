@@ -14,9 +14,11 @@ struct StringOption {
 
 fn test_parse_string_option() ! {
 	data := [
-		StringOption{'application:20', none, 'application', 20, false, false, '', false},
-		StringOption{'private:0x20', none, 'private', 32, false, false, '', false},
-		StringOption{'context_specific:0x20;optional;has_default;mode:explicit', none, 'context_specific', 32, true, true, 'explicit', false},
+		StringOption{'application:20', none, 'application', 20, false, false, 'explicit', false},
+		StringOption{'private:0x20', none, 'private', 32, false, false, 'explicit', false},
+		StringOption{'context_specific:0x20; optional; has_default; mode:explicit', none, 'context_specific', 32, true, true, 'explicit', false},
+		StringOption{'context_specific:0x20; optional; has_default; mode:implicit', none, 'context_specific', 32, true, true, 'implicit', false},
+		StringOption{'application:5; optional', none, 'application', 5, true, false, 'explicit', false},
 	]
 	for item in data {
 		fo := parse_string_option(item.src) or {
@@ -58,13 +60,15 @@ fn test_optional_marker_parsing() ! {
 		OptionalMarker{'optional: trueorfalse ', false, error('bad optional value')},
 		// multiples values is not allowed
 		OptionalMarker{'optional: true:false ', false, error('bad optional marker length')},
+		OptionalMarker{'optional: true ', true, none},
 	]
 	for item in data {
-		res, present := parse_optional_marker(item.attr) or {
+		res, status := parse_optional_marker(item.attr) or {
 			assert err == item.err
 			continue
 		}
 		assert valid_optional_key(res) == true
+		present := if status == 'true' { true } else { false }
 		assert present == item.present
 	}
 }
@@ -143,7 +147,7 @@ fn test_mode_marker_parsing() ! {
 		// bad key or value
 		TaggedModeMarker{'model:implicit', '', error('bad mode key')},
 		TaggedModeMarker{'mode:implicitkey', '', error('bad mode value')},
-		TaggedModeMarker{'modelimplicit', '', error('bad mode marker')},
+		TaggedModeMarker{'modelimplicit', '', error('bad mode key')},
 	]
 	for item in data {
 		k, v := parse_mode_marker(item.attr) or {
