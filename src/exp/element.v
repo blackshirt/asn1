@@ -36,33 +36,9 @@ pub fn encode_with_options(el Element, opt string) ![]u8 {
 	return el.encode_with_string_options(opt, .der)!
 }
 
-fn encode_with_field_options(el Element, fo &FieldOptions) ![]u8 {
+// encode_with_field_options serializes this element into bytes array with options defined in fo.
+pub fn encode_with_field_options(el Element, fo &FieldOptions) ![]u8 {
 	return el.encode_with_field_options(fo, .der)
-}
-
-// encode_with_rule encodes element into bytes with encoding rule
-fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
-	if rule != .der && rule != .ber {
-		return error('Element: unsupported rule')
-	}
-	mut dst := []u8{}
-	// when this element is optional without presence flag, by default would
-	// serialize this element into empty bytes
-	if el is Optional {
-		if !el.present {
-			return []u8{}
-		}
-	}
-	// otherwise, just serializes as normal
-	el.tag().encode_with_rule(mut dst, rule)!
-	// calculates the length of element,  and serialize this length
-	payload := el.payload()!
-	length := Length.from_i64(payload.len)!
-	length.encode_with_rule(mut dst, rule)!
-	// append the element payload to destination
-	dst << payload
-
-	return dst
 }
 
 fn (el Element) encode_with_string_options(opt string, rule EncodingRule) ![]u8 {
@@ -91,6 +67,67 @@ fn (el Element) encode_with_field_options(fo &FieldOptions, rule EncodingRule) !
 	return out
 }
 
+// encode_with_rule encodes element into bytes with encoding rule
+fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
+	if rule != .der && rule != .ber {
+		return error('Element: unsupported rule')
+	}
+	mut dst := []u8{}
+	// when this element is optional without presence flag, by default would
+	// serialize this element into empty bytes
+	if el is Optional {
+		if !el.present {
+			return dst
+		}
+	}
+	// otherwise, just serializes as normal
+	el.tag().encode_with_rule(mut dst, rule)!
+	// calculates the length of element,  and serialize this length
+	payload := el.payload()!
+	length := Length.from_i64(payload.len)!
+	length.encode_with_rule(mut dst, rule)!
+	// append the element payload to destination
+	dst << payload
+
+	return dst
+}
+
+// FIXME: its not tested
+// from_object[T] transforms and creates a new Element from generic type (maybe universal type, like an OctetString).
+// Its accepts generic element t that you should pass to this function. You should make sure if this element implements
+// required methods of the Element, or an error would be returned.
+// Examples:
+// ```v
+// oc := asn1.OctetString.from_string("xxx")!
+// el := Element.from_object[OctetString](oc)!
+// ```
+// and then treats your OctetString as an Element
+pub fn Element.from_object[T](t T) !Element {
+	$if T !is Element {
+		return error('Not holding element')
+	}
+	return t
+}
+
+// into_object[T] transforms and tries to cast element el into generic object T
+// if the element not holding object T, it would return error.
+// NOTE: Not tested
+// Examples:
+// ```v
+// oc := asn1.OctetString.from_string("xxx")!
+// el := Element.from_object[OctetString](oc)!
+//
+// // cast back the element into OctetString
+// os := el.into_object[OctetString]()!
+// ```
+// and then treats os as an OctetString
+pub fn (el Element) into_object[T]() !T {
+	if el is T {
+		return *el
+	}
+	return error('Element el does not holding T')
+}
+
 // UTILITY HELPER FOR ELEMENT
 //
 
@@ -99,7 +136,9 @@ fn (el Element) into_optional() !Optional {
 	return el.into_optional_with_present(false)!
 }
 
-// if not sure, just to false
+// into_optional_with_present turns this element into Optional.
+// Its accepts present to mark this optional should be present, ie, negates optionality.
+// if not sure, just set to false
 fn (el Element) into_optional_with_present(present bool) !Optional {
 	// maybe removed in the future
 	if el is Optional {
@@ -109,6 +148,7 @@ fn (el Element) into_optional_with_present(present bool) !Optional {
 	return opt.with_present(present)
 }
 
+// apply_optional_options turns this element into another element qith optional semantic.
 fn (el Element) apply_optional_options(fo &FieldOptions) !Element {
 	if fo.optional {
 		if fo.present {
@@ -119,6 +159,8 @@ fn (el Element) apply_optional_options(fo &FieldOptions) !Element {
 	return el
 }
 
+// apply_wrappers_options turns this element into another element by wrapping it
+// with the some options defined in field options.
 fn (el Element) apply_wrappers_options(fo &FieldOptions) !Element {
 	// no wraps, and discard other wrappe options
 	if fo.cls == '' {
@@ -140,6 +182,8 @@ fn (el Element) apply_wrappers_options(fo &FieldOptions) !Element {
 	return new_el
 }
 
+// validate_wrapper validates wrapper's part of fields options again element being
+// to be wrapped to meet requirement. Its return error on fail to validate.
 fn (el Element) validate_wrapper(fo &FieldOptions) ! {
 	// wrapper into the same class is not allowed
 	el_cls := el.tag().tag_class().str().to_lower()
@@ -151,6 +195,7 @@ fn (el Element) validate_wrapper(fo &FieldOptions) ! {
 	}
 }
 
+// validate_default validates has_default part of field options
 fn (el Element) validate_default(fo &FieldOptions) ! {
 	fo.validate_default_part()!
 	default := fo.default_value or { return err }
@@ -159,6 +204,10 @@ fn (el Element) validate_default(fo &FieldOptions) ! {
 	}
 }
 
+// apply_field_options applies rules in field options into current element
+// and turns this into another element.
+// by default, optional attribute is more higher precedence over wrapper attribut, ie,
+// take the wrap step and then turn into optional (if true)
 fn (el Element) apply_field_options(fo &FieldOptions) !Element {
 	wrapped := el.apply_wrappers_options(fo)!
 	// optional options take precedence over wrapper
@@ -248,6 +297,24 @@ fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule Enco
 	}
 }
 
+// build_payload build bytes payload for some structures contains field of Elements
+// consider from rfc 5280
+//  Certificate  ::=  SEQUENCE  {
+//      tbsCertificate       TBSCertificate,
+//      signatureAlgorithm   AlgorithmIdentifier,
+//      signatureValue       BIT STRING  }
+// where your structure defined as:
+// struct Certificate {
+// 		tbs_certificate 	TBSCertificate
+//		signature_algorithm	AlgorithmIdentifier
+// 		signature_value		BitString
+// }
+// usually you can do:
+// ```
+// cert := instance of Certificate
+// payload := build_payload[Certificate(cert)!
+// ```
+// and then you can use the produced payload
 fn build_payload[T](val T) ![]u8 {
 	mut out := []u8{}
 	$for field in val.fields {
@@ -288,42 +355,6 @@ fn (el Element) element_size_with_rule(rule EncodingRule) !int {
 	n += el.payload()!.len
 
 	return n
-}
-
-// FIXME: its not tested
-// from_object[T] transforms and creates a new Element from generic type (maybe universal type, like an OctetString).
-// Its accepts generic element t that you should pass to this function. You should make sure if this element implements
-// required methods of the Element, or an error would be returned.
-// Examples:
-// ```v
-// oc := asn1.OctetString.from_string("xxx")!
-// el := Element.from_object[OctetString](oc)!
-// ```
-// and then treats your OctetString as an Element
-pub fn Element.from_object[T](t T) !Element {
-	$if T !is Element {
-		return error('Not holding element')
-	}
-	return t
-}
-
-// into_object[T] transforms and tries to cast element el into generic object T
-// if the element not holding object T, it would return error.
-// NOTE: Not tested
-// Examples:
-// ```v
-// oc := asn1.OctetString.from_string("xxx")!
-// el := Element.from_object[OctetString](oc)!
-//
-// // cast back the element into OctetString
-// os := el.into_object[OctetString]()!
-// ```
-// and then treats os as an OctetString
-pub fn (el Element) into_object[T]() !T {
-	if el is T {
-		return *el
-	}
-	return error('Element el does not holding T')
 }
 
 /*

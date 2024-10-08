@@ -4,12 +4,25 @@
 module asn1
 
 // ASN.1 NULL TYPE
-pub struct Null {
-	tag Tag = Tag{.universal, false, int(TagType.null)}
+pub struct Null {}
+
+pub fn Null.from_bytes(b []u8, p Params) !Null {
+	if b.len != 0 {
+		return error('Null: bad non-null bytes')
+	}
+	return Null{}
 }
 
-pub fn Null.new() Null {
-	return Null{}
+pub fn (n Null) tag() Tag {
+	return Tag{.universal, false, u32(TagType.null)}
+}
+
+pub fn (n Null) payload() ![]u8 {
+	return []u8{}
+}
+
+fn (n Null) str() string {
+	return 'NULL'
 }
 
 /*
@@ -35,23 +48,10 @@ pub fn Null.from_raw_element(re RawElement, p Params) !Null {
 	return bs
 }
 */
-pub fn Null.from_bytes(b []u8, p Params) !Null {
-	if b.len != 0 {
-		return error('Null: bad non-null bytes')
-	}
-	return Null{}
-}
 
-pub fn (n Null) tag() Tag {
-	return n.tag
-}
-
+/*
 fn (n Null) length(p Params) !int {
 	return 0
-}
-
-pub fn (n Null) payload(p Params) ![]u8 {
-	return []u8{}
 }
 
 fn (n Null) packed_length(p Params) !int {
@@ -67,7 +67,9 @@ pub fn (n Null) encode(mut dst []u8, p Params) ! {
 	// the length is 0
 	dst << [u8(0x00)]
 }
+ */
 
+/*
 fn Null.decode(src []u8, loc i64, p Params) !(Null, i64) {
 	raw, next := RawElement.decode(src, loc, p)!
 	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
@@ -79,8 +81,4 @@ fn Null.decode(src []u8, loc i64, p Params) !(Null, i64) {
 	}
 	ret := Null.from_bytes(raw.payload, p)!
 	return ret, next
-}
-
-pub fn (n Null) str() string {
-	return 'NULL'
-}
+} */
