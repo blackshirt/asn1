@@ -31,7 +31,8 @@ fn (t TestStruct) tag() Tag {
 }
 
 fn (t TestStruct) payload() ![]u8 {
-	out := build_payload[TestStruct](t)!
+	kd := KeyDefault(map[string]Element{})
+	out := build_payload[TestStruct](t, kd)!
 	return out
 }
 

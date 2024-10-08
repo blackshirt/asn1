@@ -221,7 +221,7 @@ fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
 	if el.tag() != value.tag() {
 		return error('unmatching tag of default value')
 	}
-	fo.install_default(el, false)!
+	fo.install_default(value, false)!
 	el.validate_default(fo)!
 }
 
@@ -255,9 +255,7 @@ fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule Enco
 		return error('No need to wrap non-universal class')
 	}
 
-	full_payload := encode_with_rule(el, rule)!
-	only_payload := el.payload()!
-
+	payload := if mode == .explicit { encode_with_rule(el, rule)! } else { el.payload()! }
 	match cls {
 		.context_specific {
 			// should be constructed
@@ -271,11 +269,7 @@ fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule Enco
 			mut app := ApplicationElement{
 				constructed: true
 				num:         num
-			}
-			if mode == .explicit {
-				app.content = full_payload
-			} else {
-				app.content = only_payload
+				content:     payload
 			}
 			return app
 		}
@@ -283,11 +277,7 @@ fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule Enco
 			mut priv := PrivateELement{
 				constructed: true
 				num:         num
-			}
-			if mode == .explicit {
-				priv.content = full_payload
-			} else {
-				priv.content = only_payload
+				content:     payload
 			}
 			return priv
 		}
@@ -297,32 +287,45 @@ fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule Enco
 	}
 }
 
+// map of string (field.name) onto Element for element with default semantic
+// its is to be used for building payload of complex structures like sequence
+// see `build_payload` below.
+type KeyDefault = map[string]Element
+
 // build_payload build bytes payload for some structures contains field of Elements
-// consider from rfc 5280
+// consider examples from rfc 5280 defines schema
 //  Certificate  ::=  SEQUENCE  {
 //      tbsCertificate       TBSCertificate,
 //      signatureAlgorithm   AlgorithmIdentifier,
 //      signatureValue       BIT STRING  }
 // where your structure defined as:
+// ```v
 // struct Certificate {
 // 		tbs_certificate 	TBSCertificate
 //		signature_algorithm	AlgorithmIdentifier
 // 		signature_value		BitString
-// }
+// }```
 // usually you can do:
-// ```
+// ```v
 // cert := instance of Certificate
-// payload := build_payload[Certificate(cert)!
+// payload := build_payload[Certificate](cert)!
 // ```
 // and then you can use the produced payload
-fn build_payload[T](val T) ![]u8 {
+fn build_payload[T](val T, kd KeyDefault) ![]u8 {
 	mut out := []u8{}
 	$for field in val.fields {
 		// only serialiaze field that implement interfaces
 		$if field.typ is Element {
 			// if there attributes option
 			if field.attrs.len != 0 {
-				fo := parse_attrs_to_field_options(field.attrs)!
+				mut fo := parse_attrs_to_field_options(field.attrs)!
+				// TODO: add keyDefault support
+				if fo.has_default {
+					// install default by getting default element from map
+					key := unsafe { field.name }
+					def_elem := kd[key] or { return error('missing defaul element') }
+					fo.install_default(def_elem, false)!
+				}
 				current := encode_with_field_options(val.$(field.name), fo)!
 				out << current
 			} else {

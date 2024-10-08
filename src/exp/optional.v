@@ -13,7 +13,8 @@ struct Optional {
 	// underlying element marked as an optional
 	elem Element
 mut:
-	// set to true when its should present, default to false
+	// presence of this flag negates optionality of this elemeent.
+	// set to true when its should present, if notu sure, just set to to false
 	present bool
 }
 

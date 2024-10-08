@@ -213,6 +213,14 @@ fn Tag.decode_from_offset(bytes []u8, pos i64) !(Tag, i64) {
 	return tag, next
 }
 
+fn Tag.decode_with_expected(expected Tag, bytes []u8, start i64, rule EncodingRule) !(Tag, i64) {
+	tag, length_pos := Tag.decode_with_rule(bytes, start, rule)!
+	if tag != expected {
+		return error('Resulting tag is not expected')
+	}
+	return tag, length_pos
+}
+
 // Tag.decode_with_rule deserializes bytes back into Tag structure start from `loc` offset.
 // By default, its decodes in .der encoding rule, if you want more control, pass your `Params`.
 // Its return Tag and next offset to operate on, and return error if it fails to decode.

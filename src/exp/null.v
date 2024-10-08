@@ -6,7 +6,11 @@ module asn1
 // ASN.1 NULL TYPE
 pub struct Null {}
 
-pub fn Null.from_bytes(b []u8, p Params) !Null {
+pub fn Null.from_bytes(b []u8, rule EncodingRule) !Null {
+	return Null.from_bytes_with_rule(b, .der)!
+}
+
+fn Null.from_bytes_with_rule(b []u8, rule EncodingRule) !Null {
 	if b.len != 0 {
 		return error('Null: bad non-null bytes')
 	}
