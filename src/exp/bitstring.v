@@ -15,12 +15,37 @@ import arrays
 // must use the primitive encoding. DER restricts the encoding to primitive only.
 // The same applies for BITSTRING. ie, For BIT STRING and OCTET STRING types,
 // DER does not allow the constructed form (breaking a string into multiple TLVs) or the indefinite length form.
+@[heap; noinit]
 pub struct BitString {
+mut:
 	data []u8
 	pad  u8 // numbers of unused bits
-mut:
-	// make an immutable to be possible to set a tag form
-	tag Tag = Tag{.universal, false, int(TagType.bitstring)}
+}
+
+pub fn (bs BitString) tag() Tag {
+	return Tag{.universal, false, u32(TagType.bitstring)}
+}
+
+pub fn (bs BitString) payload(p Params) ![]u8 {
+	mut out := []u8{}
+	out << bs.pad
+	out << bs.data
+	return out
+}
+
+fn BitString.decode_with_rule(bytes []u8, rule EncodingRule) !(BitString, i64) {
+	tag, length_pos := Tag.decode_with_rule(bytes, loc, rule)!
+	if !tag.expect(.universal, false, u32(TagType.bitstring)) {
+		return error('Unexpected non-bitstring tag')
+	}
+	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
+
+	if content_pos >= src.len || content_pos + length > src.len {
+		return error('Boolean: truncated payload bytes')
+	}
+	payload := unsafe { src[content_pos..content_pos + length] }
+	bs := BitString.new_with_pad(raw.payload[1..], raw.payload[0], p)!
+	return bs, next
 }
 
 // BitString.from_binary_string creates a new BitString from binary bits arrays in s,
@@ -90,17 +115,6 @@ fn (bs BitString) bytes_len() int {
 	return bs.data.len + 1
 }
 
-pub fn (b BitString) tag() Tag {
-	return b.tag
-}
-
-pub fn (bs BitString) payload(p Params) ![]u8 {
-	mut out := []u8{}
-	out << bs.pad
-	out << bs.data
-	return out
-}
-
 pub fn (bs BitString) length(p Params) !int {
 	return bs.bytes_len()
 }
@@ -130,23 +144,6 @@ pub fn (bs BitString) encode(mut dst []u8, p Params) ! {
 	// write pad bit and data
 	dst << bs.pad
 	dst << bs.data
-}
-
-pub fn BitString.decode(src []u8, loc i64, p Params) !(BitString, i64) {
-	raw, next := RawElement.decode(src, loc, p)!
-
-	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
-		|| raw.tag.tag_number() != int(TagType.bitstring) {
-		return error('BitString: bad tag check')
-	}
-
-	// check for length and required bytes
-	if raw.payload.len == 0 {
-		return error('BitString: zero length bit string')
-	}
-
-	bs := BitString.new_with_pad(raw.payload[1..], raw.payload[0], p)!
-	return bs, next
 }
 
 // Utility function
