@@ -66,19 +66,22 @@ fn (mut p Parser) is_empty() bool {
 }
 
 pub fn (mut p Parser) read_element[T]() !T {
-	$if T !is Asn1Parseable {
-		return error('T is Asn1Parseable')
-	}
-	return T.parse(p)
+	return T.parse(mut p)!
 }
 
 interface Asn1Parseable {
-	parse(mut parser Parser) !Asn1Parseable
 	can_parse(tag Tag) bool
 }
 
+fn Asn1Parseable.parse(mut p Parser) !Asn1Parseable {
+	el := p.read_tlv()!
+	return el
+}
+
 pub fn parse_single[T](data []u8) !T {
-	parse(data, Parser.read_element[T])
+	mut p := Parser.new(data)!
+	out := p.read_element[T]()!
+	return out
 }
 
 // type CbParser[T] = fn (T) (mut Parser)() !T
@@ -107,5 +110,5 @@ fn (fp FixedAsn1Parseable) parse(mut p Parser) !Asn1Parseable {
 		return error('UnexpectedTag')
 	}
 	elout := fp.parse_data(tlv.payload()!)!
-	return elout
+	return elout as Asn1Parseable
 }

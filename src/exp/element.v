@@ -498,6 +498,10 @@ fn (a Asn1Element) parse[T]() !T {
 	return out
 }
 
+fn (a Asn1Element) can_parse(tag Tag) bool {
+	return a.tag() == tag
+}
+
 fn Asn1Element.new(tag Tag, content []u8) !Asn1Element {
 	return Asn1Element.new_with_rule(tag, content, .der)!
 }

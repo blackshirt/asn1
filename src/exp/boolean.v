@@ -22,6 +22,18 @@ pub fn (v Boolean) tag() Tag {
 	return Tag{.universal, false, u32(TagType.boolean)}
 }
 
+fn (v Boolean) str() string {
+	value := v.value()
+	match value {
+		false {
+			return 'false'
+		}
+		true {
+			return 'true'
+		}
+	}
+}
+
 // new creates a new Boolean value from true or false value
 // By default, when you pass true, its would store 0xff as underlying byte value
 // if you want more to be relaxed, see from_u8 to creates with another byte value
@@ -38,6 +50,12 @@ pub fn Boolean.from_u8(value u8) Boolean {
 	return Boolean{
 		value: value
 	}
+}
+
+fn Boolean.parse(mut p Parser) !Boolean {
+	value, next := Boolean.decode(p.data, 0)!
+	p.data = unsafe { p.data[next..] }
+	return value
 }
 
 // from_bytes creates a new ASN.1 BOOLEAN type from bytes b.

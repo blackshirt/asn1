@@ -28,9 +28,9 @@ fn test_encode_decode_boolean_in_der_rule() {
 	}
 }
 
-fn test_parse_boolean() ! {
+fn test_parse_boolean_with_parser() ! {
 	data := [u8(0x01), 0x01, 0xff]
-	p := Parser.new(data)
-	out := parse[Boolean](data, p.read_element[Boolean]()!)!
-	dump(out)
+	mut p := Parser.new(data)
+	out := p.read_element[Boolean]()!
+	assert out.str() == 'true'
 }
