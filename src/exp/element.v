@@ -235,7 +235,7 @@ fn (el Element) wrap(cls TagClass, num int, mode TaggedMode) !Element {
 // 1. wrapping into .universal class is not allowed
 // 2. wrapping with the same class is not allowed too
 // 3. wrapping non-universal class element is not allowed (maybe removed on futures.)
-fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule EncodingRule) !Element {
+fn (el Element) wrap_with_rule(cls TagClass, tagnum int, mode TaggedMode, rule EncodingRule) !Element {
 	// we dont allow optional element to be wrapped
 	if el is Optional {
 		return error('optional is not allowed to be wrapped')
@@ -259,27 +259,13 @@ fn (el Element) wrap_with_rule(cls TagClass, num int, mode TaggedMode, rule Enco
 	match cls {
 		.context_specific {
 			// should be constructed
-			return ContextElement{
-				inner: el // inner element
-				num:   num
-				mode:  mode
-			}
+			return ContextElement.new(mode, tagnum, el)!
 		}
 		.application {
-			mut app := ApplicationElement{
-				constructed: true
-				num:         num
-				content:     payload
-			}
-			return app
+			return ApplicationElement.new(true, tagnum, payload)!
 		}
 		.private {
-			mut priv := PrivateELement{
-				constructed: true
-				num:         num
-				content:     payload
-			}
-			return priv
+			return PrivateELement.new(true, tagnum, payload)!
 		}
 		else {
 			return error('class wrapper not allowed')
@@ -486,41 +472,81 @@ fn decode_single_with_option(src []u8, opt string) !Element {
 	return error('not implemented')
 }
 
-@[noinit]
-struct BaseElement {
-mut:
-	constructed bool
-	num         int
-	content     []u8
-}
-
-@[noinit]
+@[heap; noinit]
 struct Asn1Element {
-	BaseElement
-	cls TagClass
+mut:
+	// tag is the tag of the TLV
+	tag Tag
+	// `content` is the value of a TLV
+	content []u8
 }
 
 fn (a Asn1Element) tag() Tag {
-	tag := Tag.new(a.cls, a.constructed, a.num) or { panic('bad tag number of asn1 element') }
-	return tag
+	return a.tag
 }
 
 fn (a Asn1Element) payload() ![]u8 {
 	return a.content
 }
 
+fn (a Asn1Element) parse[T]() !T {
+	$if T !is Asn1Parseable {
+		return error('T is not asn1 parseable')
+	}
+	full_data := encode_with_rule(a, .der)!
+	out := parse_single[T](full_data)!
+	return out
+}
+
+fn Asn1Element.new(tag Tag, content []u8) !Asn1Element {
+	return Asn1Element.new_with_rule(tag, content, .der)!
+}
+
+fn Asn1Element.new_with_rule(tag Tag, content []u8, rule EncodingRule) !Asn1Element {
+	new := Asn1Element{
+		tag:     tag
+		content: content
+	}
+	return new
+}
+
 @[noinit]
 struct ContextElement {
-	inner       Element // inner element
-	constructed bool     = true
-	cls         TagClass = .context_specific
-	num         int
+	tag   Tag     // outer tag number
+	inner Element // inner element
 mut:
 	mode TaggedMode
 }
 
+fn ContextElement.new(mode TaggedMode, tagnum int, inner Element) !ContextElement {
+	// inner only for .universal class
+	if inner.tag().tag_class() != .universal {
+		return error('cant create ContextElement from non-universal class')
+	}
+	tag := Tag.new(.context_specific, true, tagnum)!
+	ctx := ContextElement{
+		tag:   tag
+		inner: inner
+		mode:  mode
+	}
+	return ctx
+}
+
+fn explicit_context(tagnum int, inner Element) !ContextElement {
+	return ContextElement.new(.explicit, tagnum, inner)!
+}
+
+fn implicit_context(tagnum int, inner Element) !ContextElement {
+	return ContextElement.new(.implicit, tagnum, inner)!
+}
+
+// outer tag
 fn (ce ContextElement) tag() Tag {
-	return Tag.new(ce.cls, ce.constructed, ce.num) or { panic(err) }
+	return ce.tag
+}
+
+fn (ce ContextElement) inner_tag() Tag {
+	return ce.inner.tag()
 }
 
 fn (ce ContextElement) payload() ![]u8 {
@@ -536,13 +562,19 @@ fn (ce ContextElement) payload() ![]u8 {
 
 @[noinit]
 struct ApplicationElement {
-	BaseElement
-	cls TagClass = .application
+	Asn1Element
+}
+
+fn ApplicationElement.new(constructed bool, tagnum int, content []u8) !ApplicationElement {
+	tag := Tag.new(.application, constructed, tagnum)!
+	return ApplicationElement{
+		tag:     tag
+		content: content
+	}
 }
 
 fn (app ApplicationElement) tag() Tag {
-	tag := Tag.new(app.cls, app.constructed, app.num) or { panic(err) }
-	return tag
+	return app.tag
 }
 
 fn (app ApplicationElement) payload() ![]u8 {
@@ -551,13 +583,19 @@ fn (app ApplicationElement) payload() ![]u8 {
 
 @[noinit]
 struct PrivateELement {
-	BaseElement
-	cls TagClass = .private
+	Asn1Element
+}
+
+fn PrivateELement.new(constructed bool, tagnum int, content []u8) !PrivateELement {
+	tag := Tag.new(.private, constructed, tagnum)!
+	return PrivateELement{
+		tag:     tag
+		content: content
+	}
 }
 
 fn (prv PrivateELement) tag() Tag {
-	tag := Tag.new(prv.cls, prv.constructed, prv.num) or { panic(err) }
-	return tag
+	return prv.tag
 }
 
 fn (prv PrivateELement) payload() ![]u8 {

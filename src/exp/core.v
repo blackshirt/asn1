@@ -138,16 +138,14 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 	}
 }
 
-// tagnum_from_int creates tag number from regular integer.
-// Its just doing check and wrapping on the passed integer
-fn tagnum_from_int(v int) !u32 {
-	if v < 0 {
-		return error('Negative number for tag number was not allowed')
-	}
-	if v > max_tag_number {
-		return error('Number bigger than max allowed tag number')
-	}
-	return u32(v)
+// primitive creates universal class of primitive tag
+pub fn primitive(value int) !Tag {
+	return Tag.new(.universal, false, value)!
+}
+
+// constructed creates universal class of constructed tag
+pub fn constructed(value int) !Tag {
+	return Tag.new(.universal, true, value)!
 }
 
 // tag_class return the ASN.1 class of this tag
@@ -168,6 +166,18 @@ pub fn (t Tag) tag_number() int {
 // encode serializes tag t into bytes array with default context
 pub fn (t Tag) encode(mut dst []u8) ! {
 	t.encode_with_rule(mut dst, .der)!
+}
+
+// tagnum_from_int creates tag number from regular integer.
+// Its just doing check and wrapping on the passed integer
+fn tagnum_from_int(v int) !u32 {
+	if v < 0 {
+		return error('Negative number for tag number was not allowed')
+	}
+	if v > max_tag_number {
+		return error('Number bigger than max allowed tag number')
+	}
+	return u32(v)
 }
 
 // encode_with_rule serializes tag into bytes array
@@ -200,8 +210,17 @@ fn (t Tag) encode_with_rule(mut dst []u8, rule EncodingRule) ! {
 	}
 }
 
+pub fn Tag.from_bytes(bytes []u8) !(Tag, []u8) {
+	tag, next_pos := Tag.decode(bytes)!
+	if next_pos < bytes.len {
+		rest := unsafe { bytes[next_pos..] }
+		return tag, rest
+	}
+	return tag, []u8{}
+}
+
 // Tag.decode tries to deserializes bytes into Tag. its return error on fails.
-pub fn Tag.decode(bytes []u8) !(Tag, i64) {
+fn Tag.decode(bytes []u8) !(Tag, i64) {
 	tag, next := Tag.decode_from_offset(bytes, 0)!
 	return tag, next
 }

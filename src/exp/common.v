@@ -15,9 +15,8 @@ fn parse_raw_expected(expected Tag, bytes []u8, start i64, rule EncodingRule) !(
 	mut payload := []u8{}
 	if length == 0 {
 		elem := Asn1Element{
-			cls:         tag.tag_class()
-			constructed: tag.is_constructed()
-			content:     payload
+			tag:     tag
+			content: payload
 		}
 		return elem, unsafe { bytes[content_pos + length..] }
 	}
@@ -29,9 +28,8 @@ fn parse_raw_expected(expected Tag, bytes []u8, start i64, rule EncodingRule) !(
 	}
 	payload = unsafe { bytes[content_pos..content_pos + length] }
 	return Asn1Element{
-		cls:         tag.tag_class()
-		constructed: tag.is_constructed()
-		content:     payload
+		tag:     tag
+		content: payload
 	}, unsafe { bytes[content_pos + length..] }
 }
 

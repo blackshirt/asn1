@@ -27,3 +27,10 @@ fn test_encode_decode_boolean_in_der_rule() {
 		assert out.value() == c.out
 	}
 }
+
+fn test_parse_boolean() ! {
+	data := [u8(0x01), 0x01, 0xff]
+	p := Parser.new(data)
+	out := parse[Boolean](data, p.read_element[Boolean]()!)!
+	dump(out)
+}
