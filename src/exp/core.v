@@ -163,6 +163,11 @@ pub fn (t Tag) tag_number() int {
 	return t.number
 }
 
+fn (t Tag) expect(cls TagClass, constructed bool, tagnum int) bool {
+	num := tagnum_from_int(tagnum) or { return false }
+	return t.class == cls && t.constructed == constructed && t.number == num
+}
+
 // encode serializes tag t into bytes array with default context
 pub fn (t Tag) encode(mut dst []u8) ! {
 	t.encode_with_rule(mut dst, .der)!

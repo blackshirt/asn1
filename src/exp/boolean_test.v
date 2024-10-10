@@ -16,10 +16,10 @@ fn test_encode_decode_boolean_in_der_rule() {
 		BooleanTest{[u8(1), 0x01, 0x10], false, error('Boolean: in DER, other than 0xff is not allowed for true value')}, // invalid value
 		BooleanTest{[u8(1), 0x02, 0x00], false, error('Boolean: should have length 1')}, // bad length
 		BooleanTest{[u8(1), 0x00, 0x00], false, error('Boolean: should have length 1')}, // bad length
-		BooleanTest{[u8(2), 0x01, 0x00], false, error('Boolean: non-boolean tag number')}, // bad tag number
+		BooleanTest{[u8(2), 0x01, 0x00], false, error('Unexpected non-boolean tag')}, // bad tag number
 	]
 	for c in bd {
-		out, _ := Boolean.decode(c.inp, 0) or {
+		out, _ := Boolean.decode(c.inp) or {
 			assert err == c.err
 			continue
 		}
@@ -33,4 +33,7 @@ fn test_parse_boolean_with_parser() ! {
 	mut p := Parser.new(data)
 	out := p.read_element[Boolean]()!
 	assert out.str() == 'true'
+
+	out_2nd := parse[Boolean](data, parse_boolean)!
+	assert out_2nd.str() == 'true'
 }

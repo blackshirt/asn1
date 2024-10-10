@@ -52,9 +52,14 @@ pub fn Boolean.from_u8(value u8) Boolean {
 	}
 }
 
+fn parse_boolean(mut p Parser) !Boolean {
+	return Boolean.parse(mut p)!
+}
+
 fn Boolean.parse(mut p Parser) !Boolean {
-	value, next := Boolean.decode(p.data, 0)!
-	p.data = unsafe { p.data[next..] }
+	value, next := Boolean.decode(p.data)!
+	rest := if next > p.data.len { []u8{} } else { unsafe { p.data[next..] } }
+	p.data = rest
 	return value
 }
 
@@ -129,8 +134,8 @@ fn (b Boolean) value_with_rule(rule EncodingRule) bool {
 	}
 }
 
-pub fn Boolean.decode(src []u8, start i64) !(Boolean, i64) {
-	return Boolean.decode_with_rule(src, start, .der)!
+pub fn Boolean.decode(src []u8) !(Boolean, i64) {
+	return Boolean.decode_with_rule(src, 0, .der)!
 }
 
 fn Boolean.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Boolean, i64) {
@@ -141,27 +146,21 @@ fn Boolean.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Boolean, i64
 		return error('Boolean: not supported rule')
 	}
 	tag, length_pos := Tag.decode_with_rule(src, loc, rule)!
-	if tag.tag_class() != .universal {
-		return error('Boolean: non universal class')
+	if !tag.expect(.universal, false, u32(TagType.boolean)) {
+		return error('Unexpected non-boolean tag')
 	}
-	if tag.is_constructed() {
-		return error('Boolean: in constructed form is not allowed')
-	}
-	if tag.tag_number() != u32(TagType.boolean) {
-		return error('Boolean: non-boolean tag number')
-	}
-	length, cpmtemt_pos := Length.decode_with_rule(src, length_pos, rule)!
+	length, content_pos := Length.decode_with_rule(src, length_pos, rule)!
 	if length != 1 {
 		return error('Boolean: should have length 1')
 	}
-	if cpmtemt_pos >= src.len || cpmtemt_pos + length > src.len {
+	if content_pos >= src.len || content_pos + length > src.len {
 		return error('Boolean: truncated payload bytes')
 	}
-	payload := unsafe { src[cpmtemt_pos..cpmtemt_pos + length] }
+	payload := unsafe { src[content_pos..content_pos + length] }
 
 	// boolean value should be encoded in single byte
 	res := Boolean.from_bytes_with_rule(payload, rule)!
-	next := cpmtemt_pos + length
+	next := content_pos + length
 	return res, next
 }
 

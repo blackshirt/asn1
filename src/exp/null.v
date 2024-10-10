@@ -6,17 +6,6 @@ module asn1
 // ASN.1 NULL TYPE
 pub struct Null {}
 
-pub fn Null.from_bytes(b []u8, rule EncodingRule) !Null {
-	return Null.from_bytes_with_rule(b, .der)!
-}
-
-fn Null.from_bytes_with_rule(b []u8, rule EncodingRule) !Null {
-	if b.len != 0 {
-		return error('Null: bad non-null bytes')
-	}
-	return Null{}
-}
-
 pub fn (n Null) tag() Tag {
 	return Tag{.universal, false, u32(TagType.null)}
 }
@@ -27,6 +16,37 @@ pub fn (n Null) payload() ![]u8 {
 
 fn (n Null) str() string {
 	return 'NULL'
+}
+
+fn Null.parse(mut p Parser) !Null {
+	null, next := Null.decode(p.data)!
+	rest := if next > p.data.len { []u8{} } else { unsafe { p.data[next..] } }
+	p.data = rest
+	return null
+}
+
+fn Null.decode(bytes []u8) !(Null, i64) {
+	tag, length_pos := Tag.decode(bytes)!
+	if !tag.expect(.universal, false, u32(TagType.null)) {
+		return error('Get unexpected tag')
+	}
+	length, content_pos := Length.decode_from_offset(bytes, length_pos)!
+	if length != 0 {
+		return error('Null with non-null length')
+	}
+	next := content_pos + length
+	return Null{}, next
+}
+
+fn Null.from_bytes(b []u8) !Null {
+	return Null.from_bytes_with_rule(b, .der)!
+}
+
+fn Null.from_bytes_with_rule(b []u8, rule EncodingRule) !Null {
+	if b.len != 0 {
+		return error('Null: bad non-null bytes')
+	}
+	return Null{}
 }
 
 /*
