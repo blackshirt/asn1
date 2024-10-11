@@ -56,7 +56,7 @@ fn parse_boolean(mut p Parser) !Boolean {
 	return Boolean.parse(mut p)!
 }
 
-fn Boolean.parse(mut p Parser) !Boolean {
+pub fn Boolean.parse(mut p Parser) !Boolean {
 	value, next := Boolean.decode(p.data)!
 	rest := if next > p.data.len { []u8{} } else { unsafe { p.data[next..] } }
 	p.data = rest

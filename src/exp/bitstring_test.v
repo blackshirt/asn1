@@ -76,12 +76,12 @@ fn test_serialize_and_decode_bitstring() ! {
 		// bad args
 	]
 	for i, c in ds {
-		bs, idx := BitString.decode(c.inp, 0) or {
+		bs, idx := BitString.decode(c.inp) or {
 			assert err == c.err
 			continue
 		}
 
-		assert bs.tag.tag_number() == int(TagType.bitstring)
+		assert bs.tag().tag_number() == int(TagType.bitstring)
 
 		// b := new_bitstring_with_pad(c.src, c.pad)!
 		b := BitString.new_with_pad(c.src, c.pad)!
@@ -108,9 +108,9 @@ fn test_bitstring_from_bytes() ! {
 		0x51, 0x14, 0x90, 0xb4, 0x0f, 0x06, 0x5e, 0x52, 0x88, 0x32, 0x7a, 0x95, 0x20, 0xa0, 0xfd,
 		0xf7, 0xe5, 0x7d, 0x60, 0xdd, 0x72, 0x68, 0x9b, 0xf5, 0x7b, 0x05, 0x8f, 0x6d, 0x1e]
 
-	bs, idx := BitString.decode(data, 0)!
+	bs, idx := BitString.decode(data)!
 
-	assert bs.tag.tag_number() == int(TagType.bitstring)
+	assert bs.tag().tag_number() == int(TagType.bitstring)
 	assert bs.bytes_len() == 0x81
 	assert bs.pad == 0x00
 }

@@ -33,117 +33,87 @@ pub fn (bs BitString) payload(p Params) ![]u8 {
 	return out
 }
 
+// parse BitString using Parser
+fn BitString.parse(mut p Parser) !BitString {
+	bs, next := BitString.decode(p.data)!
+	if next > p.data.len {
+		return error('more bytes needed')
+	}
+	rest := if next == p.data.len { []u8{} } else { unsafe { p.data[next..] } }
+	p.data = rest
+	return bs
+}
+
+fn BitString.decode(bytes []u8) !(BitString, i64) {
+	bs, next := BitString.decode_with_rule(bytes, .der)!
+	return bs, next
+}
+
 fn BitString.decode_with_rule(bytes []u8, rule EncodingRule) !(BitString, i64) {
-	tag, length_pos := Tag.decode_with_rule(bytes, loc, rule)!
+	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.expect(.universal, false, u32(TagType.bitstring)) {
 		return error('Unexpected non-bitstring tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
-
-	if content_pos >= src.len || content_pos + length > src.len {
+	if length < 1 {
+		return error('BitString: zero length bit string')
+	}
+	if content_pos >= bytes.len || content_pos + length > bytes.len {
 		return error('Boolean: truncated payload bytes')
 	}
-	payload := unsafe { src[content_pos..content_pos + length] }
-	bs := BitString.new_with_pad(raw.payload[1..], raw.payload[0], p)!
+	payload := unsafe { bytes[content_pos..content_pos + length] }
+	bs := BitString.new_with_pad(payload[1..], payload[0])!
+	next := content_pos + length
+
 	return bs, next
 }
 
 // BitString.from_binary_string creates a new BitString from binary bits arrays in s,
-// ie, arrays of `1` and `0`. If s.len is not multiple of 8, it would contain non-null pad,
+// ie, arrays of 1 and 0. If s.len is not multiple of 8, it would contain non-null pad,
 // otherwise, the pad is null.
 // Example:
 // The bits string '011010001' will need two content octets: 01101000 10000000 (hexadecimal 68 80);
 // seven bits of the last octet are not used and its interpreted as a pad value.
-// bs := BitString.from_binary_string('011010001')!
-// bs.pad == 7 and bs.data == [u8(0x68), 0x80]
-pub fn BitString.from_binary_string(s string, p Params) !BitString {
+// ```v
+//	bs := BitString.from_binary_string('011010001')!
+// 	bs.pad == 7 and bs.data == [u8(0x68), 0x80]
+// ```
+fn BitString.from_binary_string(s string) !BitString {
 	res, pad := parse_bits_string(s)!
-	return BitString.new_with_pad(res, u8(pad), p)!
+	return BitString.new_with_pad(res, u8(pad))!
 }
 
 // from_string creates a new BitString from regular string s
-pub fn BitString.from_string(s string, p Params) !BitString {
-	return BitString.from_bytes(s.bytes(), p)
-}
-
-// BitString.from_element transforms and creates Element in `el` into BitString
-pub fn BitString.from_element(el Element, p Params) !BitString {
-	// check validity of the Element tag
-	if !el.expect_tag_class(.universal) {
-		return error('BitString Element class should in .universal')
-	}
-	if !el.expect_tag_type(.bitstring) {
-		return error('Element tag does not hold .bitstring type')
-	}
-	if p.rule == .der {
-		if el.tag().is_constructed() {
-			return error('BitString Element constructed is not allowed in .der')
-		}
-	}
-
-	bytes := el.payload(p)!
-	bs := BitString.from_bytes(bytes, p)!
-
-	return bs
+fn BitString.from_string(s string) !BitString {
+	return BitString.from_bytes(s.bytes())!
 }
 
 // from_bytes creates a new BitString from bytes array in src
-pub fn BitString.from_bytes(src []u8, p Params) !BitString {
-	return BitString.new_with_pad(src, u8(0x00), p)!
+fn BitString.from_bytes(src []u8) !BitString {
+	return BitString.new_with_pad(src, u8(0x00))!
 }
 
-// new_with_pad creates a new BitString from bytes array in src with specific
+// new_with_pad creates a new BitString from bytes array in bytes with specific
 // padding bits in pad
-fn BitString.new_with_pad(src []u8, pad u8, p Params) !BitString {
+fn BitString.new_with_pad(bytes []u8, pad u8) !BitString {
 	// to align with octet size, ie, 8 in length, pad bits only need maximum 7 bits
 	// and when the bytes.len is multiples of 8, no need to pad, ie, pad should 0.
-	if pad > 7 || (src.len == 0 && pad != 0) {
+	if pad > 7 || (bytes.len == 0 && pad != 0) {
 		return error('BitString: bad pad bits or zero length')
 	}
 	// this check if the pad != 0, whether the last `pad` number of bits of the last byte
 	// is all bits cleared, and it was not used in the BitString data.
-	if pad > 0 && (src[src.len - 1]) & ((1 << pad) - 1) != 0 {
+	if pad > 0 && (bytes[bytes.len - 1]) & ((1 << pad) - 1) != 0 {
 		return error('BitString: bad args')
 	}
 	return BitString{
-		data: src
+		data: bytes
 		pad:  pad
 	}
 }
 
 fn (bs BitString) bytes_len() int {
 	return bs.data.len + 1
-}
-
-pub fn (bs BitString) length(p Params) !int {
-	return bs.bytes_len()
-}
-
-pub fn (bs BitString) packed_length(p Params) !int {
-	mut n := 0
-
-	n += bs.tag.packed_length(p)!
-	len := bs.length(p)!
-	bslen := Length.from_i64(len)!
-	n += bslen.packed_length(p)!
-	n += len
-
-	return n
-}
-
-pub fn (bs BitString) encode(mut dst []u8, p Params) ! {
-	// we currently only support .der and (stricter) .ber
-	if p.rule != .der && p.rule != .ber {
-		return error('BitString: unsupported rule')
-	}
-
-	bs.tag.encode(mut dst, p)!
-	length := Length.from_i64(bs.bytes_len())!
-	length.encode(mut dst, p)!
-
-	// write pad bit and data
-	dst << bs.pad
-	dst << bs.data
 }
 
 // Utility function
@@ -214,4 +184,33 @@ fn parse_bits_string(s string) !([]u8, int) {
 		}
 	}
 	return res, pad_len
+}
+
+// Addition
+//
+
+fn (bs BitString) length() !int {
+	return bs.bytes_len()
+}
+
+fn (bs BitString) packed_length() !int {
+	mut n := 0
+
+	n += bs.tag().tag_size()
+	len := bs.length()!
+	bslen := Length.from_i64(len)!
+	n += bslen.length_size()!
+	n += len
+
+	return n
+}
+
+fn (bs BitString) encode(mut dst []u8) ! {
+	bs.tag().encode(mut dst)!
+	length := Length.from_i64(bs.bytes_len())!
+	length.encode(mut dst)!
+
+	// write pad bit and data
+	dst << bs.pad
+	dst << bs.data
 }

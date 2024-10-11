@@ -489,19 +489,6 @@ fn (a Asn1Element) payload() ![]u8 {
 	return a.content
 }
 
-fn (a Asn1Element) parse[T]() !T {
-	$if T !is Asn1Parseable {
-		return error('T is not asn1 parseable')
-	}
-	full_data := encode_with_rule(a, .der)!
-	out := parse_single[T](full_data)!
-	return out
-}
-
-fn (a Asn1Element) can_parse(tag Tag) bool {
-	return a.tag() == tag
-}
-
 fn Asn1Element.new(tag Tag, content []u8) !Asn1Element {
 	return Asn1Element.new_with_rule(tag, content, .der)!
 }

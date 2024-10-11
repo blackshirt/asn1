@@ -38,14 +38,14 @@ fn (mut p Parser) read_length() !Length {
 	return length
 }
 
-fn (mut p Parser) read_tlv() !Asn1Element {
+/* fn (mut p Parser) read_tlv() !Element {
 	tag := p.read_tag()!
 	length := p.read_length()!
 	data := p.read_bytes(length)!
 
 	elem := Asn1Element.new(tag, data)!
 	return elem
-}
+} */
 
 fn (mut p Parser) read_bytes(length int) ![]u8 {
 	if length > p.data.len {
@@ -68,7 +68,8 @@ fn (mut p Parser) is_empty() bool {
 }
 
 fn (mut p Parser) read_element[T]() !T {
-	return T.parse(mut p)!
+	out := T.parse(mut p)!
+	return out
 }
 
 pub fn parse_single[T](data []u8) !T {
@@ -84,11 +85,12 @@ pub fn parse[T](data []u8, callback fn (mut p Parser) !T) !T {
 	return result
 }
 
+/*
 pub fn strip_tlv(data []u8) !(Asn1Element, []u8) {
 	mut p := Parser.new(data)
 	tlv := p.read_element[Asn1Element]()!
 	return tlv, p.data
-}
+} */
 
 // type CbParser[T] = fn (T) (mut Parser)() !T
 type ConditionFn[T] = fn (mut p Parser) !T

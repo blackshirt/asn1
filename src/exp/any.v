@@ -6,14 +6,23 @@ module asn1
 // ANY DEFINED BY
 @[noinit]
 struct Any {
-	name   string
-	marker Element
+mut:
+	marker string = 'any'
+	params Element
+}
+
+fn Any.new(marker string, params Element) Any {
+	return Any{marker, params}
+}
+
+fn Any.decode(bytes []u8) !Any {
+	return error('not implemented')
 }
 
 fn (a Any) tag() Tag {
-	return a.marker.tag()
+	return a.params.tag()
 }
 
 fn (a Any) payload() ![]u8 {
-	return a.marker.payload()!
+	return a.params.payload()!
 }

@@ -14,16 +14,65 @@ module asn1
 // Sequence structure can represents both SEQUENCE and SEQUENCE OF type.
 // The encoding of a sequence value shall be constructed.
 // in DER encoded of SEQUENCE or SET, never encode a default value.
+
+const max_sequence_fields_length = 256 // max of seq size
+const max_sequence_bytes_length = (1 << 23 - 1) // 8 MB
+const default_sequence_fields_length = 64 // default size
+
+@[heap; noinit]
 pub struct Sequence {
-	tag Tag = Tag{.universal, true, int(TagType.sequence)}
 mut:
-	// The tag should represents sequence or sequenceof tag, ie, 0x30
-	// seqof should be set when this sequence is SequenceOf type
-	seqof bool
-	// elements of the sequence
-	elements []Element
+	//	maximal size of this sequence fields
+	max_size int = default_sequence_fields_length
+	// fields is the elements of the sequence
+	fields []Element
 }
 
+fn (seq Sequence) tag() Tag {
+	return Tag{.universal, true, u32(TagType.sequence)}
+}
+
+fn (seq Sequence) payload() ![]u8 {
+	return seq.payload_with_rule(.der)!
+}
+
+fn (seq Sequence) payload_with_rule(rule EncodingRule) ![]u8 {
+	mut out := []u8{}
+	for el in seq.fields {
+		obj := encode_with_rule(el, rule)!
+		out << obj
+	}
+	return out
+}
+
+// generic type aliases are not yet implemented
+struct SequenceOf[T] {
+mut:
+	max_size int = default_sequence_fields_length
+	fields   []T
+}
+
+fn (so SequenceOf[T]) tag() Tag {
+	return Tag{.universal, true, u32(TagType.sequence)}
+}
+
+fn (so SequenceOf[T]) payload() ![]u8 {
+	return so.payload_with_rule(.der)!
+}
+
+fn (so SequenceOf[T]) payload_with_rule(rule EncodingRule) ![]u8 {
+	$if T !is Element {
+		return error('T is not an element')
+	}
+	mut out := []u8{}
+	for el in so.fields {
+		obj := encode_with_rule(el, rule)!
+		out << obj
+	}
+	return out
+}
+
+/*
 pub fn Sequence.new(seqof bool) !Sequence {
 	tag := Tag.new(.universal, true, int(TagType.sequence))!
 	return Sequence.new_with_tag(tag, seqof)
@@ -42,68 +91,56 @@ fn Sequence.new_with_tag(tag Tag, seqof bool) !Sequence {
 }
 
 pub fn (mut seq Sequence) set_to_sequenceof() ! {
-	if !seq.elements.hold_different_tag() {
+	if !seq.fields.hold_different_tag() {
 		seq.seqof = true
 		return
 	}
 	// non-sequenceof, just return error
-	return error("Not holds sequenceof elements, you can't set the flag")
+	return error("Not holds sequenceof fields, you can't set the flag")
 }
 
 // is_sequenceof_type checks whether this sequence is SequenceOf type
 pub fn (seq Sequence) is_sequenceof_type() bool {
 	// we assume the tag is sequence type
 	// take the first obj's tag, and check if the all the element tags has the same type
-	tag0 := seq.elements[0].tag()
-	return seq.elements.all(it.tag() == tag0) && seq.seqof
+	tag0 := seq.fields[0].tag()
+	return seq.fields.all(it.tag() == tag0) && seq.seqof
 }
 
 // add_element add the element el to this sequence. Its check whether its should be added when this
 // sequence is SequenceOf type
 pub fn (mut seq Sequence) add_element(el Element) ! {
-	if seq.elements.len == 0 {
-		// sequence elements is still empty, just add the element
-		seq.elements << el
+	if seq.fields.len == 0 {
+		// sequence fields is still empty, just add the element
+		seq.fields << el
 		return
 	}
-	// otherwise, sequence elements is not empty, so, lets performs check.
+	// otherwise, sequence fields is not empty, so, lets performs check.
 	// get the first element tag, when this sequence is SequenceOf type, to be added element
 	// has to be have the same tag with element already availables in sequence.
-	tag0 := seq.elements[0].tag()
+	tag0 := seq.fields[0].tag()
 	if seq.seqof {
 		if el.tag() != tag0 {
 			return error('Sequence: adding different element to the SequenceOf element')
 		}
 		// has the same tag
-		seq.elements << el
+		seq.fields << el
 		return
 	}
-	// otherwise, we can just append el into sequence elements
-	seq.elements << el
+	// otherwise, we can just append el into sequence fields
+	seq.fields << el
 }
 
-pub fn (s Sequence) elements() ![]Element {
-	return s.elements
+fn (s Sequence) fields() ![]Element {
+	return s.fields
 }
 
-pub fn (s Sequence) tag() Tag {
-	return s.tag
-}
-
-pub fn (s Sequence) length(p Params) !int {
+fn (s Sequence) length(p Params) !int {
 	mut n := 0
-	for e in s.elements {
+	for e in s.fields {
 		n += e.packed_length(p)!
 	}
 	return n
-}
-
-pub fn (s Sequence) payload(p Params) ![]u8 {
-	mut out := []u8{}
-	for e in s.elements {
-		e.encode(mut out, p)!
-	}
-	return out
 }
 
 pub fn (s Sequence) packed_length(p Params) !int {
@@ -142,7 +179,7 @@ pub fn Sequence.decode(src []u8, loc i64, p Params) !(Sequence, i64) {
 
 	mut seq := Sequence.parse_contents(raw.tag, raw.payload)!
 	// check for hold_different_tag
-	if !seq.elements.hold_different_tag() {
+	if !seq.fields.hold_different_tag() {
 		// set sequence into sequenceof type
 		seq.seqof = true
 	}
@@ -272,20 +309,20 @@ fn parse_constructed_element(tag Tag, contents []u8, p Params) !Element {
 }
 
 /*
-// is_sequenceof_type checks whether the sequence `seq` holds the same elements (its a SEQUENCE OF type).
+// is_sequenceof_type checks whether the sequence `seq` holds the same fields (its a SEQUENCE OF type).
 fn is_sequenceof_type(seq Sequence) bool {
 	tag := seq.tag.number
 	if tag != int(TagType.sequence) {
 		return false
 	}
 	// take the first obj's tag
-	tag0 := seq.elements[0].tag()
-	for obj in seq.elements {
+	tag0 := seq.fields[0].tag()
+	for obj in seq.fields {
 		if obj.tag() != tag0 {
 			return false
 		}
 	}
-	// return seq.elements.all(it.tag() == tag0)
+	// return seq.fields.all(it.tag() == tag0)
 	return true
 }
 
@@ -321,7 +358,7 @@ fn new_sequenceof_from_bytes(src []u8) !Sequence {
 	seq := decode_sequence(src)!
 
 	if !is_sequenceof_type(seq) {
-		return error('sequence contains some different elements, its not sequenceof')
+		return error('sequence contains some different fields, its not sequenceof')
 	}
 	return seq
 }
@@ -330,7 +367,7 @@ fn new_sequenceof_from_bytes(src []u8) !Sequence {
 
 pub fn (seq Sequence) length() int {
 	mut length := 0
-	for obj in seq.elements {
+	for obj in seq.fields {
 		n := obj.size()
 		length += n
 	}
@@ -348,7 +385,7 @@ pub fn (seq Sequence) size() int {
 	lol := calc_length_of_length(seq.length())
 	size += lol
 
-	// length of sequence elements.
+	// length of sequence fields.
 	size += seq.length()
 
 	return size
@@ -360,7 +397,7 @@ pub fn (seq Sequence) encode() ![]u8 {
 	serialize_tag(mut dst, seq.tag())
 	serialize_length(mut dst, seq.length())
 
-	el := seq.elements.encode()!
+	el := seq.fields.encode()!
 	dst << el
 	return dst
 }
@@ -370,18 +407,18 @@ pub fn Sequence.decode(src []u8) !Sequence {
 	return seq
 }
 
-// elements returns sequence content in elements
-pub fn (seq Sequence) elements() []Encoder {
-	return seq.elements
+// fields returns sequence content in fields
+pub fn (seq Sequence) fields() []Encoder {
+	return seq.fields
 }
 
 pub fn (mut seq Sequence) add(obj Encoder) Sequence {
-	seq.elements.add(obj)
+	seq.fields.add(obj)
 	return seq
 }
 
-pub fn (mut seq Sequence) add_multi(elements []Encoder) Sequence {
-	seq.elements.add_multi(elements)
+pub fn (mut seq Sequence) add_multi(fields []Encoder) Sequence {
+	seq.fields.add_multi(fields)
 	return seq
 }
 
@@ -433,3 +470,4 @@ fn parse_seq(tag Tag, contents []u8) !Sequence {
 	return seq
 }
 */
+ */
