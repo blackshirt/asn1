@@ -24,15 +24,20 @@ pub struct Sequence {
 mut:
 	//	maximal size of this sequence fields
 	max_size int = default_sequence_fields_length
+pub:
 	// fields is the elements of the sequence
 	fields []Element
 }
 
-fn (seq Sequence) tag() Tag {
+fn Sequence.parse(bytes []u8) !Sequence {
+	return error('not yet implemented')
+}
+
+pub fn (seq Sequence) tag() Tag {
 	return Tag{.universal, true, u32(TagType.sequence)}
 }
 
-fn (seq Sequence) payload() ![]u8 {
+pub fn (seq Sequence) payload() ![]u8 {
 	return seq.payload_with_rule(.der)!
 }
 
@@ -46,17 +51,19 @@ fn (seq Sequence) payload_with_rule(rule EncodingRule) ![]u8 {
 }
 
 // generic type aliases are not yet implemented
-struct SequenceOf[T] {
+@[heap; noinit]
+pub struct SequenceOf[T] {
 mut:
 	max_size int = default_sequence_fields_length
-	fields   []T
+pub:
+	fields []T
 }
 
-fn (so SequenceOf[T]) tag() Tag {
+pub fn (so SequenceOf[T]) tag() Tag {
 	return Tag{.universal, true, u32(TagType.sequence)}
 }
 
-fn (so SequenceOf[T]) payload() ![]u8 {
+pub fn (so SequenceOf[T]) payload() ![]u8 {
 	return so.payload_with_rule(.der)!
 }
 

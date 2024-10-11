@@ -324,19 +324,13 @@ fn build_payload[T](val T, kd KeyDefault) ![]u8 {
 	return out
 }
 
-// length returns the length of the payload of this element.
-fn (el Element) length() int {
-	p := el.payload() or { return 0 }
-	return p.len
+fn (el Element) encoded_len() !int {
+	return el.encoded_len_with_rule(.der)!
 }
 
-fn (el Element) element_size() !int {
-	return el.element_size_with_rule(.der)!
-}
-
-// element_size_with_rule informs us the length of bytes when this element serialized into bytes.
+// encoded_len_with_rule informs us the length of bytes when this element serialized into bytes.
 // Different rule maybe produces different result.
-fn (el Element) element_size_with_rule(rule EncodingRule) !int {
+fn (el Element) encoded_len_with_rule(rule EncodingRule) !int {
 	mut n := 0
 	n += el.tag().tag_size()
 	length := Length.from_i64(el.payload()!.len)!
@@ -346,7 +340,49 @@ fn (el Element) element_size_with_rule(rule EncodingRule) !int {
 	return n
 }
 
+// ElementList is arrays of Element
+type ElementList = []Element
+
+fn (els ElementList) payload() ![]u8 {
+	mut out := []u8{}
+	for el in els {
+		bytes := encode(el)!
+		out << bytes
+	}
+	return out
+}
+
+fn (els ElementList) encoded_len() !int {
+	mut n := 0
+	for el in els {
+		n += el.encoded_len()!
+	}
+	return n
+}
+
 /*
+// ElementList.from_bytes parses bytes in src as series of Element or return error on fails
+fn ElementList.from_bytes(src []u8, ctx &Params) ![]Element {
+	mut els := []Element{}
+	if src.len == 0 {
+		// empty list
+		return els
+	}
+	mut i := i64(0)
+	for i < src.len {
+		el, pos := Element.decode(src, i)!
+		els << el
+		i += pos
+	}
+	if i > src.len {
+		return error('i > src.len')
+	}
+	if i < src.len {
+		return error('The src contains unprocessed bytes')
+	}
+	return els
+}
+
 fn Element.decode(src []u8) !(Element, i64) {
 	ctx := default_params()
 	el, pos := Element.decode_with_context(src, 0, ctx)!
@@ -408,30 +444,7 @@ fn (el Element) expect_tag_number(number int) bool {
 	return int(tagnum) == number
 }
 
-// ElementList is arrays of Element
-type ElementList = []Element
 
-// ElementList.from_bytes parses bytes in src as series of Element or return error on fails
-fn ElementList.from_bytes(src []u8, ctx &Params) ![]Element {
-	mut els := []Element{}
-	if src.len == 0 {
-		// empty list
-		return els
-	}
-	mut i := i64(0)
-	for i < src.len {
-		el, pos := Element.decode(src, i)!
-		els << el
-		i += pos
-	}
-	if i > src.len {
-		return error('i > src.len')
-	}
-	if i < src.len {
-		return error('The src contains unprocessed bytes')
-	}
-	return els
-}
 
 // hold_different_tag checks whether this array of Element
 // contains any different tag, benefit for checking whether the type

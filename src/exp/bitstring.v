@@ -26,7 +26,7 @@ pub fn (bs BitString) tag() Tag {
 	return Tag{.universal, false, u32(TagType.bitstring)}
 }
 
-pub fn (bs BitString) payload(p Params) ![]u8 {
+pub fn (bs BitString) payload() ![]u8 {
 	mut out := []u8{}
 	out << bs.pad
 	out << bs.data
@@ -184,33 +184,4 @@ fn parse_bits_string(s string) !([]u8, int) {
 		}
 	}
 	return res, pad_len
-}
-
-// Addition
-//
-
-fn (bs BitString) length() !int {
-	return bs.bytes_len()
-}
-
-fn (bs BitString) packed_length() !int {
-	mut n := 0
-
-	n += bs.tag().tag_size()
-	len := bs.length()!
-	bslen := Length.from_i64(len)!
-	n += bslen.length_size()!
-	n += len
-
-	return n
-}
-
-fn (bs BitString) encode(mut dst []u8) ! {
-	bs.tag().encode(mut dst)!
-	length := Length.from_i64(bs.bytes_len())!
-	length.encode(mut dst)!
-
-	// write pad bit and data
-	dst << bs.pad
-	dst << bs.data
 }

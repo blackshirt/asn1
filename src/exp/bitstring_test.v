@@ -89,8 +89,7 @@ fn test_serialize_and_decode_bitstring() ! {
 		assert bs == b
 
 		// back
-		mut s := []u8{}
-		b.encode(mut s)!
+		s := encode(b)!
 
 		assert s == c.inp
 	}
@@ -139,8 +138,7 @@ fn test_bitstring_from_binary_string() ! {
 			assert err == item.err
 			continue
 		}
-		mut out := []u8{}
-		bs.encode(mut out)!
+		out := encode(bs)!
 		assert out == item.out
 	}
 }

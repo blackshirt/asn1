@@ -33,7 +33,6 @@ fn test_parse_boolean_with_parser() ! {
 	mut p := Parser.new(data)
 
 	// This is fails with the latest V
-
 	// out := p.read_element[Boolean]()!
 	// assert out.str() == 'true'
 
