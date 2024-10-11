@@ -7,9 +7,8 @@ fn test_encode_decode_numericstring_basic() {
 	str := '98'
 	exp := [u8(0x12), 0x02, 57, 56]
 
-	ns := NumericString.from_string(str)!
-	mut out := []u8{}
-	ns.encode(mut out)!
+	ns := NumericString.new(str)!
+	out := encode(ns)!
 	assert out == exp
 
 	// decode back

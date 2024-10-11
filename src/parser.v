@@ -85,11 +85,12 @@ pub fn parse[T](data []u8, callback fn (mut p Parser) !T) !T {
 }
 
 /*
-pub fn strip_tlv(data []u8) !(Asn1Element, []u8) {
+fn strip_tlv(data []u8) !(Element, []u8) {
 	mut p := Parser.new(data)
 	tlv := p.read_element[Asn1Element]()!
 	return tlv, p.data
-} */
+}
+*/
 
 // type CbParser[T] = fn (T) (mut Parser)() !T
 type ConditionFn[T] = fn (mut p Parser) !T

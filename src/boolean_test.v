@@ -32,13 +32,16 @@ fn test_parse_boolean_with_parser() ! {
 	data := [u8(0x01), 0x01, 0xff]
 	mut p := Parser.new(data)
 
-	// This is fails with the latest V
+	// This is fails too lookup
 	out := p.read_element[Boolean]()!
 	assert out.str() == 'true'
 
+	// this is OK
 	out_2nd := parse[Boolean](data, parse_boolean)!
 	assert out_2nd.str() == 'true'
 
-	out_3th := Boolean.parse(mut p)!
+	// THis is ok
+	mut p2 := Parser.new(data)
+	out_3th := Boolean.parse(mut p2)!
 	assert out_3th.str() == 'true'
 }
