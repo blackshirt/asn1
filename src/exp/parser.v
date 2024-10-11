@@ -38,14 +38,14 @@ fn (mut p Parser) read_length() !Length {
 	return length
 }
 
-/* fn (mut p Parser) read_tlv() !Element {
+fn (mut p Parser) read_tlv() !Element {
 	tag := p.read_tag()!
 	length := p.read_length()!
-	data := p.read_bytes(length)!
+	content := p.read_bytes(length)!
 
-	elem := Asn1Element.new(tag, data)!
+	elem := Asn1Element.new(tag, content)!
 	return elem
-} */
+}
 
 fn (mut p Parser) read_bytes(length int) ![]u8 {
 	if length > p.data.len {
@@ -68,8 +68,7 @@ fn (mut p Parser) is_empty() bool {
 }
 
 fn (mut p Parser) read_element[T]() !T {
-	out := T.parse(mut p)!
-	return out
+	return T.parse(mut p)
 }
 
 pub fn parse_single[T](data []u8) !T {

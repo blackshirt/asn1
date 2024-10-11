@@ -4,7 +4,7 @@
 module asn1
 
 struct IA5StringTest {
-	s   string
+	src string
 	out []u8
 	err IError
 }
@@ -18,27 +18,28 @@ fn test_ia5string_handling() ! {
 		IA5StringTest{'\x13\x03ab\x00', []u8{}, error('IA5String: contains non-ascii chars')},
 	]
 
-	for c in data {
-		s := IA5String.from_string(c.s) or {
+	for i, c in data {
+		dump(i)
+		s := IA5String.new(c.src) or {
 			assert err == c.err
 			continue
 		}
-		mut out := []u8{}
-		s.encode(mut out) or {
+		out := encode(s) or {
 			assert err == c.err
 			continue
 		}
 		assert out == c.out
 
 		// unpack back
-		ret, next := IA5String.decode(out, 0) or {
+		mut p := Parser.new(out)
+		ret := IA5String.parse(mut p) or {
 			assert err == c.err
 			continue
 		}
 
-		assert ret.tag.tag_number() == 22
-		assert ret.tag.tag_class() == TagClass.universal
-		assert ret.tag.is_constructed() == false
-		assert ret.value == c.s
+		assert ret.tag().tag_number() == 22
+		assert ret.tag().tag_class() == TagClass.universal
+		assert ret.tag().is_constructed() == false
+		assert ret.str() == c.src
 	}
 }

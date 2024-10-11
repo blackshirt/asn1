@@ -29,8 +29,17 @@ pub:
 	fields []Element
 }
 
-fn Sequence.parse(bytes []u8) !Sequence {
+fn Sequence.parse(mut p Parser) !Sequence {
 	return error('not yet implemented')
+}
+
+fn Sequence.from_bytes(bytes []u8) !Sequence {
+	mut seq := Sequence{}
+	if bytes.len == 0 {
+		return seq
+	}
+	// mut par := Parser.new(bytes)
+	return error('not implemented')
 }
 
 pub fn (seq Sequence) tag() Tag {
@@ -48,6 +57,24 @@ fn (seq Sequence) payload_with_rule(rule EncodingRule) ![]u8 {
 		out << obj
 	}
 	return out
+}
+
+// checks whether this sequence is SequenceOf[T]
+fn (seq Sequence) is_sequence_of[T]() bool {
+	return seq.fields.all(it is T)
+}
+
+// into_sequence_of[T] turns this sequence into SequenceOf[T]
+fn (seq Sequence) into_sequence_of[T]() !SequenceOf[T] {
+	if seq.is_sequence_of[T]() {
+		return error('This sequence is not SequenceOf[T]')
+	}
+	mut sqof := SequenceOf[T]{}
+	for el in seq.fields {
+		obj := el.into_object[T]()!
+		sqof.fields << obj
+	}
+	return sqof
 }
 
 // generic type aliases are not yet implemented

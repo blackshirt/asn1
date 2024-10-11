@@ -56,10 +56,18 @@ fn parse_boolean(mut p Parser) !Boolean {
 	return Boolean.parse(mut p)!
 }
 
-pub fn Boolean.parse(mut p Parser) !Boolean {
-	value, next := Boolean.decode(p.data)!
-	rest := if next > p.data.len { []u8{} } else { unsafe { p.data[next..] } }
-	p.data = rest
+fn Boolean.parse(mut p Parser) !Boolean {
+	tag := p.read_tag()!
+	if !tag.expect(.universal, false, u32(TagType.boolean)) {
+		return error('Bad boolean tag')
+	}
+	length := p.read_length()!
+	if length != 1 {
+		return error('Bad boolean length')
+	}
+	bytes := p.read_bytes(length)!
+	value := Boolean.from_bytes(bytes)!
+
 	return value
 }
 

@@ -324,18 +324,19 @@ fn build_payload[T](val T, kd KeyDefault) ![]u8 {
 	return out
 }
 
-fn (el Element) encoded_len() !int {
-	return el.encoded_len_with_rule(.der)!
+fn (el Element) encoded_len() int {
+	return el.encoded_len_with_rule(.der)
 }
 
 // encoded_len_with_rule informs us the length of bytes when this element serialized into bytes.
 // Different rule maybe produces different result.
-fn (el Element) encoded_len_with_rule(rule EncodingRule) !int {
+fn (el Element) encoded_len_with_rule(rule EncodingRule) int {
 	mut n := 0
 	n += el.tag().tag_size()
-	length := Length.from_i64(el.payload()!.len)!
-	n += length.length_size_with_rule(rule)!
-	n += el.payload()!.len
+	payload := el.payload() or { panic(err) }
+	length := Length.from_i64(payload.len) or { panic(err) }
+	n += length.length_size_with_rule(rule) or { panic(err) }
+	n += payload.len
 
 	return n
 }
@@ -352,12 +353,36 @@ fn (els ElementList) payload() ![]u8 {
 	return out
 }
 
-fn (els ElementList) encoded_len() !int {
+fn (els ElementList) encoded_len() int {
 	mut n := 0
 	for el in els {
-		n += el.encoded_len()!
+		n += el.encoded_len()
 	}
 	return n
+}
+
+fn Element.decode(mut p Parser) !Element {
+	el := p.read_tlv()!
+	match el.tag().tag_class() {
+		.universal {
+			if el.tag().is_constructed() {
+				return parse_universal_constructed(el.tag(), el.payload()!)!
+			}
+			return parse_universal_primitive(el.tag(), el.payload()!)!
+		}
+		.application {
+			return el as ApplicationElement
+		}
+		.context_specific {
+			if !el.tag().is_constructed() {
+				return error('Context should be constructed')
+			}
+		}
+		.private {
+			return el as PrivateELement
+		}
+	}
+	return el
 }
 
 /*
