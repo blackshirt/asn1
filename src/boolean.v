@@ -19,7 +19,7 @@ mut:
 }
 
 pub fn (v Boolean) tag() Tag {
-	return Tag{.universal, false, u32(TagType.boolean)}
+	return Tag{.universal, false, int(TagType.boolean)}
 }
 
 fn (v Boolean) str() string {
@@ -58,7 +58,7 @@ fn parse_boolean(mut p Parser) !Boolean {
 
 fn Boolean.parse(mut p Parser) !Boolean {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, u32(TagType.boolean)) {
+	if !tag.expect(.universal, false, int(TagType.boolean)) {
 		return error('Bad boolean tag')
 	}
 	length := p.read_length()!
@@ -154,7 +154,7 @@ fn Boolean.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Boolean, i64
 		return error('Boolean: not supported rule')
 	}
 	tag, length_pos := Tag.decode_with_rule(src, loc, rule)!
-	if !tag.expect(.universal, false, u32(TagType.boolean)) {
+	if !tag.expect(.universal, false, int(TagType.boolean)) {
 		return error('Unexpected non-boolean tag')
 	}
 	length, content_pos := Length.decode_with_rule(src, length_pos, rule)!
@@ -171,58 +171,3 @@ fn Boolean.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Boolean, i64
 	next := content_pos + length
 	return res, next
 }
-
-/*
-// Boolean.from_raw_element transforms RawElement in `re` into Boolean
-pub fn Boolean.from_raw_element(re RawElement, p Params) !Boolean {
-	// check validity of the RawElement tag
-	if re.tag.tag_class() != .universal {
-		return error('RawElement class is not .universal, but get ${re.tag.tag_class()}')
-	}
-	if p.rule == .der {
-		if re.tag.is_constructed() {
-			return error('RawElement constructed is not allowed in .der')
-		}
-	}
-	if re.tag.number.universal_tag_type()! != .boolean {
-		return error('RawElement tag does not hold .boolean type')
-	}
-	bytes := re.payload(p)!
-	bs := Boolean.from_bytes(bytes, p)!
-
-	return bs
-}
-*/
-
-/*
-fn (v Boolean) length(p Params) !int {
-	return 1
-}
-
-fn (v Boolean) packed_length(p Params) !int {
-	mut n := 0
-	n += v.tag.packed_length(p)!
-	// boolean length should 1
-	n += 1
-	n += 1
-
-	return n
-}
-
-pub fn (v Boolean) encode(mut dst []u8, p Params) ! {
-	if p.rule != .der && p.rule != .ber {
-		return error('Boolean: unsupported rule')
-	}
-
-	// in DER, true or false value packed into single byte of 0xff or 0x00 respectively
-	v.tag.encode(mut dst, p)!
-	length := Length.from_i64(1)!
-	length.encode(mut dst, p)!
-	// when rule != .der payload may contains not 0xff bytes
-	payload := v.payload()!
-
-	dst << payload
-}
-
-
- */

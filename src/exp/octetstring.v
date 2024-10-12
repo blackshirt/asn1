@@ -7,6 +7,8 @@ module asn1
 // The ASN.1 OCTET STRING type contains arbitrary strings of octets.
 // This type is very similar to BIT STRING, except that all values must be an integral number of eight bits.
 // You can use constraints to specify a maximum length for an OCTET STRING type.
+const max_octetstring_length = 1 << 32 - 1
+
 @[heap; noinit]
 pub struct OctetString {
 pub:

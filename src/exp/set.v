@@ -145,7 +145,7 @@ fn (mut els []Element) sort_the_setof() ![]Element {
 }
 
 // SET OF
-// 
+//
 @[heap; noinit]
 pub struct SetOf[T] {
 mut:
@@ -154,8 +154,7 @@ pub:
 	fields []T
 }
 
-
-pub fn (so SetOf[T]]) tag() Tag {
+pub fn (so SetOf[T]) tag() Tag {
 	return Tag{.universal, true, u32(TagType.set)}
 }
 

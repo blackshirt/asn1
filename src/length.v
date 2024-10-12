@@ -18,7 +18,7 @@ module asn1
 // the length octets should be in definite length.
 
 // max_definite_length_count is a limit tells how many bytes to represent this length.
-// We're going to limi this to 6 bytes following when the length is in long-definite form.
+// We're going to limit this to 6 bytes following when the length is in long-definite form.
 const max_definite_length_count = 126
 const max_definite_length_value = max_i64
 
@@ -27,7 +27,7 @@ type Length = i64
 
 // from_i64 creates Length from i64  value. Passing negative value (<0) for length
 // is not make a sense, so just return error instead if it happen.
-fn Length.from_i64(v i64) !Length {
+pub fn Length.from_i64(v i64) !Length {
 	if v < 0 {
 		return error('Length: supply with positive i64')
 	}
@@ -35,6 +35,49 @@ fn Length.from_i64(v i64) !Length {
 		return error('Length: value provided exceed limit')
 	}
 	return Length(v)
+}
+
+// Length.from_bytes read length from bytes array and return the length
+// and the remaining bytes
+pub fn Length.from_bytes(bytes []u8) !(Length, []u8) {
+	length, next := Length.decode(bytes)!
+	if next < bytes.len {
+		rest := unsafe { bytes[next..] }
+		return length, rest
+	}
+	return length, []u8{}
+}
+
+// encode serializes Length v into bytes in .der rule
+pub fn (v Length) encode(mut dst []u8) ! {
+	v.encode_with_rule(mut dst, .der)!
+}
+
+// encode_with_rule serializes Length v into bytes and append it into `dst`.
+// it would use rule of `Encodingrule` to drive how encode operation would be done.
+// By default the .der rule is only currently supported.
+fn (v Length) encode_with_rule(mut dst []u8, rule EncodingRule) ! {
+	// we currently only support .der and (stricter) .ber
+	if rule != .der && rule != .ber {
+		return error('Length: unsupported rule')
+	}
+	// TODO: add supports for undefinite form
+	// Long form
+	if v >= 128 {
+		// First, we count how many bytes occupied by this length value.
+		// if the count exceed the limit, we return error.
+		count := v.bytes_len()
+		if count > max_definite_length_count {
+			return error('something bad in your length')
+		}
+		// In definite long form, msb bit of first byte is set into 1, and the remaining bits
+		// of first byte tells exact count how many bytes following representing this length value.
+		dst << 0x80 | u8(count)
+		v.to_bytes(mut dst)
+	} else {
+		// short form, already tells the length value.
+		dst << u8(v)
+	}
 }
 
 // bytes_len tells how many bytes needed to represent this length
@@ -72,47 +115,6 @@ fn (v Length) length_size_with_rule(rule EncodingRule) !int {
 	}
 	n := if v < 128 { 1 } else { v.bytes_len() + 1 }
 	return n
-}
-
-// encode serializes Length v into bytes in .der rule
-pub fn (v Length) encode(mut dst []u8) ! {
-	v.encode_with_rule(mut dst, .der)!
-}
-
-// encode_with_rule serializes Length v into bytes and append it into `dst`. if p `Params` is provided,
-// it would use rule of `Encodingrule` to drive how encode operation would be done.
-// By default the .der rule is only currently supported.
-fn (v Length) encode_with_rule(mut dst []u8, rule EncodingRule) ! {
-	// we currently only support .der and (stricter) .ber
-	if rule != .der && rule != .ber {
-		return error('Length: unsupported rule')
-	}
-	// TODO: add supports for undefinite form
-	// Long form
-	if v >= 128 {
-		// First, we count how many bytes occupied by this length value.
-		// if the count exceed the limit, we return error.
-		count := v.bytes_len()
-		if count > max_definite_length_count {
-			return error('something bad in your length')
-		}
-		// In definite long form, msb bit of first byte is set into 1, and the remaining bits
-		// of first byte tells exact count how many bytes following representing this length value.
-		dst << 0x80 | u8(count)
-		v.to_bytes(mut dst)
-	} else {
-		// short form, already tells the length value.
-		dst << u8(v)
-	}
-}
-
-pub fn Length.from_bytes(bytes []u8) !(Length, []u8) {
-	length, next := Length.decode(bytes)!
-	if next < bytes.len {
-		rest := unsafe { bytes[next..] }
-		return length, rest
-	}
-	return length, []u8{}
 }
 
 // decode read length from bytes src with default context or return error on fails.

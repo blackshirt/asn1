@@ -3,56 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// TagClass is ASN.1 tag class.
-// To make sure ASN.1 encodings are not ambiguous, every ASN.1 type is associated with a tag.
-// A tag consists of three parts: the tag class, tag form and the tag number.
-// The following classes are defined in the ASN.1 standard.
-
-pub enum TagClass {
-	universal        = 0x00 // 0b00
-	application      = 0x01 // 0b01
-	context_specific = 0x02 // 0b10
-	private          = 0x03 // 0b11
-}
-
-// from_int creates TagClass from integer v
-fn TagClass.from_int(v int) !TagClass {
-	match v {
-		// vfmt off
-		0x00 { return .universal }
-		0x01 { return .application }
-		0x02 { return .context_specific }
-		0x03 { return .private }
-		else {
-			return error('Bad class number')
-		}
-		// vfmt on
-	}
-}
-
-fn TagClass.from_string(s string) !TagClass {
-	match s {
-		// vfmt off
-		'universal' { return .universal }
-		'private' { return .private }
-		'application' { return .application }
-		'context_specific' { return .context_specific }
-		else { 
-			return error('bad class string') 
-		}
-		// vfmt on
-	}
-}
-
-fn (c TagClass) str() string {
-	match c {
-		.universal { return 'UNIVERSAL' }
-		.application { return 'APPLICATION' }
-		.context_specific { return 'CONTEXT_SPECIFIC' }
-		.private { return 'PRIVATE' }
-	}
-}
-
 // vfmt off
 // bit masking values for ASN.1 tag header
 const tag_class_mask 	= 0xc0 // 192, bits 8-7
@@ -72,7 +22,8 @@ const max_tag_length = 3
 const max_tag_number = 16383
 
 // Maximum value for UNIVERSAL class tag number, see `TagType`,
-// Tag number above this number should be considered to other class, PRIVATE, CONTEXT_SPECIFIC or APPLICATION class.
+// Tag number above this number should be considered to other class,
+// PRIVATE, CONTEXT_SPECIFIC or APPLICATION class.
 const max_universal_tagnumber = 255
 
 // ASN.1 Tag identifier handling
@@ -87,7 +38,7 @@ pub struct Tag {
 mut:
 	class       TagClass = .universal
 	constructed bool
-	number      u32
+	number      int
 }
 
 // `Tag.new` creates new ASN.1 tag identifier. Its accepts params of TagClass `cls`,
@@ -110,7 +61,7 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 			tag := Tag{
 				class:       cls
 				constructed: constructed
-				number:      tagnum_from_int(number)!
+				number:      number
 			}
 			return tag
 		}
@@ -122,7 +73,7 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 			tag := Tag{
 				class:       cls
 				constructed: constructed
-				number:      tagnum_from_int(number)!
+				number:      number
 			}
 			return tag
 		}
@@ -131,7 +82,7 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 			tag := Tag{
 				class:       cls
 				constructed: constructed
-				number:      tagnum_from_int(number)!
+				number:      number
 			}
 			return tag
 		}
@@ -163,26 +114,24 @@ pub fn (t Tag) tag_number() int {
 	return t.number
 }
 
-fn (t Tag) expect(cls TagClass, constructed bool, tagnum int) bool {
-	num := tagnum_from_int(tagnum) or { return false }
-	return t.class == cls && t.constructed == constructed && t.number == num
-}
-
 // encode serializes tag t into bytes array with default context
 pub fn (t Tag) encode(mut dst []u8) ! {
 	t.encode_with_rule(mut dst, .der)!
 }
 
-// tagnum_from_int creates tag number from regular integer.
-// Its just doing check and wrapping on the passed integer
-fn tagnum_from_int(v int) !u32 {
-	if v < 0 {
-		return error('Negative number for tag number was not allowed')
+// Tag.from_bytes creates a new Tag from bytes. Its return newly created
+// tag and remaining bytes on success, or return error on failures.
+pub fn Tag.from_bytes(bytes []u8) !(Tag, []u8) {
+	tag, next_pos := Tag.decode(bytes)!
+	if next_pos < bytes.len {
+		rest := unsafe { bytes[next_pos..] }
+		return tag, rest
 	}
-	if v > max_tag_number {
-		return error('Number bigger than max allowed tag number')
-	}
-	return u32(v)
+	return tag, []u8{}
+}
+
+fn (t Tag) expect(cls TagClass, constructed bool, tagnum int) bool {
+	return t.class == cls && t.constructed == constructed && t.number == tagnum
 }
 
 // encode_with_rule serializes tag into bytes array
@@ -213,15 +162,6 @@ fn (t Tag) encode_with_rule(mut dst []u8, rule EncodingRule) ! {
 		b |= u8(t.number)
 		dst << b
 	}
-}
-
-pub fn Tag.from_bytes(bytes []u8) !(Tag, []u8) {
-	tag, next_pos := Tag.decode(bytes)!
-	if next_pos < bytes.len {
-		rest := unsafe { bytes[next_pos..] }
-		return tag, rest
-	}
-	return tag, []u8{}
 }
 
 // Tag.decode tries to deserializes bytes into Tag. its return error on fails.
@@ -271,7 +211,7 @@ fn Tag.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Tag, i64) {
 	// in multibyte (long form), or short form otherwise.
 	class := int((b & tag_class_mask) >> 6)
 	constructed := b & constructed_mask == constructed_mask
-	mut number := tagnum_from_int(int(b & tag_number_mask))!
+	mut number := int(b & tag_number_mask)
 
 	// check if this `number` is in long (multibyte) form, and interpretes more bytes as a tag number.
 	if number == 0x1f {
@@ -303,8 +243,7 @@ fn (mut t Tag) clone_with_class(c TagClass) Tag {
 
 fn (mut t Tag) clone_with_tag(v int) !Tag {
 	mut new := t
-	val := tagnum_from_int(v)!
-	t.number = val
+	t.number = v
 	return new
 }
 
@@ -347,14 +286,14 @@ fn (t Tag) to_bytes_in_base128(mut dst []u8) ! {
 
 // Tag.read_tagnum read the tag number from bytes from offset pos in base 128.
 // Its return deserialized Tag number and next offset to process on.
-fn Tag.read_tagnum(bytes []u8, pos i64) !(u32, i64) {
+fn Tag.read_tagnum(bytes []u8, pos i64) !(int, i64) {
 	tnum, next := Tag.read_tagnum_with_rule(bytes, pos, .der)!
 	return tnum, next
 }
 
 // read_tagnum_with_rule is the main routine to read the tag number part in the bytes source,
 // start from offset loc in base 128. Its return the tag number and next offset to process on, or error on fails.
-fn Tag.read_tagnum_with_rule(bytes []u8, loc i64, rule EncodingRule) !(u32, i64) {
+fn Tag.read_tagnum_with_rule(bytes []u8, loc i64, rule EncodingRule) !(int, i64) {
 	if loc > bytes.len {
 		return error('Tag number: invalid pos')
 	}
@@ -380,8 +319,8 @@ fn Tag.read_tagnum_with_rule(bytes []u8, loc i64, rule EncodingRule) !(u32, i64)
 			if ret < 0 {
 				return error('Negative tag number')
 			}
-			val := u32(ret)
-			return val, pos
+
+			return ret, pos
 		}
 	}
 	return error('Tag: truncated base 128 integer')
@@ -450,6 +389,55 @@ fn (t Tag) universal_tag_type() !TagType {
 	}
 }
 
+// TagClass is ASN.1 tag class.
+// To make sure ASN.1 encodings are not ambiguous, every ASN.1 type is associated with a tag.
+// A tag consists of three parts: the tag class, tag form and the tag number.
+// The following classes are defined in the ASN.1 standard.
+pub enum TagClass {
+	universal        = 0x00 // 0b00
+	application      = 0x01 // 0b01
+	context_specific = 0x02 // 0b10
+	private          = 0x03 // 0b11
+}
+
+// from_int creates TagClass from integer v
+fn TagClass.from_int(v int) !TagClass {
+	match v {
+		// vfmt off
+		0x00 { return .universal }
+		0x01 { return .application }
+		0x02 { return .context_specific }
+		0x03 { return .private }
+		else {
+			return error('Bad class number')
+		}
+		// vfmt on
+	}
+}
+
+fn TagClass.from_string(s string) !TagClass {
+	match s {
+		// vfmt off
+		'universal' { return .universal }
+		'private' { return .private }
+		'application' { return .application }
+		'context_specific' { return .context_specific }
+		else { 
+			return error('bad class string') 
+		}
+		// vfmt on
+	}
+}
+
+fn (c TagClass) str() string {
+	match c {
+		.universal { return 'UNIVERSAL' }
+		.application { return 'APPLICATION' }
+		.context_specific { return 'CONTEXT_SPECIFIC' }
+		.private { return 'PRIVATE' }
+	}
+}
+
 // Standard UNIVERSAL tag number. Some of them was deprecated,
 // so its not going to be supported on this module.
 enum TagType {
@@ -499,7 +487,7 @@ enum TagType {
 	// vfmt on
 }
 
-pub fn (t TagType) str() string {
+fn (t TagType) str() string {
 	match t {
 		.boolean { return 'BOOLEAN' }
 		.integer { return 'INTEGER' }
@@ -537,7 +525,7 @@ pub fn (t TagType) str() string {
 // Params is optional params passed to encode or decodeing
 // of tag, length or ASN.1 element to drive how encoding works.
 @[params]
-pub struct Params {
+struct Params {
 mut:
 	rule EncodingRule = .der
 }
