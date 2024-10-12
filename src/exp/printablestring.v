@@ -43,8 +43,7 @@ fn PrintableString.from_bytes(src []u8) !PrintableString {
 	}
 }
 
-
-pub fn (pst PrintableString) payload(s) ![]u8 {
+pub fn (pst PrintableString) payload() ![]u8 {
 	if !printable_chars(pst.value.bytes()) {
 		return error('PrintableString: contains non-printable string')
 	}

@@ -1,0 +1,1407 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="x-ua-compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>asn1 | vdoc</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+		<link rel="manifest" href="site.webmanifest" />
+		<link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5" />
+		<meta name="msapplication-TileColor" content="#da532c" />
+		<meta name="theme-color" content="#ffffff" />
+		<link rel="stylesheet" href="doc.css" />
+		<link rel="stylesheet" href="normalize.css" />
+		<script src="dark-mode.js"></script>
+	</head>
+
+	<body>
+		<div><a id="skip-to-content-link" href="#main-content">Skip to content</a></div>
+		<div id="page">
+			<header class="doc-nav hidden">
+				<div class="heading-container">
+					<div class="heading">
+						<div class="info">
+							<div class="module">src</div>
+							<div class="toggle-version-container">
+								<span> 5aa6eaf</span>
+								<div
+									id="dark-mode-toggle"
+									role="switch"
+									aria-checked="false"
+									aria-label="Toggle dark mode"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="light-icon" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" class="dark-icon" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24"><g><rect fill="none" height="24" width="24"/></g><g><g><g><path d="M11.1,12.08C8.77,7.57,10.6,3.6,11.63,2.01C6.27,2.2,1.98,6.59,1.98,12c0,0.14,0.02,0.28,0.02,0.42 C2.62,12.15,3.29,12,4,12c1.66,0,3.18,0.83,4.1,2.15C9.77,14.63,11,16.17,11,18c0,1.52-0.87,2.83-2.12,3.51 c0.98,0.32,2.03,0.5,3.11,0.5c3.5,0,6.58-1.8,8.37-4.52C18,17.72,13.38,16.52,11.1,12.08z"/></g><path d="M7,16l-0.18,0C6.4,14.84,5.3,14,4,14c-1.66,0-3,1.34-3,3s1.34,3,3,3c0.62,0,2.49,0,3,0c1.1,0,2-0.9,2-2 C9,16.9,8.1,16,7,16z"/></g></g></svg>
+
+								</div>
+							</div>
+							<svg xmlns="http://www.w3.org/2000/svg" id="toggle-menu" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+
+						</div>
+						<div id="search">
+							<input type="text" placeholder="Search... (beta)" autocomplete="off" />
+						</div>
+					</div>
+				</div>
+				<nav class="search hidden"></nav>
+				<nav class="content hidden">
+					<ul>
+						<li class="open active">
+<div class="menu-row"><a href="./asn1.html">asn1</a></div>
+</li>
+
+					</ul>
+				</nav>
+			</header>
+			<div class="doc-scrollview" tabindex="-1" id="main-content">
+				<div class="doc-container">
+					<div class="doc-content">
+								<section id="readme_asn1" class="doc-node">
+			<div class="title"><h1> asn1 <a href="#readme_asn1">#</a></h1></div>
+
+
+</section>
+
+		<section id="read_byte" class="doc-node">
+			<div class="title"><h2>fn read_byte <a href="#read_byte">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">read_byte</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> loc <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span><span class="token builtin">u8</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="read_bytes" class="doc-node">
+			<div class="title"><h2>fn read_bytes <a href="#read_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">read_bytes</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> pos <span class="token builtin">int</span><span class="token punctuation">,</span> size <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+<p>read_bytes was safe version of bytes slicing, <code>src[pos..pos+size]</code></p>
+
+</section>
+
+		<section id="Enumerated.decode" class="doc-node">
+			<div class="title"><h2>fn Enumerated.decode <a href="#Enumerated.decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Enumerated<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> loc <span class="token builtin">i64</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Enumerated<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="Enumerated.from_bytes" class="doc-node">
+			<div class="title"><h2>fn Enumerated.from_bytes <a href="#Enumerated.from_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Enumerated<span class="token punctuation">.</span><span class="token function">from_bytes</span><span class="token punctuation">(</span>b <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>Enumerated</code></pre>
+
+
+</section>
+
+		<section id="Enumerated.from_int" class="doc-node">
+			<div class="title"><h2>fn Enumerated.from_int <a href="#Enumerated.from_int">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Enumerated<span class="token punctuation">.</span><span class="token function">from_int</span><span class="token punctuation">(</span>val <span class="token builtin">int</span><span class="token punctuation">)</span> Enumerated</code></pre>
+
+
+</section>
+
+		<section id="Enumerated.from_raw_element" class="doc-node">
+			<div class="title"><h2>fn Enumerated.from_raw_element <a href="#Enumerated.from_raw_element">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Enumerated<span class="token punctuation">.</span><span class="token function">from_raw_element</span><span class="token punctuation">(</span>re RawElement<span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>Enumerated</code></pre>
+<p>Enumerated.from_raw_element transforms RawElement in <code>re</code> into Enumerated</p>
+
+</section>
+
+		<section id="GeneralString.new" class="doc-node">
+			<div class="title"><h2>fn GeneralString.new <a href="#GeneralString.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> GeneralString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>GeneralString</code></pre>
+<p>Todo: proper check GeneralString validationfrom_string creates GeneralString from string s</p>
+
+</section>
+
+		<section id="GeneralizedTime.decode" class="doc-node">
+			<div class="title"><h2>fn GeneralizedTime.decode <a href="#GeneralizedTime.decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> GeneralizedTime<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> loc <span class="token builtin">i64</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>GeneralizedTime<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="GeneralizedTime.from_bytes" class="doc-node">
+			<div class="title"><h2>fn GeneralizedTime.from_bytes <a href="#GeneralizedTime.from_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> GeneralizedTime<span class="token punctuation">.</span><span class="token function">from_bytes</span><span class="token punctuation">(</span>b <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>GeneralizedTime</code></pre>
+
+
+</section>
+
+		<section id="GeneralizedTime.from_raw_element" class="doc-node">
+			<div class="title"><h2>fn GeneralizedTime.from_raw_element <a href="#GeneralizedTime.from_raw_element">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> GeneralizedTime<span class="token punctuation">.</span><span class="token function">from_raw_element</span><span class="token punctuation">(</span>re RawElement<span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>GeneralizedTime</code></pre>
+<p>GeneralizedTime.from_raw_element transforms RawElement in <code>re</code> into GeneralizedTime</p>
+
+</section>
+
+		<section id="GeneralizedTime.from_string" class="doc-node">
+			<div class="title"><h2>fn GeneralizedTime.from_string <a href="#GeneralizedTime.from_string">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> GeneralizedTime<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>GeneralizedTime</code></pre>
+
+
+</section>
+
+		<section id="Integer.decode" class="doc-node">
+			<div class="title"><h2>fn Integer.decode <a href="#Integer.decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Integer<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> loc <span class="token builtin">i64</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Integer<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
+<p>decode deserializes and decodes bytes src back into ASN.1 Integer. Its accepts <code>loc</code> params, the location (offset) within bytes src where the unpack process start form, if not sure set to 0 and optional rule in <code>Params</code> to drive unpacking. see <code>Encodingrule</code> for availables values. Currently only support<code>.der</code>.</p>
+
+</section>
+
+		<section id="Integer.from_bigint" class="doc-node">
+			<div class="title"><h2>fn Integer.from_bigint <a href="#Integer.from_bigint">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Integer<span class="token punctuation">.</span><span class="token function">from_bigint</span><span class="token punctuation">(</span>b big<span class="token punctuation">.</span>Integer<span class="token punctuation">)</span> Integer</code></pre>
+<p>from_bigint creates a new ASN.1 Integer from big.Integer b</p>
+
+</section>
+
+		<section id="Integer.from_bytes" class="doc-node">
+			<div class="title"><h2>fn Integer.from_bytes <a href="#Integer.from_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Integer<span class="token punctuation">.</span><span class="token function">from_bytes</span><span class="token punctuation">(</span>b <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>Integer</code></pre>
+<p>from_bytes creates a new ASN.1 Integer from bytes array in b. Its try to parse bytes as in two's complement form. see <code>unpack_from_twoscomplement_bytes</code></p>
+
+</section>
+
+		<section id="Integer.from_hex" class="doc-node">
+			<div class="title"><h2>fn Integer.from_hex <a href="#Integer.from_hex">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Integer<span class="token punctuation">.</span><span class="token function">from_hex</span><span class="token punctuation">(</span>x <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>Integer</code></pre>
+<p>from_hex creates a new ASN.1 Integer from hex string in x where x is a valid hex string without <code>0x</code> prefix. If your string value is below max_i64, use from_i64 instead</p>
+
+</section>
+
+		<section id="Integer.from_i64" class="doc-node">
+			<div class="title"><h2>fn Integer.from_i64 <a href="#Integer.from_i64">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Integer<span class="token punctuation">.</span><span class="token function">from_i64</span><span class="token punctuation">(</span>v <span class="token builtin">i64</span><span class="token punctuation">)</span> Integer</code></pre>
+<p>from_i64 creates new a ASN.1 Integer from i64 v</p>
+
+</section>
+
+		<section id="Integer.from_int" class="doc-node">
+			<div class="title"><h2>fn Integer.from_int <a href="#Integer.from_int">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Integer<span class="token punctuation">.</span><span class="token function">from_int</span><span class="token punctuation">(</span>v <span class="token builtin">int</span><span class="token punctuation">)</span> Integer</code></pre>
+<p>from_int creates a new ASN.1 Integer from int v</p>
+
+</section>
+
+		<section id="Integer.from_raw_element" class="doc-node">
+			<div class="title"><h2>fn Integer.from_raw_element <a href="#Integer.from_raw_element">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Integer<span class="token punctuation">.</span><span class="token function">from_raw_element</span><span class="token punctuation">(</span>re RawElement<span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>Integer</code></pre>
+<p>Integer.from_raw_element tries to transform RawElement in <code>re</code> into Integer</p>
+
+</section>
+
+		<section id="Integer.from_string" class="doc-node">
+			<div class="title"><h2>fn Integer.from_string <a href="#Integer.from_string">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Integer<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>Integer</code></pre>
+<p>from_string creates a new ASN.1 Integer from decimal string s. If your string value is below max_i64, use from_i64 instead</p>
+
+</section>
+
+		<section id="NumericString.new" class="doc-node">
+			<div class="title"><h2>fn NumericString.new <a href="#NumericString.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> NumericString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>NumericString</code></pre>
+<p>NumericString.new creates new NumericString from string s</p>
+
+</section>
+
+		<section id="NumericString.parse" class="doc-node">
+			<div class="title"><h2>fn NumericString.parse <a href="#NumericString.parse">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> NumericString<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>NumericString</code></pre>
+
+
+</section>
+
+		<section id="OctetString.from_bytes" class="doc-node">
+			<div class="title"><h2>fn OctetString.from_bytes <a href="#OctetString.from_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> OctetString<span class="token punctuation">.</span><span class="token function">from_bytes</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span>OctetString</code></pre>
+
+
+</section>
+
+		<section id="OctetString.new" class="doc-node">
+			<div class="title"><h2>fn OctetString.new <a href="#OctetString.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> OctetString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>OctetString</code></pre>
+<p>OctetString.new creates new octet string</p>
+
+</section>
+
+		<section id="OctetString.parse" class="doc-node">
+			<div class="title"><h2>fn OctetString.parse <a href="#OctetString.parse">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> OctetString<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>OctetString</code></pre>
+
+
+</section>
+
+		<section id="Oid.decode" class="doc-node">
+			<div class="title"><h2>fn Oid.decode <a href="#Oid.decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Oid<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> loc <span class="token builtin">i64</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Oid<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="Oid.from_bytes" class="doc-node">
+			<div class="title"><h2>fn Oid.from_bytes <a href="#Oid.from_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Oid<span class="token punctuation">.</span><span class="token function">from_bytes</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>Oid</code></pre>
+
+
+</section>
+
+		<section id="Oid.from_ints" class="doc-node">
+			<div class="title"><h2>fn Oid.from_ints <a href="#Oid.from_ints">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Oid<span class="token punctuation">.</span><span class="token function">from_ints</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">!</span>Oid</code></pre>
+
+
+</section>
+
+		<section id="Oid.from_raw_element" class="doc-node">
+			<div class="title"><h2>fn Oid.from_raw_element <a href="#Oid.from_raw_element">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Oid<span class="token punctuation">.</span><span class="token function">from_raw_element</span><span class="token punctuation">(</span>re RawElement<span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>Oid</code></pre>
+<p>Oid.from_raw_element transforms RawElement in <code>re</code> into Oid</p>
+
+</section>
+
+		<section id="Oid.from_string" class="doc-node">
+			<div class="title"><h2>fn Oid.from_string <a href="#Oid.from_string">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Oid<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>Oid</code></pre>
+
+
+</section>
+
+		<section id="PrintableString.decode" class="doc-node">
+			<div class="title"><h2>fn PrintableString.decode <a href="#PrintableString.decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> PrintableString<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> loc <span class="token builtin">i64</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>PrintableString<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="PrintableString.new" class="doc-node">
+			<div class="title"><h2>fn PrintableString.new <a href="#PrintableString.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> PrintableString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>PrintableString</code></pre>
+
+
+</section>
+
+		<section id="Set.decode" class="doc-node">
+			<div class="title"><h2>fn Set.decode <a href="#Set.decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Set<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> loc <span class="token builtin">i64</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Set<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="TaggedType.decode" class="doc-node">
+			<div class="title"><h2>fn TaggedType.decode <a href="#TaggedType.decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> TaggedType<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> loc <span class="token builtin">i64</span><span class="token punctuation">,</span> tm TaggedMode<span class="token punctuation">,</span> inner_tag Tag<span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>TaggedType<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="TaggedType.explicit" class="doc-node">
+			<div class="title"><h2>fn TaggedType.explicit <a href="#TaggedType.explicit">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> TaggedType<span class="token punctuation">.</span><span class="token function">explicit</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> outer_tag Tag<span class="token punctuation">)</span> <span class="token operator">!</span>TaggedType</code></pre>
+<p>explicit creates a new TaggedType with .explicit tagged mode.</p>
+
+</section>
+
+		<section id="TaggedType.explicit_context" class="doc-node">
+			<div class="title"><h2>fn TaggedType.explicit_context <a href="#TaggedType.explicit_context">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> TaggedType<span class="token punctuation">.</span><span class="token function">explicit_context</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> tagnum <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">!</span>TaggedType</code></pre>
+<p>explicit_context creates explicit mode of TaggedType for inner element el with tag has a .context_specific TagClass and expected (outer) tag number is set into tagnum</p>
+
+</section>
+
+		<section id="TaggedType.from_raw_element" class="doc-node">
+			<div class="title"><h2>fn TaggedType.from_raw_element <a href="#TaggedType.from_raw_element">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> TaggedType<span class="token punctuation">.</span><span class="token function">from_raw_element</span><span class="token punctuation">(</span>r RawElement<span class="token punctuation">,</span> m TaggedMode<span class="token punctuation">,</span> inner_tag Tag<span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>TaggedType</code></pre>
+<p>from_raw_element treats this RawElement as TaggedType with mode m and inner element</p>
+
+</section>
+
+		<section id="TaggedType.implicit" class="doc-node">
+			<div class="title"><h2>fn TaggedType.implicit <a href="#TaggedType.implicit">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> TaggedType<span class="token punctuation">.</span><span class="token function">implicit</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> outer_tag Tag<span class="token punctuation">)</span> <span class="token operator">!</span>TaggedType</code></pre>
+<p>implicit creates a new TaggedType with .implicit tagged mode for inner element el</p>
+
+</section>
+
+		<section id="TaggedType.implicit_context" class="doc-node">
+			<div class="title"><h2>fn TaggedType.implicit_context <a href="#TaggedType.implicit_context">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> TaggedType<span class="token punctuation">.</span><span class="token function">implicit_context</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> tagnum <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">!</span>TaggedType</code></pre>
+<p>implicit_context creates implicit mode of TaggedType for inner element el with tag has a .context_specific TagClass and expected (outer) tag number is set into tagnum</p>
+
+</section>
+
+		<section id="TaggedType.new" class="doc-node">
+			<div class="title"><h2>fn TaggedType.new <a href="#TaggedType.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> TaggedType<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> tagmode TaggedMode<span class="token punctuation">,</span> outer_tag Tag<span class="token punctuation">)</span> <span class="token operator">!</span>TaggedType</code></pre>
+<p>new creates a new TaggedType</p>
+
+</section>
+
+		<section id="UTCTime.decode" class="doc-node">
+			<div class="title"><h2>fn UTCTime.decode <a href="#UTCTime.decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> UTCTime<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> loc <span class="token builtin">i64</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>UTCTime<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="UTCTime.from_bytes" class="doc-node">
+			<div class="title"><h2>fn UTCTime.from_bytes <a href="#UTCTime.from_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> UTCTime<span class="token punctuation">.</span><span class="token function">from_bytes</span><span class="token punctuation">(</span>b <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>UTCTime</code></pre>
+
+
+</section>
+
+		<section id="UTCTime.from_raw_element" class="doc-node">
+			<div class="title"><h2>fn UTCTime.from_raw_element <a href="#UTCTime.from_raw_element">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> UTCTime<span class="token punctuation">.</span><span class="token function">from_raw_element</span><span class="token punctuation">(</span>re RawElement<span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>UTCTime</code></pre>
+<p>UTCTime.from_raw_element transforms RawElement in <code>re</code> into UTCTime</p>
+
+</section>
+
+		<section id="UTCTime.from_string" class="doc-node">
+			<div class="title"><h2>fn UTCTime.from_string <a href="#UTCTime.from_string">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> UTCTime<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>UTCTime</code></pre>
+<p>new_utctime creates new UTCTime from string s.</p>
+
+</section>
+
+		<section id="Utf8String.from_bytes" class="doc-node">
+			<div class="title"><h2>fn Utf8String.from_bytes <a href="#Utf8String.from_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Utf8String<span class="token punctuation">.</span><span class="token function">from_bytes</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span>Utf8String</code></pre>
+
+
+</section>
+
+		<section id="Utf8String.new" class="doc-node">
+			<div class="title"><h2>fn Utf8String.new <a href="#Utf8String.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Utf8String<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>Utf8String</code></pre>
+
+
+</section>
+
+		<section id="VisibleString.decode" class="doc-node">
+			<div class="title"><h2>fn VisibleString.decode <a href="#VisibleString.decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> VisibleString<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> loc <span class="token builtin">i64</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>VisibleString<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="VisibleString.from_bytes" class="doc-node">
+			<div class="title"><h2>fn VisibleString.from_bytes <a href="#VisibleString.from_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> VisibleString<span class="token punctuation">.</span><span class="token function">from_bytes</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>VisibleString</code></pre>
+<p>from_bytes creates a new VisibleString from bytes src</p>
+
+</section>
+
+		<section id="VisibleString.from_raw_element" class="doc-node">
+			<div class="title"><h2>fn VisibleString.from_raw_element <a href="#VisibleString.from_raw_element">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> VisibleString<span class="token punctuation">.</span><span class="token function">from_raw_element</span><span class="token punctuation">(</span>re RawElement<span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span>VisibleString</code></pre>
+<p>VisibleString.from_raw_element transforms RawElement in <code>re</code> into VisibleString</p>
+
+</section>
+
+		<section id="VisibleString.new" class="doc-node">
+			<div class="title"><h2>fn VisibleString.new <a href="#VisibleString.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> VisibleString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>VisibleString</code></pre>
+<p>from_string creates a new VisibleString from string s</p>
+
+</section>
+
+		<section id="SetOf[T].tag" class="doc-node">
+			<div class="title"><h2>fn (SetOf[T]) tag <a href="#SetOf[T].tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>so SetOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="SetOf[T].payload" class="doc-node">
+			<div class="title"><h2>fn (SetOf[T]) payload <a href="#SetOf[T].payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>so SetOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="Enumerated" class="doc-node">
+			<div class="title"><h2>struct Enumerated <a href="#Enumerated">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">Enumerated</span> <span class="token punctuation">{</span>
+	value <span class="token builtin">int</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	tag Tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>enumerated<span class="token punctuation">)</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>ENUMERATED. Enumerated type treated as ordinary integer, only differs on tag value. The encoding of an enumerated value shall be that of the integer value with which it is associated.</p><p>Note: It is primitive.</p>
+
+</section>
+
+		<section id="Enumerated.tag" class="doc-node">
+			<div class="title"><h2>fn (Enumerated) tag <a href="#Enumerated.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>e Enumerated<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="Enumerated.payload" class="doc-node">
+			<div class="title"><h2>fn (Enumerated) payload <a href="#Enumerated.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>e Enumerated<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="Enumerated.length" class="doc-node">
+			<div class="title"><h2>fn (Enumerated) length <a href="#Enumerated.length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>e Enumerated<span class="token punctuation">)</span> <span class="token function">length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="Enumerated.packed_length" class="doc-node">
+			<div class="title"><h2>fn (Enumerated) packed_length <a href="#Enumerated.packed_length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>e Enumerated<span class="token punctuation">)</span> <span class="token function">packed_length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="Enumerated.encode" class="doc-node">
+			<div class="title"><h2>fn (Enumerated) encode <a href="#Enumerated.encode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>e Enumerated<span class="token punctuation">)</span> <span class="token function">encode</span><span class="token punctuation">(</span><span class="token keyword">mut</span> dst <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+
+
+</section>
+
+		<section id="GeneralString" class="doc-node">
+			<div class="title"><h2>struct GeneralString <a href="#GeneralString">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[heap]</div><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">GeneralString</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	value <span class="token builtin">string</span>
+<span class="token punctuation">}</span></code></pre>
+<p>ASN.1 GENERALSTRING Handling It may contain any characters from a "G" and "C" set of any standardized character sets. A "G" set contains some specified set of graphic (i.e., printable) characters, while a "C" set contains a group of control characters. For example, the "G" set in the ASCII character set consists of the characters with ASCII numbers 33 through 126, while the "C" set is those characters with ASCII numbers 0 through 31. For historical reasons, the characters SPACE (number 32) and DELETE (number 127) are not considered to be in either the C set or the G set, but instead stand on their own We only treated GeneralString as an us-ascii charset</p>
+
+</section>
+
+		<section id="GeneralString.tag" class="doc-node">
+			<div class="title"><h2>fn (GeneralString) tag <a href="#GeneralString.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>gst GeneralString<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="GeneralString.payload" class="doc-node">
+			<div class="title"><h2>fn (GeneralString) payload <a href="#GeneralString.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>gst GeneralString<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="GeneralizedTime" class="doc-node">
+			<div class="title"><h2>struct GeneralizedTime <a href="#GeneralizedTime">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">GeneralizedTime</span> <span class="token punctuation">{</span>
+	value <span class="token builtin">string</span>
+	tag   Tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>generalizedtime<span class="token punctuation">)</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>GeneralizedTime.</p><p>In DER Encoding scheme, GeneralizedTime should :- The encoding shall terminate with a "Z"</p><ul><li>The seconds element shall always be present</li><li>The fractional-seconds elements, if present, shall omit all trailing zeros;</li><li>if the elements correspond to 0, they shall be wholly omitted, and the decimal point element also shall be omitted</li></ul><p>GeneralizedTime values MUST be:- expressed in Greenwich Mean Time (Zulu) and MUST include seconds(i.e., times are <code>YYYYMMDDHHMMSSZ</code>), even where the number of seconds is zero.- GeneralizedTime values MUST NOT include fractional seconds.</p>
+
+</section>
+
+		<section id="GeneralizedTime.tag" class="doc-node">
+			<div class="title"><h2>fn (GeneralizedTime) tag <a href="#GeneralizedTime.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>gt GeneralizedTime<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="GeneralizedTime.value" class="doc-node">
+			<div class="title"><h2>fn (GeneralizedTime) value <a href="#GeneralizedTime.value">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>gt GeneralizedTime<span class="token punctuation">)</span> <span class="token function">value</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span></code></pre>
+
+
+</section>
+
+		<section id="GeneralizedTime.packed_length" class="doc-node">
+			<div class="title"><h2>fn (GeneralizedTime) packed_length <a href="#GeneralizedTime.packed_length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>gt GeneralizedTime<span class="token punctuation">)</span> <span class="token function">packed_length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="GeneralizedTime.payload" class="doc-node">
+			<div class="title"><h2>fn (GeneralizedTime) payload <a href="#GeneralizedTime.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>gt GeneralizedTime<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="GeneralizedTime.length" class="doc-node">
+			<div class="title"><h2>fn (GeneralizedTime) length <a href="#GeneralizedTime.length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>gt GeneralizedTime<span class="token punctuation">)</span> <span class="token function">length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="GeneralizedTime.encode" class="doc-node">
+			<div class="title"><h2>fn (GeneralizedTime) encode <a href="#GeneralizedTime.encode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>gt GeneralizedTime<span class="token punctuation">)</span> <span class="token function">encode</span><span class="token punctuation">(</span><span class="token keyword">mut</span> dst <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+
+
+</section>
+
+		<section id="Integer" class="doc-node">
+			<div class="title"><h2>struct Integer <a href="#Integer">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">Integer</span> <span class="token punctuation">{</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	tag Tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>integer<span class="token punctuation">)</span><span class="token punctuation">}</span>
+	<span class="token comment">// underlying integer value with support from i64 and big.Integer</span>
+	value IntValue
+<span class="token punctuation">}</span></code></pre>
+<p>Integer represent Universal class of arbitrary length type of ASN.1 INTEGER The encoding of an integer value shall be primitive. If the contents octets of an integer value encoding consist of more than one octet, then the bits of the first octet and bit 8 of the second octet: a) shall not all be ones; and b) shall not all be zero. NOTE – These rules ensure that an integer value is always encoded in the smallest possible number of octets</p>
+
+</section>
+
+		<section id="Integer.bytes" class="doc-node">
+			<div class="title"><h2>fn (Integer) bytes <a href="#Integer.bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>v Integer<span class="token punctuation">)</span> <span class="token function">bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+<p>bytes return underlying bytes array</p>
+
+</section>
+
+		<section id="Integer.equal" class="doc-node">
+			<div class="title"><h2>fn (Integer) equal <a href="#Integer.equal">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>n Integer<span class="token punctuation">)</span> <span class="token function">equal</span><span class="token punctuation">(</span>m Integer<span class="token punctuation">)</span> <span class="token builtin">bool</span></code></pre>
+<p>equal do checking if n equal to m. ISSUE?: There are some issues when compared n == m directly, its fails even internally its a same, so we provide and use equality check</p>
+
+</section>
+
+		<section id="Integer.packed_length" class="doc-node">
+			<div class="title"><h2>fn (Integer) packed_length <a href="#Integer.packed_length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>v Integer<span class="token punctuation">)</span> <span class="token function">packed_length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="Integer.tag" class="doc-node">
+			<div class="title"><h2>fn (Integer) tag <a href="#Integer.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>v Integer<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="Integer.as_bigint" class="doc-node">
+			<div class="title"><h2>fn (Integer) as_bigint <a href="#Integer.as_bigint">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>v Integer<span class="token punctuation">)</span> <span class="token function">as_bigint</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>big<span class="token punctuation">.</span>Integer</code></pre>
+<p>as_bigint casts Integer value to big.Integer or error on fails.</p>
+
+</section>
+
+		<section id="Integer.as_i64" class="doc-node">
+			<div class="title"><h2>fn (Integer) as_i64 <a href="#Integer.as_i64">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>v Integer<span class="token punctuation">)</span> <span class="token function">as_i64</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">i64</span></code></pre>
+<p>as_i64 casts Integer value to i64 value or error on fails.</p>
+
+</section>
+
+		<section id="Integer.payload" class="doc-node">
+			<div class="title"><h2>fn (Integer) payload <a href="#Integer.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>v Integer<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="Integer.length" class="doc-node">
+			<div class="title"><h2>fn (Integer) length <a href="#Integer.length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>v Integer<span class="token punctuation">)</span> <span class="token function">length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="Integer.encode" class="doc-node">
+			<div class="title"><h2>fn (Integer) encode <a href="#Integer.encode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>v Integer<span class="token punctuation">)</span> <span class="token function">encode</span><span class="token punctuation">(</span><span class="token keyword">mut</span> dst <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+<p>encode serializes and encodes Integer v into bytes and appended into <code>dst</code>. Its accepts encoding rule params, where its currently only suppport <code>.der</code> DER rule. If <code>dst.len != 0</code>, it act as append semantic, otherwise the <code>dst</code> bytes stores the result.</p>
+
+</section>
+
+		<section id="NumericString" class="doc-node">
+			<div class="title"><h2>struct NumericString <a href="#NumericString">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[heap]</div><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">NumericString</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	value <span class="token builtin">string</span>
+<span class="token punctuation">}</span></code></pre>
+<p>NumericString.</p><p>NumericString was restricted character string types restricted to sequences of zero, one or more characters from some specified collection of characters. That was : digit : 0,1,..9 and spaces char (0x20)</p>
+
+</section>
+
+		<section id="NumericString.tag" class="doc-node">
+			<div class="title"><h2>fn (NumericString) tag <a href="#NumericString.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>nst NumericString<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="NumericString.payload" class="doc-node">
+			<div class="title"><h2>fn (NumericString) payload <a href="#NumericString.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>nst NumericString<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="OctetString" class="doc-node">
+			<div class="title"><h2>struct OctetString <a href="#OctetString">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[heap]</div><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">OctetString</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	value <span class="token builtin">string</span>
+<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="OctetString.tag" class="doc-node">
+			<div class="title"><h2>fn (OctetString) tag <a href="#OctetString.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oct OctetString<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="OctetString.payload" class="doc-node">
+			<div class="title"><h2>fn (OctetString) payload <a href="#OctetString.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>os OctetString<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="Oid" class="doc-node">
+			<div class="title"><h2>struct Oid <a href="#Oid">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">Oid</span> <span class="token punctuation">{</span>
+	value <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	tag Tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>oid<span class="token punctuation">)</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>ObjectIdentifier</p>
+
+</section>
+
+		<section id="Oid.tag" class="doc-node">
+			<div class="title"><h2>fn (Oid) tag <a href="#Oid.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="Oid.value" class="doc-node">
+			<div class="title"><h2>fn (Oid) value <a href="#Oid.value">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">value</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="Oid.payload" class="doc-node">
+			<div class="title"><h2>fn (Oid) payload <a href="#Oid.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="Oid.length" class="doc-node">
+			<div class="title"><h2>fn (Oid) length <a href="#Oid.length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="Oid.packed_length" class="doc-node">
+			<div class="title"><h2>fn (Oid) packed_length <a href="#Oid.packed_length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">packed_length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="Oid.encode" class="doc-node">
+			<div class="title"><h2>fn (Oid) encode <a href="#Oid.encode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">encode</span><span class="token punctuation">(</span><span class="token keyword">mut</span> dst <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+
+
+</section>
+
+		<section id="Oid.equal" class="doc-node">
+			<div class="title"><h2>fn (Oid) equal <a href="#Oid.equal">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">equal</span><span class="token punctuation">(</span>oth Oid<span class="token punctuation">)</span> <span class="token builtin">bool</span></code></pre>
+
+
+</section>
+
+		<section id="Oid.str" class="doc-node">
+			<div class="title"><h2>fn (Oid) str <a href="#Oid.str">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">str</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span></code></pre>
+
+
+</section>
+
+		<section id="PrintableString" class="doc-node">
+			<div class="title"><h2>struct PrintableString <a href="#PrintableString">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[heap]</div><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">PrintableString</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	value <span class="token builtin">string</span>
+<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="PrintableString.tag" class="doc-node">
+			<div class="title"><h2>fn (PrintableString) tag <a href="#PrintableString.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pst PrintableString<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="PrintableString.payload" class="doc-node">
+			<div class="title"><h2>fn (PrintableString) payload <a href="#PrintableString.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pst PrintableString<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="Set" class="doc-node">
+			<div class="title"><h2>struct Set <a href="#Set">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[heap]</div><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">Set</span> <span class="token punctuation">{</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	<span class="token comment">//	maximal size of this set fields</span>
+	max_size <span class="token builtin">int</span> <span class="token operator">=</span> default_seqset_fields
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	<span class="token comment">// fields is the elements of the set</span>
+	fields <span class="token punctuation">[</span><span class="token punctuation">]</span>Element
+<span class="token punctuation">}</span></code></pre>
+<p>SET and SET OF</p><p>SET and SET OF contains an unordered series of fields of one or more types. This differs from a SEQUENCE which contains an ordered list. in DER encoding, SET types elements are sorted into tag order, and, for SET OF types elements are sorted into ascending order of encoding.</p>
+
+</section>
+
+		<section id="Set.tag" class="doc-node">
+			<div class="title"><h2>fn (Set) tag <a href="#Set.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>s Set<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="Set.payload" class="doc-node">
+			<div class="title"><h2>fn (Set) payload <a href="#Set.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>s Set<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="Set.encode" class="doc-node">
+			<div class="title"><h2>fn (Set) encode <a href="#Set.encode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>s Set<span class="token punctuation">)</span> <span class="token function">encode</span><span class="token punctuation">(</span><span class="token keyword">mut</span> dst <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+
+
+</section>
+
+		<section id="SetOf" class="doc-node">
+			<div class="title"><h2>struct SetOf <a href="#SetOf">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[heap]</div><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> SetOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	max_size <span class="token builtin">int</span> <span class="token operator">=</span> default_seqset_fields
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	fields <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">T</span>
+<span class="token punctuation">}</span></code></pre>
+<p>SET OF</p>
+
+</section>
+
+		<section id="TaggedType" class="doc-node">
+			<div class="title"><h2>struct TaggedType <a href="#TaggedType">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">TaggedType</span> <span class="token punctuation">{</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	<span class="token comment">// class of TaggedType element was default to .context_specific</span>
+	outer_tag Tag
+	mode      TaggedMode <span class="token operator">=</span> <span class="token punctuation">.</span>explicit
+	<span class="token comment">// Element being tagged</span>
+	inner_el Element
+<span class="token punctuation">}</span></code></pre>
+<p>Tagged type element</p>
+
+</section>
+
+		<section id="TaggedType.tag" class="doc-node">
+			<div class="title"><h2>fn (TaggedType) tag <a href="#TaggedType.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>tt TaggedType<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+<p>tag returns outer tag of TaggedType</p>
+
+</section>
+
+		<section id="TaggedType.tagged_mode" class="doc-node">
+			<div class="title"><h2>fn (TaggedType) tagged_mode <a href="#TaggedType.tagged_mode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>tt TaggedType<span class="token punctuation">)</span> <span class="token function">tagged_mode</span><span class="token punctuation">(</span><span class="token punctuation">)</span> TaggedMode</code></pre>
+
+
+</section>
+
+		<section id="TaggedType.payload" class="doc-node">
+			<div class="title"><h2>fn (TaggedType) payload <a href="#TaggedType.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>tt TaggedType<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="TaggedType.length" class="doc-node">
+			<div class="title"><h2>fn (TaggedType) length <a href="#TaggedType.length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>tt TaggedType<span class="token punctuation">)</span> <span class="token function">length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="TaggedType.packed_length" class="doc-node">
+			<div class="title"><h2>fn (TaggedType) packed_length <a href="#TaggedType.packed_length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>tt TaggedType<span class="token punctuation">)</span> <span class="token function">packed_length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="TaggedType.encode" class="doc-node">
+			<div class="title"><h2>fn (TaggedType) encode <a href="#TaggedType.encode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>tt TaggedType<span class="token punctuation">)</span> <span class="token function">encode</span><span class="token punctuation">(</span><span class="token keyword">mut</span> dst <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+
+
+</section>
+
+		<section id="TaggedType.inner_element" class="doc-node">
+			<div class="title"><h2>fn (TaggedType) inner_element <a href="#TaggedType.inner_element">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>tt TaggedType<span class="token punctuation">)</span> <span class="token function">inner_element</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Element</code></pre>
+
+
+</section>
+
+		<section id="UTCTime" class="doc-node">
+			<div class="title"><h2>struct UTCTime <a href="#UTCTime">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">UTCTime</span> <span class="token punctuation">{</span>
+	value <span class="token builtin">string</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	tag Tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>utctime<span class="token punctuation">)</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<h2>UTCTime</h2><p>For this time, UTCTime represented by simple string with format "YYMMDDhhmmssZ"- the six digits YYMMDD where YY is the two low-order digits of the Christian year,(RFC 5280 defines it as a range from 1950 to 2049 for X.509), MM is the month (counting January as 01), and DD is the day of the month (01 to 31).- the four digits hhmm where hh is hour (00 to 23) and mm is minutes (00 to 59); (SEE NOTE BELOW)</p><ul><li>the six digits hhmmss where hh and mm are as in above, and ss is seconds (00 to 59);</li><li>the character Z;</li><li>one of the characters + or -, followed by hhmm, where hh is hour and mm is minutes (NOT SUPPORTED)</li></ul><h2>NOTE</h2><ul><li>Restrictions employed by DER, the encoding shall terminate with "Z".</li><li>The seconds element shall always be present, and DER (along with RFC 5280) specify that seconds must be present,</li><li>Fractional seconds must not be present.</li></ul><p>Todo:- check for invalid representation of date and hhmmss part.</p><ul><li>represented UTCTime in time.Time</li></ul>
+
+</section>
+
+		<section id="UTCTime.tag" class="doc-node">
+			<div class="title"><h2>fn (UTCTime) tag <a href="#UTCTime.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>ut UTCTime<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="UTCTime.value" class="doc-node">
+			<div class="title"><h2>fn (UTCTime) value <a href="#UTCTime.value">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>ut UTCTime<span class="token punctuation">)</span> <span class="token function">value</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span></code></pre>
+
+
+</section>
+
+		<section id="UTCTime.payload" class="doc-node">
+			<div class="title"><h2>fn (UTCTime) payload <a href="#UTCTime.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>ut UTCTime<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="UTCTime.length" class="doc-node">
+			<div class="title"><h2>fn (UTCTime) length <a href="#UTCTime.length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>ut UTCTime<span class="token punctuation">)</span> <span class="token function">length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="UTCTime.packed_length" class="doc-node">
+			<div class="title"><h2>fn (UTCTime) packed_length <a href="#UTCTime.packed_length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>ut UTCTime<span class="token punctuation">)</span> <span class="token function">packed_length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="UTCTime.encode" class="doc-node">
+			<div class="title"><h2>fn (UTCTime) encode <a href="#UTCTime.encode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>t UTCTime<span class="token punctuation">)</span> <span class="token function">encode</span><span class="token punctuation">(</span><span class="token keyword">mut</span> dst <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+
+
+</section>
+
+		<section id="Utf8String" class="doc-node">
+			<div class="title"><h2>struct Utf8String <a href="#Utf8String">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[heap]</div><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">Utf8String</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	value <span class="token builtin">string</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Utf8String UTF8 unicode charset</p>
+
+</section>
+
+		<section id="Utf8String.tag" class="doc-node">
+			<div class="title"><h2>fn (Utf8String) tag <a href="#Utf8String.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>uts Utf8String<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="Utf8String.payload" class="doc-node">
+			<div class="title"><h2>fn (Utf8String) payload <a href="#Utf8String.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>uts Utf8String<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="VisibleString" class="doc-node">
+			<div class="title"><h2>struct VisibleString <a href="#VisibleString">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[heap]</div><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">VisibleString</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	value <span class="token builtin">string</span>
+<span class="token punctuation">}</span></code></pre>
+<p>VisibleString The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.</p>
+
+</section>
+
+		<section id="VisibleString.tag" class="doc-node">
+			<div class="title"><h2>fn (VisibleString) tag <a href="#VisibleString.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>vs VisibleString<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="VisibleString.value" class="doc-node">
+			<div class="title"><h2>fn (VisibleString) value <a href="#VisibleString.value">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>vs VisibleString<span class="token punctuation">)</span> <span class="token function">value</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span></code></pre>
+
+
+</section>
+
+		<section id="VisibleString.payload" class="doc-node">
+			<div class="title"><h2>fn (VisibleString) payload <a href="#VisibleString.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>vs VisibleString<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="VisibleString.length" class="doc-node">
+			<div class="title"><h2>fn (VisibleString) length <a href="#VisibleString.length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>vs VisibleString<span class="token punctuation">)</span> <span class="token function">length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="VisibleString.packed_length" class="doc-node">
+			<div class="title"><h2>fn (VisibleString) packed_length <a href="#VisibleString.packed_length">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>vs VisibleString<span class="token punctuation">)</span> <span class="token function">packed_length</span><span class="token punctuation">(</span>p Params<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+
+
+</section>
+
+		<section id="VisibleString.encode" class="doc-node">
+			<div class="title"><h2>fn (VisibleString) encode <a href="#VisibleString.encode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>vs VisibleString<span class="token punctuation">)</span> <span class="token function">encode</span><span class="token punctuation">(</span><span class="token keyword">mut</span> dst <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> p Params<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+
+
+</section>
+
+
+						<div class="footer">Powered by vdoc. Generated on: 12 Oct 2024 12:27:22</div>
+					</div>
+					<div class="doc-toc"><ul><li class="open"><a href="#read_byte">fn read_byte</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#read_bytes">fn read_bytes</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Enumerated.decode">fn Enumerated.decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Enumerated.from_bytes">fn Enumerated.from_bytes</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Enumerated.from_int">fn Enumerated.from_int</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Enumerated.from_raw_element">fn Enumerated.from_raw_element</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#GeneralString.new">fn GeneralString.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#GeneralizedTime.decode">fn GeneralizedTime.decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#GeneralizedTime.from_bytes">fn GeneralizedTime.from_bytes</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#GeneralizedTime.from_raw_element">fn GeneralizedTime.from_raw_element</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#GeneralizedTime.from_string">fn GeneralizedTime.from_string</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Integer.decode">fn Integer.decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Integer.from_bigint">fn Integer.from_bigint</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Integer.from_bytes">fn Integer.from_bytes</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Integer.from_hex">fn Integer.from_hex</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Integer.from_i64">fn Integer.from_i64</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Integer.from_int">fn Integer.from_int</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Integer.from_raw_element">fn Integer.from_raw_element</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Integer.from_string">fn Integer.from_string</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#NumericString.new">fn NumericString.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#NumericString.parse">fn NumericString.parse</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#OctetString.from_bytes">fn OctetString.from_bytes</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#OctetString.new">fn OctetString.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#OctetString.parse">fn OctetString.parse</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Oid.decode">fn Oid.decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Oid.from_bytes">fn Oid.from_bytes</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Oid.from_ints">fn Oid.from_ints</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Oid.from_raw_element">fn Oid.from_raw_element</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Oid.from_string">fn Oid.from_string</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#PrintableString.decode">fn PrintableString.decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#PrintableString.new">fn PrintableString.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Set.decode">fn Set.decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#TaggedType.decode">fn TaggedType.decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#TaggedType.explicit">fn TaggedType.explicit</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#TaggedType.explicit_context">fn TaggedType.explicit_context</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#TaggedType.from_raw_element">fn TaggedType.from_raw_element</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#TaggedType.implicit">fn TaggedType.implicit</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#TaggedType.implicit_context">fn TaggedType.implicit_context</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#TaggedType.new">fn TaggedType.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#UTCTime.decode">fn UTCTime.decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#UTCTime.from_bytes">fn UTCTime.from_bytes</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#UTCTime.from_raw_element">fn UTCTime.from_raw_element</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#UTCTime.from_string">fn UTCTime.from_string</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Utf8String.from_bytes">fn Utf8String.from_bytes</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Utf8String.new">fn Utf8String.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#VisibleString.decode">fn VisibleString.decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#VisibleString.from_bytes">fn VisibleString.from_bytes</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#VisibleString.from_raw_element">fn VisibleString.from_raw_element</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#VisibleString.new">fn VisibleString.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#SetOf[T].tag">type SetOf[T]</a>        <ul>
+<li><a href="#SetOf[T].tag">fn tag</a></li>
+<li><a href="#SetOf[T].payload">fn payload</a></li>
+</ul>
+</li>
+<li class="open"><a href="#Enumerated">struct Enumerated</a>        <ul>
+<li><a href="#Enumerated.tag">fn tag</a></li>
+<li><a href="#Enumerated.payload">fn payload</a></li>
+<li><a href="#Enumerated.length">fn length</a></li>
+<li><a href="#Enumerated.packed_length">fn packed_length</a></li>
+<li><a href="#Enumerated.encode">fn encode</a></li>
+</ul>
+</li>
+<li class="open"><a href="#GeneralString">struct GeneralString</a>        <ul>
+<li><a href="#GeneralString.tag">fn tag</a></li>
+<li><a href="#GeneralString.payload">fn payload</a></li>
+</ul>
+</li>
+<li class="open"><a href="#GeneralizedTime">struct GeneralizedTime</a>        <ul>
+<li><a href="#GeneralizedTime.tag">fn tag</a></li>
+<li><a href="#GeneralizedTime.value">fn value</a></li>
+<li><a href="#GeneralizedTime.packed_length">fn packed_length</a></li>
+<li><a href="#GeneralizedTime.payload">fn payload</a></li>
+<li><a href="#GeneralizedTime.length">fn length</a></li>
+<li><a href="#GeneralizedTime.encode">fn encode</a></li>
+</ul>
+</li>
+<li class="open"><a href="#Integer">struct Integer</a>        <ul>
+<li><a href="#Integer.bytes">fn bytes</a></li>
+<li><a href="#Integer.equal">fn equal</a></li>
+<li><a href="#Integer.packed_length">fn packed_length</a></li>
+<li><a href="#Integer.tag">fn tag</a></li>
+<li><a href="#Integer.as_bigint">fn as_bigint</a></li>
+<li><a href="#Integer.as_i64">fn as_i64</a></li>
+<li><a href="#Integer.payload">fn payload</a></li>
+<li><a href="#Integer.length">fn length</a></li>
+<li><a href="#Integer.encode">fn encode</a></li>
+</ul>
+</li>
+<li class="open"><a href="#NumericString">struct NumericString</a>        <ul>
+<li><a href="#NumericString.tag">fn tag</a></li>
+<li><a href="#NumericString.payload">fn payload</a></li>
+</ul>
+</li>
+<li class="open"><a href="#OctetString">struct OctetString</a>        <ul>
+<li><a href="#OctetString.tag">fn tag</a></li>
+<li><a href="#OctetString.payload">fn payload</a></li>
+</ul>
+</li>
+<li class="open"><a href="#Oid">struct Oid</a>        <ul>
+<li><a href="#Oid.tag">fn tag</a></li>
+<li><a href="#Oid.value">fn value</a></li>
+<li><a href="#Oid.payload">fn payload</a></li>
+<li><a href="#Oid.length">fn length</a></li>
+<li><a href="#Oid.packed_length">fn packed_length</a></li>
+<li><a href="#Oid.encode">fn encode</a></li>
+<li><a href="#Oid.equal">fn equal</a></li>
+<li><a href="#Oid.str">fn str</a></li>
+</ul>
+</li>
+<li class="open"><a href="#PrintableString">struct PrintableString</a>        <ul>
+<li><a href="#PrintableString.tag">fn tag</a></li>
+<li><a href="#PrintableString.payload">fn payload</a></li>
+</ul>
+</li>
+<li class="open"><a href="#Set">struct Set</a>        <ul>
+<li><a href="#Set.tag">fn tag</a></li>
+<li><a href="#Set.payload">fn payload</a></li>
+<li><a href="#Set.encode">fn encode</a></li>
+</ul>
+</li>
+<li class="open"><a href="#SetOf">struct SetOf</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#TaggedType">struct TaggedType</a>        <ul>
+<li><a href="#TaggedType.tag">fn tag</a></li>
+<li><a href="#TaggedType.tagged_mode">fn tagged_mode</a></li>
+<li><a href="#TaggedType.payload">fn payload</a></li>
+<li><a href="#TaggedType.length">fn length</a></li>
+<li><a href="#TaggedType.packed_length">fn packed_length</a></li>
+<li><a href="#TaggedType.encode">fn encode</a></li>
+<li><a href="#TaggedType.inner_element">fn inner_element</a></li>
+</ul>
+</li>
+<li class="open"><a href="#UTCTime">struct UTCTime</a>        <ul>
+<li><a href="#UTCTime.tag">fn tag</a></li>
+<li><a href="#UTCTime.value">fn value</a></li>
+<li><a href="#UTCTime.payload">fn payload</a></li>
+<li><a href="#UTCTime.length">fn length</a></li>
+<li><a href="#UTCTime.packed_length">fn packed_length</a></li>
+<li><a href="#UTCTime.encode">fn encode</a></li>
+</ul>
+</li>
+<li class="open"><a href="#Utf8String">struct Utf8String</a>        <ul>
+<li><a href="#Utf8String.tag">fn tag</a></li>
+<li><a href="#Utf8String.payload">fn payload</a></li>
+</ul>
+</li>
+<li class="open"><a href="#VisibleString">struct VisibleString</a>        <ul>
+<li><a href="#VisibleString.tag">fn tag</a></li>
+<li><a href="#VisibleString.value">fn value</a></li>
+<li><a href="#VisibleString.payload">fn payload</a></li>
+<li><a href="#VisibleString.length">fn length</a></li>
+<li><a href="#VisibleString.packed_length">fn packed_length</a></li>
+<li><a href="#VisibleString.encode">fn encode</a></li>
+</ul>
+</li>
+</ul></div>
+				</div>
+			</div>
+		</div>
+		<script src="doc.js"></script>
+		<script async src="search_index.js"></script>
+	</body>
+</html>
