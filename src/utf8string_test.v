@@ -20,24 +20,22 @@ fn test_uf8string_handling() ! {
 		UTF8StringTest{'\x13\x03ab\x00', [u8(12), 5, 19, 3, 97, 98, 0], none},
 		UTF8StringTest{'Test User 1', '\x0c\x0bTest User 1'.bytes(), none},
 		// invalid utf8 string, emoji with removed first and fifth byte
-		UTF8StringTest{'🐶🐶🐶🚀'.substr(0, 5), []u8{}, error('UTF8String: invalid UTF-8 string')},
+		UTF8StringTest{'🐶🐶🐶🚀'.substr(0, 5), []u8{}, error('Utf8String: invalid UTF-8 string')},
 	]
 
 	for c in data {
-		us := UTF8String.from_string(c.s) or {
+		us := Utf8String.new(c.s) or {
 			assert err == c.err
 			continue
 		}
-		mut out := []u8{}
-		us.encode(mut out) or {
+		out := encode(us) or {
 			assert err == c.err
 			continue
 		}
 		assert out == c.out
 
-		uss, _ := UTF8String.decode(out, 0)!
-
-		assert uss.tag.tag_number() == int(TagType.utf8string)
+		uss, _ := Utf8String.decode(out)!
+		assert uss.tag().tag_number() == int(TagType.utf8string)
 		assert uss.value == c.s
 	}
 }

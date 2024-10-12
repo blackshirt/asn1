@@ -34,7 +34,7 @@ pub fn (bs BitString) payload() ![]u8 {
 }
 
 // parse BitString using Parser
-fn BitString.parse(mut p Parser) !BitString {
+pub fn BitString.parse(mut p Parser) !BitString {
 	bs, next := BitString.decode(p.data)!
 	if next > p.data.len {
 		return error('more bytes needed')
@@ -44,7 +44,7 @@ fn BitString.parse(mut p Parser) !BitString {
 	return bs
 }
 
-fn BitString.decode(bytes []u8) !(BitString, i64) {
+pub fn BitString.decode(bytes []u8) !(BitString, i64) {
 	bs, next := BitString.decode_with_rule(bytes, .der)!
 	return bs, next
 }
@@ -59,7 +59,7 @@ fn BitString.decode_with_rule(bytes []u8, rule EncodingRule) !(BitString, i64) {
 		return error('BitString: zero length bit string')
 	}
 	if content_pos >= bytes.len || content_pos + length > bytes.len {
-		return error('Boolean: truncated payload bytes')
+		return error('BitString: truncated payload bytes')
 	}
 	payload := unsafe { bytes[content_pos..content_pos + length] }
 	bs := BitString.new_with_pad(payload[1..], payload[0])!
@@ -71,20 +71,20 @@ fn BitString.decode_with_rule(bytes []u8, rule EncodingRule) !(BitString, i64) {
 // BitString.from_binary_string creates a new BitString from binary bits arrays in s,
 // ie, arrays of 1 and 0. If s.len is not multiple of 8, it would contain non-null pad,
 // otherwise, the pad is null.
-// Example:
 // The bits string '011010001' will need two content octets: 01101000 10000000 (hexadecimal 68 80);
 // seven bits of the last octet are not used and its interpreted as a pad value.
+// Example:
 // ```v
 //	bs := BitString.from_binary_string('011010001')!
-// 	bs.pad == 7 and bs.data == [u8(0x68), 0x80]
+// 	assert (bs.pad == 7 && bs.data == [u8(0x68), 0x80]) == true
 // ```
-fn BitString.from_binary_string(s string) !BitString {
+pub fn BitString.from_binary_string(s string) !BitString {
 	res, pad := parse_bits_string(s)!
 	return BitString.new_with_pad(res, u8(pad))!
 }
 
 // from_string creates a new BitString from regular string s
-fn BitString.from_string(s string) !BitString {
+pub fn BitString.from_string(s string) !BitString {
 	return BitString.from_bytes(s.bytes())!
 }
 

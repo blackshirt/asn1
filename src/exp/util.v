@@ -6,7 +6,7 @@ module asn1
 // ASN.1 Utility function
 
 // read_bytes was safe version of bytes slicing, `src[pos..pos+size]`
-pub fn read_bytes(src []u8, pos int, size int) ![]u8 {
+fn read_bytes(src []u8, pos int, size int) ![]u8 {
 	if src.len < 1 || pos > src.len || size > src.len {
 		return error(' pos=${pos} or size=${size} bigger than len=${src.len}')
 	}
@@ -18,7 +18,7 @@ pub fn read_bytes(src []u8, pos int, size int) ![]u8 {
 	return ret
 }
 
-pub fn read_byte(src []u8, loc int) !(u8, int) {
+fn read_byte(src []u8, loc int) !(u8, int) {
 	if src.len == 0 || loc + 1 > src.len {
 		return error('invalid loc or len')
 	}

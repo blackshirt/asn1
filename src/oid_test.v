@@ -30,7 +30,7 @@ fn test_write_oid() ! {
 			continue
 		}
 
-		dst := oid.pack()!
+		dst := oid.payload()!
 
 		assert dst == item.exp
 	}
@@ -133,7 +133,7 @@ fn test_oid_from_string() ! {
 		}, error('Oid: bad string oid length')},
 	]
 	for s in td {
-		v := Oid.from_string(s.inp) or {
+		v := Oid.new(s.inp) or {
 			assert err == s.err
 			continue
 		}
@@ -147,8 +147,7 @@ fn test_serialize_oid_basic() {
 	exp := [u8(6), 5, 0x28, 0xC2, 0x7B, 0x02, 0x01]
 	oid := Oid.from_ints(inp)!
 
-	mut out := []u8{}
-	oid.encode(mut out)!
+	out := encode(oid)!
 
 	assert out == exp
 }
@@ -184,8 +183,7 @@ fn test_serialize_decode_oid() {
 			assert err == t.err
 			continue
 		}
-		mut out := []u8{}
-		oid.encode(mut out) or {
+		out := encode(oid) or {
 			assert err == t.err
 			continue
 		}
@@ -193,9 +191,9 @@ fn test_serialize_decode_oid() {
 		assert out == t.exp
 		// dump(out)
 		// decode back
-		oidback, next := Oid.decode(out, 0)!
+		oidback, next := Oid.decode(out)!
 
-		assert oidback.tag.tag_number() == int(TagType.oid)
+		assert oidback.tag().tag_number() == int(TagType.oid)
 		assert oidback == oid
 	}
 }
@@ -203,24 +201,23 @@ fn test_serialize_decode_oid() {
 fn test_oid_encode_decode() ! {
 	inp := '1.2.840.113549'
 
-	src := Oid.from_string(inp)!
+	src := Oid.new(inp)!
 
-	mut out := []u8{}
-	src.encode(mut out)!
+	out := encode(src)!
 	exp := [u8(0x06), 0x06, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d]
 
 	assert out == exp
 
-	oidback, _ := Oid.decode(out, 0)!
+	oidback, _ := Oid.decode(out)!
 
 	assert oidback.str() == inp
-	assert oidback.tag.tag_number() == 6
+	assert oidback.tag().tag_number() == 6
 }
 
 fn test_tc21_long_format_of_oid_encoding_should_error_in_der() ! {
 	data := [u8(0x06), 0x06, 0x80, 0x80, 0x51, 0x80, 0x80, 0x01]
 
-	_, _ := Oid.decode(data, 0) or {
+	_, _ := Oid.decode(data) or {
 		assert err == error('integer is not minimaly encoded')
 		return
 	}
@@ -230,7 +227,7 @@ fn test_tc22_too_big_value_oid() ! {
 	data := [u8(0x06), 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f,
 		0x85, 0x03, 0x02, 0x02, 0x03]
 
-	_, _ := Oid.decode(data, 0) or {
+	_, _ := Oid.decode(data) or {
 		assert err == error('integer is not minimaly encoded')
 		return
 	}

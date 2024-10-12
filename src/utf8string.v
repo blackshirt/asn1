@@ -27,7 +27,7 @@ pub fn Utf8String.from_bytes(src []u8) !Utf8String {
 	if !utf8.validate_str(src.bytestr()) {
 		return error('Utf8String: invalid UTF-8 string')
 	}
-	return UtfString{
+	return Utf8String{
 		value: src.bytestr()
 	}
 }
@@ -36,7 +36,7 @@ pub fn (uts Utf8String) tag() Tag {
 	return Tag{.universal, false, u32(TagType.utf8string)}
 }
 
-pub fn (uts Utf8String) payload(p Params) ![]u8 {
+pub fn (uts Utf8String) payload() ![]u8 {
 	return uts.payload_with_rule(.der)!
 }
 
@@ -57,16 +57,41 @@ fn (uts Utf8String) payload_with_rule(rule EncodingRule) ![]u8 {
 	return uts.value.bytes()
 }
 
-fn Utf8String.decode(src []u8, loc i64, p Params) !(Utf8String, i64) {
-	raw, next := RawElement.decode(src, loc, p)!
-	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
-		|| raw.tag.tag_number() != int(TagType.utf8string) {
-		return error('Utf8String: bad tag of universal class type')
+pub fn Utf8String.parse(mut p Parser) !Utf8String {
+	tag := p.read_tag()!
+	if !tag.expect(.universal, false, int(TagType.utf8string)) {
+		return error('Bad Utf8String tag')
 	}
-	// no bytes
-	if raw.payload.len == 0 {
-		return Utf8String{}, next
+	length := p.read_length()!
+	bytes := p.read_bytes(length)!
+
+	res := Utf8String.from_bytes(bytes)!
+
+	return res
+}
+
+pub fn Utf8String.decode(src []u8) !(Utf8String, i64) {
+	return Utf8String.decode_with_rule(src, .der)!
+}
+
+fn Utf8String.decode_with_rule(bytes []u8, rule EncodingRule) !(Utf8String, i64) {
+	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
+	if !tag.expect(.universal, false, int(TagType.utf8string)) {
+		return error('Unexpected non-utf8string tag')
 	}
-	uts := Utf8String.from_bytes(raw.payload, p)!
-	return uts, next
+	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
+	content := if length == 0 {
+		[]u8{}
+	} else {
+		// non-null length should contains non-null bytes
+		if content_pos >= bytes.len || content_pos + length > bytes.len {
+			return error('Utf8String: truncated payload bytes')
+		}
+		unsafe { bytes[content_pos..content_pos + length] }
+	}
+
+	ust := Utf8String.from_bytes(content)!
+	next := content_pos + length
+
+	return ust, next
 }

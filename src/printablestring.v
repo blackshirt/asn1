@@ -27,7 +27,7 @@ fn (pst PrintableString) str() string {
 }
 
 pub fn (pst PrintableString) tag() Tag {
-	return Tag{.universal, false, u32(TagType.printablestring)}
+	return Tag{.universal, false, int(TagType.printablestring)}
 }
 
 pub fn PrintableString.new(s string) !PrintableString {
@@ -50,18 +50,44 @@ pub fn (pst PrintableString) payload() ![]u8 {
 	return pst.value.bytes()
 }
 
-pub fn PrintableString.decode(src []u8, loc i64, p Params) !(PrintableString, i64) {
-	raw, next := RawElement.decode(src, loc, p)!
+// parse an PrintableString from on going Parser
+pub fn PrintableString.parse(mut p Parser) !PrintableString {
+	tag := p.read_tag()!
+	if !tag.expect(.universal, false, int(TagType.printablestring)) {
+		return error('Unexpected non-printablestring tag')
+	}
+	length := p.read_length()!
+	content := p.read_bytes(length)!
 
-	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
-		|| raw.tag.tag_number() != int(TagType.printablestring) {
-		return error('PrintableString: bad tag of universal class type')
+	payload := if length == 0 { []u8{} } else { content }
+
+	pst := PrintableString.from_bytes(payload)!
+	return pst
+}
+
+pub fn PrintableString.decode(src []u8) !(PrintableString, i64) {
+	return PrintableString.decode_with_rule(src, .der)!
+}
+
+fn PrintableString.decode_with_rule(bytes []u8, rule EncodingRule) !(PrintableString, i64) {
+	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
+	if !tag.expect(.universal, false, int(TagType.printablestring)) {
+		return error('Unexpected non-printablestring tag')
 	}
-	if raw.payload.len == 0 {
-		return PrintableString{}, next
+	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
+	content := if length == 0 {
+		[]u8{}
+	} else {
+		if content_pos >= bytes.len || content_pos + length > bytes.len {
+			return error('PrintableString: truncated payload bytes')
+		}
+		unsafe { bytes[content_pos..content_pos + length] }
 	}
-	ps := PrintableString.from_bytes(raw.payload)!
-	return ps, next
+
+	pst := PrintableString.from_bytes(content)!
+	next := content_pos + length
+
+	return pst, next
 }
 
 // utility function

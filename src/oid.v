@@ -7,10 +7,34 @@ module asn1
 const max_oid_length = 128
 
 // ObjectIdentifier
+@[heap; noinit]
 pub struct Oid {
-	value []int
 mut:
-	tag Tag = Tag{.universal, false, int(TagType.oid)}
+	value []int
+}
+
+pub fn (oid Oid) tag() Tag {
+	return Tag{.universal, false, int(TagType.oid)}
+}
+
+// Oid.new creates new Oid from . separated string
+pub fn Oid.new(s string) !Oid {
+	if s.len < 2 {
+		return error('Oid: bad string oid length')
+	}
+	mut result := []int{}
+	src := s.split('.')
+	for n in src {
+		v := n.parse_int(10, 32)!
+		result << int(v)
+	}
+	oid := Oid{
+		value: result
+	}
+	if !oid.validate() {
+		return error('Oid: bad oid string')
+	}
+	return oid
 }
 
 pub fn Oid.from_ints(src []int) !Oid {
@@ -35,27 +59,7 @@ pub fn Oid.from_ints(src []int) !Oid {
 	return oid
 }
 
-// Oid.from_raw_element transforms RawElement in `re` into Oid
-pub fn Oid.from_raw_element(re RawElement, p Params) !Oid {
-	// check validity of the RawElement tag
-	if re.tag.tag_class() != .universal {
-		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
-	}
-	if p.rule == .der {
-		if re.tag.is_constructed() {
-			return error('RawElement constructed is not allowed in .der')
-		}
-	}
-	if re.tag.number.universal_tag_type()! != .oid {
-		return error('RawElement tag does not hold .oid type')
-	}
-	bytes := re.payload(p)!
-	os := Oid.from_bytes(bytes, p)!
-
-	return os
-}
-
-pub fn Oid.from_bytes(src []u8, p Params) !Oid {
+fn Oid.from_bytes(src []u8) !Oid {
 	// maybe two integer fits in 1 bytes
 	if src.len == 0 {
 		return error('Oid: bad string oid length')
@@ -87,55 +91,11 @@ pub fn Oid.from_bytes(src []u8, p Params) !Oid {
 	return oid
 }
 
-pub fn Oid.from_string(s string, p Params) !Oid {
-	if s.len < 2 {
-		return error('Oid: bad string oid length')
-	}
-	mut result := []int{}
-	src := s.split('.')
-	for n in src {
-		v := n.parse_int(10, 32)!
-		result << int(v)
-	}
-	oid := Oid{
-		value: result
-	}
-	if !oid.validate() {
-		return error('Oid: bad oid string')
-	}
-	return oid
+pub fn (oid Oid) payload() ![]u8 {
+	return oid.pack_into_bytes()!
 }
 
-pub fn (oid Oid) tag() Tag {
-	return oid.tag
-}
-
-pub fn (oid Oid) value() []int {
-	return oid.value
-}
-
-pub fn (oid Oid) payload(p Params) ![]u8 {
-	return oid.pack()!
-}
-
-pub fn (oid Oid) length(p Params) !int {
-	bytes := oid.pack()!
-	return bytes.len
-}
-
-pub fn (oid Oid) packed_length(p Params) !int {
-	mut n := 0
-	n += oid.tag.packed_length(p)!
-
-	src := oid.pack()!
-	len := Length.from_i64(src.len)!
-	n += len.packed_length(p)!
-	n += src.len
-
-	return n
-}
-
-fn (oid Oid) pack() ![]u8 {
+fn (oid Oid) pack_into_bytes() ![]u8 {
 	if !oid.validate() {
 		return error('Oid: failed to validate')
 	}
@@ -148,29 +108,41 @@ fn (oid Oid) pack() ![]u8 {
 	return dst
 }
 
-pub fn (oid Oid) encode(mut dst []u8, p Params) ! {
-	if p.rule != .der && p.rule != .ber {
-		return error('Oid: unsupported rule')
+pub fn Oid.parse(mut p Parser) !Oid {
+	tag := p.read_tag()!
+	if !tag.expect(.universal, false, int(TagType.oid)) {
+		return error('Bad Oid tag')
 	}
-	// packing in DER rule
-	bytes := oid.pack()!
-	oid.tag.encode(mut dst, p)!
-	length := Length.from_i64(bytes.len)!
-	length.encode(mut dst, p)!
-	dst << bytes
+	length := p.read_length()!
+	bytes := p.read_bytes(length)!
+
+	res := Oid.from_bytes(bytes)!
+
+	return res
 }
 
-pub fn Oid.decode(src []u8, loc i64, p Params) !(Oid, i64) {
-	raw, next := RawElement.decode(src, loc, p)!
-	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
-		|| raw.tag.tag_number() != int(TagType.oid) {
-		return error('Oid: bad tag of universal class type')
+pub fn Oid.decode(src []u8) !(Oid, i64) {
+	return Oid.decode_with_rule(src, .der)!
+}
+
+fn Oid.decode_with_rule(bytes []u8, rule EncodingRule) !(Oid, i64) {
+	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
+	if !tag.expect(.universal, false, int(TagType.oid)) {
+		return error('Unexpected non-oid tag')
 	}
-	if raw.payload.len == 0 {
-		return Oid{}, next
+	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
+	content := if length == 0 {
+		[]u8{}
+	} else {
+		if content_pos >= bytes.len || content_pos + length > bytes.len {
+			return error('Oid: truncated payload bytes')
+		}
+		unsafe { bytes[content_pos..content_pos + length] }
 	}
 
-	oid := Oid.from_bytes(raw.payload, p)!
+	oid := Oid.from_bytes(content)!
+	next := content_pos + length
+
 	return oid, next
 }
 
@@ -189,7 +161,10 @@ pub fn (oid Oid) equal(oth Oid) bool {
 	return true
 }
 
-pub fn (oid Oid) str() string {
+fn (oid Oid) str() string {
+	if oid.value.len == 0 {
+		return 'nil'
+	}
 	mut s := []string{}
 	for i in oid.value {
 		s << i.str()

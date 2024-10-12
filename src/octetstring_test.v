@@ -16,12 +16,14 @@ fn test_octetstring_handling() ! {
 	]
 
 	for o in data {
-		os := OctetString.from_string(o.inp)!
-		mut out := []u8{}
-		os.encode(mut out) or {
+		os := OctetString.new(o.inp)!
+		out := encode(os) or {
 			assert err == o.err
 			continue
 		}
 		assert out == o.exp
+
+		outback, _ := OctetString.decode(out)!
+		assert outback.value == o.inp
 	}
 }

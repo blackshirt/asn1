@@ -5,7 +5,7 @@ module asn1
 
 // ANY DEFINED BY
 @[noinit]
-struct Any {
+pub struct Any {
 mut:
 	marker string = 'any'
 	params Element

@@ -18,8 +18,7 @@ fn test_ia5string_handling() ! {
 		IA5StringTest{'\x13\x03ab\x00', []u8{}, error('IA5String: contains non-ascii chars')},
 	]
 
-	for i, c in data {
-		dump(i)
+	for c in data {
 		s := IA5String.new(c.src) or {
 			assert err == c.err
 			continue
@@ -40,6 +39,6 @@ fn test_ia5string_handling() ! {
 		assert ret.tag().tag_number() == 22
 		assert ret.tag().tag_class() == TagClass.universal
 		assert ret.tag().is_constructed() == false
-		assert ret.str() == c.src
+		assert ret.str() == 'IA5String: (${c.src})'
 	}
 }

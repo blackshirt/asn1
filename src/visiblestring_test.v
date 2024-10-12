@@ -19,12 +19,11 @@ fn test_visible_string_handling() {
 	]
 
 	for i, c in vb {
-		vs := VisibleString.from_string(c.inp) or {
+		vs := VisibleString.new(c.inp) or {
 			assert err == c.err
 			continue
 		}
-		mut out := []u8{}
-		vs.encode(mut out) or {
+		mut out := encode(vs) or {
 			assert err == c.err
 			continue
 		}
@@ -32,12 +31,12 @@ fn test_visible_string_handling() {
 		assert out == c.out
 
 		// back
-		vsback, idx := VisibleString.decode(out, 0) or {
+		vsback, idx := VisibleString.decode(out) or {
 			assert err == c.err
 			continue
 		}
 
-		assert vsback.tag.tag_number() == int(TagType.visiblestring)
+		assert vsback.tag().tag_number() == int(TagType.visiblestring)
 		assert vsback.value == c.inp
 	}
 }

@@ -18,22 +18,6 @@ mut:
 	value u8
 }
 
-pub fn (v Boolean) tag() Tag {
-	return Tag{.universal, false, int(TagType.boolean)}
-}
-
-fn (v Boolean) str() string {
-	value := v.value()
-	match value {
-		false {
-			return 'false'
-		}
-		true {
-			return 'true'
-		}
-	}
-}
-
 // new creates a new Boolean value from true or false value
 // By default, when you pass true, its would store 0xff as underlying byte value
 // if you want more to be relaxed, see from_u8 to creates with another byte value
@@ -52,11 +36,41 @@ pub fn Boolean.from_u8(value u8) Boolean {
 	}
 }
 
+pub fn (v Boolean) tag() Tag {
+	return Tag{.universal, false, int(TagType.boolean)}
+}
+
+fn (v Boolean) str() string {
+	value := v.value()
+	match value {
+		false {
+			return 'false'
+		}
+		true {
+			return 'true'
+		}
+	}
+}
+
+pub fn (b Boolean) payload() ![]u8 {
+	return b.payload_with_rule(.der)!
+}
+
+fn (b Boolean) payload_with_rule(rule EncodingRule) ![]u8 {
+	// by default, true value is encoded to 0xff
+	if rule == .der {
+		if b.value != u8(0xff) && b.value != u8(0x00) {
+			return error('Boolean: in .der, only 0xff or 0x00 are allowed')
+		}
+	}
+	return [b.value]
+}
+
 fn parse_boolean(mut p Parser) !Boolean {
 	return Boolean.parse(mut p)!
 }
 
-fn Boolean.parse(mut p Parser) !Boolean {
+pub fn Boolean.parse(mut p Parser) !Boolean {
 	tag := p.read_tag()!
 	if !tag.expect(.universal, false, int(TagType.boolean)) {
 		return error('Bad boolean tag')
@@ -104,23 +118,9 @@ fn Boolean.from_bytes_with_rule(bytes []u8, rule EncodingRule) !Boolean {
 	}
 }
 
-pub fn (b Boolean) payload() ![]u8 {
-	return b.payload_with_rule(.der)!
-}
-
-fn (b Boolean) payload_with_rule(rule EncodingRule) ![]u8 {
-	// by default, true value is encoded to 0xff
-	if rule == .der {
-		if b.value != u8(0xff) && b.value != u8(0x00) {
-			return error('Boolean: in .der, only 0xff or 0x00 are allowed')
-		}
-	}
-	return [b.value]
-}
-
 // value gets the boolean value represented by underlying byte value
 // It returnz FALSE ob the byte == 0x00 and TRUE otherwise.
-pub fn (b Boolean) value() bool {
+fn (b Boolean) value() bool {
 	return b.value_with_rule(.der)
 }
 

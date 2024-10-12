@@ -12,11 +12,11 @@ fn test_encode_decode_numericstring_basic() {
 	assert out == exp
 
 	// decode back
-	nsback, _ := NumericString.decode(out, 0)!
+	nsback, _ := NumericString.decode(out)!
 
-	assert nsback.tag.tag_class() == .universal
-	assert nsback.tag.is_constructed() == false
-	assert nsback.tag.tag_number() == int(TagType.numericstring)
+	assert nsback.tag().tag_class() == .universal
+	assert nsback.tag().is_constructed() == false
+	assert nsback.tag().tag_number() == int(TagType.numericstring)
 	assert nsback.value == str
 }
 
@@ -52,7 +52,7 @@ fn test_encode_decode_numericstring_advanced() ! {
 			exp_length:     dst.len
 			exp_bytelength: dst
 			exp_values:     b
-			err:            error('invalid_length_error')
+			err:            none
 		}
 
 		exp << d
@@ -66,12 +66,11 @@ fn test_encode_decode_numericstring_advanced() ! {
 			assert err == c.err
 			continue
 		}
-		mut out := []u8{}
-		ns.encode(mut out)!
+		out := encode(ns)!
 		assert out == exp_out
 
 		// decode back
-		back, _ := NumericString.decode(out, 0)!
+		back, _ := NumericString.decode(out)!
 
 		assert back.value == c.inp
 	}

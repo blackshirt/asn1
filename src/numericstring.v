@@ -26,7 +26,7 @@ pub fn NumericString.new(s string) !NumericString {
 }
 
 pub fn (nst NumericString) tag() Tag {
-	return Tag{.universal, false, u32(TagType.numericstring)}
+	return Tag{.universal, false, int(TagType.numericstring)}
 }
 
 pub fn (nst NumericString) payload() ![]u8 {
@@ -46,7 +46,7 @@ fn (nst NumericString) payload_with_rule(rule EncodingRule) ![]u8 {
 
 pub fn NumericString.parse(mut p Parser) !NumericString {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, u32(TagType.numericstring)) {
+	if !tag.expect(.universal, false, int(TagType.numericstring)) {
 		return error('Bad NumericString tag')
 	}
 	length := p.read_length()!
@@ -73,14 +73,14 @@ fn NumericString.decode(bytes []u8) !(NumericString, i64) {
 
 fn NumericString.decode_with_rule(bytes []u8, rule EncodingRule) !(NumericString, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, u32(TagType.numericstring)) {
+	if !tag.expect(.universal, false, int(TagType.numericstring)) {
 		return error('Unexpected non-numericstring tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
-	content := if (length == 0 || content_pos == bytes.len) {
+	content := if length == 0 {
 		[]u8{}
 	} else {
-		if content_pos + length > bytes.len {
+		if content_pos >= bytes.len || content_pos + length > bytes.len {
 			return error('NumericString: truncated payload bytes')
 		}
 		unsafe { bytes[content_pos..content_pos + length] }

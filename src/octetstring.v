@@ -16,10 +16,10 @@ pub:
 }
 
 pub fn (oct OctetString) tag() Tag {
-	return Tag{.universal, false, u32(TagType.octetstring)}
+	return Tag{.universal, false, int(TagType.octetstring)}
 }
 
-pub fn (os OctetString) payload() ![]u8 {
+pub fn (oct OctetString) payload() ![]u8 {
 	return oct.payload_with_rule(.der)!
 }
 
@@ -47,13 +47,13 @@ pub fn OctetString.new(s string) !OctetString {
 	}
 }
 
+// parse an OctetString from ongoing Parser
 pub fn OctetString.parse(mut p Parser) !OctetString {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, u32(TagType.octetstring)) {
+	if !tag.expect(.universal, false, int(TagType.octetstring)) {
 		return error('Bad octetstring tag')
 	}
-	length:
-	p.read_length()!
+	length := p.read_length()!
 	content := p.read_bytes(length)!
 
 	payload := if length == 0 { []u8{} } else { content }
@@ -62,7 +62,32 @@ pub fn OctetString.parse(mut p Parser) !OctetString {
 	return oct
 }
 
-pub fn OctetString.from_bytes(src []u8) !OctetString {
+pub fn OctetString.decode(src []u8) !(OctetString, i64) {
+	return OctetString.decode_with_rule(src, .der)!
+}
+
+fn OctetString.decode_with_rule(bytes []u8, rule EncodingRule) !(OctetString, i64) {
+	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
+	if !tag.expect(.universal, false, int(TagType.octetstring)) {
+		return error('Unexpected non-octetstring tag')
+	}
+	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
+	content := if length == 0 {
+		[]u8{}
+	} else {
+		if content_pos >= bytes.len || content_pos + length > bytes.len {
+			return error('OctetString: truncated payload bytes')
+		}
+		unsafe { bytes[content_pos..content_pos + length] }
+	}
+
+	os := OctetString.from_bytes(content)!
+	next := content_pos + length
+
+	return os, next
+}
+
+fn OctetString.from_bytes(src []u8) !OctetString {
 	return OctetString.new(src.bytestr())!
 }
 
@@ -70,19 +95,4 @@ pub fn OctetString.from_bytes(src []u8) !OctetString {
 fn valid_octet_string(s string) bool {
 	// just return true
 	return true
-}
-
-fn OctetString.decode(src []u8) !(OctetString, i64) {
-	tag, length_pos := Tag.decode(src)!
-
-	if !tag.expect(.universal, false, u32(TagType.octetstring)) {
-		return error('Bad OctetString tag')
-	}
-	// todo: check bound
-	length, content_pos := Length.decode(src, length_pos)!
-	bytes := unsafe { src[content_pos..content_pos + length] }
-	oct := OctetString.from_bytes(content)!
-	next := content_pos + length
-
-	return oct, next
 }
