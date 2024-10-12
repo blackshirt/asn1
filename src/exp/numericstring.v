@@ -15,6 +15,35 @@ pub:
 	value string
 }
 
+// NumericString.new creates new NumericString from string s
+pub fn NumericString.new(s string) !NumericString {
+	if !all_numeric_string(s.bytes()) {
+		return error('NumericString: contains non-numeric string')
+	}
+	return NumericString{
+		value: s
+	}
+}
+
+pub fn (nst NumericString) tag() Tag {
+	return Tag{.universal, false, u32(TagType.numericstring)}
+}
+
+pub fn (nst NumericString) payload() ![]u8 {
+	return nst.payload_with_rule(.der)!
+}
+
+fn (nst NumericString) payload_with_rule(rule EncodingRule) ![]u8 {
+	bytes := nst.value.bytes()
+	if !all_numeric_string(bytes) {
+		return error('NumericString: contains non-numeric string')
+	}
+	if rule != .der && rule != .ber {
+		return error('NumericString: bad rule')
+	}
+	return bytes
+}
+
 pub fn NumericString.parse(mut p Parser) !NumericString {
 	tag := p.read_tag()!
 	if !tag.expect(.universal, false, u32(TagType.numericstring)) {
@@ -28,16 +57,6 @@ pub fn NumericString.parse(mut p Parser) !NumericString {
 	return res
 }
 
-// new_numeric_string creates new numeric string
-pub fn NumericString.new(s string) !NumericString {
-	if !all_numeric_string(s.bytes()) {
-		return error('NumericString: contains non-numeric string')
-	}
-	return NumericString{
-		value: s
-	}
-}
-
 fn NumericString.from_bytes(bytes []u8) !NumericString {
 	if !all_numeric_string(bytes) {
 		return error('NumericString: contains non-numeric string')
@@ -45,14 +64,6 @@ fn NumericString.from_bytes(bytes []u8) !NumericString {
 	return NumericString{
 		value: bytes.bytestr()
 	}
-}
-
-pub fn (ns NumericString) tag() Tag {
-	return Tag{.universal, false, u32(TagType.numericstring)}
-}
-
-pub fn (ns NumericString) payload() ![]u8 {
-	return ns.value.bytes()
 }
 
 fn NumericString.decode(bytes []u8) !(NumericString, i64) {
@@ -66,7 +77,7 @@ fn NumericString.decode_with_rule(bytes []u8, rule EncodingRule) !(NumericString
 		return error('Unexpected non-numericstring tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
-	content := if length == 0 || content_pos == bytes.len {
+	content := if (length == 0 || content_pos == bytes.len) {
 		[]u8{}
 	} else {
 		if content_pos + length > bytes.len {

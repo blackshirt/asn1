@@ -13,38 +13,29 @@ module asn1
 //
 const printable_symbols = r"(')+,-./:=?".bytes()
 
+@[heap; noinit]
 pub struct PrintableString {
+pub:
 	value string
-mut:
-	tag Tag = Tag{.universal, false, int(TagType.printablestring)}
 }
 
-pub fn PrintableString.from_string(s string, p Params) !PrintableString {
-	return PrintableString.from_bytes(s.bytes(), p)!
+fn (pst PrintableString) str() string {
+	if pst.value.len == 0 {
+		return 'PrintableString (<empty>)'
+	}
+	return 'PrintableString (${pst.value})'
 }
 
-// PrintableString.from_raw_element transforms RawElement in `re` into PrintableString
-pub fn PrintableString.from_raw_element(re RawElement, p Params) !PrintableString {
-	// check validity of the RawElement tag
-	if re.tag.tag_class() != .universal {
-		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
-	}
-	if p.rule == .der {
-		if re.tag.is_constructed() {
-			return error('RawElement constructed is not allowed in .der')
-		}
-	}
-	if re.tag.number.universal_tag_type()! != .printablestring {
-		return error('RawElement tag does not hold .printablestring type')
-	}
-	bytes := re.payload(p)!
-	os := PrintableString.from_bytes(bytes, p)!
-
-	return os
+pub fn (pst PrintableString) tag() Tag {
+	return Tag{.universal, false, u32(TagType.printablestring)}
 }
 
-pub fn PrintableString.from_bytes(src []u8, p Params) !PrintableString {
-	if !printable_chars(src, p) {
+pub fn PrintableString.new(s string) !PrintableString {
+	return PrintableString.from_bytes(s.bytes())!
+}
+
+fn PrintableString.from_bytes(src []u8) !PrintableString {
+	if !printable_chars(src) {
 		return error('PrintableString: contains non-printable string')
 	}
 	return PrintableString{
@@ -52,49 +43,12 @@ pub fn PrintableString.from_bytes(src []u8, p Params) !PrintableString {
 	}
 }
 
-pub fn (ps PrintableString) tag() Tag {
-	return ps.tag
-}
 
-pub fn (ps PrintableString) value() string {
-	return ps.value
-}
-
-pub fn (ps PrintableString) payload(p Params) ![]u8 {
-	if !printable_chars(ps.value.bytes(), p) {
+pub fn (pst PrintableString) payload(s) ![]u8 {
+	if !printable_chars(pst.value.bytes()) {
 		return error('PrintableString: contains non-printable string')
 	}
-	return ps.value.bytes()
-}
-
-pub fn (ps PrintableString) length(p Params) !int {
-	return ps.value.len
-}
-
-pub fn (ps PrintableString) packed_length(p Params) !int {
-	mut n := 0
-	n += ps.tag.packed_length(p)!
-	len := ps.length(p)!
-	pslen := Length.from_i64(len)!
-	n += pslen.packed_length(p)!
-	n += len
-
-	return n
-}
-
-pub fn (ps PrintableString) encode(mut dst []u8, p Params) ! {
-	// recheck
-	if !printable_chars(ps.value.bytes(), p) {
-		return error('PrintableString: contains non-printable string')
-	}
-	if p.rule != .der && p.rule != .ber {
-		return error('PrintableString: unsupported rule')
-	}
-	// pack in DER rule
-	ps.tag.encode(mut dst, p)!
-	length := Length.from_i64(ps.value.bytes().len)!
-	length.encode(mut dst, p)!
-	dst << ps.value.bytes()
+	return pst.value.bytes()
 }
 
 pub fn PrintableString.decode(src []u8, loc i64, p Params) !(PrintableString, i64) {
@@ -112,7 +66,7 @@ pub fn PrintableString.decode(src []u8, loc i64, p Params) !(PrintableString, i6
 }
 
 // utility function
-fn printable_chars(bytes []u8, p Params) bool {
+fn printable_chars(bytes []u8) bool {
 	return bytes.all(is_printablestring(it))
 }
 

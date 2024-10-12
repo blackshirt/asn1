@@ -75,7 +75,7 @@ fn (v Length) length_size_with_rule(rule EncodingRule) !int {
 }
 
 // encode serializes Length v into bytes in .der rule
-fn (v Length) encode(mut dst []u8) ! {
+pub fn (v Length) encode(mut dst []u8) ! {
 	v.encode_with_rule(mut dst, .der)!
 }
 
@@ -104,6 +104,15 @@ fn (v Length) encode_with_rule(mut dst []u8, rule EncodingRule) ! {
 		// short form, already tells the length value.
 		dst << u8(v)
 	}
+}
+
+pub fn Length.from_bytes(bytes []u8) !(Length, []u8) {
+	length, next := Length.decode(bytes)!
+	if next < bytes.len {
+		rest := unsafe { bytes[next..] }
+		return length, rest
+	}
+	return length, []u8{}
 }
 
 // decode read length from bytes src with default context or return error on fails.

@@ -15,15 +15,15 @@ module asn1
 // The encoding of a sequence value shall be constructed.
 // in DER encoded of SEQUENCE or SET, never encode a default value.
 
-const max_sequence_fields_length = 256 // max of seq size
-const max_sequence_bytes_length = (1 << 23 - 1) // 8 MB
-const default_sequence_fields_length = 64 // default size
+const max_seqset_fields = 256 // max of seq size
+const max_seqset_bytes = (1 << 23 - 1) // 8 MB
+const default_seqset_fields = 64 // default size
 
 @[heap; noinit]
 pub struct Sequence {
 mut:
 	//	maximal size of this sequence fields
-	max_size int = default_sequence_fields_length
+	max_size int = default_seqset_fields
 pub:
 	// fields is the elements of the sequence
 	fields []Element
@@ -81,7 +81,7 @@ fn (seq Sequence) into_sequence_of[T]() !SequenceOf[T] {
 @[heap; noinit]
 pub struct SequenceOf[T] {
 mut:
-	max_size int = default_sequence_fields_length
+	max_size int = default_seqset_fields
 pub:
 	fields []T
 }

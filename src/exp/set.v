@@ -9,95 +9,38 @@ module asn1
 // This differs from a SEQUENCE which contains an ordered list.
 // in DER encoding, SET types elements are sorted into tag order, and,
 // for SET OF types elements are sorted into ascending order of encoding.
-// Internal machinery of SET and SET OF was built using the same machinery with
-// SEQUENCE and SEQUENCE OF.
+@[heap; noinit]
 pub struct Set {
-	tag Tag = Tag{.universal, true, int(TagType.set)}
 mut:
-	setof    bool
-	elements []Element
+	//	maximal size of this set fields
+	max_size int = default_seqset_fields
+pub:
+	// fields is the elements of the set
+	fields []Element
 }
 
-pub fn Set.new(setof bool) Set {
-	return Set{
-		setof: setof
+fn (s Set) str() string {
+	if s.fields.len == 0 {
+		return 'Set(max: ${s.max_size}): <empty>'
 	}
-}
-
-pub fn (mut s Set) set_into_setof() ! {
-	if !s.elements.hold_different_tag() {
-		s.setof = true
-		return
-	}
-	// non-setof, just return error
-	return error('Not holds setof elements, you cant set the flag')
-}
-
-// is_setof_type checks whether this set is setof type
-pub fn (s Set) is_setof_type() bool {
-	// we assume the tag is set type
-	// take the first obj's tag, and check if the all the element tags has the same type
-	tag0 := s.elements[0].tag()
-	return s.elements.all(it.tag() == tag0) && s.setof
-}
-
-// add_element add the element el to this set. Its check whether its should be added when this
-// set is setof type
-pub fn (mut s Set) add_element(el Element) ! {
-	if s.elements.len == 0 {
-		// set elements is still empty, just add the element
-		s.elements << el
-		return
-	}
-	// otherwise, set elements is not empty, so, lets performs check.
-	// get the first element tag, when this set is setof type, to be added element
-	// has to be have the same tag with element already availables in set.
-	tag0 := s.elements[0].tag()
-	if s.setof {
-		if el.tag() != tag0 {
-			return error('set: adding different element to the setof element')
-		}
-		// has the same tag
-		s.elements << el
-		return
-	}
-	// otherwise, we can just append el into set elements
-	s.elements << el
-}
-
-pub fn (s Set) elements() ![]Element {
-	return s.elements
+	return 'Set(max: ${s.max_size}): ${s.fields.len} fields'
 }
 
 pub fn (s Set) tag() Tag {
 	return s.tag
 }
 
-pub fn (s Set) payload(p Params) ![]u8 {
+pub fn (s Set) payload() ![]u8 {
+	return s.payload_with_rule(.der)!
+}
+
+fn (s Set) payload_with_rule(rule EncodingRule) ![]u8 {
 	mut out := []u8{}
-	for el in s.elements {
-		el.encode(mut out, p)!
+	for item in s.fields {
+		obj := encode_with_rule(item, rule)!
+		out << obj
 	}
 	return out
-}
-
-pub fn (s Set) length(p Params) !int {
-	mut n := 0
-	for el in s.elements {
-		n += el.packed_length(p)!
-	}
-	return n
-}
-
-pub fn (s Set) packed_length(p Params) !int {
-	mut n := 0
-	n += s.tag.packed_length(p)!
-	ln := s.length(p)!
-	length := Length.from_i64(ln)!
-	n += length.packed_length(p)!
-	n += ln
-
-	return n
 }
 
 pub fn (s Set) encode(mut dst []u8, p Params) ! {
@@ -199,6 +142,37 @@ fn (mut els []Element) sort_the_setof() ![]Element {
 		return aa.bytestr().compare(bb.bytestr())
 	})
 	return els
+}
+
+// SET OF
+// 
+@[heap; noinit]
+pub struct SetOf[T] {
+mut:
+	max_size int = default_seqset_fields
+pub:
+	fields []T
+}
+
+
+pub fn (so SetOf[T]]) tag() Tag {
+	return Tag{.universal, true, u32(TagType.set)}
+}
+
+pub fn (so SetOf[T]) payload() ![]u8 {
+	return so.payload_with_rule(.der)!
+}
+
+fn (so SetOf[T]) payload_with_rule(rule EncodingRule) ![]u8 {
+	$if T !is Element {
+		return error('T is not an element')
+	}
+	mut out := []u8{}
+	for el in so.fields {
+		obj := encode_with_rule(el, rule)!
+		out << obj
+	}
+	return out
 }
 
 /*

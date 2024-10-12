@@ -6,14 +6,14 @@ module asn1
 // VisibleString
 // The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.
 //
+@[heap; noinit]
 pub struct VisibleString {
-	tag Tag = Tag{.universal, false, int(TagType.visiblestring)}
-mut:
+pub:
 	value string
 }
 
 // from_string creates a new VisibleString from string s
-pub fn VisibleString.from_string(s string, p Params) !VisibleString {
+pub fn VisibleString.new(s string) !VisibleString {
 	if contains_ctrl_chars(s.bytes()) {
 		return error('VisibleString: contains control chars')
 	}
