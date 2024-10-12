@@ -16,7 +16,7 @@ pub:
 }
 
 // TODO: proper check GeneralString validation
-// from_string creates GeneralString from string s
+// new creates GeneralString from string s
 pub fn GeneralString.new(s string) !GeneralString {
 	if !s.is_ascii() {
 		return error('GeneralString: contains non-ascii chars')

@@ -339,30 +339,6 @@ fn (v IntValue) bytes() []u8 {
 
 // Utility function
 
-// valid_bytes validates bytes meets some requirement for BER/DER encoding.
-fn valid_bytes(src []u8, signed bool) bool {
-	// Requirement for der encoding
-	// The contents octets shall consist of one or more octets.
-	if src.len == 0 {
-		return false
-	}
-
-	// check for minimaly encoded
-	// If the contents octets of an integer value encoding consist of more
-	// than one octet, then the bits of the first octet and bit 8 of
-	// the second octets shall not all be ones; and shall not all be zero.
-	if src.len > 1 && ((src[0] == 0 && src[1] & 0x80 == 0)
-		|| (src[0] == 0xff && src[1] & 0x80 == 0x80)) {
-		return false
-	}
-
-	// reject negative for unsigned type
-	if !signed && src[0] & 0x80 == 0x80 {
-		return false
-	}
-	return true
-}
-
 fn is_highest_bit_set(src []u8) bool {
 	if src.len > 0 {
 		return src[0] & 0x80 == 0

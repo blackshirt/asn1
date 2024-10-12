@@ -5,6 +5,30 @@ module asn1
 
 import math.big
 
+fn test_sequence_of_time() ! {
+	mut seq := Sequence.new(false)!
+
+	o1 := Boolean.new(true) // 3
+	o2 := UtcTime.new('191215190210Z')! // 15
+	o3 := Boolean.new(false) // 3
+	o4 := GeneralizedTime.new('20100102030405Z')! // 17
+
+	seq.add_element(o1)!
+	seq.add_element(o2)!
+	seq.add_element(o3)!
+	seq.add_element(o4)!
+
+	assert seq.length()! == 3 + 15 + 3 + 17 // 38
+	assert seq.packed_length()! == 2 + 38
+
+	mut out := encode(seq)!
+	exp := [u8(0x30), 38, u8(0x01), 0x01, 0xff, u8(0x17), 0x0D, 49, 57, 49, 50, 49, 53, 49, 57,
+		48, 50, 49, 48, 90, u8(0x01), 0x01, 0x00, u8(0x18), 0x0f, 50, 48, 49, 48, 48, 49, 48, 50,
+		48, 51, 48, 52, 48, 53, 90]
+
+	assert out == exp
+}
+
 fn test_sequence_contains_other_seq() ! {
 	// lets create first sequence
 	mut seq1 := Sequence.new(false)!
