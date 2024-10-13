@@ -3,6 +3,9 @@
 // that can be found in the LICENSE file.
 module asn1
 
+// for bytes compare
+import crypto.internal.subtle { constant_time_compare }
+
 // This file contains structures and routines for handling ASN.1 Element.
 // Its includes:
 // 	- basic Element interface, for support ASN.1 element in more generic way
@@ -324,7 +327,8 @@ fn build_payload[T](val T, kd KeyDefault) ![]u8 {
 	return out
 }
 
-fn (el Element) encoded_len() int {
+// encoded_len calculates the length of bytes when this element was serialized
+pub fn (el Element) encoded_len() int {
 	return el.encoded_len_with_rule(.der)
 }
 
@@ -341,13 +345,39 @@ fn (el Element) encoded_len_with_rule(rule EncodingRule) int {
 	return n
 }
 
+fn (el Element) expect_tag(t Tag) bool {
+	return el.tag() == t
+}
+
+// equal_with checks whether this two element equal and holds the same tag and content
+fn (el Element) equal_with(other Element) bool {
+	return el.equal_tag(other) && el.equal_payload(other)
+}
+
+fn (el Element) equal_tag(other Element) bool {
+	return el.tag() == other.tag()
+}
+
+fn (el Element) equal_payload(other Element) bool {
+	// taken from crypto.internal.subtle
+	x := el.payload() or { panic(err) }
+	y := el.payload() or { panic(err) }
+
+	return constant_time_compare(x, y) == 1
+}
+
 // ElementList is arrays of Element
+// Many places maybe required this wells, likes Sequence or Set fields
 type ElementList = []Element
 
 fn (els ElementList) payload() ![]u8 {
+	return els.payload_with_rule(.der)!
+}
+
+fn (els ElementList) payload_with_rule(rule EncodingRule) ![]u8 {
 	mut out := []u8{}
 	for el in els {
-		bytes := encode(el)!
+		bytes := encode_with_rule(el, rule)!
 		out << bytes
 	}
 	return out
@@ -361,7 +391,7 @@ fn (els ElementList) encoded_len() int {
 	return n
 }
 
-fn Element.decode(mut p Parser) !Element {
+fn Element.parse(mut p Parser) !Element {
 	el := p.read_tlv()!
 	match el.tag().tag_class() {
 		.universal {
@@ -387,7 +417,7 @@ fn Element.decode(mut p Parser) !Element {
 
 /*
 // ElementList.from_bytes parses bytes in src as series of Element or return error on fails
-fn ElementList.from_bytes(src []u8, ctx &Params) ![]Element {
+fn ElementList.from_bytes(src []u8) ![]Element {
 	mut els := []Element{}
 	if src.len == 0 {
 		// empty list
@@ -435,16 +465,6 @@ fn Element.decode_with_context(src []u8, loc i64, ctx &Params) !(Element, i64) {
 	}
 }
 
-fn (el Element) expect_tag(t Tag) bool {
-	return el.tag() == t
-}
-
-// equal_with checks whether this two element equal and holds the same tag and content
-fn (el Element) equal_with(other Element) bool {
-	a := el.payload() or { return false }
-	b := other.payload() or { return false }
-	return el.tag() == other.tag() && a == b
-}
 
 fn (el Element) as_raw_element(ctx &Params) !RawElement {
 	re := RawElement.new(el.tag(), el.payload(ctx)!)
