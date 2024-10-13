@@ -50,9 +50,9 @@ fn test_struct_build_payload() ! {
 
 fn test_into_optional() ! {
 	// boolean raw, id = 1
-	el := RawElement{
+	el := Asn1Element{
 		tag:     Tag.new(.universal, false, int(TagType.boolean))!
-		payload: [u8(0xff)]
+		content: [u8(0xff)]
 	}
 	orig_exp := [u8(0x01), 0x01, 0xff]
 
@@ -81,9 +81,9 @@ struct WrapperTest {
 
 fn test_wrapping_functionality() ! {
 	// raw boolean element
-	elem := RawElement{
+	elem := Asn1Element{
 		tag:     Tag.new(.universal, false, int(TagType.boolean))!
-		payload: [u8(0xff)]
+		content: [u8(0xff)]
 	}
 	orig_exp := [u8(0x01), 0x01, 0xff]
 	data := [
@@ -112,4 +112,26 @@ fn test_wrapping_functionality() ! {
 		}
 		assert out == item.out
 	}
+}
+
+// test for ElementList
+fn test_for_element_list() ! {
+	mut fields := ElementList([]Element{})
+
+	a := Boolean.new(true)
+	b := Boolean.new(false)
+
+	fields << a
+	fields << b
+
+	fields_payload := fields.payload()!
+
+	expected := [u8(0x01), 0x01, 0xff, u8(0x01), 1, 0]
+	assert fields_payload == expected
+	assert fields.encoded_len() == 6
+
+	els := ElementList.from_bytes(expected)!
+	assert els.len == 2
+	assert els[0] is Boolean
+	assert els[1] is Boolean
 }

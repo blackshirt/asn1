@@ -6,6 +6,10 @@ module asn1
 // ASN.1 NULL TYPE
 pub struct Null {}
 
+pub fn Null.new() Null {
+	return Null{}
+}
+
 pub fn (n Null) tag() Tag {
 	return Tag{.universal, false, int(TagType.null)}
 }

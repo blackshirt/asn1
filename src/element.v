@@ -327,6 +327,10 @@ fn build_payload[T](val T, kd KeyDefault) ![]u8 {
 	return out
 }
 
+pub fn encoded_len(el Element) int {
+	return el.encoded_len()
+}
+
 // encoded_len calculates the length of bytes when this element was serialized
 pub fn (el Element) encoded_len() int {
 	return el.encoded_len_with_rule(.der)
@@ -361,7 +365,7 @@ fn (el Element) equal_tag(other Element) bool {
 fn (el Element) equal_payload(other Element) bool {
 	// taken from crypto.internal.subtle
 	x := el.payload() or { panic(err) }
-	y := el.payload() or { panic(err) }
+	y := other.payload() or { panic(err) }
 
 	return constant_time_compare(x, y) == 1
 }
@@ -391,6 +395,28 @@ fn (els ElementList) encoded_len() int {
 	return n
 }
 
+// ElementList.from_bytes parses bytes in src as series of Element or return error on fails
+fn ElementList.from_bytes(src []u8) ![]Element {
+	mut els := []Element{}
+	if src.len == 0 {
+		// empty list
+		return els
+	}
+	mut i := i64(0)
+	for i < src.len {
+		el, _ := Element.decode_with_rule(src, i, .der)!
+		i += el.encoded_len()
+		els << el
+	}
+	if i > src.len {
+		return error('i > src.len')
+	}
+	if i < src.len {
+		return error('The src contains unprocessed bytes')
+	}
+	return els
+}
+
 fn Element.parse(mut p Parser) !Element {
 	el := p.read_tlv()!
 	match el.tag().tag_class() {
@@ -415,80 +441,48 @@ fn Element.parse(mut p Parser) !Element {
 	return el
 }
 
-/*
-// ElementList.from_bytes parses bytes in src as series of Element or return error on fails
-fn ElementList.from_bytes(src []u8) ![]Element {
-	mut els := []Element{}
-	if src.len == 0 {
-		// empty list
-		return els
-	}
-	mut i := i64(0)
-	for i < src.len {
-		el, pos := Element.decode(src, i)!
-		els << el
-		i += pos
-	}
-	if i > src.len {
-		return error('i > src.len')
-	}
-	if i < src.len {
-		return error('The src contains unprocessed bytes')
-	}
-	return els
-}
-
 fn Element.decode(src []u8) !(Element, i64) {
-	ctx := default_params()
-	el, pos := Element.decode_with_context(src, 0, ctx)!
+	el, pos := Element.decode_with_rule(src, 0, .der)!
 	return el, pos
 }
 
 // decode deserializes back bytes in src from offet `loc` into Element.
 // Basically, its tries to parse a Universal class Element when it is possible.
-// Other class parsed as a RawElement.
-fn Element.decode_with_context(src []u8, loc i64, ctx &Params) !(Element, i64) {
-	raw, next := RawElement.decode_with_context(src, loc, ctx)!
-	bytes := raw.payload
+fn Element.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Element, i64) {
+	tag, length_pos := Tag.decode_with_rule(src, loc, rule)!
+	length, content_pos := Length.decode_with_rule(src, length_pos, rule)!
+	bytes := if length == 0 {
+		[]u8{}
+	} else {
+		unsafe { src[content_pos..content_pos + length] }
+	}
+	next_pos := content_pos + length
 
-	match raw.tag.tag_class() {
+	match tag.tag_class() {
 		.universal {
-			if raw.tag.is_constructed() {
-				return parse_constructed_element(raw.tag, bytes)!, next
+			if tag.is_constructed() {
+				elem := parse_universal_constructed(tag, bytes)!
+				return elem, next_pos
 			}
-			return parse_primitive_element(raw.tag, bytes)!, next
+			elem := parse_universal_primitive(tag, bytes)!
+			return elem, next_pos
 		}
-		// other classes parsed as a RawElement
-		else {
-			return RawElement.new(raw.tag, bytes), next
+		.application {
+			app := parse_application(tag, bytes)!
+			return app, next_pos
+		}
+		.context_specific {
+			ctx := parse_context_specific(tag, bytes)!
+			return ctx, next_pos
+		}
+		.private {
+			prv := parse_private(tag, bytes)!
+			return prv, next_pos
 		}
 	}
 }
 
-
-fn (el Element) as_raw_element(ctx &Params) !RawElement {
-	re := RawElement.new(el.tag(), el.payload(ctx)!)
-	return re
-}
-
-fn (el Element) expect_tag_class(c TagClass) bool {
-	return el.tag().tag_class() == c
-}
-
-fn (el Element) expect_tag_form(constructed bool) bool {
-	return el.tag().is_constructed() == constructed
-}
-
-fn (el Element) expect_tag_type(t TagType) bool {
-	typ := el.tag().number.universal_tag_type() or { panic('unsupported tag type') }
-	return typ == t
-}
-
-fn (el Element) expect_tag_number(number int) bool {
-	tagnum := el.tag().tag_number()
-	return int(tagnum) == number
-}
-
+/*
 
 
 // hold_different_tag checks whether this array of Element
@@ -528,125 +522,4 @@ fn decode_single(src []u8) !Element {
 // decode_single decodes single element from bytes with options support, its not allowing trailing data
 fn decode_single_with_option(src []u8, opt string) !Element {
 	return error('not implemented')
-}
-
-@[heap; noinit]
-struct Asn1Element {
-mut:
-	// tag is the tag of the TLV
-	tag Tag
-	// `content` is the value of a TLV
-	content []u8
-}
-
-fn (a Asn1Element) tag() Tag {
-	return a.tag
-}
-
-fn (a Asn1Element) payload() ![]u8 {
-	return a.content
-}
-
-fn Asn1Element.new(tag Tag, content []u8) !Asn1Element {
-	return Asn1Element.new_with_rule(tag, content, .der)!
-}
-
-fn Asn1Element.new_with_rule(tag Tag, content []u8, rule EncodingRule) !Asn1Element {
-	new := Asn1Element{
-		tag:     tag
-		content: content
-	}
-	return new
-}
-
-@[noinit]
-struct ContextElement {
-	tag   Tag     // outer tag number
-	inner Element // inner element
-mut:
-	mode TaggedMode
-}
-
-fn ContextElement.new(mode TaggedMode, tagnum int, inner Element) !ContextElement {
-	// inner only for .universal class
-	if inner.tag().tag_class() != .universal {
-		return error('cant create ContextElement from non-universal class')
-	}
-	tag := Tag.new(.context_specific, true, tagnum)!
-	ctx := ContextElement{
-		tag:   tag
-		inner: inner
-		mode:  mode
-	}
-	return ctx
-}
-
-fn explicit_context(tagnum int, inner Element) !ContextElement {
-	return ContextElement.new(.explicit, tagnum, inner)!
-}
-
-fn implicit_context(tagnum int, inner Element) !ContextElement {
-	return ContextElement.new(.implicit, tagnum, inner)!
-}
-
-// outer tag
-fn (ce ContextElement) tag() Tag {
-	return ce.tag
-}
-
-fn (ce ContextElement) inner_tag() Tag {
-	return ce.inner.tag()
-}
-
-fn (ce ContextElement) payload() ![]u8 {
-	match ce.mode {
-		.explicit {
-			return encode_with_rule(ce.inner, .der)!
-		}
-		.implicit {
-			return ce.inner.payload()!
-		}
-	}
-}
-
-@[noinit]
-struct ApplicationElement {
-	Asn1Element
-}
-
-fn ApplicationElement.new(constructed bool, tagnum int, content []u8) !ApplicationElement {
-	tag := Tag.new(.application, constructed, tagnum)!
-	return ApplicationElement{
-		tag:     tag
-		content: content
-	}
-}
-
-fn (app ApplicationElement) tag() Tag {
-	return app.tag
-}
-
-fn (app ApplicationElement) payload() ![]u8 {
-	return app.content
-}
-
-@[noinit]
-struct PrivateELement {
-	Asn1Element
-}
-
-fn PrivateELement.new(constructed bool, tagnum int, content []u8) !PrivateELement {
-	tag := Tag.new(.private, constructed, tagnum)!
-	return PrivateELement{
-		tag:     tag
-		content: content
-	}
-}
-
-fn (prv PrivateELement) tag() Tag {
-	return prv.tag
-}
-
-fn (prv PrivateELement) payload() ![]u8 {
-	return prv.content
 }
