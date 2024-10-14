@@ -93,7 +93,7 @@ fn test_length_pack_and_unpack_tofrom_asn() ! {
 	]
 	for i, c in edata {
 		mut dst := []u8{}
-		s := Length.from_i64(c.value)!
+		s := Length.new(c.value)!
 		s.encode(mut dst)!
 		assert dst == c.expected
 
@@ -139,7 +139,7 @@ fn test_length_pack_and_append() ! {
 	for v in bdata {
 		mut dst := []u8{}
 
-		ln := Length.from_i64(v.value)!
+		ln := Length.new(v.value)!
 		ln.to_bytes(mut dst)
 
 		assert dst == v.expected
@@ -166,7 +166,7 @@ fn test_length_bytes_len() ! {
 	]
 
 	for c in ldata {
-		len := Length.from_i64(c.value)!
+		len := Length.new(c.value)!
 		out := len.bytes_len()
 
 		assert out == c.expected
@@ -188,7 +188,7 @@ fn test_calc_length_of_length() ! {
 	]
 
 	for c in data {
-		len := Length.from_i64(c.value)!
+		len := Length.new(c.value)!
 		out := len.length_size()!
 
 		assert out == c.expected

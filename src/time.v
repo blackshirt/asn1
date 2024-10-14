@@ -3,6 +3,9 @@
 // that can be found in the LICENSE file.
 module asn1
 
+const default_utctime_tag = Tag{.universal, false, int(TagType.utctime)}
+const default_generalizedtime_tag = Tag{.universal, false, int(TagType.generalizedtime)}
+
 // UtcTime
 // -------
 // For this time, UtcTime represented by simple string with format "YYMMDDhhmmssZ"
@@ -23,7 +26,7 @@ module asn1
 // TODO:
 // - check for invalid representation of date and hhmmss part.
 // - represented UtcTime in time.Time
-@[heap; noinit]
+@[noinit]
 pub struct UtcTime {
 pub:
 	value string
@@ -52,10 +55,12 @@ fn (utc UtcTime) str() string {
 	return 'UtcTime: (${utc.value})'
 }
 
+// the tag of UtcTime
 pub fn (utc UtcTime) tag() Tag {
-	return Tag{.universal, false, int(TagType.utctime)}
+	return default_utctime_tag
 }
 
+// payload was the payload (content) of this UtcTime
 pub fn (utc UtcTime) payload() ![]u8 {
 	return utc.payload_with_rule(.der)!
 }
@@ -72,7 +77,7 @@ fn (utc UtcTime) payload_with_rule(rule EncodingRule) ![]u8 {
 
 pub fn UtcTime.parse(mut p Parser) !UtcTime {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.utctime)) {
+	if !tag.equal(default_utctime_tag) {
 		return error('Bad UtcTime tag')
 	}
 	length := p.read_length()!
@@ -83,13 +88,14 @@ pub fn UtcTime.parse(mut p Parser) !UtcTime {
 	return res
 }
 
+// UtcTime.decode tries to decode bytes into UtcTime with DER rule 
 pub fn UtcTime.decode(src []u8) !(UtcTime, i64) {
 	return UtcTime.decode_with_rule(src, .der)!
 }
 
 fn UtcTime.decode_with_rule(bytes []u8, rule EncodingRule) !(UtcTime, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.utctime)) {
+	if !tag.equal(default_utctime_tag) {
 		return error('Unexpected non-utctime tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
@@ -177,6 +183,7 @@ pub:
 	value string
 }
 
+// GeneralizedTime.new creates a new GeneralizedTime from string s 
 pub fn GeneralizedTime.new(s string) !GeneralizedTime {
 	valid := validate_generalizedtime(s)!
 	if !valid {
@@ -188,7 +195,7 @@ pub fn GeneralizedTime.new(s string) !GeneralizedTime {
 }
 
 pub fn (gt GeneralizedTime) tag() Tag {
-	return Tag{.universal, false, int(TagType.generalizedtime)}
+	return default_generalizedtime_tag
 }
 
 pub fn (gt GeneralizedTime) payload() ![]u8 {
@@ -203,9 +210,10 @@ fn GeneralizedTime.from_bytes(b []u8) !GeneralizedTime {
 	return GeneralizedTime.new(b.bytestr())!
 }
 
+// GeneralizedTime.parse tries to parse throught ongoing Parser into GeneralizedTime
 pub fn GeneralizedTime.parse(mut p Parser) !GeneralizedTime {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.generalizedtime)) {
+	if !tag.equal(default_generalizedtime_tag) {
 		return error('Bad GeneralizedTime tag')
 	}
 	length := p.read_length()!
@@ -216,14 +224,14 @@ pub fn GeneralizedTime.parse(mut p Parser) !GeneralizedTime {
 	return res
 }
 
-pub fn GeneralizedTime.decode(src []u8) !(GeneralizedTime, i64) {
-	return GeneralizedTime.decode_with_rule(src, .der)!
+pub fn GeneralizedTime.decode(bytes []u8) !(GeneralizedTime, i64) {
+	return GeneralizedTime.decode_with_rule(bytes, .der)!
 }
 
 fn GeneralizedTime.decode_with_rule(bytes []u8, rule EncodingRule) !(GeneralizedTime, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.generalizedtime)) {
-		return error('Get GeneralizedTime tag')
+	if !tag.equal(default_generalizedtime_tag) {
+		return error('Get bad GeneralizedTime tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
 	content := if length == 0 {

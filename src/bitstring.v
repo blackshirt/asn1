@@ -15,15 +15,17 @@ import arrays
 // must use the primitive encoding. DER restricts the encoding to primitive only.
 // The same applies for BITSTRING. ie, For BIT STRING and OCTET STRING types,
 // DER does not allow the constructed form (breaking a string into multiple TLVs) or the indefinite length form.
-@[heap; noinit]
+@[noinit]
 pub struct BitString {
 mut:
 	data []u8
 	pad  u8 // numbers of unused bits
 }
 
+const default_bitstring_tag = Tag{.universal, false, int(TagType.bitstring)}
+
 pub fn (bs BitString) tag() Tag {
-	return Tag{.universal, false, u32(TagType.bitstring)}
+	return default_bitstring_tag
 }
 
 pub fn (bs BitString) payload() ![]u8 {
@@ -51,7 +53,7 @@ pub fn BitString.decode(bytes []u8) !(BitString, i64) {
 
 fn BitString.decode_with_rule(bytes []u8, rule EncodingRule) !(BitString, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, u32(TagType.bitstring)) {
+	if !tag.equal(default_bitstring_tag) {
 		return error('Unexpected non-bitstring tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!

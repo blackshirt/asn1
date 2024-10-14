@@ -5,16 +5,21 @@ module asn1
 
 // TODO: doing check for limiting oid array length.
 const max_oid_length = 128
+const default_oid_tag = Tag{.universal, false, int(TagType.oid)}
 
-// ObjectIdentifier
-@[heap; noinit]
+// ASN.1 ObjectIdentifier
+@[noinit]
 pub struct Oid {
 mut:
 	value []int
 }
 
 pub fn (oid Oid) tag() Tag {
-	return Tag{.universal, false, int(TagType.oid)}
+	return default_oid_tag
+}
+
+pub fn (oid Oid) payload() ![]u8 {
+	return oid.pack_into_bytes()!
 }
 
 // Oid.new creates new Oid from . separated string
@@ -91,10 +96,6 @@ fn Oid.from_bytes(src []u8) !Oid {
 	return oid
 }
 
-pub fn (oid Oid) payload() ![]u8 {
-	return oid.pack_into_bytes()!
-}
-
 fn (oid Oid) pack_into_bytes() ![]u8 {
 	if !oid.validate() {
 		return error('Oid: failed to validate')
@@ -110,7 +111,7 @@ fn (oid Oid) pack_into_bytes() ![]u8 {
 
 pub fn Oid.parse(mut p Parser) !Oid {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.oid)) {
+	if !tag.equal(default_oid_tag) {
 		return error('Bad Oid tag')
 	}
 	length := p.read_length()!
@@ -127,7 +128,7 @@ pub fn Oid.decode(src []u8) !(Oid, i64) {
 
 fn Oid.decode_with_rule(bytes []u8, rule EncodingRule) !(Oid, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.oid)) {
+	if !tag.equal(default_oid_tag) {
 		return error('Unexpected non-oid tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!

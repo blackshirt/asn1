@@ -130,6 +130,11 @@ pub fn Tag.from_bytes(bytes []u8) !(Tag, []u8) {
 	return tag, []u8{}
 }
 
+// equal checks whether this tag is equal with the provided other tag 
+fn (t Tag) equal(o Tag) bool {
+	return t.class == o.class && t.constructed == o.constructed && t.number == o.number 
+}
+
 fn (t Tag) expect(cls TagClass, constructed bool, tagnum int) bool {
 	return t.class == cls && t.constructed == constructed && t.number == tagnum
 }
@@ -175,14 +180,6 @@ fn Tag.decode_from_offset(bytes []u8, pos i64) !(Tag, i64) {
 	// default rule
 	tag, next := Tag.decode_with_rule(bytes, pos, .der)!
 	return tag, next
-}
-
-fn Tag.decode_with_expected(expected Tag, bytes []u8, start i64, rule EncodingRule) !(Tag, i64) {
-	tag, length_pos := Tag.decode_with_rule(bytes, start, rule)!
-	if tag != expected {
-		return error('Resulting tag is not expected')
-	}
-	return tag, length_pos
 }
 
 // Tag.decode_with_rule deserializes bytes back into Tag structure start from `loc` offset.

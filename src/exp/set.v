@@ -3,13 +3,15 @@
 // that can be found in the LICENSE file.
 module asn1
 
+const default_set_tag = Tag{.universal, true, int(TagType.set)}
+
 // SET and SET OF
 //
 // SET and SET OF contains an unordered series of fields of one or more types.
 // This differs from a SEQUENCE which contains an ordered list.
 // in DER encoding, SET types elements are sorted into tag order, and,
 // for SET OF types elements are sorted into ascending order of encoding.
-@[heap; noinit]
+@[noinit]
 pub struct Set {
 mut:
 	//	maximal size of this set fields
@@ -19,15 +21,8 @@ pub:
 	fields []Element
 }
 
-fn (s Set) str() string {
-	if s.fields.len == 0 {
-		return 'Set(max: ${s.max_size}): <empty>'
-	}
-	return 'Set(max: ${s.max_size}): ${s.fields.len} fields'
-}
-
 pub fn (s Set) tag() Tag {
-	return s.tag
+	return default_set_tag
 }
 
 pub fn (s Set) payload() ![]u8 {
@@ -43,74 +38,78 @@ fn (s Set) payload_with_rule(rule EncodingRule) ![]u8 {
 	return out
 }
 
-pub fn (s Set) encode(mut dst []u8, p Params) ! {
-	if p.rule != .der && p.rule != .ber {
-		return error('set: unsupported rule')
+fn (s Set) str() string {
+	if s.fields.len == 0 {
+		return 'Set(max: ${s.max_size}): <empty>'
 	}
-	// recheck
-	if !s.tag().is_constructed() && s.tag().tag_number() != int(TagType.set) {
-		return error('Not a valid set tag')
-	}
-	// pack in DER rule
-	s.tag.encode(mut dst, p)!
-	payload := s.payload(p)!
-	length := Length.from_i64(payload.len)!
-	length.encode(mut dst, p)!
-	dst << payload
+	return 'Set(max: ${s.max_size}): ${s.fields.len} fields'
 }
 
-pub fn Set.decode(src []u8, loc i64, p Params) !(Set, i64) {
-	raw, next := RawElement.decode(src, loc, p)!
+pub fn (set Set) payload() ![]u8 {
+	return set.payload_with_rule(.der)!
+}
 
-	if raw.tag.tag_class() != .universal && !raw.tag.is_constructed()
-		&& raw.tag.tag_number() != int(TagType.set) {
-		return error('Set: bad set tag')
-	}
+pub fn (set Set) fields() []Element {
+	return set.fields
+}
 
-	if raw.payload.len == 0 {
-		// empty sequence
-		set := Set.new(false)
-		return set, next
-	}
+fn Set.parse(mut p Parser) !Set {
+	return error('not yet implemented')
+}
 
-	mut set := Set.parse_contents(raw.tag, raw.payload)!
-	// check for hold_different_tag
-	if !set.elements.hold_different_tag() {
-		// set sequence into sequenceof type
-		set.setof = true
+fn Set.decode(bytes []u8) !(Set, i64) {
+	return Set.decode_with_rule(bytes, 0, .der)!
+}
+
+fn Set.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Set, i64) {
+	tag, length_pos := Tag.decode_with_rule(bytes, loc, rule)!
+	if !tag.equal(default_set_tag) {
+		return error('Get unexpected non-set tag')
 	}
+	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
+	payload := if length == 0 {
+		[]u8{}
+	} else {
+		if content_pos + length > bytes.len {
+			return error('Not enought bytes to read on')
+		}
+		unsafe { bytes[content_pos..content_pos + length] }
+	}
+	next := content_pos + length
+	set := Set.from_bytes(payload)!
 	return set, next
 }
 
-// Utility function
-//
-fn Set.parse_contents(tag Tag, contents []u8, p Params) !Set {
-	if !tag.is_constructed() && tag.tag_number() != int(TagType.set) {
-		return error('Set: not set tag')
+// bytes should set.fields payload, not includes the tag
+fn Set.from_bytes(bytes []u8) !Set {
+	mut set := Set{}
+	if bytes.len == 0 {
+		return set
 	}
-	mut i := 0
-	// by default, we create regular Set type
-	// if you wish SET OF type, call `.set_into_setof()`
-	// on this set to have SET OF behavior,
-	// or you can call it later.
-	mut set := Set.new(false)
-	for i < contents.len {
-		raw, _ := RawElement.decode(contents, i, p)!
-		// TODO: still no check
-		sub := raw.payload
-		if raw.tag.is_constructed() {
-			obj := parse_constructed_element(raw.tag, sub)!
-			set.add_element(obj)!
-			i += obj.packed_length(p)!
-		} else {
-			obj := parse_primitive_element(raw.tag, sub)!
-			set.add_element(obj)!
-			i += obj.packed_length(p)!
-		}
+	mut i := i64(0)
+	for i < bytes.len {
+		el, _ := Element.decode_with_rule(bytes, i, .der)!
+		i += el.encoded_len()
+		set.add_element(el)!
+	}
+	if i > bytes.len {
+		return error('i > bytes.len')
+	}
+	if i < bytes.len {
+		return error('The src contains unprocessed bytes')
 	}
 	return set
 }
 
+fn (mut set Set) set_limit(limit int) ! {
+	if limit > max_seqset_fields {
+		return error('Provided limit was exceed current one')
+	}
+	set.max_size = limit
+}
+
+
+/*
 fn (mut els []Element) sort_the_set() []Element {
 	// without &, its return an error: sort_with_compare callback function parameter
 	// `a` with type `asn1.Element` should be `&asn1.Element`
@@ -143,10 +142,11 @@ fn (mut els []Element) sort_the_setof() ![]Element {
 	})
 	return els
 }
+*/
 
-// SET OF
+// ASN.1 SET OF 
 //
-@[heap; noinit]
+@[noinit]
 pub struct SetOf[T] {
 mut:
 	max_size int = default_seqset_fields

@@ -3,6 +3,8 @@
 // that can be found in the LICENSE file.
 module asn1
 
+const default_null_tag = Tag{.universal, false, int(TagType.null)}
+
 // ASN.1 NULL TYPE
 pub struct Null {}
 
@@ -11,7 +13,7 @@ pub fn Null.new() Null {
 }
 
 pub fn (n Null) tag() Tag {
-	return Tag{.universal, false, int(TagType.null)}
+	return default_null_tag
 }
 
 // payload tells the payload of the Null type, its should empty bytes.
@@ -34,7 +36,7 @@ pub fn Null.parse(mut p Parser) !Null {
 // Null.decode read Null from bytes
 pub fn Null.decode(bytes []u8) !(Null, i64) {
 	tag, length_pos := Tag.decode(bytes)!
-	if !tag.expect(.universal, false, int(TagType.null)) {
+	if !tag.equal(default_null_tag) {
 		return error('Null: get unexpected tag')
 	}
 	length, content_pos := Length.decode_from_offset(bytes, length_pos)!

@@ -10,6 +10,8 @@ module asn1
 // and otherwise, encodes into zero (0x00) for false value.
 // The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.
 
+const default_boolean_tag = Tag{.universal, false, int(TagType.boolean)}
+
 @[noinit]
 pub struct Boolean {
 mut:
@@ -37,7 +39,7 @@ pub fn Boolean.from_u8(value u8) Boolean {
 }
 
 pub fn (v Boolean) tag() Tag {
-	return Tag{.universal, false, int(TagType.boolean)}
+	return default_boolean_tag
 }
 
 fn (v Boolean) str() string {
@@ -72,7 +74,7 @@ fn parse_boolean(mut p Parser) !Boolean {
 
 pub fn Boolean.parse(mut p Parser) !Boolean {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.boolean)) {
+	if !tag.equal(default_boolean_tag) {
 		return error('Bad boolean tag')
 	}
 	length := p.read_length()!
@@ -154,7 +156,7 @@ fn Boolean.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Boolean, i64
 		return error('Boolean: not supported rule')
 	}
 	tag, length_pos := Tag.decode_with_rule(src, loc, rule)!
-	if !tag.expect(.universal, false, int(TagType.boolean)) {
+	if !tag.equal(default_boolean_tag) {
 		return error('Unexpected non-boolean tag')
 	}
 	length, content_pos := Length.decode_with_rule(src, length_pos, rule)!

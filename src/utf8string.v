@@ -5,10 +5,12 @@ module asn1
 
 import encoding.utf8
 
+const default_utf8string_tag = Tag{.universal, false, int(TagType.utf8string)}
+
 // Utf8String
 // UTF8 unicode charset
 //
-@[heap; noinit]
+@[noinit]
 pub struct Utf8String {
 pub:
 	value string
@@ -33,7 +35,7 @@ pub fn Utf8String.from_bytes(src []u8) !Utf8String {
 }
 
 pub fn (uts Utf8String) tag() Tag {
-	return Tag{.universal, false, u32(TagType.utf8string)}
+	return default_utf8string_tag
 }
 
 pub fn (uts Utf8String) payload() ![]u8 {
@@ -59,7 +61,7 @@ fn (uts Utf8String) payload_with_rule(rule EncodingRule) ![]u8 {
 
 pub fn Utf8String.parse(mut p Parser) !Utf8String {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.utf8string)) {
+	if !tag.equal(default_utf8string_tag) {
 		return error('Bad Utf8String tag')
 	}
 	length := p.read_length()!
@@ -76,7 +78,7 @@ pub fn Utf8String.decode(src []u8) !(Utf8String, i64) {
 
 fn Utf8String.decode_with_rule(bytes []u8, rule EncodingRule) !(Utf8String, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.utf8string)) {
+	if !tag.equal(default_utf8string_tag) {
 		return error('Unexpected non-utf8string tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!

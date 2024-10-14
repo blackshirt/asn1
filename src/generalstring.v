@@ -1,4 +1,10 @@
+// Copyright (c) 2022, 2023 blackshirt. All rights reserved.
+// Use of this source code is governed by a MIT License
+// that can be found in the LICENSE file.
 module asn1
+
+// Default tag of GENERALSTRING type 
+const default_generalstring_tag = Tag{.universal, false, int(TagType.generalstring) }
 
 // ASN.1 GENERALSTRING Handling
 // It may contain any characters from a "G" and "C" set of any standardized character sets.
@@ -9,7 +15,7 @@ module asn1
 // For historical reasons, the characters SPACE (number 32) and DELETE (number 127)
 // are not considered to be in either the C set or the G set, but instead stand on their own
 // We only treated GeneralString as an us-ascii charset
-@[heap; noinit]
+@[noinit]
 pub struct GeneralString {
 pub:
 	value string
@@ -34,7 +40,7 @@ fn (gst GeneralString) str() string {
 }
 
 pub fn (gst GeneralString) tag() Tag {
-	return Tag{.universal, false, u32(TagType.generalstring)}
+	return default_generalstring_tag
 }
 
 pub fn (gst GeneralString) payload() ![]u8 {
@@ -63,7 +69,7 @@ fn GeneralString.from_bytes(b []u8) !GeneralString {
 
 pub fn GeneralString.parse(mut p Parser) !GeneralString {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.generalstring)) {
+	if !tag.equal(default_generalstring_tag) {
 		return error('Bad GeneralString tag')
 	}
 	length := p.read_length()!
@@ -80,7 +86,7 @@ pub fn GeneralString.decode(src []u8) !(GeneralString, i64) {
 
 fn GeneralString.decode_with_rule(bytes []u8, rule EncodingRule) !(GeneralString, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.generalstring)) {
+	if !tag.equal(default_generalstring_tag) {
 		return error('Unexpected non-generalstring tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!

@@ -3,11 +3,14 @@
 // that can be found in the LICENSE file.
 module asn1
 
+// default tag of Enumerated type 
+const default_enumerated_tag = Tag{.universal, false, int(TagType.enumerated)}
+
 // ENUMERATED.
 // Enumerated type treated as ordinary integer, only differs on tag value.
 // The encoding of an enumerated value shall be that of the integer value with which it is associated.
 // NOTE: It is primitive.
-@[heap; noinit]
+@[noinit]
 pub struct Enumerated {
 pub:
 	value int
@@ -24,7 +27,7 @@ pub fn Enumerated.new(val int) Enumerated {
 }
 
 pub fn (e Enumerated) tag() Tag {
-	return Tag{.universal, false, int(TagType.enumerated)}
+	return default_enumerated_tag
 }
 
 pub fn (e Enumerated) payload() ![]u8 {
@@ -54,7 +57,7 @@ fn Enumerated.from_bytes(bytes []u8) !Enumerated {
 
 pub fn Enumerated.parse(mut p Parser) !Enumerated {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.enumerated)) {
+	if !tag.equal {
 		return error('Bad Enumerated tag')
 	}
 	length := p.read_length()!
@@ -71,7 +74,7 @@ pub fn Enumerated.decode(src []u8) !(Enumerated, i64) {
 
 fn Enumerated.decode_with_rule(bytes []u8, rule EncodingRule) !(Enumerated, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.enumerated)) {
+	if !tag.equal(default_enumerated_tag) {
 		return error('Unexpected non-Enumerated tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!

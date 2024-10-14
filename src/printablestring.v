@@ -12,11 +12,16 @@ module asn1
 // symbols:  (space) ' ( ) + , - . / : = ?
 //
 const printable_symbols = r"(')+,-./:=?".bytes()
+const default_printablestring_tag = Tag{.universal, false, int(TagType.printablestring)}
 
-@[heap; noinit]
+@[noinit]
 pub struct PrintableString {
 pub:
 	value string
+}
+
+pub fn PrintableString.new(s string) !PrintableString {
+	return PrintableString.from_bytes(s.bytes())!
 }
 
 fn (pst PrintableString) str() string {
@@ -27,11 +32,14 @@ fn (pst PrintableString) str() string {
 }
 
 pub fn (pst PrintableString) tag() Tag {
-	return Tag{.universal, false, int(TagType.printablestring)}
+	return default_printablestring_tag
 }
 
-pub fn PrintableString.new(s string) !PrintableString {
-	return PrintableString.from_bytes(s.bytes())!
+pub fn (pst PrintableString) payload() ![]u8 {
+	if !printable_chars(pst.value.bytes()) {
+		return error('PrintableString: contains non-printable string')
+	}
+	return pst.value.bytes()
 }
 
 fn PrintableString.from_bytes(src []u8) !PrintableString {
@@ -43,17 +51,10 @@ fn PrintableString.from_bytes(src []u8) !PrintableString {
 	}
 }
 
-pub fn (pst PrintableString) payload() ![]u8 {
-	if !printable_chars(pst.value.bytes()) {
-		return error('PrintableString: contains non-printable string')
-	}
-	return pst.value.bytes()
-}
-
 // parse an PrintableString from on going Parser
 pub fn PrintableString.parse(mut p Parser) !PrintableString {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.printablestring)) {
+	if !tag.equal(default_printablestring_tag) {
 		return error('Unexpected non-printablestring tag')
 	}
 	length := p.read_length()!
@@ -71,7 +72,7 @@ pub fn PrintableString.decode(src []u8) !(PrintableString, i64) {
 
 fn PrintableString.decode_with_rule(bytes []u8, rule EncodingRule) !(PrintableString, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.printablestring)) {
+	if !tag.equal(default_printablestring_tag) {
 		return error('Unexpected non-printablestring tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!

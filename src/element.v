@@ -87,7 +87,7 @@ fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
 	el.tag().encode_with_rule(mut dst, rule)!
 	// calculates the length of element,  and serialize this length
 	payload := el.payload()!
-	length := Length.from_i64(payload.len)!
+	length := Length.new(payload.len)!
 	length.encode_with_rule(mut dst, rule)!
 	// append the element payload to destination
 	dst << payload
@@ -342,7 +342,7 @@ fn (el Element) encoded_len_with_rule(rule EncodingRule) int {
 	mut n := 0
 	n += el.tag().tag_size()
 	payload := el.payload() or { panic(err) }
-	length := Length.from_i64(payload.len) or { panic(err) }
+	length := Length.new(payload.len) or { panic(err) }
 	n += length.length_size_with_rule(rule) or { panic(err) }
 	n += payload.len
 

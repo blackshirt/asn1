@@ -3,13 +3,15 @@
 // that can be found in the LICENSE file.
 module asn1
 
+const default_numericstring_tag = Tag{.universal, false, int(TagType.numericstring)}
+
 // NumericString.
 //
 // NumericString was restricted character string types
 // restricted to sequences of zero, one or more characters from some
 // specified collection of characters.
 // That was : digit : 0,1,..9 and spaces char (0x20)
-@[heap; noinit]
+@[noinit]
 pub struct NumericString {
 pub:
 	value string
@@ -26,7 +28,7 @@ pub fn NumericString.new(s string) !NumericString {
 }
 
 pub fn (nst NumericString) tag() Tag {
-	return Tag{.universal, false, int(TagType.numericstring)}
+	return default_numericstring_tag
 }
 
 pub fn (nst NumericString) payload() ![]u8 {
@@ -46,7 +48,7 @@ fn (nst NumericString) payload_with_rule(rule EncodingRule) ![]u8 {
 
 pub fn NumericString.parse(mut p Parser) !NumericString {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.numericstring)) {
+	if !tag.equal(default_numericstring_tag) {
 		return error('Bad NumericString tag')
 	}
 	length := p.read_length()!
@@ -73,7 +75,7 @@ fn NumericString.decode(bytes []u8) !(NumericString, i64) {
 
 fn NumericString.decode_with_rule(bytes []u8, rule EncodingRule) !(NumericString, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.numericstring)) {
+	if !tag.equal(default_numericstring_tag) {
 		return error('Unexpected non-numericstring tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!

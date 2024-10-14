@@ -3,9 +3,12 @@
 // that can be found in the LICENSE file.
 module asn1
 
+// Default tag of IA5STRING type 
+const default_ia5string_tag = Tag{.universal, false, int(TagType.ia5string) }
+
 // IA5String handling routine
 // Standard ASCII characters
-@[heap; noinit]
+@[noinit]
 pub struct IA5String {
 mut:
 	value string
@@ -22,7 +25,7 @@ pub fn IA5String.new(s string) !IA5String {
 }
 
 pub fn (v IA5String) tag() Tag {
-	return Tag{.universal, false, int(TagType.ia5string)}
+	return default_ia5string_tag
 }
 
 pub fn (v IA5String) payload() ![]u8 {
@@ -41,7 +44,7 @@ fn (v IA5String) str() string {
 
 pub fn IA5String.parse(mut p Parser) !IA5String {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.ia5string)) {
+	if !tag.equal(default_ia5string_tag) {
 		return error('Bad Ia5String tag')
 	}
 	length := p.read_length()!
@@ -59,7 +62,7 @@ pub fn IA5String.decode(bytes []u8) !(IA5String, i64) {
 
 fn IA5String.decode_with_rule(bytes []u8, rule EncodingRule) !(IA5String, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.ia5string)) {
+	if !tag.equal(default_ia5string_tag) {
 		return error('Unexpected non-ia5string tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!

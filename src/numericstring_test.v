@@ -43,7 +43,7 @@ fn test_encode_decode_numericstring_advanced() ! {
 	for k, v in m {
 		s := k.repeat(v) // strings.repeat_string(k, v)
 		b := s.bytes()
-		ln := Length.from_i64(b.len)!
+		ln := Length.new(b.len)!
 		mut dst := []u8{}
 		ln.encode(mut dst)!
 

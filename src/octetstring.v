@@ -3,20 +3,21 @@
 // that can be found in the LICENSE file.
 module asn1
 
+const default_octetstring_tag = Tag{.universal, false, int(TagType.octetstring)}
+const max_octetstring_length = 1 << 32 - 1
+
 // OCTETSTRING
 // The ASN.1 OCTET STRING type contains arbitrary strings of octets.
 // This type is very similar to BIT STRING, except that all values must be an integral number of eight bits.
 // You can use constraints to specify a maximum length for an OCTET STRING type.
-const max_octetstring_length = 1 << 32 - 1
-
-@[heap; noinit]
+@[noinit]
 pub struct OctetString {
 pub:
 	value string
 }
 
 pub fn (oct OctetString) tag() Tag {
-	return Tag{.universal, false, int(TagType.octetstring)}
+	return default_octetstring_tag
 }
 
 pub fn (oct OctetString) payload() ![]u8 {
@@ -50,7 +51,7 @@ pub fn OctetString.new(s string) !OctetString {
 // parse an OctetString from ongoing Parser
 pub fn OctetString.parse(mut p Parser) !OctetString {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.octetstring)) {
+	if !tag.equal(default_octetstring_tag) {
 		return error('Bad octetstring tag')
 	}
 	length := p.read_length()!
@@ -68,7 +69,7 @@ pub fn OctetString.decode(src []u8) !(OctetString, i64) {
 
 fn OctetString.decode_with_rule(bytes []u8, rule EncodingRule) !(OctetString, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.octetstring)) {
+	if !tag.equal(default_octetstring_tag) {
 		return error('Unexpected non-octetstring tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!

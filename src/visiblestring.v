@@ -3,10 +3,12 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// VisibleString
+const default_visiblestring_tag = Tag{.universal, false, int(TagType.visiblestring)}
+
+// ASN.1 VisibleString universal type
 // The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.
 //
-@[heap; noinit]
+@[noinit]
 pub struct VisibleString {
 pub:
 	value string
@@ -33,7 +35,7 @@ fn VisibleString.from_bytes(src []u8) !VisibleString {
 }
 
 pub fn (vst VisibleString) tag() Tag {
-	return Tag{.universal, false, int(TagType.visiblestring)}
+	return default_visiblestring_tag
 }
 
 pub fn (vst VisibleString) payload() ![]u8 {
@@ -52,7 +54,7 @@ fn (vst VisibleString) str() string {
 
 pub fn VisibleString.parse(mut p Parser) !VisibleString {
 	tag := p.read_tag()!
-	if !tag.expect(.universal, false, int(TagType.visiblestring)) {
+	if !tag.equal(default_visiblestring_tag) {
 		return error('Bad VisibleString tag')
 	}
 	length := p.read_length()!
@@ -69,7 +71,7 @@ pub fn VisibleString.decode(src []u8) !(VisibleString, i64) {
 
 fn VisibleString.decode_with_rule(bytes []u8, rule EncodingRule) !(VisibleString, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
-	if !tag.expect(.universal, false, int(TagType.visiblestring)) {
+	if !tag.equal(default_visiblestring_tag) {
 		return error('Unexpected non-visiblestring tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!

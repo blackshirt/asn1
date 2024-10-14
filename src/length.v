@@ -25,9 +25,9 @@ const max_definite_length_value = max_i64
 // Length represent ASN.1 length value
 type Length = i64
 
-// from_i64 creates Length from i64  value. Passing negative value (<0) for length
+// new creates Length from i64  value. Passing negative value (<0) for length
 // is not make a sense, so just return error instead if it happen.
-pub fn Length.from_i64(v i64) !Length {
+pub fn Length.new(v i64) !Length {
 	if v < 0 {
 		return error('Length: supply with positive i64')
 	}
@@ -168,9 +168,9 @@ fn Length.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Length, i64) 
 			return error('Length: 0x7f is for reserved use')
 		}
 		// we limit the bytes count for length definite form to `max_definite_length_count`
-		// if num_bytes > asn1.max_definite_length_count {
-		//		return error('Length: count bytes exceed limit')
-		// }
+		if num_bytes > asn1.max_definite_length_count {
+				return error('Length: count bytes exceed limit')
+		}
 		for i := 0; i < num_bytes; i++ {
 			if pos >= src.len {
 				return error('Length: truncated length')
@@ -199,6 +199,6 @@ fn Length.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Length, i64) 
 			return error('Length: dont needed in long form')
 		}
 	}
-	ret := Length.from_i64(length)!
+	ret := Length.new(length)!
 	return ret, pos
 }
