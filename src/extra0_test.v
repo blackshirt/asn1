@@ -69,7 +69,7 @@ AlgorithmIdentifier  ::=  SEQUENCE  {
       }
 */
 
-// NOTE: Need to be fixed
+// FIXED: NOTE: Need to be fixed
 fn test_x509_certificate_version() ! {
 	// version         [0]  EXPLICIT Version DEFAULT v1,
 	// Version  ::=  INTEGER  {  v1(0), v2(1), v3(2)  }

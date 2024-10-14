@@ -15,20 +15,54 @@ const default_set_tag = Tag{.universal, true, int(TagType.set)}
 pub struct Set {
 mut:
 	//	maximal size of this set fields
-	max_size int = default_seqset_fields
+	size int = default_seqset_fields
 	// fields is the elements of the set
 	fields []Element
+}
+
+fn Set.new() !Set {
+	return Set.new_with_size(default_seqset_fields)!
+}
+
+fn Set.new_with_size(size int) !Set {
+	if size > max_seqset_fields {
+		return error('size is exceed limit')
+	}
+	if size < 0 {
+		return error('Provides with correct size')
+	}
+
+	// if size is 0, use default_seqset_fields
+	limit := if size == 0 { default_seqset_fields } else { size }
+	return Set{
+		size: limit
+	}
 }
 
 pub fn (s Set) tag() Tag {
 	return default_set_tag
 }
 
+// Required for DER encoding.
+// The encodings of the component values of a set value shall appear in an order determined by their tags.
+// The canonical order for tags is based on the outermost tag of each type and is defined as follows:
+//   a) those elements or alternatives with universal class tags shall appear first, followed by those with
+//      application class tags, followed by those with context-specific tags, followed by those with private class
+//      tags;
+//   b) within each class of tags, the elements or alternatives shall appear in ascending order of their tag
+//      numbers.
 pub fn (s Set) payload() ![]u8 {
-	return s.payload_with_rule(.der)!
+	// workaround by working with the copy of Set, changing it to 'mut s Set` would encounter some issues
+	// ie, with messages `asn1.Set` incorrectly implements method `payload` of interface `asn1.Element`:
+	// expected `asn1.Element` which is immutable, not `mut &asn1.Set`
+	mut set := s
+	return set.payload_with_rule(.der)!
 }
 
-fn (s Set) payload_with_rule(rule EncodingRule) ![]u8 {
+fn (mut s Set) payload_with_rule(rule EncodingRule) ![]u8 {
+	// first, we sort the set.fields and then serializing it.
+	s.sort_set_fields()
+
 	mut out := []u8{}
 	for item in s.fields {
 		obj := encode_with_rule(item, rule)!
@@ -39,9 +73,9 @@ fn (s Set) payload_with_rule(rule EncodingRule) ![]u8 {
 
 fn (s Set) str() string {
 	if s.fields.len == 0 {
-		return 'Set(max: ${s.max_size}): <empty>'
+		return 'Set(max: ${s.size}): <empty>'
 	}
-	return 'Set(max: ${s.max_size}): ${s.fields.len} fields'
+	return 'Set(max: ${s.size}): ${s.fields.len} fields'
 }
 
 pub fn (set Set) fields() []Element {
@@ -75,12 +109,34 @@ fn Set.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Set, i64) {
 	return set, next
 }
 
+// bytes should seq.fields payload, not includes the tag
+fn Set.from_bytes(bytes []u8) !Set {
+	mut set := Set{}
+	if bytes.len == 0 {
+		return set
+	}
+	mut i := i64(0)
+	for i < bytes.len {
+		el, pos := Element.decode_with_rule(bytes, i, .der)!
+		i = pos
+		set.add_element(el)!
+	}
+
+	if i > bytes.len {
+		return error('i > bytes.len')
+	}
+	if i < bytes.len {
+		return error('The src contains unprocessed bytes')
+	}
+	return set
+}
+
 // by default allow add with the same tag
 fn (mut set Set) add_element(el Element) ! {
 	set.relaxed_add_element(el, true)!
 }
 
-// add_element allows adding a new element into current sequence fields.
+// add_element allows adding a new element into current Set fields.
 // Its does not allow adding element when is already the same tag in the fields.
 // but, some exception when you set relaxed to true
 fn (mut set Set) relaxed_add_element(el Element, relaxed bool) ! {
@@ -90,11 +146,12 @@ fn (mut set Set) relaxed_add_element(el Element, relaxed bool) ! {
 		return
 	}
 
-	for item in set.fields {
-		if item.equal_with(el) {
-			return error('has already in the fields')
-		}
-	}
+	// remove this checks
+	// for item in set.fields {
+	//	if item.equal_with(el) {
+	//		return error('has already in the fields')
+	//	}
+	// }
 	filtered_by_tag := set.fields.filter(it.equal_tag(el))
 	if filtered_by_tag.len == 0 {
 		set.fields << el
@@ -108,77 +165,65 @@ fn (mut set Set) relaxed_add_element(el Element, relaxed bool) ! {
 	}
 }
 
-// bytes should set.fields payload, not includes the tag
-fn Set.from_bytes(bytes []u8) !Set {
-	mut set := Set{}
-	if bytes.len == 0 {
-		return set
-	}
-	mut i := i64(0)
-	for i < bytes.len {
-		el, _ := Element.decode_with_rule(bytes, i, .der)!
-		i += el.encoded_len()
-		set.add_element(el)!
-	}
-	if i > bytes.len {
-		return error('i > bytes.len')
-	}
-	if i < bytes.len {
-		return error('The src contains unprocessed bytes')
-	}
-	return set
-}
-
 fn (mut set Set) set_limit(limit int) ! {
 	if limit > max_seqset_fields {
 		return error('Provided limit was exceed current one')
 	}
-	set.max_size = limit
+	set.size = limit
+}
+
+// sort_set_fields sort the Set fields in places with sort_with_compare support
+fn (mut set Set) sort_set_fields() {
+	// without &, its return an error: sort_with_compare callback function parameter
+	// `x` with type `asn1.Element` should be `&asn1.Element`
+	set.fields.sort_with_compare(fn (x &Element, y &Element) int {
+		if x.tag().class != y.tag().class {
+			s := if int(x.tag().class) < int(y.tag().class) { -1 } else { 1 }
+			return s
+		}
+		if x.tag() == y.tag() {
+			// compare by contents instead just return 0
+			xx := encode(x) or { panic(err) }
+			yy := encode(y) or { panic(err) }
+			return xx.bytestr().compare(yy.bytestr())
+		}
+		q := if x.tag().number < y.tag().number { -1 } else { 1 }
+		return q
+	})
 }
 
 /*
-fn (mut els []Element) sort_the_set() []Element {
-	// without &, its return an error: sort_with_compare callback function parameter
-	// `a` with type `asn1.Element` should be `&asn1.Element`
-	els.sort_with_compare(fn (a &Element, b &Element) int {
-		if a.tag().class != b.tag().class {
-			s := if int(a.tag().class) < int(b.tag().class) { -1 } else { 1 }
-			return s
-		}
-		if a.tag() == b.tag() {
-			// compare by contents instead just return 0
-			mut aa := []u8{}
-			a.encode(mut aa) or { panic(err) }
-			mut bb := []u8{}
-			b.encode(mut bb) or { panic(err) }
-			return aa.bytestr().compare(bb.bytestr())
-		}
-		q := if a.tag().number < b.tag().number { -1 } else { 1 }
-		return q
-	})
-	return els
-}
-
-fn (mut els []Element) sort_the_setof() ![]Element {
-	els.sort_with_compare(fn (a &Element, b &Element) int {
-		mut aa := []u8{}
-		a.encode(mut aa) or { panic(err) }
-		mut bb := []u8{}
-		b.encode(mut bb) or { panic(err) }
-		return aa.bytestr().compare(bb.bytestr())
-	})
-	return els
-}
 */
 
 // ASN.1 SET OF
 //
-@[noinit]
+@[heap; noinit]
 pub struct SetOf[T] {
 mut:
-	max_size int = default_seqset_fields
-pub:
+	size   int = default_seqset_fields
 	fields []T
+}
+
+fn new_setof[T]() !SetOf[T] {
+	return new_setof_with_size[T](default_seqset_fields)!
+}
+
+fn new_setof_with_size[T](size int) !SetOf[T] {
+	$if T !is Element {
+		return error('Yur T is not Element')
+	}
+	if size > max_seqset_fields {
+		return error('size is exceed limit')
+	}
+	if size < 0 {
+		return error('Provides with correct size')
+	}
+
+	// if size is 0, use default_seqset_fields
+	limit := if size == 0 { default_seqset_fields } else { size }
+	return SetOf[T]{
+		size: limit
+	}
 }
 
 pub fn (so SetOf[T]) tag() Tag {
@@ -186,46 +231,94 @@ pub fn (so SetOf[T]) tag() Tag {
 }
 
 pub fn (so SetOf[T]) payload() ![]u8 {
-	return so.payload_with_rule(.der)!
+	mut sto := so
+	return sto.payload_with_rule(.der)!
 }
 
-fn (so SetOf[T]) payload_with_rule(rule EncodingRule) ![]u8 {
+// issues: el cannot be used as interface object outside `unsafe` blocks
+// as it might be stored on stack.
+// Consider wrapping the `T` object in a `struct` declared as `@[heap]`
+fn (mut so SetOf[T]) payload_with_rule(rule EncodingRule) ![]u8 {
 	$if T !is Element {
 		return error('T is not an element')
 	}
+	// sort the fields and serialize
+	so.sort_setof_fields()
+
 	mut out := []u8{}
 	for el in so.fields {
-		obj := encode_with_rule(el, rule)!
+		elem := unsafe { el }
+		obj := encode_with_rule(elem, rule)!
 		out << obj
 	}
 	return out
 }
 
-/*
-// Required for DER encoding.
-// The encodings of the component values of a set value shall appear in an order determined by their tags.
-// The canonical order for tags is based on the outermost tag of each type and is defined as follows:
-//   a) those elements or alternatives with universal class tags shall appear first, followed by those with
-//      application class tags, followed by those with context-specific tags, followed by those with private class
-//      tags;
-//   b) within each class of tags, the elements or alternatives shall appear in ascending order of their tag
-//      numbers.
+fn (mut so SetOf[T]) sort_setof_fields() {
+	so.fields.sort_with_compare(fn [T](x &T, y &T) int {
+		xx := Element.from_object[T](x) or { panic(err) }
+		yy := Element.from_object[T](y) or { panic(err) }
+		aa := encode(xx) or { panic(err) }
+		bb := encode(yy) or { panic(err) }
+		return aa.bytestr().compare(bb.bytestr())
+	})
+}
 
+// by default allow add with the same tag
+fn (mut so SetOf[T]) add_element(el Element) ! {
+	so.relaxed_add_element(el, true)!
+}
+
+// add_element allows adding a new element into current Set fields.
+// Its does not allow adding element when is already the same tag in the fields.
+// but, some exception when you set relaxed to true
+fn (mut so SetOf[T]) relaxed_add_element(el Element, relaxed bool) ! {
+	the_t := el.into_object[T]()!
+	if so.fields.len == 0 {
+		// just adds it then return
+		so.fields << the_t
+		return
+	}
+	mut filtered_by_tag := []T{}
+	for field in so.fields {
+		item := Element.from_object(field)!
+		if item.equal_with(el) {
+			return error('has already in the fields')
+		}
+		if item.equal_tag(el) {
+			// add this to filtered
+			filtered_by_tag << field
+		}
+	}
+
+	if filtered_by_tag.len == 0 {
+		so.fields << the_t
+		return
+	} else {
+		if !relaxed {
+			return error('You can not insert element without forcing')
+		}
+		so.fields << the_t
+		return
+	}
+}
+
+/*
 fn (mut objs []Encoder) sort_the_set() []Encoder {
 	// without &, its return an error: sort_with_compare callback function parameter
 	// `a` with type `asn1.Encoder` should be `&asn1.Encoder`
 	objs.sort_with_compare(fn (a &Encoder, b &Encoder) int {
-		if a.tag().class != b.tag().class {
-			s := if int(a.tag().class) < int(b.tag().class) { -1 } else { 1 }
+		if x.tag().class != y.tag().class {
+			s := if int(x.tag().class) < int(y.tag().class) { -1 } else { 1 }
 			return s
 		}
-		if a.tag() == b.tag() {
+		if x.tag() == y.tag() {
 			// compare by contents instead just return 0
-			aa := a.encode() or { return 0 }
-			bb := b.encode() or { return 0 }
-			return aa.bytestr().compare(bb.bytestr())
+			aa := x.encode() or { return 0 }
+			bb := y.encode() or { return 0 }
+			return ax.bytestr().compare(by.bytestr())
 		}
-		q := if a.tag().number < b.tag().number { -1 } else { 1 }
+		q := if x.tag().number < y.tag().number { -1 } else { 1 }
 		return q
 	})
 	return objs
@@ -233,9 +326,9 @@ fn (mut objs []Encoder) sort_the_set() []Encoder {
 
 fn (mut objs []Encoder) sort_the_setof() ![]Encoder {
 	objs.sort_with_compare(fn (a &Encoder, b &Encoder) int {
-		aa := a.encode() or { return 0 }
-		bb := b.encode() or { return 0 }
-		return aa.bytestr().compare(bb.bytestr())
+		aa := x.encode() or { return 0 }
+		bb := y.encode() or { return 0 }
+		return ax.bytestr().compare(by.bytestr())
 	})
 	return objs
 }

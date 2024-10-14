@@ -131,6 +131,11 @@ pub fn (el Element) into_object[T]() !T {
 	return error('Element el does not holding T')
 }
 
+fn (el Element) length() !int {
+	payload := el.payload()!
+	return payload.len
+}
+
 // UTILITY HELPER FOR ELEMENT
 //
 

@@ -43,7 +43,7 @@ fn (mut p Parser) read_tlv() !Element {
 	length := p.read_length()!
 	content := p.read_bytes(length)!
 
-	elem := Asn1Element.new(tag, content)!
+	elem := Asn1Element.new(tag, content)
 	return elem
 }
 

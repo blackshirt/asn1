@@ -235,7 +235,8 @@ pub fn (n Integer) equal(m Integer) bool {
 	nbytes := n.bytes()
 	mbytes := m.bytes()
 	// todo: check sign equality
-	return n.tag().equal(m.tag()) && constant_time_compare(nbytes, mbytes) == 1
+	// m.tag() == n.tag() by definition, no need to check
+	return constant_time_compare(nbytes, mbytes) == 1
 }
 
 // Integer.unpack_and_validate deserializes bytes in b into Integer

@@ -27,9 +27,28 @@ const default_seqset_fields = 64 // default size
 pub struct Sequence {
 mut:
 	//	maximal size of this sequence fields
-	max_size int = default_seqset_fields
+	size int = default_seqset_fields
 	// fields is the elements of the sequence
 	fields []Element
+}
+
+fn Sequence.new() !Sequence {
+	return Sequence.new_with_size(default_seqset_fields)!
+}
+
+fn Sequence.new_with_size(size int) !Sequence {
+	if size > max_seqset_fields {
+		return error('size is exceed limit')
+	}
+	if size < 0 {
+		return error('Provides with correct size')
+	}
+
+	// if size is 0, use default_seqset_fields
+	limit := if size == 0 { default_seqset_fields } else { size }
+	return Sequence{
+		size: limit
+	}
 }
 
 pub fn (seq Sequence) tag() Tag {
@@ -47,6 +66,17 @@ fn (seq Sequence) payload_with_rule(rule EncodingRule) ![]u8 {
 		out << obj
 	}
 	return out
+}
+
+fn (seq Sequence) encoded_len() int {
+	mut n := 0
+	n += seq.tag().tag_size()
+	payload := seq.payload() or { panic(err) }
+	length := Length.new(payload.len) or { panic(err) }
+	n += length.length_size() or { panic(err) }
+	n += payload.len
+
+	return n
 }
 
 pub fn (seq Sequence) fields() []Element {
@@ -88,10 +118,11 @@ fn Sequence.from_bytes(bytes []u8) !Sequence {
 	}
 	mut i := i64(0)
 	for i < bytes.len {
-		el, _ := Element.decode_with_rule(bytes, i, .der)!
-		i += el.encoded_len()
+		el, pos := Element.decode_with_rule(bytes, i, .der)!
+		i = pos
 		seq.add_element(el)!
 	}
+
 	if i > bytes.len {
 		return error('i > bytes.len')
 	}
@@ -105,7 +136,7 @@ fn (mut seq Sequence) set_limit(limit int) ! {
 	if limit > max_seqset_fields {
 		return error('Provided limit was exceed current one')
 	}
-	seq.max_size = limit
+	seq.size = limit
 }
 
 // by default allow add with the same tag
@@ -123,11 +154,11 @@ fn (mut seq Sequence) relaxed_add_element(el Element, relaxed bool) ! {
 		return
 	}
 
-	for item in seq.fields {
-		if item.equal_with(el) {
-			return error('has already in the fields')
-		}
-	}
+	// for item in seq.fields {
+	//	if item.equal_with(el) {
+	//		return error('has already in the fields')
+	//	}
+	// }
 	filtered_by_tag := seq.fields.filter(it.equal_tag(el))
 	if filtered_by_tag.len == 0 {
 		seq.fields << el
@@ -163,7 +194,7 @@ fn (seq Sequence) into_sequence_of[T]() !SequenceOf[T] {
 @[noinit]
 pub struct SequenceOf[T] {
 mut:
-	max_size int = default_seqset_fields
+	size int = default_seqset_fields
 pub:
 	fields []T
 }

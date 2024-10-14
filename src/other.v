@@ -23,11 +23,7 @@ pub fn (a Asn1Element) payload() ![]u8 {
 	return a.content
 }
 
-pub fn Asn1Element.new(tag Tag, content []u8) !Asn1Element {
-	return Asn1Element.new_with_rule(tag, content, .der)!
-}
-
-fn Asn1Element.new_with_rule(tag Tag, content []u8, rule EncodingRule) !Asn1Element {
+pub fn Asn1Element.new(tag Tag, content []u8) Asn1Element {
 	new := Asn1Element{
 		tag:     tag
 		content: content

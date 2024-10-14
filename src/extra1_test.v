@@ -1,39 +1,47 @@
 module asn1
 
 import encoding.hex
+import crypto.pem
 
-fn test_ed4418_data() ! {
+fn test_rsa_public_key() ! {
 	// from https://asecuritysite.com/digitalcert/sigs4cd
 	/*
-	DER: 3043300506032b6571033a00419610a534af127f583b04818cdb7f0ff300b025f2e01682bcae33fd691cee039511df0cddc690ee978426e8b38e50ce5af7dcfba50f704c00
-	// decoded as:
-	[U] SEQUENCE (30)
-  		[U] SEQUENCE (30)
-    		[U] OBJECT (06): 1.3.101.113 - Ed448
-  		[U] BIT STRING (03): 0xb'00419610A534AF127F583B04818CDB7F0FF300B025F2E01682BCAE33FD691CEE039511DF0CDDC690EE978426E8B38E50CE5AF7DCFBA50F704C00'
-  	Public key (9610a534af127f583b04818cdb7f0ff300b025f2e01682bcae33fd, 691cee039511df0cddc690ee978426e8b38e50ce5af7dcfba50f704c00)
+       // from https://asecuritysite.com/ecc/sigs4?a0=30819f300d06092a864886f70d010101050003818d0030818902818100a399caf6d93b62a6b6a5311efe93c4d647397ca05a98fa5cddb72d6816ab16fc85f940efe9cf2233975c8925c60f4cd356767cc8445686313a0caeae32930070ca90591a1b249c2fcef9280f5a11d8f1990579d86a05b2523f52c4a876da2d635ca27fbff195e6f7015f834928f033a20b2cd0216a852958b3e58d0f9bd542330203010001
+	DER: 30819f300d06092a864886f70d010101050003818d0030818902818100a399caf6d93b62a6b6a5311efe93c4d647397ca05a98fa5cddb72d6816ab16fc85f940efe9cf2233975c8925c60f4cd356767cc8445686313a0caeae32930070ca90591a1b249c2fcef9280f5a11d8f1990579d86a05b2523f52c4a876da2d635ca27fbff195e6f7015f834928f033a20b2cd0216a852958b3e58d0f9bd542330203010001
 
-	-----BEGIN PUBLIC KEY-----
-		MEMwBQYDK2VxAzoAQZYQpTSvEn9YOwSBjNt/D/MAsCXy4BaCvK4z/Wkc7gOVEd8M3caQ7peEJuizjlDOWvfc+6UPcEwA
-	-----END PUBLIC KEY-----
+[U] SEQUENCE (30)
+  [U] SEQUENCE (30)
+    [U] OBJECT (06): 1.2.840.113549.1.1.1 - RSA Encryption
+    [U] NULL: None
+  [U] BIT STRING (03): 0xb'0030818902818100A399CAF6D93B62A6B6A5311EFE93C4D647397CA05A98FA5CDDB72D6816AB16FC85F940EFE9CF2233975C8925C60F4CD356767CC8445686313A0CAEAE32930070CA90591A1B249C2FCEF9280F5A11D8F1990579D86A05B2523F52C4A876DA2D635CA27FBFF195E6F7015F834928F033A20B2CD0216A852958B3E58D0F9BD542330203010001'
+81
+  RSA Modulus (1024) bits: a399caf6d93b62a6b6a5311efe93c4d647397ca05a98fa5cddb72d6816ab16fc85f940efe9cf2233975c8925c60f4cd356767cc8445686313a0caeae32930070ca90591a1b249c2fcef9280f5a11d8f1990579d86a05b2523f52c4a876da2d635ca27fbff195e6f7015f834928f033a20b2cd0216a852958b3e58d0f9bd54233
+RSA e: 10001
+
+-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCjmcr22TtipralMR7+k8TWRzl8oFqY+lzdty1oFqsW/IX5QO/pzyIzl1yJJcYPTNNWdnzIRFaGMToMrq4ykwBwypBZGhsknC/O+SgPWhHY8ZkFedhqBbJSP1LEqHbaLWNcon+/8ZXm9wFfg0ko8DOiCyzQIWqFKViz5Y0Pm9VCMwIDAQAB
+-----END PUBLIC KEY-----
 	*/
-	data := '3043300506032b6571033a00419610a534af127f583b04818cdb7f0ff300b025f2e01682bcae33fd691cee039511df0cddc690ee978426e8b38e50ce5af7dcfba50f704c00'
+	data := '30819f300d06092a864886f70d010101050003818d0030818902818100a399caf6d93b62a6b6a5311efe93c4d647397ca05a98fa5cddb72d6816ab16fc85f940efe9cf2233975c8925c60f4cd356767cc8445686313a0caeae32930070ca90591a1b249c2fcef9280f5a11d8f1990579d86a05b2523f52c4a876da2d635ca27fbff195e6f7015f834928f033a20b2cd0216a852958b3e58d0f9bd542330203010001'
 
 	bytes := hex.decode(data)!
+	seq, n := Sequence.decode(bytes)!
 
-	seq, n := Sequence.decode(bytes, 0)!
-
-	els := seq.elements()!
+	els := seq.fields()
 	assert els.len == 2
 	assert els[0] is Sequence
 	assert els[1] is BitString
-	// NOTE: Need to be fixed
-	// assert el[0].payload()!.bytestr() == '1.3.101.113'
+
+	els0 := els[0] as Sequence
+	assert els0.fields.len == 2
+	assert els0.fields[0] is Oid
+	oid := els0.fields[0] as Oid
+	assert oid.str() == '1.2.840.113549.1.1.1'
+	assert els0.fields[1] is Null
 }
 
-/*
-NOTE: Need to be fixed
-fn test_x25519_private_key() ? {
+// NOTE: Need to be fixed
+fn test_x25519_private_key() ! {
 	// taken from https://www.rfc-editor.org/rfc/rfc8410#section-10
 	// 10.3 Examples of Ed25519 Private Key
 
@@ -57,30 +65,30 @@ MC4CAQAwBQYDK2VwBCIEINTuctv5E1hK1bbY8fdp+K06/nwoy/HU++CXqI9EdVhC
 	*/
 	block, _ := pem.decode(data)?
 
-	seq, n := Sequence.decode(block.data, 0)!
+	seq, n := Sequence.decode(block.data)!
 
-	assert seq.length()! == 46
-	
-	els := seq.elements()!
+	assert seq.payload()!.len == 46
+
+	els := seq.fields()
 	assert els[0] is Integer
 	assert els[1] is Sequence
 	b := els[1] as Sequence
 
-	assert b.elements()[0] is Oid
-	assert b.elements()[0].length()! == 3
+	assert b.fields()[0] is Oid
+	assert b.fields()[0].length()! == 3
 
-	oid := b.elements()[0] as Oid
+	oid := b.fields()[0] as Oid
 	assert oid.str() == '1.3.101.112'
 
 	assert els[2] is OctetString
-	assert els[2].length()! == 34
+	assert els[2].payload()!.len == 34
 }
-*/
 
+/*
+// NEED TO BE FIXED
 // TODO: This test still failed on `Sequence.parse_contents` with error `next: truncated bytes`
 // FIXME: need to be investigated, bad data, or sequence handling or others source of fail
 // so just disable this test, would be moved into related module when ready
-/*
 fn test_example_x25519_certificate() {
 	// taken from https://www.rfc-editor.org/rfc/rfc8410.html#section-10
 	// 10.2.  Example X25519 Certificate
@@ -178,18 +186,17 @@ w1AH9efZBw==
           :   }
 	*/
 	block, _ := pem.decode(data)?
-       dump(block.data.hex())
+	seq, n := Sequence.decode(block.data)!
 
-	seq, n := Sequence.decode(block.data, 0)!
-
-	assert seq.length()! == 300
+	assert seq.payload()!.len == 302
 
 	// certificate is arrays of 3 element
-	assert seq.elements().len == 3
+	assert seq.fields().len == 3
+
+	els := seq.fields()
 	// last element
 	assert els[2] is BitString
-	assert els[2].length()! == 65
-	bts := BitString.from_bytes(seq.elements[2].payload()!)!
+	bts := BitString.from_bytes(seq.fields[2].payload()!)!
 	exp := [u8(0xAF), 0x23, 0x01, 0xFE, 0xDD, 0xC9, 0xE6, 0xFF, 0xC1, 0xCC, 0xA7, 0x3D, 0x74, 0xD6,
 		0x48, 0xA4, 0x39, 0x80, 0x82, 0xCD, 0xDB, 0x69, 0xB1, 0x4E, 0x4D, 0x06, 0xEC, 0xF8, 0x1A,
 		0x25, 0xCE, 0x50, 0xD4, 0xC2, 0xC3, 0xEB, 0x74, 0x6C, 0x4E, 0xDD, 0x83, 0x46, 0x85, 0x6E,
@@ -197,5 +204,4 @@ w1AH9efZBw==
 		0x07, 0xF5, 0xE7, 0xD9, 0x07]
 	assert bts.data == exp
 }
-
 */

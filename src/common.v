@@ -76,12 +76,10 @@ fn parse_universal_constructed(tag Tag, content []u8) !Element {
 	match tag.tag_number() {
 		int(TagType.sequence) {
 			// todo: handle SequenceOf
-			// return error('not implemented')
 			return Sequence.from_bytes(content)!
 		}
 		int(TagType.set) {
-			// return Set.from_bytes(content)!
-			return error('not implemented')
+			return Set.from_bytes(content)!
 		}
 		else {
 			return Asn1Element{

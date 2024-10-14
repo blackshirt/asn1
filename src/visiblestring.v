@@ -90,7 +90,7 @@ fn VisibleString.decode_with_rule(bytes []u8, rule EncodingRule) !(VisibleString
 	return vst, next
 }
 
-// Utility function
+// Utility function for VisibleString
 //
 
 fn is_ctrl_char(c u8) bool {
