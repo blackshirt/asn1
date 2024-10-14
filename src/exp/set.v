@@ -155,7 +155,7 @@ pub:
 }
 
 pub fn (so SetOf[T]) tag() Tag {
-	return Tag{.universal, true, u32(TagType.set)}
+	return default_set_tag
 }
 
 pub fn (so SetOf[T]) payload() ![]u8 {
@@ -175,92 +175,6 @@ fn (so SetOf[T]) payload_with_rule(rule EncodingRule) ![]u8 {
 }
 
 /*
-// new_set creates universal set.
-pub fn new_set() Set {
-	return new_set_with_class(.universal)
-}
-
-// new_set_with_class creates new set with specific ASN.1 class.
-pub fn new_set_with_class(c TagClass) Set {
-	set := Set{
-		tag: Tag.new(c, true, int(TagType.set))
-	}
-	return set
-}
-
-fn new_set_from_multiencoder(en []Encoder) !Set {
-	mut set := new_set()
-	set.add_multi(en)
-	return set
-}
-
-fn parse_set(tag Tag, contents []u8) !Set {
-	if !tag.is_set_tag() {
-		return error('not set tag')
-	}
-
-	mut i := 0
-	mut set := new_set_with_class(tag.class)
-	for i < contents.len {
-		t, idx := read_tag(contents, i)!
-		ln, next := decode_length(contents, idx)!
-
-		sub := read_bytes(contents, next, ln)!
-		match t.constructed {
-			true {
-				obj := parse_compound_element(t, sub)!
-				set.add(obj)
-				i += obj.size()
-			}
-			false {
-				obj := parse_primitive_element(t, sub)!
-				set.add(obj)
-				i += obj.size()
-			}
-		}
-	}
-	return set
-}
-
-pub fn (mut set Set) add(obj Encoder) Set {
-	set.elements.add(obj)
-	return set
-}
-
-pub fn (mut set Set) add_multi(objs []Encoder) Set {
-	set.elements.add_multi(objs)
-	return set
-}
-
-pub fn (set Set) tag() Tag {
-	return Tag.new(.universal, true, int(TagType.set))
-}
-
-pub fn (set Set) length() int {
-	mut length := 0
-	for obj in set.elements {
-		n := obj.size()
-		length += n
-	}
-	return length
-}
-
-pub fn (set Set) size() int {
-	mut size := 0
-	tag := set.tag()
-	t := calc_tag_length(tag)
-	size += t
-
-	l := calc_length_of_length(set.length())
-	size += int(l)
-
-	for o in set.elements {
-		n := o.size()
-		size += n
-	}
-	return size
-}
-
 // Required for DER encoding.
 // The encodings of the component values of a set value shall appear in an order determined by their tags.
 // The canonical order for tags is based on the outermost tag of each type and is defined as follows:

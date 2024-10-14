@@ -3,28 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-fn parse_universal_type(src []u8, start i64) !Element {
-	tag, length_pos := Tag.decode_with_rule(src, start, .der)!
-	if tag.tag_class() != .universal {
-		return error('parse error: not an universal class, but %{tag.tag_class()}')
-	}
-	length, content_pos := Length.decode_with_rule(src, length_pos, .der)!
-
-	payload := if length == 0 { []u8{} } else { unsafe { src[content_pos..content_pos + length] } }
-	num := tag.tag_number()
-	match num {
-		int(TagType.null) {
-			return Null.from_bytes_with_rule(payload, .der)!
-		}
-		int(TagType.boolean) {
-			return Boolean.from_bytes_with_rule(payload, .der)!
-		}
-		else {
-			return error('Not currently implemented')
-		}
-	}
-}
-
 fn parse_universal_primitive(tag Tag, content []u8) !Element {
 	if tag.tag_class() != .universal {
 		return error('parse on non-universal type')
@@ -40,8 +18,7 @@ fn parse_universal_primitive(tag Tag, content []u8) !Element {
 			return Null.from_bytes(content)!
 		}
 		int(TagType.integer) {
-			// return Integer.from_bytes(content)!
-			return error('Not implemted')
+			return Integer.from_bytes(content)!
 		}
 		int(TagType.enumerated) {
 			return Enumerated.from_bytes(content)!

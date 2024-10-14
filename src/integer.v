@@ -4,6 +4,9 @@
 module asn1
 
 import math.big
+import crypto.internal.subtle { constant_time_compare }
+
+const default_integer_tag = Tag{.universal, false, int(TagType.integer)}
 
 // ASN.1 INTEGER.
 //
@@ -25,11 +28,56 @@ const max_integer_length = 2048
 // 	a) shall not all be ones; and
 // 	b) shall not all be zero.
 // NOTE – These rules ensure that an integer value is always encoded in the smallest possible number of octets
+@[noinit; heap]
 pub struct Integer {
 mut:
-	tag Tag = Tag{.universal, false, int(TagType.integer)}
-	// underlying integer value with support from i64 and big.Integer
+	// underlying integer value with support from `i64` and `big.Integer`
 	value IntValue
+}
+
+// IntValue represents arbitrary integer value, currently we support
+// through primitive 164 type for integer value below < max_i64, and
+// use `big.Integer` for support arbitrary length of integer values.
+type IntValue = big.Integer | i64
+
+fn (v IntValue) str() string {
+	match v {
+		i64 {
+			val := v as i64
+			return val.str()
+		}
+		big.Integer {
+			val := v as big.Integer
+			return val.str()
+		}
+	}
+}
+
+// bytes get the bytes representation from underlying IntValue
+fn (v IntValue) bytes() []u8 {
+	match v {
+		i64 {
+			return i64_to_bytes(v)
+		}
+		big.Integer {
+			// if v == big.zero_int or similar big.Integer values that produces empty bytes,
+			// returns v.bytes() directly can lead to undesired behavior thats doesn't aligned with
+			// ASN.1 INTEGER requirement. See the discussion on the discord about the issues
+			// at https://discord.com/channels/592103645835821068/592294828432424960/1230460279733620777
+			// so, we do some hack to get the correct value
+			// TODO: find the correct way to tackle this
+			if v == big.zero_int {
+				return [u8(0x00)]
+			}
+			// todo: proper check of 0 bytes length
+			if v.bit_len() == 0 {
+				return [u8(0x00)]
+			}
+			// otherwise, we use v.bytes() directly
+			b, _ := v.bytes()
+			return b
+		}
+	}
 }
 
 // from_i64 creates new a ASN.1 Integer from i64 v
@@ -72,34 +120,40 @@ pub fn Integer.from_hex(x string) !Integer {
 	}
 }
 
-// Integer.from_raw_element tries to transform RawElement in `re` into Integer
-pub fn Integer.from_raw_element(re RawElement, p Params) !Integer {
-	// check validity of the RawElement tag
-	if re.tag.tag_class() != .universal {
-		return error('RawElement class is not .universal, but : ${re.tag.tag_class()}')
-	}
-	if p.rule == .der {
-		if re.tag.is_constructed() {
-			return error('RawElement constructed is not allowed in .der')
-		}
-	}
-	if re.tag.number.universal_tag_type()! != .integer {
-		return error('RawElement tag does not hold .integer type')
-	}
-	bytes := re.payload(p)!
-	bs := Integer.from_bytes(bytes, p)!
-
-	return bs
-}
-
 // from_bytes creates a new ASN.1 Integer from bytes array in b.
 // Its try to parse bytes as in two's complement form. see `unpack_from_twoscomplement_bytes`
-pub fn Integer.from_bytes(b []u8, p Params) !Integer {
-	return Integer.unpack_from_twoscomplement_bytes(b, p)!
+pub fn Integer.from_bytes(b []u8) !Integer {
+	return Integer.unpack_from_twoscomplement_bytes(b)!
+}
+
+// unpack_from_twoscomplement_bytes parses the bytes in b into the Integer
+// value in the big-endian two's complement way. If b[0]&80 != 0, the number
+// is negative. If b is empty it would be error.
+fn Integer.unpack_from_twoscomplement_bytes(b []u8) !Integer {
+	// FIXME: should we return error instead ?
+	if b.len == 0 {
+		return error('Integer: null bytes')
+	}
+	if b.len > 8 {
+		mut num := big.integer_from_bytes(b)
+		// negative number
+		if b.len > 0 && b[0] & 0x80 > 0 {
+			sub := big.one_int.left_shift(u32(b.len) * 8)
+			num -= sub
+		}
+
+		return Integer{
+			value: IntValue(num)
+		}
+	}
+	// use i64
+	val := read_i64(b)!
+	res := Integer.from_i64(val)
+	return res
 }
 
 // bytes return underlying bytes array
-pub fn (v Integer) bytes() []u8 {
+fn (v Integer) bytes() []u8 {
 	return v.value.bytes()
 }
 
@@ -109,14 +163,13 @@ fn (v Integer) bytes_len() int {
 	return b.len
 }
 
-// equal do checking if n equal to m.
-// ISSUE?: There are some issues when compared n == m directly,
-// its fails even internally its a same, so we provide and use equality check
-pub fn (n Integer) equal(m Integer) bool {
-	nbytes := n.bytes()
-	mbytes := m.bytes()
-	// todo: check sign equality
-	return n.tag == m.tag && nbytes == mbytes
+pub fn (v Integer) tag() Tag {
+	return default_integer_tag
+}
+
+pub fn (v Integer) payload() ![]u8 {
+	bytes, _ := v.pack_into_twoscomplement_form()!
+	return bytes
 }
 
 // pack_into_twoscomplement_form serialize Integer in two's-complement rules.
@@ -125,7 +178,7 @@ pub fn (n Integer) equal(m Integer) bool {
 // 		to indicate that the number is not negative.
 // 	-	If the number is negative after applying two's-complement rules, and the the most-significant-bit of the
 // 		the high order bit of the bytes results isn't set, pad it with 0xff in order to keep the number negative.
-fn (v Integer) pack_into_twoscomplement_form(p Params) !([]u8, int) {
+fn (v Integer) pack_into_twoscomplement_form() !([]u8, int) {
 	match v.value {
 		i64 {
 			val := v.value as i64
@@ -175,56 +228,26 @@ fn (v Integer) pack_into_twoscomplement_form(p Params) !([]u8, int) {
 	}
 }
 
+
+// equal do checking if integer n was equal to integer m.
+// ISSUE?: There are some issues when compared n == m directly,
+// its fails even internally its a same, so we provide and use equality check
+pub fn (n Integer) equal(m Integer) bool {
+	nbytes := n.bytes()
+	mbytes := m.bytes()
+	// todo: check sign equality
+	return n.tag().equal(m.tag()) && constant_time_compare(nbytes, mbytes) == 1
+}
+
 // Integer.unpack_and_validate deserializes bytes in b into Integer
 // in two's complement way and perform validation on this bytes to
 // meet der requirement.
-fn Integer.unpack_and_validate(b []u8, p Params) !Integer {
+fn Integer.unpack_and_validate(b []u8) !Integer {
 	if !valid_bytes(b, true) {
 		return error('Integer: check return false')
 	}
-	ret := Integer.unpack_from_twoscomplement_bytes(b, p)!
+	ret := Integer.unpack_from_twoscomplement_bytes(b)!
 	return ret
-}
-
-// unpack_from_twoscomplement_bytes parses the bytes in b into the Integer
-// value in the big-endian two's complement way. If b[0]&80 != 0, the number
-// is negative. If b is empty it would be error.
-fn Integer.unpack_from_twoscomplement_bytes(b []u8, p Params) !Integer {
-	// FIXME: should we return error instead ?
-	if b.len == 0 {
-		return error('Integer: null bytes')
-	}
-	if b.len > 8 {
-		mut num := big.integer_from_bytes(b)
-		// negative number
-		if b.len > 0 && b[0] & 0x80 > 0 {
-			sub := big.one_int.left_shift(u32(b.len) * 8)
-			num -= sub
-		}
-
-		return Integer{
-			value: IntValue(num)
-		}
-	}
-	// use i64
-	val := read_i64(b)!
-	res := Integer.from_i64(val)
-	return res
-}
-
-pub fn (v Integer) packed_length(p Params) !int {
-	mut n := 0
-	n += v.tag.packed_length(p)!
-
-	len := Length.from_i64(v.bytes_len())!
-	n += len.packed_length(p)!
-	n += v.bytes_len()
-
-	return n
-}
-
-pub fn (v Integer) tag() Tag {
-	return v.tag
 }
 
 // as_bigint casts Integer value to big.Integer or error on fails.
@@ -233,7 +256,7 @@ pub fn (v Integer) as_bigint() !big.Integer {
 		val := v.value as big.Integer
 		return val
 	}
-	return error('not hold big.Integer type')
+	return error('Integer not hold big.Integer type')
 }
 
 // as_i64 casts Integer value to i64 value or error on fails.
@@ -242,103 +265,44 @@ pub fn (v Integer) as_i64() !i64 {
 		val := v.value as i64
 		return val
 	}
-	return error('not hold i64 type')
+	return error('Integer not hold i64 type')
 }
 
-pub fn (v Integer) payload(p Params) ![]u8 {
-	bytes, _ := v.pack_into_twoscomplement_form(p)!
-	return bytes
+pub fn Integer.decode(bytes []u8) !(Integer, i64) {
+	return Integer.decode_with_rule(bytes, 0, .der)!
 }
 
-pub fn (v Integer) length(p Params) !int {
-	return v.bytes_len()
-}
-
-// encode serializes and encodes Integer v into bytes and appended into `dst`.
-// Its accepts encoding rule params, where its currently only suppport `.der` DER rule.
-// If `dst.len != 0`, it act as append semantic, otherwise the `dst` bytes stores the result.
-pub fn (v Integer) encode(mut dst []u8, p Params) ! {
-	if p.rule != .der && p.rule != .ber {
-		return error('Integer: unsupported rule')
+// decode_with_rule tries to decode bytes back into ASN.1 Integer.
+// Its accepts `loc` params, the location (offset) within bytes where the unpack start from.
+// If not sure set to 0 to drive unpacking and rule of `Encodingrule`, currently only support`.der`.
+fn Integer.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Integer, i64) {
+	if bytes.len < 3 {
+		return error('Integer: bad bytes length')
 	}
-
-	v.tag.encode(mut dst, p)!
-	bytes, n := v.pack_into_twoscomplement_form(p)!
-	length := Length.from_i64(n)!
-	length.encode(mut dst, p)!
-	dst << bytes
-}
-
-// decode deserializes and decodes bytes src back into ASN.1 Integer.
-// Its accepts `loc` params, the location (offset) within bytes src where the unpack
-// process start form, if not sure set to 0 and optional rule in `Params` to drive unpacking.
-// see `Encodingrule` for availables values. Currently only support`.der`.
-pub fn Integer.decode(src []u8, loc i64, p Params) !(Integer, i64) {
-	if src.len < 3 {
-		return error('IA5String: bad ia5string bytes length')
+	tag, length_pos := Tag.decode_with_rule(bytes, loc, rule)!
+	if !tag.equal(default_integer_tag) {
+		return error('Get unexpected Integer tag')
 	}
-	raw, next := RawElement.decode(src, loc, p)!
-	if raw.tag.tag_class() != .universal || raw.tag.is_constructed()
-		|| raw.tag.tag_number() != int(TagType.integer) {
-		return error('Integer: bad tag of universal class type')
-	}
-	if raw.payload.len == 0 {
-		return error('Integer: len==0')
-	}
-
-	bytes := raw.payload
-	// buf := trim_bytes(bytes)!
-	ret := Integer.from_bytes(bytes, p)!
-	return ret, next
-}
-
-// IntValue represents arbitrary integer value, currently we support
-// through primitive 164 type for integer value below < max_i64, and
-// use `big.Integer` for support arbitrary length of integer values.
-type IntValue = big.Integer | i64
-
-fn (v IntValue) str() string {
-	match v {
-		i64 {
-			val := v as i64
-			return val.str()
+	length, content_pos := Length.decode_with_rule(bytes, length_pos, rule)!
+	payload := if length == 0 {
+		[]u8{}
+	} else {
+		if content_pos + length > bytes.len {
+			return error('Not enought bytes to read on')
 		}
-		big.Integer {
-			val := v as big.Integer
-			return val.str()
-		}
+		unsafe { bytes[content_pos..content_pos + length] }
 	}
+
+	// buf := trim_bytes(payload)!
+	next := content_pos + length
+	result := Integer.from_bytes(payload)!
+	
+	return result, next
 }
 
-// bytes get the bytes representation from underlying IntValue
-fn (v IntValue) bytes() []u8 {
-	match v {
-		i64 {
-			return i64_to_bytes(v)
-		}
-		big.Integer {
-			// if v == big.zero_int or similar big.Integer values that produces empty bytes,
-			// returns v.bytes() directly can lead to undesired behavior thats doesn't aligned with
-			// ASN.1 INTEGER requirement. See the discussion on the discord about the issues
-			// at https://discord.com/channels/592103645835821068/592294828432424960/1230460279733620777
-			// so, we do some hack to get the correct value
-			// TODO: find the correct way to tackle this
-			if v == big.zero_int {
-				return [u8(0x00)]
-			}
-			// todo: proper check of 0 bytes length
-			if v.bit_len() == 0 {
-				return [u8(0x00)]
-			}
-			// otherwise, we use v.bytes() directly
-			b, _ := v.bytes()
-			return b
-		}
-	}
-}
 
 // Utility function
-
+//
 fn is_highest_bit_set(src []u8) bool {
 	if src.len > 0 {
 		return src[0] & 0x80 == 0

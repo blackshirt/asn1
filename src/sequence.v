@@ -108,7 +108,7 @@ fn (mut seq Sequence) set_limit(limit int) ! {
 	seq.max_size = limit
 }
 
-// by default allow add with the same tag
+// by default dont allow add with the same tag
 fn (mut seq Sequence) add_element(el Element) ! {
 	seq.force_add_element(el, false)!
 }
@@ -160,7 +160,7 @@ fn (seq Sequence) into_sequence_of[T]() !SequenceOf[T] {
 }
 
 // generic type aliases are not yet implemented
-@[heap; noinit]
+@[noinit]
 pub struct SequenceOf[T] {
 mut:
 	max_size int = default_seqset_fields
