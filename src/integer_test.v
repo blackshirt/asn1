@@ -75,8 +75,7 @@ const unpack_data = [
 fn test_asn1_integer_unencode() ! {
 	for i, c in unpack_data {
 		n := Integer.from_i64(c.val)
-		mut to := []u8{}
-		n.encode(mut to)!
+		to := encode(n)!
 		assert to == c.out
 	}
 }
@@ -129,26 +128,24 @@ fn test_asn1_unpack_and_validate() {
 
 fn test_asn1_integer_simple_long_integer_pack_unpack() ! {
 	num := Integer.from_hex('0102030405060708090a0b0c0d0e0f')!
-	mut dst := []u8{}
-	num.encode(mut dst)!
+	dst := encode(num)!
 
 	expected := '\x02\x0f\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'.bytes()
 	assert dst == expected
 
 	// unpack back
-	val, pos := Integer.decode(expected, 0)!
+	val, pos := Integer.decode(expected)!
 	assert val == num
 	assert pos == 17
 
 	// test with negative value
 	negnum := Integer.from_hex('-0102030405060708090a0b0c0d0e0f')!
-	mut out := []u8{}
-	negnum.encode(mut out)!
+	out := encode(negnum)!
 	expneg := '\x02\x0f\xfe\xfd\xfc\xfb\xfa\xf9\xf8\xf7\xf6\xf5\xf4\xf3\xf2\xf1\xf1'.bytes()
 	assert out == expneg
 
 	// unpack back a negative number
-	val2, pos2 := Integer.decode(expneg, 0)!
+	val2, pos2 := Integer.decode(expneg)!
 	assert val2 == negnum
 	assert pos2 == 17
 }
@@ -166,11 +163,11 @@ fn test_integer_large_int() ! {
 		0x71, 0xe1, 0xb2, 0x2f, 0x5c, 0x8d, 0xee, 0xf0, 0xf1, 0x17, 0x1e, 0xd2, 0x5f, 0x31, 0x5b,
 		0xb1, 0x9c, 0xbc, 0x20, 0x55, 0xbf, 0x3a, 0x37, 0x42, 0x45, 0x75, 0xdc, 0x90, 0x65]
 	expected_integer := Integer.from_string('101038645214968213029489864879507742420925199145132483818978980455132582258676381289000109319204510275496178360219909358646064503513889573494768497419381751359787623037449375660247011308028102339473875820259375735204357343091558075960601364303443174344509161224592926325506446708043127306053676664799729848421')!
-	out, pos := Integer.decode(bytes, 0)!
+	out, pos := Integer.decode(bytes)!
 
 	assert pos == bytes.len
 
-	assert out.tag == expected_integer.tag // success
+	assert out.tag() == expected_integer.tag() // success
 	outbytes := out.bytes()
 	expbytes := expected_integer.bytes()
 	assert outbytes == expbytes // success
@@ -182,11 +179,9 @@ fn test_integer_large_int() ! {
 	assert out.equal(expected_integer)
 
 	// pack back
-	mut dst := []u8{}
-	expected_integer.encode(mut dst)!
+	dst := encode(expected_integer)!
 	assert dst == bytes
 
-	mut dst2 := []u8{}
-	out.encode(mut dst2)!
+	dst2 := encode(out)!
 	assert dst2 == bytes
 }

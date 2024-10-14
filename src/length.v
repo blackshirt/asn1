@@ -168,8 +168,8 @@ fn Length.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Length, i64) 
 			return error('Length: 0x7f is for reserved use')
 		}
 		// we limit the bytes count for length definite form to `max_definite_length_count`
-		if num_bytes > asn1.max_definite_length_count {
-				return error('Length: count bytes exceed limit')
+		if num_bytes > max_definite_length_count {
+			return error('Length: count bytes exceed limit')
 		}
 		for i := 0; i < num_bytes; i++ {
 			if pos >= src.len {

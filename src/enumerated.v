@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// default tag of Enumerated type 
+// default tag of Enumerated type
 const default_enumerated_tag = Tag{.universal, false, int(TagType.enumerated)}
 
 // ENUMERATED.
@@ -57,7 +57,7 @@ fn Enumerated.from_bytes(bytes []u8) !Enumerated {
 
 pub fn Enumerated.parse(mut p Parser) !Enumerated {
 	tag := p.read_tag()!
-	if !tag.equal {
+	if !tag.equal(default_enumerated_tag) {
 		return error('Bad Enumerated tag')
 	}
 	length := p.read_length()!

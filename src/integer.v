@@ -28,7 +28,7 @@ const max_integer_length = 2048
 // 	a) shall not all be ones; and
 // 	b) shall not all be zero.
 // NOTE – These rules ensure that an integer value is always encoded in the smallest possible number of octets
-@[noinit; heap]
+@[heap; noinit]
 pub struct Integer {
 mut:
 	// underlying integer value with support from `i64` and `big.Integer`
@@ -228,7 +228,6 @@ fn (v Integer) pack_into_twoscomplement_form() !([]u8, int) {
 	}
 }
 
-
 // equal do checking if integer n was equal to integer m.
 // ISSUE?: There are some issues when compared n == m directly,
 // its fails even internally its a same, so we provide and use equality check
@@ -296,10 +295,9 @@ fn Integer.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Integer, i
 	// buf := trim_bytes(payload)!
 	next := content_pos + length
 	result := Integer.from_bytes(payload)!
-	
+
 	return result, next
 }
-
 
 // Utility function
 //

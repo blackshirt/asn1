@@ -18,7 +18,7 @@ module asn1
 // default tag of Sequence(Of)
 const default_sequence_tag = Tag{.universal, true, int(TagType.sequence)}
 
-// constant for sequence(of) and set(of) internal value 
+// constant for sequence(of) and set(of) internal value
 const max_seqset_fields = 256 // max of seq size
 const max_seqset_bytes = (1 << 23 - 1) // 8 MB
 const default_seqset_fields = 64 // default size
@@ -108,15 +108,15 @@ fn (mut seq Sequence) set_limit(limit int) ! {
 	seq.max_size = limit
 }
 
-// by default dont allow add with the same tag
+// by default allow add with the same tag
 fn (mut seq Sequence) add_element(el Element) ! {
-	seq.force_add_element(el, false)!
+	seq.relaxed_add_element(el, true)!
 }
 
 // add_element allows adding a new element into current sequence fields.
 // Its does not allow adding element when is already the same tag in the fields.
-// but, some exception when you set force to true
-fn (mut seq Sequence) force_add_element(el Element, force bool) ! {
+// but, some exception when you set relaxed to true
+fn (mut seq Sequence) relaxed_add_element(el Element, relaxed bool) ! {
 	if seq.fields.len == 0 {
 		// just adds it then return
 		seq.fields << el
@@ -133,7 +133,7 @@ fn (mut seq Sequence) force_add_element(el Element, force bool) ! {
 		seq.fields << el
 		return
 	} else {
-		if !force {
+		if !relaxed {
 			return error('You can not insert element without forcing')
 		}
 		seq.fields << el

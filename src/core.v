@@ -130,9 +130,9 @@ pub fn Tag.from_bytes(bytes []u8) !(Tag, []u8) {
 	return tag, []u8{}
 }
 
-// equal checks whether this tag is equal with the provided other tag 
+// equal checks whether this tag is equal with the provided other tag
 fn (t Tag) equal(o Tag) bool {
-	return t.class == o.class && t.constructed == o.constructed && t.number == o.number 
+	return t.class == o.class && t.constructed == o.constructed && t.number == o.number
 }
 
 fn (t Tag) expect(cls TagClass, constructed bool, tagnum int) bool {

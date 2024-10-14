@@ -89,6 +89,28 @@ pub fn implicit_context(tagnum int, inner Element) !ContextElement {
 	return ContextElement.new(.implicit, tagnum, inner)!
 }
 
+fn ContextElement.decode_with_mode(bytes []u8, mode TaggedMode) !(ContextElement, i64) {
+	tag, length_pos := Tag.decode_with_rule(bytes, 0, .der)!
+	if tag.tag_class() != .context_specific {
+		return error('Get non ContextSpecific tag')
+	}
+	if !tag.is_constructed() {
+		return error('Get non-constructed ContextSpecific tag')
+	}
+	length, content_pos := Length.decode_with_rule(bytes, length_pos, .der)!
+	content := if length == 0 {
+		[]u8{}
+	} else {
+		if content_pos >= bytes.len || content_pos + length > bytes.len {
+			return error('ContextElement: truncated payload bytes')
+		}
+		unsafe { bytes[content_pos..content_pos + length] }
+	}
+	next := content_pos + length
+	ctx := parse_context_specific_with_mode(tag, content, mode)!
+	return ctx
+}
+
 // outer tag
 pub fn (ce ContextElement) tag() Tag {
 	return ce.outer_tag

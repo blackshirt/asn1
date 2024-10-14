@@ -109,6 +109,33 @@ fn parse_application(tag Tag, content []u8) !ApplicationElement {
 	}
 }
 
+fn parse_context_specific_with_inner_tag(tag Tag, content []u8, mode TaggedMode, inner_tag Tag) !ContextElement {
+	mut ctx := parse_context_specific_with_mode(tag, content, mode)!
+	if ctx.mode == .explicit {
+		inn_tt, _ := Tag.from_bytes(content)!
+		if ctx.inner_tag != none {
+			if ctx.inner_tag.equal(inner_tag) {
+			return error('ContextSpecific already has an inner_tag: ${ctx.inner_tag}')
+		}
+		}
+	}
+}
+
+fn parse_context_specific_with_mode(tag Tag, content []u8, mode TaggedMode) !ContextElement {
+	mut ctx := parse_context_specific(tag, content)!
+	ctx.set_ctx_mode(mode)!
+	if mode == .explicit {
+		inner_tag, _ := Tag.from_bytes(content)!
+		if ctx.inner_tag != none {
+			if ctx.inner_tag.equal(inner_tag) {
+				return error('ContextSpecific already has an inner_tag: ${ctx.inner_tag}')
+			}
+		}
+		ctx.inner_tag = inner_tag
+	}
+	return ctx
+}
+
 fn parse_context_specific(tag Tag, content []u8) !ContextElement {
 	if tag.tag_class() != .context_specific {
 		return error('parse on non-context-specific class')

@@ -45,10 +45,6 @@ fn (s Set) str() string {
 	return 'Set(max: ${s.max_size}): ${s.fields.len} fields'
 }
 
-pub fn (set Set) payload() ![]u8 {
-	return set.payload_with_rule(.der)!
-}
-
 pub fn (set Set) fields() []Element {
 	return set.fields
 }
@@ -108,7 +104,6 @@ fn (mut set Set) set_limit(limit int) ! {
 	set.max_size = limit
 }
 
-
 /*
 fn (mut els []Element) sort_the_set() []Element {
 	// without &, its return an error: sort_with_compare callback function parameter
@@ -144,7 +139,7 @@ fn (mut els []Element) sort_the_setof() ![]Element {
 }
 */
 
-// ASN.1 SET OF 
+// ASN.1 SET OF
 //
 @[noinit]
 pub struct SetOf[T] {

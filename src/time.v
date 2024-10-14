@@ -88,7 +88,7 @@ pub fn UtcTime.parse(mut p Parser) !UtcTime {
 	return res
 }
 
-// UtcTime.decode tries to decode bytes into UtcTime with DER rule 
+// UtcTime.decode tries to decode bytes into UtcTime with DER rule
 pub fn UtcTime.decode(src []u8) !(UtcTime, i64) {
 	return UtcTime.decode_with_rule(src, .der)!
 }
@@ -183,7 +183,7 @@ pub:
 	value string
 }
 
-// GeneralizedTime.new creates a new GeneralizedTime from string s 
+// GeneralizedTime.new creates a new GeneralizedTime from string s
 pub fn GeneralizedTime.new(s string) !GeneralizedTime {
 	valid := validate_generalizedtime(s)!
 	if !valid {

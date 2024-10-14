@@ -5,13 +5,13 @@ module asn1
 
 fn test_explicit_context_null_pack_unpack() ! {
 	el := Null.new()
-	ex1 := TaggedType.explicit_context(el, 0)!
+	ex1 := explicit_context(0, el)!
 
-	mut out := []u8{}
-	ex1.encode(mut out)!
+	out := encode(ex1)!
 	exp := [u8(0xa0), 0x02, 0x05, 0x00]
 	assert out == exp
 	// unpack back
+	ctxback := parse_context_specific_with_mode(tag Tag, content []u8, mode TaggedMode) !ContextElement {
 	ttback, _ := TaggedType.decode(out, 0, .explicit, el.tag())!
 	assert ttback == ex1
 	assert ttback.inner_el as Null == el
@@ -20,18 +20,17 @@ fn test_explicit_context_null_pack_unpack() ! {
 fn test_explicit_context_nested_pack_unpack() ! {
 	el := Null.new()
 
-	ex1 := TaggedType.explicit_context(el, 1)!
-	ex2 := TaggedType.explicit_context(ex1, 2)!
+	ex1 := explicit_context(1, el)!
+	ex2 := explicit_context(2, ex1)!
 
-	mut out := []u8{}
-	ex2.encode(mut out)!
+	out := encode(ex2)!
 	exp := [u8(0xa2), 0x04, 0xa1, 0x02, 0x05, 0x00]
 
 	assert out == exp
 
 	// clears out
 	out.clear()
-	ex1.encode(mut out)!
+	out = encode(ex1)!
 	assert out == [u8(0xa1), 0x02, u8(0x05), 0x00]
 }
 

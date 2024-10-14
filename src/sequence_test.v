@@ -12,10 +12,10 @@ fn test_sequence_with_multi_items() ! {
 	o2 := UtcTime.new('191215190210Z')! // 15
 	o3 := GeneralizedTime.new('20100102030405Z')! // 17
 
-	// we are going to add with force_add_element to allow adding element with the same tag
-	seq.force_add_element(o1)!
-	seq.force_add_element(o2)!
-	seq.force_add_element(o3)!
+	// we are going to add with relaxed_add_element to allow adding element with the same tag
+	seq.relaxed_add_element(o1, true)!
+	seq.relaxed_add_element(o2, true)!
+	seq.relaxed_add_element(o3, true)!
 
 	assert seq.payload()!.len == 3 + 15 + 17 // 35
 	assert encoded_len(seq) == 2 + 35
@@ -32,16 +32,16 @@ fn test_sequence_contains_other_seq() ! {
 	// lets create first sequence
 	mut seq1 := Sequence{}
 	// add two primitive elements to the sequence
-	seq1.force_add_element(Boolean.new(true))!
-	seq1.force_add_element(Null.new())!
-	seq1.force_add_element(Boolean.new(false), true)!
+	seq1.relaxed_add_element(Boolean.new(true), true)!
+	seq1.relaxed_add_element(Null.new(), true)!
+	seq1.relaxed_add_element(Boolean.new(false), true)!
 
 	// lets create another sequences, where it contains primitive element and first sequence created above.
 	mut seq2 := Sequence{}
-	seq2.force_add_element(Boolean.new(false))!
-	seq2.force_add_element(seq1)!
+	seq2.relaxed_add_element(Boolean.new(false), true)!
+	seq2.relaxed_add_element(seq1, true)!
 	// you should force add element to allow add second Boolean, by default its not allowed
-	seq2.force_add_element(Boolean.new(true), true)!
+	seq2.relaxed_add_element(Boolean.new(true), true)!
 
 	// lets serialize it to bytes
 
@@ -90,9 +90,9 @@ fn test_sequence_add_and_encode_boolean() {
 	o2 := Boolean.new(true)
 	o3 := Null.new()
 	mut seq := Sequence{}
-	seq.force_add_element(o1)!
-	seq.force_add_element(o2)!
-	seq.force_add_element(o3)!
+	seq.relaxed_add_element(o1, true)!
+	seq.relaxed_add_element(o2, true)!
+	seq.relaxed_add_element(o3, true)!
 
 	length := seq.payload()!.len
 	assert length == 8
@@ -135,9 +135,9 @@ fn test_sequence_add_encode_oid() ! {
 	o2 := Oid.new('1.2.4')! // size = 4
 	o3 := Boolean.new(true) // size = 3
 
-	seq.force_add_element(o1)!
-	seq.force_add_element(o2)!
-	seq.force_add_element(o3)!
+	seq.relaxed_add_element(o1, true)!
+	seq.relaxed_add_element(o2, true)!
+	seq.relaxed_add_element(o3, true)!
 
 	assert seq.tag() == Tag.new(.universal, true, int(TagType.sequence))!
 	assert seq.payload()!.len == 11
@@ -176,9 +176,9 @@ fn test_sequence_add_encode_integer() ! {
 	o1 := Integer.from_i64(127)
 	o2 := Boolean.new(true)
 	o3 := Integer.from_i64(max_i64)
-	seq.force_add_element(o1)!
-	seq.force_add_element(o2)!
-	seq.force_add_element(o3)!
+	seq.relaxed_add_element(o1, true)!
+	seq.relaxed_add_element(o2, true)!
+	seq.relaxed_add_element(o3, true)!
 
 	assert seq.tag() == Tag.new(.universal, true, int(TagType.sequence))!
 	assert seq.length()! == 16
@@ -207,9 +207,9 @@ fn test_sequence_integer_bigint() ! {
 	o1 := Integer.from_bigint(inp)
 	o2 := Boolean.new(true)
 	o3 := Null.new()
-	seq.force_add_element(o1)!
-	seq.force_add_element(o2)!
-	seq.force_add_element(o3)!
+	seq.relaxed_add_element(o1, true)!
+	seq.relaxed_add_element(o2, true)!
+	seq.relaxed_add_element(o3, true)!
 
 	mut out := []u8{}
 	seq.encode(mut out)!
@@ -246,9 +246,9 @@ fn test_sequence_of_string() ! {
 	o1 := Null.new()
 	o2 := UTF8String.from_string(str)!
 	o3 := IA5String.from_string(str)!
-	seq.force_add_element(o1)!
-	seq.force_add_element(o2)!
-	seq.force_add_element(o3)!
+	seq.relaxed_add_element(o1, true)!
+	seq.relaxed_add_element(o2, true)!
+	seq.relaxed_add_element(o3, true)!
 
 	assert seq.length()! == 22
 	assert seq.packed_length()! == 24
@@ -270,23 +270,23 @@ fn test_sequence_of_string() ! {
 fn test_sequnce_of_sequence() {
 	mut seq := Sequence.new(false)!
 
-	seq.force_add_element(Null.new())!
-	seq.force_add_element(Boolean.new(false))!
+	seq.relaxed_add_element(Null.new(), true)!
+	seq.relaxed_add_element(Boolean.new(false), true)!
 
 	mut out := []u8{}
 	seq.encode(mut out)!
 	assert out == [u8(0x30), 5, 5, 0, 1, 1, 0]
 
 	mut seq2 := Sequence.new(false)!
-	seq2.force_add_element(Integer.from_i64(int(5)))!
-	seq2.force_add_element(Integer.from_i64(i64(86424278346)))!
+	seq2.relaxed_add_element(Integer.from_i64(5), true)!
+	seq2.relaxed_add_element(Integer.from_i64(i64(86424278346)), true)!
 
 	// clear out
 	out.clear()
 	seq2.encode(mut out)!
 	assert out == [u8(0x30), 10, 2, 1, 5, 2, 5, 0x14, 0x1f, 0x49, 0xd5, 0x4a]
 
-	seq.force_add_element(seq2)!
+	seq.relaxed_add_element(seq2, true)!
 	// clear out
 	out.clear()
 	seq.encode(mut out)!
