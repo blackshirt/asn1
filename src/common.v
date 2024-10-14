@@ -17,6 +17,9 @@ fn parse_universal_primitive(tag Tag, content []u8) !Element {
 		int(TagType.null) {
 			return Null.from_bytes(content)!
 		}
+		int(TagType.oid) {
+			return Oid.from_bytes(content)!
+		}
 		int(TagType.integer) {
 			return Integer.from_bytes(content)!
 		}
@@ -109,33 +112,17 @@ fn parse_application(tag Tag, content []u8) !ApplicationElement {
 	}
 }
 
-fn parse_context_specific_with_inner_tag(tag Tag, content []u8, mode TaggedMode, inner_tag Tag) !ContextElement {
-	mut ctx := parse_context_specific_with_mode(tag, content, mode)!
-	if ctx.mode == .explicit {
-		inn_tt, _ := Tag.from_bytes(content)!
-		if ctx.inner_tag != none {
-			if ctx.inner_tag.equal(inner_tag) {
-			return error('ContextSpecific already has an inner_tag: ${ctx.inner_tag}')
-		}
-		}
-	}
-}
-
+// parse_context_specific_with_mode parses tag and content as ContextElement when mode is availables
 fn parse_context_specific_with_mode(tag Tag, content []u8, mode TaggedMode) !ContextElement {
 	mut ctx := parse_context_specific(tag, content)!
 	ctx.set_ctx_mode(mode)!
-	if mode == .explicit {
-		inner_tag, _ := Tag.from_bytes(content)!
-		if ctx.inner_tag != none {
-			if ctx.inner_tag.equal(inner_tag) {
-				return error('ContextSpecific already has an inner_tag: ${ctx.inner_tag}')
-			}
-		}
-		ctx.inner_tag = inner_tag
-	}
+
 	return ctx
 }
 
+// parse_context_specific parses tag and content as ContextElement.
+// The info of fields of ContextElement, ie, inner_tag and mode, is not availables here
+// You should provides this later with the correct value.
 fn parse_context_specific(tag Tag, content []u8) !ContextElement {
 	if tag.tag_class() != .context_specific {
 		return error('parse on non-context-specific class')
@@ -148,6 +135,8 @@ fn parse_context_specific(tag Tag, content []u8) !ContextElement {
 	ctx := ContextElement{
 		outer_tag: tag
 		content:   content
+		// inner_tag: ?
+		// mode: ?
 	}
 	return ctx
 }

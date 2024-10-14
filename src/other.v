@@ -46,10 +46,6 @@ mut:
 }
 
 pub fn ContextElement.new(mode TaggedMode, tagnum int, inner Element) !ContextElement {
-	// inner only for .universal class
-	if inner.tag().tag_class() != .universal {
-		return error('cant create ContextElement from non-universal class')
-	}
 	tag := Tag.new(.context_specific, true, tagnum)!
 	mut content := []u8{}
 	if mode == .explicit {
@@ -71,6 +67,9 @@ fn (mut ctx ContextElement) set_inner_tag(tag Tag) ! {
 	if ctx.inner_tag != none {
 		return error('already has inner_tag')
 	}
+	if ctx.mode == none {
+		return error('You should set mode first')
+	}
 	ctx.inner_tag = tag
 }
 
@@ -87,6 +86,40 @@ pub fn explicit_context(tagnum int, inner Element) !ContextElement {
 
 pub fn implicit_context(tagnum int, inner Element) !ContextElement {
 	return ContextElement.new(.implicit, tagnum, inner)!
+}
+
+fn (ce ContextElement) read_innertag_from_content() !Tag {
+	if ce.mode == none {
+		return error('Mode is not set')
+	}
+	ctx_mode := ce.mode or { return error('mode is not set') }
+	if ctx_mode == .implicit {
+		return error('You can not read inner_tag from implicit mode')
+	}
+	tag, _ := Tag.from_bytes(ce.content)!
+	return tag
+}
+
+fn ContextElement.decode(bytes []u8) !(ContextElement, i64) {
+	tag, length_pos := Tag.decode_with_rule(bytes, 0, .der)!
+	if tag.tag_class() != .context_specific {
+		return error('Get non ContextSpecific tag')
+	}
+	if !tag.is_constructed() {
+		return error('Get non-constructed ContextSpecific tag')
+	}
+	length, content_pos := Length.decode_with_rule(bytes, length_pos, .der)!
+	content := if length == 0 {
+		[]u8{}
+	} else {
+		if content_pos >= bytes.len || content_pos + length > bytes.len {
+			return error('ContextElement: truncated payload bytes')
+		}
+		unsafe { bytes[content_pos..content_pos + length] }
+	}
+	next := content_pos + length
+	ctx := parse_context_specific(tag, content)!
+	return ctx, next
 }
 
 fn ContextElement.decode_with_mode(bytes []u8, mode TaggedMode) !(ContextElement, i64) {
@@ -107,8 +140,18 @@ fn ContextElement.decode_with_mode(bytes []u8, mode TaggedMode) !(ContextElement
 		unsafe { bytes[content_pos..content_pos + length] }
 	}
 	next := content_pos + length
-	ctx := parse_context_specific_with_mode(tag, content, mode)!
-	return ctx
+
+	mut ctx := parse_context_specific_with_mode(tag, content, mode)!
+	ctx_mode := ctx.mode or { return error('Mode is not set') }
+	if ctx_mode == .explicit {
+		inner_tag := ctx.read_innertag_from_content()!
+		ctx.set_inner_tag(inner_tag)!
+	}
+	return ctx, next
+}
+
+fn (ce ContextElement) inner_element() !Element {
+	return error('not implemented')
 }
 
 // outer tag

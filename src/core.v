@@ -135,10 +135,6 @@ fn (t Tag) equal(o Tag) bool {
 	return t.class == o.class && t.constructed == o.constructed && t.number == o.number
 }
 
-fn (t Tag) expect(cls TagClass, constructed bool, tagnum int) bool {
-	return t.class == cls && t.constructed == constructed && t.number == tagnum
-}
-
 // encode_with_rule serializes tag into bytes array
 fn (t Tag) encode_with_rule(mut dst []u8, rule EncodingRule) ! {
 	// we currently only support .der or (stricter) .ber
@@ -229,6 +225,18 @@ fn Tag.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Tag, i64) {
 	tag := Tag.new(TagClass.from_int(class)!, constructed, number)!
 
 	return tag, pos
+}
+
+fn (t Tag) str() string {
+	cls := t.class.str()
+	form := if t.constructed { 'true' } else { 'false' }
+	number := t.number.str()
+	return '${cls}-${form}-${number}'
+}
+
+// uniqid_with_id the id of this tag for special purposes identifying in decode
+fn (t Tag) uniqid_with_id(id string) string {
+	return '${t.str()}-${id}'
 }
 
 // clone_with_class clones teh tag t into new tag with class is set to c
@@ -428,10 +436,10 @@ fn TagClass.from_string(s string) !TagClass {
 
 fn (c TagClass) str() string {
 	match c {
-		.universal { return 'UNIVERSAL' }
-		.application { return 'APPLICATION' }
-		.context_specific { return 'CONTEXT_SPECIFIC' }
-		.private { return 'PRIVATE' }
+		.universal { return 'universal' }
+		.application { return 'application' }
+		.context_specific { return 'context_specific' }
+		.private { return 'private' }
 	}
 }
 

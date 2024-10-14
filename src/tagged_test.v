@@ -11,10 +11,12 @@ fn test_explicit_context_null_pack_unpack() ! {
 	exp := [u8(0xa0), 0x02, 0x05, 0x00]
 	assert out == exp
 	// unpack back
-	ctxback := parse_context_specific_with_mode(tag Tag, content []u8, mode TaggedMode) !ContextElement {
-	ttback, _ := TaggedType.decode(out, 0, .explicit, el.tag())!
+	ttback, _ := ContextElement.decode_with_mode(out, .explicit)!
+	// ctxback := parse_context_specific_with_mode(tag Tag, content []u8, mode TaggedMode) !ContextElement {
+	// ttback, _ := TaggedType.decode(out, 0, .explicit, el.tag())!
 	assert ttback == ex1
-	assert ttback.inner_el as Null == el
+	itt := ttback.inner_tag?
+	assert itt.tag_number() == int(TagType.null)
 }
 
 fn test_explicit_context_nested_pack_unpack() ! {
@@ -23,7 +25,7 @@ fn test_explicit_context_nested_pack_unpack() ! {
 	ex1 := explicit_context(1, el)!
 	ex2 := explicit_context(2, ex1)!
 
-	out := encode(ex2)!
+	mut out := encode(ex2)!
 	exp := [u8(0xa2), 0x04, 0xa1, 0x02, 0x05, 0x00]
 
 	assert out == exp
@@ -43,28 +45,34 @@ Example ::= SEQUENCE {
     type    [1] EXPLICIT OBJECT IDENTIFIER
 }
 ```*/
-	oid := Oid.from_string('1.3.6.1.3')!
-	expl := TaggedType.explicit_context(oid, 1)!
-	mut seq := Sequence.new(false)!
-	seq.add_element(UTF8String.from_string('Hello')!)! // tag : 12
+	oid := Oid.new('1.3.6.1.3')!
+	expl := explicit_context(1, oid)!
+	mut seq := Sequence{}
+	seq.add_element(Utf8String.new('Hello')!)! // tag : 12
 	seq.add_element(Integer.from_i64(i64(42)))! // tag 2
 	seq.add_element(expl)!
 
-	mut out := []u8{}
-	seq.encode(mut out)!
+	mut out := encode(seq)!
 
 	exp := [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1), 6, 6, 4, 43,
 		6, 1, 3]
 	assert out == exp
 
-	back, n := Sequence.decode(out, 0)!
+	back, n := Sequence.decode(out)!
 	assert n == exp.len
 
-	els := back.elements()!
-	assert els[0] is UTF8String
+	els := back.fields()
+	assert els[0] is Utf8String
 	assert els[1] is Integer
-	els2 := els[2] as RawElement
+	mut els2 := els[2] as ContextElement
 
-	els2_tagged := els2.as_tagged(.explicit, oid.tag())!
-	assert els2_tagged == expl
+	els2.set_ctx_mode(.explicit)!
+	els2.set_inner_tag(default_oid_tag)!
+	// els2_tagged := els2.as_tagged(.explicit, oid.tag())!
+	// assert els2_tagged == expl
+
+	out.clear()
+	out = encode(els2)!
+	expected_ctx_type := [u8(0xA1), 6, 6, 4, 43, 6, 1, 3]
+	assert out == expected_ctx_type
 }

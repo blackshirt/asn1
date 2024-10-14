@@ -16,7 +16,6 @@ pub struct Set {
 mut:
 	//	maximal size of this set fields
 	max_size int = default_seqset_fields
-pub:
 	// fields is the elements of the set
 	fields []Element
 }
@@ -74,6 +73,39 @@ fn Set.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Set, i64) {
 	next := content_pos + length
 	set := Set.from_bytes(payload)!
 	return set, next
+}
+
+// by default allow add with the same tag
+fn (mut set Set) add_element(el Element) ! {
+	set.relaxed_add_element(el, true)!
+}
+
+// add_element allows adding a new element into current sequence fields.
+// Its does not allow adding element when is already the same tag in the fields.
+// but, some exception when you set relaxed to true
+fn (mut set Set) relaxed_add_element(el Element, relaxed bool) ! {
+	if set.fields.len == 0 {
+		// just adds it then return
+		set.fields << el
+		return
+	}
+
+	for item in set.fields {
+		if item.equal_with(el) {
+			return error('has already in the fields')
+		}
+	}
+	filtered_by_tag := set.fields.filter(it.equal_tag(el))
+	if filtered_by_tag.len == 0 {
+		set.fields << el
+		return
+	} else {
+		if !relaxed {
+			return error('You can not insert element without forcing')
+		}
+		set.fields << el
+		return
+	}
 }
 
 // bytes should set.fields payload, not includes the tag

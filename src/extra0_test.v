@@ -1,19 +1,21 @@
 module asn1
 
+import math.big
+
 fn test_parse_sequence_match_length() ! {
 	// from https://en.wikipedia.org/wiki/ASN.1#Example_encoded_in_DER
 	data := [u8(0x30), 0x13, 0x02, 0x01, 0x05, 0x16, 0x0e, 0x41, 0x6e, 0x79, 0x62, 0x6f, 0x64,
 		0x79, 0x20, 0x74, 0x68, 0x65, 0x72, 0x65, 0x3f]
 
-	seq, n := Sequence.decode(data, 0)!
+	seq, n := Sequence.decode(data)!
 	assert n == data.len
-	assert seq.length()! == 19 // 0x13
-	assert seq.packed_length()! == 21
+	assert seq.payload()!.len == 19 // 0x13
+	assert encoded_len(seq) == 21
 	assert seq.tag().tag_class() == .universal
 	assert seq.tag().is_constructed() == true
 	assert seq.tag().tag_number() == 16
 
-	els := seq.elements()!
+	els := seq.fields()
 	assert els.len == 2
 	assert els[0] is Integer
 	assert els[1] is IA5String
@@ -67,56 +69,50 @@ AlgorithmIdentifier  ::=  SEQUENCE  {
       }
 */
 
-/*
-NOTE: Need to be fixed
+// NOTE: Need to be fixed
 fn test_x509_certificate_version() ! {
 	// version         [0]  EXPLICIT Version DEFAULT v1,
 	// Version  ::=  INTEGER  {  v1(0), v2(1), v3(2)  }
-	val := new_integer(2)
-	version := new_explicit_context(val, 0)
+	val := Integer.from_int(2)
+	version := explicit_context(0, val)!
 
-	out := version.encode()!
+	out := encode(version)!
 	exp := [u8(0xA0), 0x03, 0x02, 0x01, 0x02]
 
 	assert out == exp
 }
-*/
 
-/*
 fn test_x509_certificate_signature() ! {
 	// signature            AlgorithmIdentifier,
 	// AlgorithmIdentifier  ::=  SEQUENCE  {
 	//    algorithm   OBJECT IDENTIFIER,
 	//    parameters  ANY DEFINED BY algorithm OPTIONAL
 	//  }
-	oid := new_oid_from_string('1.3.101.112')!
+	oid := Oid.new('1.3.101.112')!
 
-	mut seq := new_sequence()
-	seq.add(oid)
+	mut seq := Sequence{}
+	seq.add_element(oid)!
 
-	out := seq.encode()!
+	out := encode(seq)!
 	exp := [u8(0x30), 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70]
 
 	assert out == exp
-	back := der_decode(exp)!
-	seqback := back as Sequence
+	seqback, _ := Sequence.decode(exp)!
+
 	assert seqback == seq
 }
-*/
 
-/*
 fn test_x509_certificate_serialnumber() ! {
 	// serialNumber         CertificateSerialNumber,
 	// CertificateSerialNumber  ::=  INTEGER
-	sn := new_integer(big.integer_from_string('711090297755414526861352146244170174161660335942')!)
+	sn := Integer.from_bigint(big.integer_from_string('711090297755414526861352146244170174161660335942')!)
 
-	out := sn.encode()!
+	mut out := encode(sn)!
 	exp := [u8(0x02), 0x14, 0x7C, 0x8E, 0x64, 0x49, 0xD7, 0x0E, 0xD9, 0x2D, 0x3E, 0x2E, 0x4A, 0x5D,
 		0x2F, 0x76, 0xF6, 0x55, 0x42, 0x46, 0xD7, 0x46]
 
 	assert out == exp
 }
-*/
 
 /*
 fn test_x509_certificate_issuer() ! {
