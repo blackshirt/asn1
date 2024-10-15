@@ -367,8 +367,8 @@ fn (el Element) expect_tag(t Tag) bool {
 	return el.tag() == t
 }
 
-// equal_with checks whether this two element equal and holds the same tag and content
-fn (el Element) equal_with(other Element) bool {
+// equal checks whether this two element equal and holds the same tag and content
+pub fn (el Element) equal(other Element) bool {
 	return el.equal_tag(other) && el.equal_payload(other)
 }
 

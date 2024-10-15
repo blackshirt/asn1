@@ -1,5 +1,7 @@
 module asn1
 
+import io
+
 // Parser is ongoing ASN.1 parser.
 // Its capables parsing ASN.1 element through availables methods.
 pub struct Parser {
@@ -26,7 +28,7 @@ pub fn (mut p Parser) peek_tag() !Tag {
 }
 
 // read_tag lookup the tag from the current parser and updates internal parser data.
-fn (mut p Parser) read_tag() !Tag {
+pub fn (mut p Parser) read_tag() !Tag {
 	tag, rest := Tag.from_bytes(p.data)!
 	p.data = rest
 	return tag
@@ -40,7 +42,7 @@ pub fn (mut p Parser) read_length() !Length {
 }
 
 // read_bytes read length bytes from the current parser data.
-fn (mut p Parser) read_bytes(length int) ![]u8 {
+pub fn (mut p Parser) read_bytes(length int) ![]u8 {
 	if length > p.data.len {
 		return error('Parser: too short data to read ${length} bytes')
 	}
@@ -91,10 +93,10 @@ pub fn (mut p Parser) is_empty() bool {
 	return p.data.len == 0
 }
 
-// read_from reads up to buf.len bytes, places them into buf and then appends
+// read_from reads up to buf.len bytes from reader r, places them into buf and then appends
 // to current Parser data.
-pub fn (mut p Parser) read_from(r io.Reader, mut buf []u8) !int {
-	n := r.read(buf)!
+pub fn (mut p Parser) read_from(mut r io.Reader, mut buf []u8) !int {
+	n := r.read(mut buf)!
 	p.data << buf
 
 	return n

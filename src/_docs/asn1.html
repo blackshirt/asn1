@@ -793,6 +793,14 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="Element.equal" class="doc-node">
+			<div class="title"><h2>fn (Element) equal <a href="#Element.equal">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>el Element<span class="token punctuation">)</span> <span class="token function">equal</span><span class="token punctuation">(</span>other Element<span class="token punctuation">)</span> <span class="token builtin">bool</span></code></pre>
+<p>equal checks whether this two element equal and holds the same tag and content</p>
+
+</section>
+
 		<section id="KeyDefault" class="doc-node">
 			<div class="title"><h2>type KeyDefault <a href="#KeyDefault">#</a></h2></div>
 <pre class="signature">
@@ -1466,11 +1474,27 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="Parser.read_tag" class="doc-node">
+			<div class="title"><h2>fn (Parser) read_tag <a href="#Parser.read_tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token function">read_tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Tag</code></pre>
+<p>read_tag lookup the tag from the current parser and updates internal parser data.</p>
+
+</section>
+
 		<section id="Parser.read_length" class="doc-node">
 			<div class="title"><h2>fn (Parser) read_length <a href="#Parser.read_length">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token function">read_length</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Length</code></pre>
 <p>read_length reads and lookup Length from the current parser.</p>
+
+</section>
+
+		<section id="Parser.read_bytes" class="doc-node">
+			<div class="title"><h2>fn (Parser) read_bytes <a href="#Parser.read_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token function">read_bytes</span><span class="token punctuation">(</span>length <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+<p>read_bytes read length bytes from the current parser data.</p>
 
 </section>
 
@@ -1509,8 +1533,8 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 		<section id="Parser.read_from" class="doc-node">
 			<div class="title"><h2>fn (Parser) read_from <a href="#Parser.read_from">#</a></h2></div>
 <pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token function">read_from</span><span class="token punctuation">(</span>r io<span class="token punctuation">.</span>Reader<span class="token punctuation">,</span> <span class="token keyword">mut</span> buf <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
-<p>read_from reads up to buf.len bytes, places them into buf and then appends to current Parser data.</p>
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token function">read_from</span><span class="token punctuation">(</span><span class="token keyword">mut</span> r io<span class="token punctuation">.</span>Reader<span class="token punctuation">,</span> <span class="token keyword">mut</span> buf <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">int</span></code></pre>
+<p>read_from reads up to buf.len bytes from reader r, places them into buf and then appends to current Parser data.</p>
 
 </section>
 
@@ -1899,7 +1923,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 15 Oct 2024 08:48:32</div>
+						<div class="footer">Powered by vdoc. Generated on: 15 Oct 2024 09:00:01</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#build_payload">fn build_payload</a>        <ul>
@@ -2155,6 +2179,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li><a href="#Element.into_object">fn into_object</a></li>
 <li><a href="#Element.length">fn length</a></li>
 <li><a href="#Element.encoded_len">fn encoded_len</a></li>
+<li><a href="#Element.equal">fn equal</a></li>
 </ul>
 </li>
 <li class="open"><a href="#KeyDefault">type KeyDefault</a>        <ul>
@@ -2272,7 +2297,9 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#Parser">struct Parser</a>        <ul>
 <li><a href="#Parser.reset">fn reset</a></li>
 <li><a href="#Parser.peek_tag">fn peek_tag</a></li>
+<li><a href="#Parser.read_tag">fn read_tag</a></li>
 <li><a href="#Parser.read_length">fn read_length</a></li>
+<li><a href="#Parser.read_bytes">fn read_bytes</a></li>
 <li><a href="#Parser.read_element">fn read_element</a></li>
 <li><a href="#Parser.read_tlv">fn read_tlv</a></li>
 <li><a href="#Parser.finish">fn finish</a></li>

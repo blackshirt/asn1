@@ -149,7 +149,7 @@ fn (mut set Set) relaxed_add_element(el Element, relaxed bool) ! {
 
 	// remove this checks
 	// for item in set.fields {
-	//	if item.equal_with(el) {
+	//	if item.equal(el) {
 	//		return error('has already in the fields')
 	//	}
 	// }
@@ -290,7 +290,7 @@ fn (mut so SetOf[T]) relaxed_add_element(el Element, relaxed bool) ! {
 	mut filtered_by_tag := []T{}
 	for field in so.fields {
 		item := Element.from_object(field)!
-		if item.equal_with(el) {
+		if item.equal(el) {
 			return error('has already in the fields')
 		}
 		if item.equal_tag(el) {
