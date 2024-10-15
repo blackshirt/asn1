@@ -20,7 +20,8 @@ mut:
 	fields []Element
 }
 
-fn Set.new() !Set {
+// creates a new Set with default size
+pub fn Set.new() !Set {
 	return Set.new_with_size(default_seqset_fields)!
 }
 
@@ -165,7 +166,7 @@ fn (mut set Set) relaxed_add_element(el Element, relaxed bool) ! {
 	}
 }
 
-fn (mut set Set) set_limit(limit int) ! {
+pub fn (mut set Set) set_limit(limit int) ! {
 	if limit > max_seqset_fields {
 		return error('Provided limit was exceed current one')
 	}
@@ -204,7 +205,9 @@ mut:
 	fields []T
 }
 
-fn new_setof[T]() !SetOf[T] {
+// new_setof creates a new SetOf for generic T.
+// You should make sure T is implement Element interface.
+pub fn new_setof[T]() !SetOf[T] {
 	return new_setof_with_size[T](default_seqset_fields)!
 }
 
@@ -247,6 +250,8 @@ fn (mut so SetOf[T]) payload_with_rule(rule EncodingRule) ![]u8 {
 
 	mut out := []u8{}
 	for el in so.fields {
+		// we encounter issues above at here
+		// we can not directly pass el to encode routine
 		elem := unsafe { el }
 		obj := encode_with_rule(elem, rule)!
 		out << obj

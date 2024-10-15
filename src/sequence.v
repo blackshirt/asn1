@@ -32,7 +32,8 @@ mut:
 	fields []Element
 }
 
-fn Sequence.new() !Sequence {
+// new creates new Sequence with default size
+pub fn Sequence.new() !Sequence {
 	return Sequence.new_with_size(default_seqset_fields)!
 }
 
@@ -68,7 +69,7 @@ fn (seq Sequence) payload_with_rule(rule EncodingRule) ![]u8 {
 	return out
 }
 
-fn (seq Sequence) encoded_len() int {
+pub fn (seq Sequence) encoded_len() int {
 	mut n := 0
 	n += seq.tag().tag_size()
 	payload := seq.payload() or { panic(err) }
@@ -83,11 +84,24 @@ pub fn (seq Sequence) fields() []Element {
 	return seq.fields
 }
 
-fn Sequence.parse(mut p Parser) !Sequence {
-	return error('not yet implemented')
+// parse tries to parse into Sequence from ongoing Parser p.
+// Uts return a parsed Sequence or error on fails.
+pub fn Sequence.parse(mut p Parser) !Sequence {
+	tag := p.read_tag()!
+	if !tag.equal(default_sequence_tag) {
+		return error('Get non Sequence tag')
+	}
+	length := p.read_length()!
+	content := p.read_bytes(length)!
+
+	seq := Sequence.from_bytes(content)!
+	return seq
 }
 
-fn Sequence.decode(bytes []u8) !(Sequence, i64) {
+// decode tries to decode bytes into Sequence.
+// Its return a decoded Sequence and next offset to read on
+// if possible, or return error on fails.
+pub fn Sequence.decode(bytes []u8) !(Sequence, i64) {
 	return Sequence.decode_with_rule(bytes, 0, .der)!
 }
 
@@ -132,11 +146,15 @@ fn Sequence.from_bytes(bytes []u8) !Sequence {
 	return seq
 }
 
-fn (mut seq Sequence) set_limit(limit int) ! {
-	if limit > max_seqset_fields {
+// set_max_size sets maximal size of this sequence fielda 
+pub fn (mut seq Sequence) set_max_size(size int) ! {
+	if size <= 0 {
+		return error('provides with correct limit')
+	}
+	if size > max_seqset_fields {
 		return error('Provided limit was exceed current one')
 	}
-	seq.size = limit
+	seq.size = size
 }
 
 // by default allow add with the same tag
@@ -148,6 +166,7 @@ fn (mut seq Sequence) add_element(el Element) ! {
 // Its does not allow adding element when is already the same tag in the fields.
 // but, some exception when you set relaxed to true
 fn (mut seq Sequence) relaxed_add_element(el Element, relaxed bool) ! {
+	// todo: check against size
 	if seq.fields.len == 0 {
 		// just adds it then return
 		seq.fields << el
@@ -172,13 +191,13 @@ fn (mut seq Sequence) relaxed_add_element(el Element, relaxed bool) ! {
 	}
 }
 
-// checks whether this sequence is SequenceOf[T]
-fn (seq Sequence) is_sequence_of[T]() bool {
+// is_sequence_of[T] checks whether this sequence is SequenceOf[T] type.
+pub fn (seq Sequence) is_sequence_of[T]() bool {
 	return seq.fields.all(it is T)
 }
 
 // into_sequence_of[T] turns this sequence into SequenceOf[T]
-fn (seq Sequence) into_sequence_of[T]() !SequenceOf[T] {
+pub fn (seq Sequence) into_sequence_of[T]() !SequenceOf[T] {
 	if seq.is_sequence_of[T]() {
 		return error('This sequence is not SequenceOf[T]')
 	}
@@ -190,17 +209,18 @@ fn (seq Sequence) into_sequence_of[T]() !SequenceOf[T] {
 	return sqof
 }
 
+// SEQUENCE OF 
+// T should fullfill Element interface
 // generic type aliases are not yet implemented
-@[noinit]
+@[heap; noinit]
 pub struct SequenceOf[T] {
 mut:
-	size int = default_seqset_fields
-pub:
+	size   int = default_seqset_fields
 	fields []T
 }
 
 pub fn (so SequenceOf[T]) tag() Tag {
-	return Tag{.universal, true, u32(TagType.sequence)}
+	return default_sequence_tag
 }
 
 pub fn (so SequenceOf[T]) payload() ![]u8 {
