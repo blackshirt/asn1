@@ -83,8 +83,8 @@ fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 	return error('you can not install default value when has_default being not set')
 }
 
-// parse_string_option parses string as an attribute of field options
-// Its allows string similar to `application:4; optional; has_default` to be treated as an field options
+// `parse_string_option` parses string as an attribute of field options.
+// Its allows string similar to `application:4; optional; has_default` to be treated as an field options.
 pub fn parse_string_option(s string) !&FieldOptions {
 	if s.len == 0 {
 		return &FieldOptions{}
@@ -101,7 +101,7 @@ pub fn parse_string_option(s string) !&FieldOptions {
 	return opt
 }
 
-// parses and validates []string into FieldOptions
+// `parse_attrs_to_field_options` parses and validates []string into FieldOptions.
 pub fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
 	mut fo := &FieldOptions{}
 	if attrs.len == 0 {

@@ -35,7 +35,8 @@ fn (opt Optional) validate() ! {
 	*/
 }
 
-pub fn new_optional(el Element) !Optional {
+// Optional.new creates and marked element as an Optional from some element.
+pub fn Optional.new(el Element) !Optional {
 	return Optional{
 		tag:     el.tag()
 		content: el.payload()!
@@ -74,7 +75,7 @@ pub fn (opt Optional) encode() ![]u8 {
 
 fn (opt Optional) encode_with_rule(rule EncodingRule) ![]u8 {
 	if opt.present {
-		elem := Asn1Element{
+		elem := RawElement{
 			tag:     opt.tag
 			content: opt.content
 		}
@@ -101,7 +102,9 @@ fn (opt Optional) into_element() !Element {
 	}
 }
 
-pub fn (opt Optional) into_t[T]() !T {
+// `into_object` tries to turns this optional into real underlying object T.
+// Its return object T on success or error on fails.
+pub fn (opt Optional) into_object[T]() !T {
 	$if T !is Element {
 		return error('T is not element')
 	}

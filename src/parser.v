@@ -1,6 +1,6 @@
 module asn1
 
-struct Parser {
+pub struct Parser {
 mut:
 	data []u8
 }
@@ -84,7 +84,7 @@ pub fn parse_single[T](data []u8) !T {
 	return out
 }
 
-pub fn parse[T](data []u8, callback fn (mut p Parser) !T) !T {
+fn parse[T](data []u8, callback fn (mut p Parser) !T) !T {
 	mut p := Parser.new(data)
 	result := callback(mut p)!
 	p.finish()!

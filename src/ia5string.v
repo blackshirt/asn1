@@ -6,15 +6,15 @@ module asn1
 // Default tag of IA5STRING type
 const default_ia5string_tag = Tag{.universal, false, int(TagType.ia5string)}
 
-// IA5String handling routine
-// Standard ASCII characters
+// ASN.1 IA5String type handling routine.
+// IA5String is a standard ASCII characters
 @[noinit]
 pub struct IA5String {
-mut:
+pub:
 	value string
 }
 
-// new creates IA5String from string s
+// new creates IA5String from string s.
 pub fn IA5String.new(s string) !IA5String {
 	if !valid_ia5string(s) {
 		return error('IA5String: contains non-ascii chars')

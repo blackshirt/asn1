@@ -26,12 +26,12 @@ const max_tag_number = 16383
 // PRIVATE, CONTEXT_SPECIFIC or APPLICATION class.
 const max_universal_tagnumber = 255
 
-// ASN.1 Tag identifier handling
+// ASN.1 Tag identifier handling.
 //
-// Tag represents identifier of the ASN1 element (object)
-// ASN.1 Tag number can be represented in two form, short form and long form.
-// The short form for tag number below <= 30 and stored enough in single byte,
-// where long form for tag number > 30, and stored in two or more bytes.
+// Tag represents identifier of the ASN.1 element (object).
+// ASN.1 Tag number can be represented in two form, the short form and the long form.
+// The short form for tag number below <= 30 and stored enough in single byte.
+// The long form for tag number > 30, and stored in two or more bytes.
 // See limit restriction comment above.
 @[noinit]
 pub struct Tag {
@@ -42,7 +42,7 @@ mut:
 }
 
 // `Tag.new` creates new ASN.1 tag identifier. Its accepts params of TagClass `cls`,
-// the tag form in the form of constructed or primitive in `constructed` boolean flag, and the integer tag `number`.
+// the tag form in the constructed or primitive form in `constructed` flag, and the integer tag `number`.
 pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 	if number < 0 || number > max_tag_number {
 		return error('Unallowed tag number, ${number} exceed limit')
@@ -75,38 +75,30 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 	return tag
 }
 
-// primitive creates universal class of primitive tag
-pub fn primitive(value int) !Tag {
-	return Tag.new(.universal, false, value)!
-}
-
-// constructed creates universal class of constructed tag
-pub fn constructed(value int) !Tag {
-	return Tag.new(.universal, true, value)!
-}
-
-// tag_class return the ASN.1 class of this tag
+// `tag_class` return the ASN.1 class of this tag
 pub fn (t Tag) tag_class() TagClass {
 	return t.class
 }
 
-// is_constructed tells us whether this tag is constructed or not
+// `is_constructed` tells us whether this tag is in constructed form
+// or the primitive one, ie, not constructed.
 pub fn (t Tag) is_constructed() bool {
 	return t.constructed
 }
 
-// tag_number return the tag nunber of this tag
+// `tag_number` return the tag nunber of this tag
 pub fn (t Tag) tag_number() int {
 	return t.number
 }
 
-// encode serializes tag t into bytes array with default context
+// `encode` serializes the tag into bytes array with default rule, ie, .der.
+// Its serializes into dst bytes buffer or return error on fails.
 pub fn (t Tag) encode(mut dst []u8) ! {
 	t.encode_with_rule(mut dst, .der)!
 }
 
-// Tag.from_bytes creates a new Tag from bytes. Its return newly created
-// tag and and the rest of remaining bytes on success, or return error on failures.
+// `Tag.from_bytes` creates a new Tag from bytes. Its return newly created tag and
+// the rest of remaining bytes on success, or error on failures.
 pub fn Tag.from_bytes(bytes []u8) !(Tag, []u8) {
 	tag, next_pos := Tag.decode(bytes)!
 	if next_pos < bytes.len {
@@ -119,8 +111,8 @@ pub fn Tag.from_bytes(bytes []u8) !(Tag, []u8) {
 	return error('Tag: too short data')
 }
 
-// equal checks whether this tag is equal with the provided other tag
-fn (t Tag) equal(o Tag) bool {
+// `equal` checks whether this tag is equal with the other tag
+pub fn (t Tag) equal(o Tag) bool {
 	return t.class == o.class && t.constructed == o.constructed && t.number == o.number
 }
 
@@ -154,7 +146,8 @@ fn (t Tag) encode_with_rule(mut dst []u8, rule EncodingRule) ! {
 	}
 }
 
-// Tag.decode tries to deserializes bytes into Tag. its return error on fails.
+// Tag.decode tries to deserializes bytes into Tag.
+// Its return error on fails.
 fn Tag.decode(bytes []u8) !(Tag, i64) {
 	tag, next := Tag.decode_from_offset(bytes, 0)!
 	return tag, next
@@ -228,19 +221,6 @@ fn (t Tag) uniqid_with_id(id string) string {
 	return '${t.str()}-${id}'
 }
 
-// clone_with_class clones teh tag t into new tag with class is set to c
-fn (mut t Tag) clone_with_class(c TagClass) Tag {
-	mut new := t
-	new.class = c
-	return new
-}
-
-fn (mut t Tag) clone_with_tag(v int) !Tag {
-	mut new := t
-	t.number = v
-	return new
-}
-
 // bytes_len tells amount of bytes needed to store tag in base 128
 fn (t Tag) bytes_len() int {
 	if t.number == 0 {
@@ -257,8 +237,8 @@ fn (t Tag) bytes_len() int {
 	return ret
 }
 
-// tag_size informs us how many bytes needed to store this tag includes one byte marker if in long form.
-fn (t Tag) tag_size() int {
+// `tag_size` informs us how many bytes needed to store this tag includes one byte marker if in the long form.
+pub fn (t Tag) tag_size() int {
 	// when number is greater than 31 (0x1f), its need more bytes
 	// to represent this number, includes one byte marker for long form tag
 	len := if t.number < 0x1f { 1 } else { t.bytes_len() + 1 }
@@ -324,9 +304,9 @@ fn (t Tag) valid_supported_universal_tagnum() bool {
 	return t.class == .universal && t.number < max_universal_tagnumber
 }
 
-// `universal_tag_type` transforrms this TagNumber into available UNIVERSAL class of TagType,
+// `universal_tag_type` turns this Tag into available UNIVERSAL class of TagType,
 // or return error if it is unknown number.
-fn (t Tag) universal_tag_type() !TagType {
+pub fn (t Tag) universal_tag_type() !TagType {
 	// currently, only support Standard universal tag number
 	if t.number > max_universal_tagnumber {
 		return error('Tag number: unknown TagType number=${t.number}')
@@ -383,7 +363,8 @@ fn (t Tag) universal_tag_type() !TagType {
 	}
 }
 
-// TagClass is ASN.1 tag class.
+// TagClass is an enume of ASN.1 tag class.
+//
 // To make sure ASN.1 encodings are not ambiguous, every ASN.1 type is associated with a tag.
 // A tag consists of three parts: the tag class, tag form and the tag number.
 // The following classes are defined in the ASN.1 standard.
@@ -394,8 +375,9 @@ pub enum TagClass {
 	private          = 0x03 // 0b11
 }
 
-// from_int creates TagClass from integer v
-fn TagClass.from_int(v int) !TagClass {
+// `TagClass.from_int` creates TagClass from integer v.
+// Its return a new TagClass on success or error on fails.
+pub fn TagClass.from_int(v int) !TagClass {
 	match v {
 		// vfmt off
 		0x00 { return .universal }
@@ -409,7 +391,9 @@ fn TagClass.from_int(v int) !TagClass {
 	}
 }
 
-fn TagClass.from_string(s string) !TagClass {
+// `TagClass.from_string` creates a TagClass from string s.
+// Its return a new TagClass on success or error on fails.
+pub fn TagClass.from_string(s string) !TagClass {
 	match s {
 		// vfmt off
 		'universal' { return .universal }
@@ -432,9 +416,9 @@ fn (c TagClass) str() string {
 	}
 }
 
-// Standard UNIVERSAL tag number. Some of them was deprecated,
+// TagType is standard UNIVERSAL tag number. Some of them was deprecated,
 // so its not going to be supported on this module.
-enum TagType {
+pub enum TagType {
 	// vfmt off
 	reserved 			= 0 	// reserved for BER
 	boolean 			= 1 	// BOOLEAN type
@@ -534,7 +518,8 @@ fn params_with_rule(rule EncodingRule) &Params {
 	}
 }
 
-// encoding rule
+// EncodingRule is standard of rule thats drives how some ASN.1
+// element was encoded or deserialized.
 pub enum EncodingRule {
 	// Distinguished Encoding Rules (DER)
 	der = 0
@@ -567,16 +552,18 @@ fn syntax_error(msg string, opts &FieldOptions) &SyntaxError {
 	return se
 }
 
-// EXPLICIT and IMPLICIT
+// EXPLICIT and IMPLICIT MODE
 //
-// rule of context specific wrapping. explicit rule add new tag
-// to the existing object, implicit rule replaces tag of original object.
+// TaggedMode is the rule of context specific wrapping.
+// Explicit rule add new tag to the existing element,
+// where implicit rule replaces the tag of original object.
 pub enum TaggedMode {
 	implicit
 	explicit
 }
 
-fn TaggedMode.from_string(s string) !TaggedMode {
+// `from_string` creates TaggedMode from string s.
+pub fn TaggedMode.from_string(s string) !TaggedMode {
 	match s {
 		'explicit' { return .explicit }
 		'implicit' { return .implicit }

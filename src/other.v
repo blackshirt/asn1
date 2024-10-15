@@ -7,7 +7,7 @@ module asn1
 //
 
 @[noinit]
-pub struct Asn1Element {
+pub struct RawElement {
 mut:
 	// tag is the tag of the TLV
 	tag Tag
@@ -15,16 +15,16 @@ mut:
 	content []u8
 }
 
-pub fn (a Asn1Element) tag() Tag {
+pub fn (a RawElement) tag() Tag {
 	return a.tag
 }
 
-pub fn (a Asn1Element) payload() ![]u8 {
+pub fn (a RawElement) payload() ![]u8 {
 	return a.content
 }
 
-pub fn Asn1Element.new(tag Tag, content []u8) Asn1Element {
-	new := Asn1Element{
+pub fn RawElement.new(tag Tag, content []u8) RawElement {
+	new := RawElement{
 		tag:     tag
 		content: content
 	}
@@ -76,10 +76,12 @@ fn (mut ctx ContextElement) set_ctx_mode(mode TaggedMode) ! {
 	ctx.mode = mode
 }
 
+// `explicit_context` creates new ContextElement with explicit mode.
 pub fn explicit_context(tagnum int, inner Element) !ContextElement {
 	return ContextElement.new(.explicit, tagnum, inner)!
 }
 
+// implicit_context creates new ContextElement with implicit mode.
 pub fn implicit_context(tagnum int, inner Element) !ContextElement {
 	return ContextElement.new(.implicit, tagnum, inner)!
 }
@@ -169,7 +171,7 @@ fn ContextElement.from_bytes(bytes []u8) !ContextElement {
 
 @[noinit]
 pub struct ApplicationElement {
-	Asn1Element
+	RawElement
 }
 
 pub fn ApplicationElement.new(constructed bool, tagnum int, content []u8) !ApplicationElement {
@@ -190,7 +192,7 @@ pub fn (app ApplicationElement) payload() ![]u8 {
 
 @[noinit]
 pub struct PrivateELement {
-	Asn1Element
+	RawElement
 }
 
 pub fn PrivateELement.new(constructed bool, tagnum int, content []u8) !PrivateELement {

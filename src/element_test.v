@@ -50,7 +50,7 @@ fn test_struct_build_payload() ! {
 
 fn test_into_optional() ! {
 	// boolean raw, id = 1
-	el := Asn1Element{
+	el := RawElement{
 		tag:     Tag.new(.universal, false, int(TagType.boolean))!
 		content: [u8(0xff)]
 	}
@@ -81,7 +81,7 @@ struct WrapperTest {
 
 fn test_wrapping_functionality() ! {
 	// raw boolean element
-	elem := Asn1Element{
+	elem := RawElement{
 		tag:     Tag.new(.universal, false, int(TagType.boolean))!
 		content: [u8(0xff)]
 	}

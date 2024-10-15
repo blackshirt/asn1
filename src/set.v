@@ -83,11 +83,11 @@ pub fn (set Set) fields() []Element {
 	return set.fields
 }
 
-fn Set.parse(mut p Parser) !Set {
+pub fn Set.parse(mut p Parser) !Set {
 	return error('not yet implemented')
 }
 
-fn Set.decode(bytes []u8) !(Set, i64) {
+pub fn Set.decode(bytes []u8) !(Set, i64) {
 	return Set.decode_with_rule(bytes, 0, .der)!
 }
 
@@ -111,7 +111,7 @@ fn Set.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Set, i64) {
 }
 
 // bytes should seq.fields payload, not includes the tag
-fn Set.from_bytes(bytes []u8) !Set {
+pub fn Set.from_bytes(bytes []u8) !Set {
 	mut set := Set{}
 	if bytes.len == 0 {
 		return set
@@ -166,6 +166,7 @@ fn (mut set Set) relaxed_add_element(el Element, relaxed bool) ! {
 	}
 }
 
+// `set_size` set internal maximal size of this set fields.
 pub fn (mut set Set) set_size(size int) ! {
 	if size < 0 {
 		return error('provides the correct size')
@@ -205,7 +206,7 @@ mut:
 	fields []T
 }
 
-// new_setof creates a new SetOf for generic T.
+// `new_setof` creates a new SetOf for generic T.
 // You should make sure T is implement Element interface.
 pub fn new_setof[T]() !SetOf[T] {
 	return new_setof_with_size[T](default_seqset_fields)!
@@ -229,10 +230,12 @@ fn new_setof_with_size[T](size int) !SetOf[T] {
 	}
 }
 
+// the tag of SetOf[T].
 pub fn (so SetOf[T]) tag() Tag {
 	return default_set_tag
 }
 
+// the payload of SetOf[T].
 pub fn (so SetOf[T]) payload() ![]u8 {
 	mut sto := so
 	return sto.payload_with_rule(.der)!

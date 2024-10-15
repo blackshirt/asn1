@@ -71,7 +71,7 @@ fn parse_universal_primitive(tag Tag, content []u8) !Element {
 		}
 		else {
 			// return the raw element
-			return Asn1Element{
+			return RawElement{
 				tag:     tag
 				content: content
 			}
@@ -95,7 +95,7 @@ fn parse_universal_constructed(tag Tag, content []u8) !Element {
 			return Set.from_bytes(content)!
 		}
 		else {
-			return Asn1Element{
+			return RawElement{
 				tag:     tag
 				content: content
 			}

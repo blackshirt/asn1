@@ -28,18 +28,18 @@ pub interface Element {
 	payload() ![]u8
 }
 
-// encode serializes element into bytes array. By default, its encode in .der rule with empty options.
+// `encode` serializes element into bytes array. By default, its encode in .der rule with empty options.
 // See  `encode_with_options` if you want pass an option string. See `field.v` for more option in detail.
 pub fn encode(el Element) ![]u8 {
 	return encode_with_options(el, '')!
 }
 
-// encode_with_options serializes element into bytes array with options string passed to drive the result.
+// `encode_with_options` serializes element into bytes array with options string passed to drive the result.
 pub fn encode_with_options(el Element, opt string) ![]u8 {
 	return el.encode_with_string_options(opt, .der)!
 }
 
-// encode_with_field_options serializes this element into bytes array with options defined in fo.
+// `encode_with_field_options` serializes this element into bytes array with options defined in fo.
 pub fn encode_with_field_options(el Element, fo &FieldOptions) ![]u8 {
 	return el.encode_with_field_options(fo, .der)
 }
@@ -95,10 +95,10 @@ fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
 	return dst
 }
 
-// FIXME: its not tested
 // from_object[T] transforms and creates a new Element from generic type (maybe universal type, like an OctetString).
 // Its accepts generic element t that you should pass to this function. You should make sure if this element implements
 // required methods of the Element, or an error would be returned.
+// FIXME: its not tested
 // Examples:
 // ```v
 // oc := asn1.OctetString.from_string("xxx")!
@@ -281,12 +281,12 @@ fn (el Element) wrap_with_rule(cls TagClass, tagnum int, mode TaggedMode, rule E
 	}
 }
 
-// map of string (field.name) onto Element for element with default semantic
-// its is to be used for building payload of complex structures like sequence
+// KeyDefault is map of string (field.name) into Element for element with default semantic.
+// its is to be used for building payload of complex structures like sequence.
 // see `build_payload` below.
-type KeyDefault = map[string]Element
+pub type KeyDefault = map[string]Element
 
-// build_payload build bytes payload for some structures contains field of Elements
+// `build_payload` build bytes payload for some structures contains field of Elements
 // consider examples from rfc 5280 defines schema
 //  Certificate  ::=  SEQUENCE  {
 //      tbsCertificate       TBSCertificate,
@@ -305,7 +305,7 @@ type KeyDefault = map[string]Element
 // payload := build_payload[Certificate](cert)!
 // ```
 // and then you can use the produced payload
-fn build_payload[T](val T, kd KeyDefault) ![]u8 {
+pub fn build_payload[T](val T, kd KeyDefault) ![]u8 {
 	mut out := []u8{}
 	$for field in val.fields {
 		// only serialiaze field that implement interfaces
@@ -332,11 +332,12 @@ fn build_payload[T](val T, kd KeyDefault) ![]u8 {
 	return out
 }
 
+// `encoded_len` calculates the size in bytes when the el element was serialized.
 pub fn encoded_len(el Element) int {
 	return el.encoded_len()
 }
 
-// encoded_len calculates the length of bytes when this element was serialized
+// `encoded_len` calculates the length of bytes when this element was serialized.
 pub fn (el Element) encoded_len() int {
 	return el.encoded_len_with_rule(.der)
 }
