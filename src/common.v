@@ -3,11 +3,24 @@
 // that can be found in the LICENSE file.
 module asn1
 
+// common parsing routines
+//
+
+fn parse_universal(tag Tag, content []u8) !Element {
+	if tag.class == .universal {
+		return error('Non universal class')
+	}
+	if tag.constructed {
+		return parse_universal_constructed(tag, content)!
+	}
+	return parse_universal_primitive(tag, content)!
+}
+
 fn parse_universal_primitive(tag Tag, content []u8) !Element {
-	if tag.tag_class() != .universal {
+	if tag.class != .universal {
 		return error('parse on non-universal type')
 	}
-	if tag.is_constructed() {
+	if tag.constructed {
 		return error('parse on constructed type')
 	}
 	match tag.tag_number() {

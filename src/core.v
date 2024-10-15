@@ -120,14 +120,17 @@ pub fn (t Tag) encode(mut dst []u8) ! {
 }
 
 // Tag.from_bytes creates a new Tag from bytes. Its return newly created
-// tag and remaining bytes on success, or return error on failures.
+// tag and and the rest of remaining bytes on success, or return error on failures.
 pub fn Tag.from_bytes(bytes []u8) !(Tag, []u8) {
 	tag, next_pos := Tag.decode(bytes)!
 	if next_pos < bytes.len {
 		rest := unsafe { bytes[next_pos..] }
 		return tag, rest
 	}
-	return tag, []u8{}
+	if next_pos == bytes.len {
+		return tag, []u8{}
+	}
+	return error('Tag: too short data')
 }
 
 // equal checks whether this tag is equal with the provided other tag

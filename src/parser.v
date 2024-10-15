@@ -18,7 +18,6 @@ fn (mut p Parser) reset() {
 // see the tag from the parser without updata parser.data
 fn (mut p Parser) peek_tag() !Tag {
 	tag, _ := Tag.from_bytes(p.data)!
-
 	return tag
 }
 
@@ -29,12 +28,8 @@ fn (mut p Parser) read_tag() !Tag {
 }
 
 fn (mut p Parser) read_length() !Length {
-	length, next := Length.decode(p.data)!
-
-	if next > p.data.len {
-		return error('too short length data')
-	}
-	p.data = unsafe { p.data[next..] }
+	length, rest := Length.from_bytes(p.data)!
+	p.data = rest
 	return length
 }
 
@@ -42,17 +37,29 @@ fn (mut p Parser) read_tlv() !Element {
 	tag := p.read_tag()!
 	length := p.read_length()!
 	content := p.read_bytes(length)!
-
-	elem := Asn1Element.new(tag, content)
-	return elem
+    
+	match tag.class {
+		.universal {
+			return parse_universal(tag, content)!
+		}
+		.application {
+			return parse_application(tag, content)!
+		}
+		.contex_specific {
+			return parse_context_specific(tag, content)!
+		}
+		.private {
+			return parse_private(tag, content)!
+		}
+	}
 }
 
 fn (mut p Parser) read_bytes(length int) ![]u8 {
 	if length > p.data.len {
-		return error('too short data')
+		return error('Parser: too short data to read ${length} bytes')
 	}
 	result := p.data[0..length]
-	rest := unsafe { p.data[length..] }
+	rest := if length == p.data.len { []u8{} } else { unsafe { p.data[length..] } )
 	p.data = rest
 	return result
 }

@@ -23,7 +23,7 @@ const max_definite_length_count = 126
 const max_definite_length_value = max_i64
 
 // Length represent ASN.1 length value
-type Length = i64
+pub type Length = i64
 
 // new creates Length from i64  value. Passing negative value (<0) for length
 // is not make a sense, so just return error instead if it happen.
@@ -38,14 +38,17 @@ pub fn Length.new(v i64) !Length {
 }
 
 // Length.from_bytes read length from bytes array and return the length
-// and the remaining bytes
+// and the rest of remaining bytes
 pub fn Length.from_bytes(bytes []u8) !(Length, []u8) {
 	length, next := Length.decode(bytes)!
 	if next < bytes.len {
 		rest := unsafe { bytes[next..] }
 		return length, rest
 	}
-	return length, []u8{}
+	if next == bytes.len {
+		return length, []u8{}
+	}
+	return error('Length: too short data')
 }
 
 // encode serializes Length v into bytes in .der rule
