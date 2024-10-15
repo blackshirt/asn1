@@ -1120,6 +1120,34 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="FieldOptions" class="doc-node">
+			<div class="title"><h2>struct FieldOptions <a href="#FieldOptions">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[heap]</div><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">FieldOptions</span> <span class="token punctuation">{</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	<span class="token comment">// wrapper class</span>
+	cls <span class="token builtin">string</span>
+	<span class="token comment">// tag number for wrapper element when cls != ''</span>
+	tagnum <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+	<span class="token comment">// mode in 'explicit' or 'implicit' when cls !+ '', default to explicit</span>
+	mode <span class="token builtin">string</span> <span class="token operator">=</span> <span class="token string">'explicit'</span>
+	<span class="token comment">// set to some value when mode = 'impllcit'</span>
+	<span class="token comment">// make sense when you doing decode from implicitly wrapped element</span>
+	inner <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+	<span class="token comment">// set to true when this should be optional element</span>
+	optional <span class="token builtin">bool</span>
+	<span class="token comment">// set to true when optional should present, if unsure, just set to false</span>
+	present <span class="token builtin">bool</span>
+	<span class="token comment">// set to true when element has default value</span>
+	has_default <span class="token builtin">bool</span>
+	<span class="token comment">// default value for element when has_default value is true</span>
+	default_value <span class="token operator">?</span>Element
+<span class="token punctuation">}</span></code></pre>
+<p>FieldOptions is a structure to accomodate and allowing configures your complex structures through string or arrays of string stored in FieldOptions fields. For example, you can tagging your fields of some element with tagging like <code>@[context_specific:10; optional; mode: explicit]</code>. Its will be parsed and can be used to drive encoding or decoding of Element.</p>
+
+</section>
+
 		<section id="GeneralString" class="doc-node">
 			<div class="title"><h2>struct GeneralString <a href="#GeneralString">#</a></h2></div>
 <div class="attributes"><div class="attribute">@[noinit]</div></div>
@@ -1923,7 +1951,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 15 Oct 2024 09:00:01</div>
+						<div class="footer">Powered by vdoc. Generated on: 15 Oct 2024 09:05:36</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#build_payload">fn build_payload</a>        <ul>
@@ -2238,6 +2266,9 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#Enumerated">struct Enumerated</a>        <ul>
 <li><a href="#Enumerated.tag">fn tag</a></li>
 <li><a href="#Enumerated.payload">fn payload</a></li>
+</ul>
+</li>
+<li class="open"><a href="#FieldOptions">struct FieldOptions</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#GeneralString">struct GeneralString</a>        <ul>

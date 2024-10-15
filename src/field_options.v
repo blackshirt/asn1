@@ -8,8 +8,12 @@ module asn1
 const max_string_option_length = 255
 const max_attributes_length = 5
 
+// FieldOptions is a structure to accomodate and allowing configures your complex structures 
+// through string or arrays of string stored in FieldOptions fields.
+// For example, you can tagging your fields of some element with tagging like `@[context_specific:10; optional; mode: explicit]`.
+// Its will be parsed and can be used to drive encoding or decoding of Element.
 @[heap; noinit]
-struct FieldOptions {
+pub struct FieldOptions {
 mut:
 	// wrapper class
 	cls string
