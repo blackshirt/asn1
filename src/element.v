@@ -290,7 +290,8 @@ pub type KeyDefault = map[string]Element
 
 // `build_payload` build bytes payload for some structures contains field of Elements.
 // Consider this examples from RFC 5280 defines schema.
-//  ```Certificate  ::=  SEQUENCE  {
+//  ```v
+// Certificate  ::=  SEQUENCE  {
 //      tbsCertificate       TBSCertificate,
 //      signatureAlgorithm   AlgorithmIdentifier,
 //      signatureValue       BIT STRING  }
