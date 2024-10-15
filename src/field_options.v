@@ -85,6 +85,7 @@ fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 
 // `parse_string_option` parses string as an attribute of field options.
 // Its allows string similar to `application:4; optional; has_default` to be treated as an field options.
+// See FieldOptions in `field_options.v` for more detail.
 pub fn parse_string_option(s string) !&FieldOptions {
 	if s.len == 0 {
 		return &FieldOptions{}

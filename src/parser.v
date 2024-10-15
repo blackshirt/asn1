@@ -1,38 +1,45 @@
 module asn1
 
+// Parser is ongoing ASN.1 parser.
+// Its capables parsing ASN.1 element through availables methods.
 pub struct Parser {
 mut:
 	data []u8
 }
 
-fn Parser.new(data []u8) &Parser {
+// Parser.new creates a new Parser from bytes array in data.
+pub fn Parser.new(data []u8) &Parser {
 	return &Parser{
 		data: data
 	}
 }
 
-fn (mut p Parser) reset() {
+// reset resets internal data of parser to empty buffer.
+pub fn (mut p Parser) reset() {
 	p.data = unsafe { p.data[..0] }
 }
 
-// see the tag from the parser without updata parser.data
-fn (mut p Parser) peek_tag() !Tag {
+// peek_tag lookup the tag from the parser without updates internal parser data.
+pub fn (mut p Parser) peek_tag() !Tag {
 	tag, _ := Tag.from_bytes(p.data)!
 	return tag
 }
 
+// read_tag lookup the tag from the current parser and updates internal parser data.
 fn (mut p Parser) read_tag() !Tag {
 	tag, rest := Tag.from_bytes(p.data)!
 	p.data = rest
 	return tag
 }
 
-fn (mut p Parser) read_length() !Length {
+// read_length reads and lookup Length from the current parser.
+pub fn (mut p Parser) read_length() !Length {
 	length, rest := Length.from_bytes(p.data)!
 	p.data = rest
 	return length
 }
 
+// read_bytes read length bytes from the current parser data.
 fn (mut p Parser) read_bytes(length int) ![]u8 {
 	if length > p.data.len {
 		return error('Parser: too short data to read ${length} bytes')
@@ -43,11 +50,15 @@ fn (mut p Parser) read_bytes(length int) ![]u8 {
 	return result
 }
 
-fn (mut p Parser) read_element[T]() !T {
+// read_element read an element T from the current parser.
+// Note: somes builtin have not this method.
+pub fn (mut p Parser) read_element[T]() !T {
 	return T.parse(mut p)
 }
 
-fn (mut p Parser) read_tlv() !Element {
+// read_tlv read an Element from the parser data.
+// Its return an Element, you should cast it to underlying data if you need.
+pub fn (mut p Parser) read_tlv() !Element {
 	tag := p.read_tag()!
 	length := p.read_length()!
 	content := p.read_bytes(length)!
@@ -68,13 +79,15 @@ fn (mut p Parser) read_tlv() !Element {
 	}
 }
 
-fn (mut p Parser) finish() ! {
+// finish end this parser or error if not empty.
+pub fn (mut p Parser) finish() ! {
 	if !p.is_empty() {
 		return error('not empty on finish')
 	}
 }
 
-fn (mut p Parser) is_empty() bool {
+// is_empty checks whether the parser has empty buffer data.
+pub fn (mut p Parser) is_empty() bool {
 	return p.data.len == 0
 }
 

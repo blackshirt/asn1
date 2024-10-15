@@ -70,8 +70,13 @@ fn (seq Sequence) payload_with_rule(rule EncodingRule) ![]u8 {
 }
 
 pub fn (seq Sequence) encoded_len() int {
+	mut n := 0
+	n += seq.tag().tag_size()
 	fields := ElementList(seq.fields)
-	n := fields.encoded_len()
+	len := fields.encoded_len()
+	length := Length.new(len) or { panic(err) }
+	n += length.length_size() or { panic(err) }
+	n += len
 	return n
 }
 

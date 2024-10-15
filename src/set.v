@@ -111,7 +111,7 @@ fn Set.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Set, i64) {
 }
 
 // bytes should seq.fields payload, not includes the tag
-pub fn Set.from_bytes(bytes []u8) !Set {
+fn Set.from_bytes(bytes []u8) !Set {
 	mut set := Set{}
 	if bytes.len == 0 {
 		return set

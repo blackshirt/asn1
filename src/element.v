@@ -98,7 +98,7 @@ fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
 // from_object[T] transforms and creates a new Element from generic type (maybe universal type, like an OctetString).
 // Its accepts generic element t that you should pass to this function. You should make sure if this element implements
 // required methods of the Element, or an error would be returned.
-// FIXME: its not tested
+// FIXME: its not tested.
 // Examples:
 // ```v
 // oc := asn1.OctetString.from_string("xxx")!
@@ -114,16 +114,17 @@ pub fn Element.from_object[T](t T) !Element {
 
 // into_object[T] transforms and tries to cast element el into generic object T
 // if the element not holding object T, it would return error.
-// NOTE: Not tested
+// NOTE: Not tested.
 // Examples:
 // ```v
 // oc := asn1.OctetString.from_string("xxx")!
 // el := Element.from_object[OctetString](oc)!
-//
-// // cast back the element into OctetString
+// ```
+// cast back the element into OctetString.
+// ```v
 // os := el.into_object[OctetString]()!
 // ```
-// and then treats os as an OctetString
+// and then treats os as an OctetString.
 pub fn (el Element) into_object[T]() !T {
 	if el is T {
 		return *el
@@ -131,7 +132,8 @@ pub fn (el Element) into_object[T]() !T {
 	return error('Element el does not holding T')
 }
 
-fn (el Element) length() !int {
+// length tells the payload length of this element.
+pub fn (el Element) length() !int {
 	payload := el.payload()!
 	return payload.len
 }
@@ -152,7 +154,7 @@ fn (el Element) into_optional_with_present(present bool) !Optional {
 	if el is Optional {
 		return error('already optional element')
 	}
-	mut opt := new_optional(el)!
+	mut opt := Optional.new(el)!
 	return opt.with_present(present)
 }
 
@@ -288,10 +290,11 @@ pub type KeyDefault = map[string]Element
 
 // `build_payload` build bytes payload for some structures contains field of Elements
 // consider examples from rfc 5280 defines schema
-//  Certificate  ::=  SEQUENCE  {
+//  ```Certificate  ::=  SEQUENCE  {
 //      tbsCertificate       TBSCertificate,
 //      signatureAlgorithm   AlgorithmIdentifier,
-//      signatureValue       BIT STRING  }
+//      signatureValue       BIT STRING  }```
+//
 // where your structure defined as:
 // ```v
 // struct Certificate {
@@ -299,11 +302,13 @@ pub type KeyDefault = map[string]Element
 //		signature_algorithm	AlgorithmIdentifier
 // 		signature_value		BitString
 // }```
+//
 // usually you can do:
+//
 // ```v
 // cert := instance of Certificate
-// payload := build_payload[Certificate](cert)!
-// ```
+// payload := asn1.build_payload[Certificate](cert)!```
+//
 // and then you can use the produced payload
 pub fn build_payload[T](val T, kd KeyDefault) ![]u8 {
 	mut out := []u8{}

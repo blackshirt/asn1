@@ -10,8 +10,8 @@ fn test_sort_the_set() {
 	val32 := Integer.from_i64(32)
 	valbol := Boolean.new(false)
 	valnull := Null.new()
-	valapp := Asn1Element.new(Tag{.application, false, 34}, [u8(44), 45])
-	valctx := Asn1Element.new(Tag{.context_specific, false, 35}, [u8(50), 55])
+	valapp := RawElement.new(Tag{.application, false, 34}, [u8(44), 45])
+	valctx := RawElement.new(Tag{.context_specific, false, 35}, [u8(50), 55])
 
 	objs.add_element(val12)! // tag: 2
 	objs.add_element(val32)! // tag: 2

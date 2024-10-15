@@ -1,6 +1,6 @@
 module asn1
 
-// OPTIONAL
+// OPTIONAL Element.
 //
 // note: At the abstract ASN.1 level the absence of a DEFAULT value in an encoding is the same as its being present.
 // Contrast this with OPTIONAL, where a value being present in the encoding is semantically distinct from its being absent.

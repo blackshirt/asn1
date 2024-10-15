@@ -20,9 +20,9 @@ mut:
 	value u8
 }
 
-// new creates a new Boolean value from true or false value
-// By default, when you pass true, its would store 0xff as underlying byte value
-// if you want more to be relaxed, see from_u8 to creates with another byte value
+// new creates a new Boolean value from true or false value.
+// By default, when you pass true, its would store 0xff as underlying byte value.
+// If you want more to be relaxed, see from_u8 to creates with another byte value.
 pub fn Boolean.new(value bool) Boolean {
 	mut ret := Boolean{}
 	val := if value { u8(0xff) } else { u8(0x00) }
@@ -31,7 +31,7 @@ pub fn Boolean.new(value bool) Boolean {
 	return ret
 }
 
-// from_u8 creates a new Boolean value from single byte value
+// from_u8 creates a new Boolean value from single byte value.
 pub fn Boolean.from_u8(value u8) Boolean {
 	return Boolean{
 		value: value
