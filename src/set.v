@@ -166,11 +166,14 @@ fn (mut set Set) relaxed_add_element(el Element, relaxed bool) ! {
 	}
 }
 
-pub fn (mut set Set) set_limit(limit int) ! {
-	if limit > max_seqset_fields {
+pub fn (mut set Set) set_size(size int) ! {
+	if size < 0 {
+		return error('provides the correct size')
+	}
+	if size > max_seqset_fields {
 		return error('Provided limit was exceed current one')
 	}
-	set.size = limit
+	set.size = size
 }
 
 // sort_set_fields sort the Set fields in places with sort_with_compare support
@@ -192,9 +195,6 @@ fn (mut set Set) sort_set_fields() {
 		return q
 	})
 }
-
-/*
-*/
 
 // ASN.1 SET OF
 //
@@ -307,92 +307,3 @@ fn (mut so SetOf[T]) relaxed_add_element(el Element, relaxed bool) ! {
 		return
 	}
 }
-
-/*
-fn (mut objs []Encoder) sort_the_set() []Encoder {
-	// without &, its return an error: sort_with_compare callback function parameter
-	// `a` with type `asn1.Encoder` should be `&asn1.Encoder`
-	objs.sort_with_compare(fn (a &Encoder, b &Encoder) int {
-		if x.tag().class != y.tag().class {
-			s := if int(x.tag().class) < int(y.tag().class) { -1 } else { 1 }
-			return s
-		}
-		if x.tag() == y.tag() {
-			// compare by contents instead just return 0
-			aa := x.encode() or { return 0 }
-			bb := y.encode() or { return 0 }
-			return ax.bytestr().compare(by.bytestr())
-		}
-		q := if x.tag().number < y.tag().number { -1 } else { 1 }
-		return q
-	})
-	return objs
-}
-
-fn (mut objs []Encoder) sort_the_setof() ![]Encoder {
-	objs.sort_with_compare(fn (a &Encoder, b &Encoder) int {
-		aa := x.encode() or { return 0 }
-		bb := y.encode() or { return 0 }
-		return ax.bytestr().compare(by.bytestr())
-	})
-	return objs
-}
-
-pub fn (set Set) encode() ![]u8 {
-	mut dst := []u8{}
-	tag := set.tag()
-	serialize_tag(mut dst, tag)
-
-	serialize_length(mut dst, set.length())
-
-	mut objs := set.elements.clone()
-
-	// sorted
-	if set.is_set_of() {
-		objs.sort_the_setof()!
-	} else {
-		objs.sort_the_set()
-	}
-
-	for obj in objs {
-		o := obj.encode()!
-		dst << o
-	}
-	return dst
-}
-
-pub fn Set.decode(src []u8) !Set {
-	if src.len < 2 {
-		return error('Set: underflow')
-	}
-	tag, pos := read_tag(src, 0)!
-	if !tag.is_set_tag() {
-		return error('bad tags n look like not a set tag=${tag}')
-	}
-
-	length, next := decode_length(src, pos)!
-	sub := read_bytes(src, next, length)!
-
-	set := parse_set(tag, sub)!
-
-	return set
-}
-
-// is_set_of checks whether the set holds the same elements (its a set of type)
-pub fn (set Set) is_set_of() bool {
-	tag := set.tag.number
-	if tag != int(TagType.set) {
-		return false
-	}
-	// take the tag of the first obj
-	tag0 := set.elements[0].tag()
-
-	for obj in set.elements {
-		if obj.tag() != tag0 {
-			return false
-		}
-	}
-
-	return true
-}
-*/

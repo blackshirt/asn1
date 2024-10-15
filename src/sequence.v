@@ -70,13 +70,8 @@ fn (seq Sequence) payload_with_rule(rule EncodingRule) ![]u8 {
 }
 
 pub fn (seq Sequence) encoded_len() int {
-	mut n := 0
-	n += seq.tag().tag_size()
-	payload := seq.payload() or { panic(err) }
-	length := Length.new(payload.len) or { panic(err) }
-	n += length.length_size() or { panic(err) }
-	n += payload.len
-
+	fields := ElementList(seq.fields)
+	n := fields.encoded_len()
 	return n
 }
 
@@ -146,8 +141,8 @@ fn Sequence.from_bytes(bytes []u8) !Sequence {
 	return seq
 }
 
-// set_max_size sets maximal size of this sequence fielda
-pub fn (mut seq Sequence) set_max_size(size int) ! {
+// set_size sets maximal size of this sequence fielda
+pub fn (mut seq Sequence) set_size(size int) ! {
 	if size <= 0 {
 		return error('provides with correct limit')
 	}

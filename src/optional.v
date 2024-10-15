@@ -85,7 +85,7 @@ fn (opt Optional) encode_with_rule(rule EncodingRule) ![]u8 {
 }
 
 fn (opt Optional) into_element() !Element {
-	match tag.class {
+	match opt.tag.class {
 		.universal {
 			return parse_universal(opt.tag, opt.content)!
 		}
@@ -110,7 +110,7 @@ pub fn (opt Optional) into_t[T]() !T {
 	}
 	elem := opt.into_element()!
 	if elem is Optional {
-		return error('Optional.elem is also optional')
+		return error('elem is also optional')
 	}
 	return elem.into_object[T]()!
 }

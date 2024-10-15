@@ -47,46 +47,32 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 	if number < 0 || number > max_tag_number {
 		return error('Unallowed tag number, ${number} exceed limit')
 	}
-	match cls {
-		.universal {
-			if number > max_universal_tagnumber {
-				return error('Not a valid tag number for universal class=${number}')
-			}
-			// SEQUENCE (OF) or SET (OF) should be in constructed form
-			if number == int(TagType.sequence) || number == int(TagType.set) {
-				if !constructed {
-					return error('For SEQUENCE(OF) or SET(OF) type, should be in constructed form')
-				}
-			}
-			tag := Tag{
-				class:       cls
-				constructed: constructed
-				number:      number
-			}
-			return tag
+	// validates required criteria
+	if cls == .universal {
+		// UNIVERSAL tag number should below max_universal_tagnumber
+		if number > max_universal_tagnumber {
+			return error('Not a valid tag number for universal class=${number}')
 		}
-		.context_specific {
-			// in CONTEXT_SPECIFIC class, treats is as TaggedType in constructed form
+		// SEQUENCE (OF) or SET (OF) should be in constructed form
+		if number == int(TagType.sequence) || number == int(TagType.set) {
 			if !constructed {
-				return error('Context Specific should be in constructed form')
+				return error('For SEQUENCE(OF) or SET(OF) type, should be in constructed form')
 			}
-			tag := Tag{
-				class:       cls
-				constructed: constructed
-				number:      number
-			}
-			return tag
-		}
-		else {
-			// Otherwise, just returns as is
-			tag := Tag{
-				class:       cls
-				constructed: constructed
-				number:      number
-			}
-			return tag
 		}
 	}
+	if cls == .context_specific {
+		// in CONTEXT_SPECIFIC class, treats is as tagged type in constructed form
+		if !constructed {
+			return error('Context Specific should be in constructed form')
+		}
+	}
+	// otherwise, ok
+	tag := Tag{
+		class:       cls
+		constructed: constructed
+		number:      number
+	}
+	return tag
 }
 
 // primitive creates universal class of primitive tag

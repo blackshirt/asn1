@@ -33,6 +33,20 @@ fn (mut p Parser) read_length() !Length {
 	return length
 }
 
+fn (mut p Parser) read_bytes(length int) ![]u8 {
+	if length > p.data.len {
+		return error('Parser: too short data to read ${length} bytes')
+	}
+	result := p.data[0..length]
+	rest := if length == p.data.len { []u8{} } else { unsafe { p.data[length..] } }
+	p.data = rest
+	return result
+}
+
+fn (mut p Parser) read_element[T]() !T {
+	return T.parse(mut p)
+}
+
 fn (mut p Parser) read_tlv() !Element {
 	tag := p.read_tag()!
 	length := p.read_length()!
@@ -45,23 +59,13 @@ fn (mut p Parser) read_tlv() !Element {
 		.application {
 			return parse_application(tag, content)!
 		}
-		.contex_specific {
+		.context_specific {
 			return parse_context_specific(tag, content)!
 		}
 		.private {
 			return parse_private(tag, content)!
 		}
 	}
-}
-
-fn (mut p Parser) read_bytes(length int) ![]u8 {
-	if length > p.data.len {
-		return error('Parser: too short data to read ${length} bytes')
-	}
-	result := p.data[0..length]
-	rest := if length == p.data.len { []u8{} } else { unsafe { p.data[length..] } }
-	p.data = rest
-	return result
 }
 
 fn (mut p Parser) finish() ! {
@@ -72,10 +76,6 @@ fn (mut p Parser) finish() ! {
 
 fn (mut p Parser) is_empty() bool {
 	return p.data.len == 0
-}
-
-fn (mut p Parser) read_element[T]() !T {
-	return T.parse(mut p)
 }
 
 pub fn parse_single[T](data []u8) !T {

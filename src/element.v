@@ -152,7 +152,7 @@ fn (el Element) into_optional_with_present(present bool) !Optional {
 	if el is Optional {
 		return error('already optional element')
 	}
-	mut opt := new_optional(el)
+	mut opt := new_optional(el)!
 	return opt.with_present(present)
 }
 
@@ -375,6 +375,59 @@ fn (el Element) equal_payload(other Element) bool {
 	return constant_time_compare(x, y) == 1
 }
 
+fn Element.parse(mut p Parser) !Element {
+	el := p.read_tlv()!
+	return el
+}
+
+fn Element.decode(src []u8) !(Element, i64) {
+	el, pos := Element.decode_with_rule(src, 0, .der)!
+	return el, pos
+}
+
+// decode deserializes back bytes in src from offet `loc` into Element.
+// Basically, its tries to parse a Universal class Element when it is possible.
+fn Element.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Element, i64) {
+	tag, length_pos := Tag.decode_with_rule(src, loc, rule)!
+	length, content_pos := Length.decode_with_rule(src, length_pos, rule)!
+	// get the bytes
+	bytes := if length == 0 {
+		[]u8{}
+	} else {
+		if content_pos == src.len {
+			[]u8{}
+		} else {
+			unsafe { src[content_pos..content_pos + length] }
+		}
+	}
+	next_pos := content_pos + length
+
+	match tag.class {
+		.universal {
+			if tag.constructed {
+				elem := parse_universal_constructed(tag, bytes)!
+				return elem, next_pos
+			}
+			elem := parse_universal_primitive(tag, bytes)!
+			return elem, next_pos
+		}
+		.application {
+			app := parse_application(tag, bytes)!
+			return app, next_pos
+		}
+		.context_specific {
+			ctx := parse_context_specific(tag, bytes)!
+			return ctx, next_pos
+		}
+		.private {
+			prv := parse_private(tag, bytes)!
+			return prv, next_pos
+		}
+	}
+}
+
+// ElementList
+//
 // ElementList is arrays of Element
 // Many places maybe required this wells, likes Sequence or Set fields
 type ElementList = []Element
@@ -409,8 +462,8 @@ fn ElementList.from_bytes(src []u8) ![]Element {
 	}
 	mut i := i64(0)
 	for i < src.len {
-		el, _ := Element.decode_with_rule(src, i, .der)!
-		i += el.encoded_len()
+		el, pos := Element.decode_with_rule(src, i, .der)!
+		i = pos
 		els << el
 	}
 	if i > src.len {
@@ -422,109 +475,12 @@ fn ElementList.from_bytes(src []u8) ![]Element {
 	return els
 }
 
-fn Element.parse(mut p Parser) !Element {
-	el := p.read_tlv()!
-	match el.tag().tag_class() {
-		.universal {
-			if el.tag().is_constructed() {
-				return parse_universal_constructed(el.tag(), el.payload()!)!
-			}
-			return parse_universal_primitive(el.tag(), el.payload()!)!
-		}
-		.application {
-			return el as ApplicationElement
-		}
-		.context_specific {
-			if !el.tag().is_constructed() {
-				return error('Context should be constructed')
-			}
-		}
-		.private {
-			return el as PrivateELement
-		}
-	}
-	return el
-}
-
-fn Element.decode(src []u8) !(Element, i64) {
-	el, pos := Element.decode_with_rule(src, 0, .der)!
-	return el, pos
-}
-
-// decode deserializes back bytes in src from offet `loc` into Element.
-// Basically, its tries to parse a Universal class Element when it is possible.
-fn Element.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Element, i64) {
-	tag, length_pos := Tag.decode_with_rule(src, loc, rule)!
-	length, content_pos := Length.decode_with_rule(src, length_pos, rule)!
-	bytes := if length == 0 {
-		[]u8{}
-	} else {
-		unsafe { src[content_pos..content_pos + length] }
-	}
-	next_pos := content_pos + length
-
-	match tag.tag_class() {
-		.universal {
-			if tag.is_constructed() {
-				elem := parse_universal_constructed(tag, bytes)!
-				return elem, next_pos
-			}
-			elem := parse_universal_primitive(tag, bytes)!
-			return elem, next_pos
-		}
-		.application {
-			app := parse_application(tag, bytes)!
-			return app, next_pos
-		}
-		.context_specific {
-			ctx := parse_context_specific(tag, bytes)!
-			return ctx, next_pos
-		}
-		.private {
-			prv := parse_private(tag, bytes)!
-			return prv, next_pos
-		}
-	}
-}
-
-/*
-
-
-// hold_different_tag checks whether this array of Element
-// contains any different tag, benefit for checking whether the type
-// with this elements is sequence or sequence of type.
-fn (els []Element) hold_different_tag() bool {
-	// if els has empty length we return false, so we can treat
-	// it as a regular sequence or set.
-	if els.len == 0 {
-		return false
-	}
-	// when this return true, there is nothing in elements
-	// has same tag for all items, ie, there are some item
-	// in the elements hold the different tag.
-	tag0 := els[0].tag()
-	return els.any(it.tag() != tag0)
-}
-
-// contains checks whether this array of Element contains the Element el
-fn (els []Element) contains(el Element) bool {
-	for e in els {
-		if !el.equal_with(el) {
-			return false
-		}
-	}
-	return true
-}
-
-
-*/
-
 // decode_single decodes single element from bytes, its not allowing trailing data
-fn decode_single(src []u8) !Element {
-	return decode_single_with_option(src, '')
+fn decode(src []u8) !Element {
+	return decode_with_option(src, '')
 }
 
 // decode_single decodes single element from bytes with options support, its not allowing trailing data
-fn decode_single_with_option(src []u8, opt string) !Element {
+fn decode_with_option(src []u8, opt string) !Element {
 	return error('not implemented')
 }
