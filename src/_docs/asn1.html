@@ -79,19 +79,15 @@
 			<div class="title"><h2>fn build_payload <a href="#build_payload">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> build_payload<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span>val <span class="token builtin">T</span><span class="token punctuation">,</span> kd KeyDefault<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
-<p><code>build_payload</code> build bytes payload for some structures contains field of Elements. Consider this examples from RFC 5280 defines schema.</p><pre><code class="language-v"> Certificate  <span class="token punctuation">:</span><span class="token operator">:=</span>  <span class="token symbol">SEQUENCE</span>  <span class="token punctuation">{</span>
+<p><code>build_payload</code> builds bytes of payload for some structures contains field of Elements. Consider this examples from RFC 5280 defines schema.</p><pre><code class="language-v"> Certificate  <span class="token punctuation">:</span><span class="token operator">:=</span>  <span class="token symbol">SEQUENCE</span>  <span class="token punctuation">{</span>
     tbsCertificate       TBSCertificate<span class="token punctuation">,</span>
     signatureAlgorithm   AlgorithmIdentifier<span class="token punctuation">,</span>
     signatureValue       BIT STRING  <span class="token punctuation">}</span></code></pre><p>where your structure defined as:.</p><pre><code class="language-v"><span class="token keyword">struct</span> <span class="token symbol">Certificate</span> <span class="token punctuation">{</span>
         tbs_certificate 	TBSCertificate
         signature_algorithm	AlgorithmIdentifier
         signature_value		BitString
-<span class="token punctuation">}</span><span class="token char">``</span><span class="token char">`
-
-usually you can do.
-
-`</span><span class="token char">``</span>v
-cert <span class="token operator">:=</span> instance of Certificate payload <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>build_payload<span class="token punctuation">[</span>Certificate<span class="token punctuation">]</span><span class="token punctuation">(</span>cert<span class="token punctuation">)</span><span class="token operator">!</span></code></pre><p>and then you can use the produced payload.</p>
+<span class="token punctuation">}</span></code></pre><p>Usually you can do.</p><pre><code class="language-v">cert <span class="token operator">:=</span> Certificate<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">!</span>
+payload <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>build_payload<span class="token punctuation">[</span>Certificate<span class="token punctuation">]</span><span class="token punctuation">(</span>cert<span class="token punctuation">)</span><span class="token operator">!</span></code></pre><p>and then you can use the produced payload.</p>
 
 </section>
 
@@ -256,7 +252,7 @@ cert <span class="token operator">:=</span> instance of Certificate payload <spa
 			<div class="title"><h2>fn ContextElement.new <a href="#ContextElement.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> ContextElement<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>mode TaggedMode<span class="token punctuation">,</span> tagnum <span class="token builtin">int</span><span class="token punctuation">,</span> inner Element<span class="token punctuation">)</span> <span class="token operator">!</span>ContextElement</code></pre>
-
+<p>ContextElement.new creates a new tagged type of ContextElement from some element in inner.</p>
 
 </section>
 
@@ -1903,7 +1899,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 15 Oct 2024 08:43:20</div>
+						<div class="footer">Powered by vdoc. Generated on: 15 Oct 2024 08:48:32</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#build_payload">fn build_payload</a>        <ul>

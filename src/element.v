@@ -288,7 +288,7 @@ fn (el Element) wrap_with_rule(cls TagClass, tagnum int, mode TaggedMode, rule E
 // see `build_payload` below.
 pub type KeyDefault = map[string]Element
 
-// `build_payload` build bytes payload for some structures contains field of Elements.
+// `build_payload` builds bytes of payload for some structures contains field of Elements.
 // Consider this examples from RFC 5280 defines schema.
 //  ```v
 // Certificate  ::=  SEQUENCE  {
@@ -302,12 +302,13 @@ pub type KeyDefault = map[string]Element
 // 		tbs_certificate 	TBSCertificate
 //		signature_algorithm	AlgorithmIdentifier
 // 		signature_value		BitString
-// }```
+// }
+// ```
 //
-// usually you can do.
+// Usually you can do.
 //
 // ```v
-// cert := instance of Certificate
+// cert := Certificate.new()!
 // payload := asn1.build_payload[Certificate](cert)!
 // ```
 //

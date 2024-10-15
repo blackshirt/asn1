@@ -41,13 +41,13 @@ mut:
 	mode    ?TaggedMode // mode of tagged type
 }
 
+// ContextElement.new creates a new tagged type of ContextElement from some element in inner.
 pub fn ContextElement.new(mode TaggedMode, tagnum int, inner Element) !ContextElement {
 	tag := Tag.new(.context_specific, true, tagnum)!
-	mut content := []u8{}
-	if mode == .explicit {
-		content = encode(inner)!
+	content := if mode == .explicit {
+		encode(inner)!
 	} else {
-		content = inner.payload()!
+		inner.payload()!
 	}
 	ctx := ContextElement{
 		outer_tag: tag
