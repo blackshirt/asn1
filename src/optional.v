@@ -8,7 +8,7 @@ module asn1
 // (except for primitive type values in PER which are required by the PER standard to be absent in the encoding),
 // while with others (like DER) the DEFAULT value is NEVER encoded. For all encoding rules,
 // if the component that has a DEFAULT value is not encoded the receiving application must behave as though the DEFAULT value had been encoded.
-@[noinit; heap]
+@[heap; noinit]
 pub struct Optional {
 	// underlying element marked as an optional
 	tag     Tag
@@ -22,7 +22,7 @@ mut:
 }
 
 fn (opt Optional) validate() ! {
-	/* 
+	/*
 	if opt.has_default && opt.default_value == none {
 		return error('Optional with has_default but default_value is none')
 	}
@@ -31,13 +31,13 @@ fn (opt Optional) validate() ! {
 		if opt.elem.tag() != val.tag() {
 			return error('default value with different tag is not allowed')
 		}
-	} 
+	}
 	*/
 }
 
 pub fn new_optional(el Element) !Optional {
 	return Optional{
-		tag: el.tag()
+		tag:     el.tag()
 		content: el.payload()!
 	}
 }
@@ -74,7 +74,10 @@ pub fn (opt Optional) encode() ![]u8 {
 
 fn (opt Optional) encode_with_rule(rule EncodingRule) ![]u8 {
 	if opt.present {
-		elem := Asn1Element{tag: opt.tag, content: opt.content}
+		elem := Asn1Element{
+			tag:     opt.tag
+			content: opt.content
+		}
 		return encode_with_rule(elem, .der)!
 	}
 	// not present
@@ -82,7 +85,7 @@ fn (opt Optional) encode_with_rule(rule EncodingRule) ![]u8 {
 }
 
 fn (opt Optional) into_element() !Element {
-    match tag.class {
+	match tag.class {
 		.universal {
 			return parse_universal(opt.tag, opt.content)!
 		}

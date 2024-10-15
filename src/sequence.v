@@ -146,7 +146,7 @@ fn Sequence.from_bytes(bytes []u8) !Sequence {
 	return seq
 }
 
-// set_max_size sets maximal size of this sequence fielda 
+// set_max_size sets maximal size of this sequence fielda
 pub fn (mut seq Sequence) set_max_size(size int) ! {
 	if size <= 0 {
 		return error('provides with correct limit')
@@ -209,7 +209,7 @@ pub fn (seq Sequence) into_sequence_of[T]() !SequenceOf[T] {
 	return sqof
 }
 
-// SEQUENCE OF 
+// SEQUENCE OF
 // T should fullfill Element interface
 // generic type aliases are not yet implemented
 @[heap; noinit]

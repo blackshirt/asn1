@@ -37,7 +37,7 @@ fn (mut p Parser) read_tlv() !Element {
 	tag := p.read_tag()!
 	length := p.read_length()!
 	content := p.read_bytes(length)!
-    
+
 	match tag.class {
 		.universal {
 			return parse_universal(tag, content)!
@@ -59,7 +59,7 @@ fn (mut p Parser) read_bytes(length int) ![]u8 {
 		return error('Parser: too short data to read ${length} bytes')
 	}
 	result := p.data[0..length]
-	rest := if length == p.data.len { []u8{} } else { unsafe { p.data[length..] } )
+	rest := if length == p.data.len { []u8{} } else { unsafe { p.data[length..] } }
 	p.data = rest
 	return result
 }
