@@ -21,13 +21,13 @@ const default_integer_tag = Tag{.universal, false, int(TagType.integer)}
 // Known big RSA keys is 4096 bits, ie, 512 bytes
 const max_integer_length = 2048
 
-// Integer represent Universal class of arbitrary length type of ASN.1 INTEGER
+// Integer represent Universal class of arbitrary length type of ASN.1 INTEGER.
 // The encoding of an integer value shall be primitive.
 // If the contents octets of an integer value encoding consist of more than one octet,
-// then the bits of the first octet and bit 8 of the second octet:
-// 	a) shall not all be ones; and
+// then the bits of the first octet and bit 8 of the second octet.
+// 	a) shall not all be ones; and.
 // 	b) shall not all be zero.
-// NOTE – These rules ensure that an integer value is always encoded in the smallest possible number of octets
+// NOTE – These rules ensure that an integer value is always encoded in the smallest possible number of octets.
 @[heap; noinit]
 pub struct Integer {
 mut:
@@ -53,7 +53,7 @@ fn (v IntValue) str() string {
 	}
 }
 
-// bytes get the bytes representation from underlying IntValue
+// bytes get the bytes representation from underlying IntValue.
 fn (v IntValue) bytes() []u8 {
 	match v {
 		i64 {
@@ -80,14 +80,14 @@ fn (v IntValue) bytes() []u8 {
 	}
 }
 
-// from_i64 creates new a ASN.1 Integer from i64 v
+// from_i64 creates new a ASN.1 Integer from i64 v.
 pub fn Integer.from_i64(v i64) Integer {
 	return Integer{
 		value: IntValue(v)
 	}
 }
 
-// from_int creates a new ASN.1 Integer from int v
+// from_int creates a new ASN.1 Integer from int v.
 pub fn Integer.from_int(v int) Integer {
 	return Integer{
 		value: IntValue(i64(v))

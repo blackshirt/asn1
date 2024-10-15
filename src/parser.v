@@ -91,6 +91,15 @@ pub fn (mut p Parser) is_empty() bool {
 	return p.data.len == 0
 }
 
+// read_from reads up to buf.len bytes, places them into buf and then appends
+// to current Parser data.
+pub fn (mut p Parser) read_from(r io.Reader, mut buf []u8) !int {
+	n := r.read(buf)!
+	p.data << buf
+
+	return n
+}
+
 pub fn parse_single[T](data []u8) !T {
 	mut p := Parser.new(data)!
 	out := p.read_element[T]()!

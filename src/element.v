@@ -288,14 +288,14 @@ fn (el Element) wrap_with_rule(cls TagClass, tagnum int, mode TaggedMode, rule E
 // see `build_payload` below.
 pub type KeyDefault = map[string]Element
 
-// `build_payload` build bytes payload for some structures contains field of Elements
-// consider examples from rfc 5280 defines schema
+// `build_payload` build bytes payload for some structures contains field of Elements.
+// Consider this examples from RFC 5280 defines schema.
 //  ```Certificate  ::=  SEQUENCE  {
 //      tbsCertificate       TBSCertificate,
 //      signatureAlgorithm   AlgorithmIdentifier,
-//      signatureValue       BIT STRING  }```
-//
-// where your structure defined as:
+//      signatureValue       BIT STRING  }
+// ```
+// where your structure defined as:.
 // ```v
 // struct Certificate {
 // 		tbs_certificate 	TBSCertificate
@@ -303,13 +303,14 @@ pub type KeyDefault = map[string]Element
 // 		signature_value		BitString
 // }```
 //
-// usually you can do:
+// usually you can do.
 //
 // ```v
 // cert := instance of Certificate
-// payload := asn1.build_payload[Certificate](cert)!```
+// payload := asn1.build_payload[Certificate](cert)!
+// ```
 //
-// and then you can use the produced payload
+// and then you can use the produced payload.
 pub fn build_payload[T](val T, kd KeyDefault) ![]u8 {
 	mut out := []u8{}
 	$for field in val.fields {
