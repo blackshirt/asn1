@@ -6,7 +6,8 @@ module asn1
 import math.big
 import crypto.internal.subtle { constant_time_compare }
 
-const default_integer_tag = Tag{.universal, false, int(TagType.integer)}
+// The default tag of an universal ASN.1 INTEGER type with tag number 2.
+pub const default_integer_tag = Tag{.universal, false, int(TagType.integer)}
 
 // ASN.1 INTEGER.
 //
@@ -122,7 +123,7 @@ pub fn Integer.from_hex(x string) !Integer {
 
 // from_bytes creates a new ASN.1 Integer from bytes array in b.
 // Its try to parse bytes as in two's complement form. see `unpack_from_twoscomplement_bytes`
-pub fn Integer.from_bytes(b []u8) !Integer {
+fn Integer.from_bytes(b []u8) !Integer {
 	return Integer.unpack_from_twoscomplement_bytes(b)!
 }
 
@@ -163,10 +164,12 @@ fn (v Integer) bytes_len() int {
 	return b.len
 }
 
+// The tag of Integer type
 pub fn (v Integer) tag() Tag {
 	return default_integer_tag
 }
 
+// The payload of Integer v
 pub fn (v Integer) payload() ![]u8 {
 	bytes, _ := v.pack_into_twoscomplement_form()!
 	return bytes
@@ -268,6 +271,23 @@ pub fn (v Integer) as_i64() !i64 {
 	return error('Integer not hold i64 type')
 }
 
+// parse tries to read and parse into Integer type or return error on fails.
+pub fn Integer.parse(mut p Parser) !Integer {
+	tag := p.read_tag()!
+	if !tag.equal(default_integer_tag) {
+		return error('Get unexected non Integer tag')
+	}
+	length := p.read_length()!
+	if length < 1 {
+		return error('Get length < 1 for Integer length')
+	}
+	bytes := p.read_bytes(length)!
+	ret := Integer.from_bytes(bytes)!
+
+	return ret
+}
+
+// decode tries to decode bytes array into Integer type or error on fails
 pub fn Integer.decode(bytes []u8) !(Integer, i64) {
 	return Integer.decode_with_rule(bytes, 0, .der)!
 }

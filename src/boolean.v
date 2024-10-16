@@ -3,15 +3,15 @@
 // that can be found in the LICENSE file.
 module asn1
 
+// The default tag of Universal ASN.1 BOOLEAN type with tag number 1.
+pub const default_boolean_tag = Tag{.universal, false, int(TagType.boolean)}
+
 // ASN.1 BOOLEAN
 //
 // A Boolean value can take true or false.
 // ASN.1 DER encoding restricts encoding of boolean true value into 0xff
 // and otherwise, encodes into zero (0x00) for false value.
 // The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.
-
-const default_boolean_tag = Tag{.universal, false, int(TagType.boolean)}
-
 @[noinit]
 pub struct Boolean {
 mut:
@@ -32,12 +32,13 @@ pub fn Boolean.new(value bool) Boolean {
 }
 
 // from_u8 creates a new Boolean value from single byte value.
-pub fn Boolean.from_u8(value u8) Boolean {
+fn Boolean.from_u8(value u8) Boolean {
 	return Boolean{
 		value: value
 	}
 }
 
+// The tag of Boolean type
 pub fn (v Boolean) tag() Tag {
 	return default_boolean_tag
 }
@@ -54,6 +55,7 @@ fn (v Boolean) str() string {
 	}
 }
 
+// The payload of Boolean type in .der rule.
 pub fn (b Boolean) payload() ![]u8 {
 	return b.payload_with_rule(.der)!
 }
@@ -72,10 +74,11 @@ fn parse_boolean(mut p Parser) !Boolean {
 	return Boolean.parse(mut p)!
 }
 
+// parse tries to read a Boolean type from parser or return error on fails
 pub fn Boolean.parse(mut p Parser) !Boolean {
 	tag := p.read_tag()!
 	if !tag.equal(default_boolean_tag) {
-		return error('Bad boolean tag')
+		return error('Get unexpected non boolean tag')
 	}
 	length := p.read_length()!
 	if length != 1 {
@@ -122,7 +125,7 @@ fn Boolean.from_bytes_with_rule(bytes []u8, rule EncodingRule) !Boolean {
 
 // value gets the boolean value represented by underlying byte value
 // It returnz FALSE ob the byte == 0x00 and TRUE otherwise.
-fn (b Boolean) value() bool {
+pub fn (b Boolean) value() bool {
 	return b.value_with_rule(.der)
 }
 
@@ -144,6 +147,7 @@ fn (b Boolean) value_with_rule(rule EncodingRule) bool {
 	}
 }
 
+// decode tries to decode bytes array into Booelan type or error on fails.
 pub fn Boolean.decode(src []u8) !(Boolean, i64) {
 	return Boolean.decode_with_rule(src, 0, .der)!
 }

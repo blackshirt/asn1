@@ -74,7 +74,7 @@ fn test_x509_certificate_version() ! {
 	// version         [0]  EXPLICIT Version DEFAULT v1,
 	// Version  ::=  INTEGER  {  v1(0), v2(1), v3(2)  }
 	val := Integer.from_int(2)
-	version := explicit_context(0, val)!
+	version := ContextElement.explicit_context(0, val)!
 
 	out := encode(version)!
 	exp := [u8(0xA0), 0x03, 0x02, 0x01, 0x02]

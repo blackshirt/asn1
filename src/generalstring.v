@@ -3,8 +3,8 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// Default tag of GENERALSTRING type
-const default_generalstring_tag = Tag{.universal, false, int(TagType.generalstring)}
+// The default tag of Universal GENERALSTRING type with tag number 27
+pub const default_generalstring_tag = Tag{.universal, false, int(TagType.generalstring)}
 
 // ASN.1 GENERALSTRING Handling
 // It may contain any characters from a "G" and "C" set of any standardized character sets.
@@ -39,10 +39,12 @@ fn (gst GeneralString) str() string {
 	return 'GeneralString: (${gst.value})'
 }
 
+// The tag of GeneralString
 pub fn (gst GeneralString) tag() Tag {
 	return default_generalstring_tag
 }
 
+// payload of the GeneralString generated with .der rule.
 pub fn (gst GeneralString) payload() ![]u8 {
 	return gst.payload_with_rule(.der)!
 }
@@ -67,6 +69,7 @@ fn GeneralString.from_bytes(b []u8) !GeneralString {
 	}
 }
 
+// parse tries to read into GeneralString from parser p or return error on fails.
 pub fn GeneralString.parse(mut p Parser) !GeneralString {
 	tag := p.read_tag()!
 	if !tag.equal(default_generalstring_tag) {
@@ -80,6 +83,7 @@ pub fn GeneralString.parse(mut p Parser) !GeneralString {
 	return res
 }
 
+// decode tries to decode bytes array into GeneralString or return error on fails.
 pub fn GeneralString.decode(src []u8) !(GeneralString, i64) {
 	return GeneralString.decode_with_rule(src, .der)!
 }

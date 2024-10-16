@@ -3,15 +3,21 @@
 // that can be found in the LICENSE file.
 module asn1
 
+// The default tag of ASN.1 NULL type with tag number 5.
 const default_null_tag = Tag{.universal, false, int(TagType.null)}
 
 // ASN.1 NULL TYPE
+// The ASN.1 NULL type is a placeholder used when there is no value.
+// It's a simple, non-string type with the UNIVERSAL TAG number 5.
+// The NULL type can be used in situations where the presence of a type is important, but no concrete value is needed.
 pub struct Null {}
 
+// `Null.new` creates a Null
 pub fn Null.new() Null {
 	return Null{}
 }
 
+// tag is the tag of Null type.
 pub fn (n Null) tag() Tag {
 	return default_null_tag
 }
@@ -25,15 +31,22 @@ fn (n Null) str() string {
 	return 'NULL'
 }
 
-// Null.parse read Null from ongoing parser
+// `Null.parse` tries to read into Null type from ongoing parser.
 pub fn Null.parse(mut p Parser) !Null {
-	null, next := Null.decode(p.data)!
-	rest := if next >= p.data.len { []u8{} } else { unsafe { p.data[next..] } }
-	p.data = rest
+	tag := p.read_tag()!
+	if !tag.equal(default_null_tag) {
+		return error('Get unexpected null tag')
+	}
+	length := p.read_length()!
+	if length != 0 {
+		return error('Get unexpected non-null length for Null type')
+	}
+	null := Null.new()
+
 	return null
 }
 
-// Null.decode read Null from bytes
+// Null.decode read Null from bytes.
 pub fn Null.decode(bytes []u8) !(Null, i64) {
 	tag, length_pos := Tag.decode(bytes)!
 	if !tag.equal(default_null_tag) {

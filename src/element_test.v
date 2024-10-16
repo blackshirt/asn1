@@ -32,11 +32,11 @@ fn (t TestStruct) tag() Tag {
 
 fn (t TestStruct) payload() ![]u8 {
 	kd := KeyDefault(map[string]Element{})
-	out := build_payload[TestStruct](t, kd)!
+	out := make_payload[TestStruct](t, kd)!
 	return out
 }
 
-fn test_struct_build_payload() ! {
+fn test_struct_make_payload() ! {
 	st := TestStruct{
 		a: MyOct('aku')
 		b: MyStr('dia')

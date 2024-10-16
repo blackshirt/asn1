@@ -8,21 +8,24 @@ const max_oid_length = 128
 const default_oid_tag = Tag{.universal, false, int(TagType.oid)}
 
 // ASN.1 ObjectIdentifier
+// The ASN. 1 OBJECT IDENTIFIER type is used when you need to provide a unique identifier.
 @[noinit]
 pub struct Oid {
 mut:
 	value []int
 }
 
+// The tag of Oid type.
 pub fn (oid Oid) tag() Tag {
 	return default_oid_tag
 }
 
+// The payload of Oid type
 pub fn (oid Oid) payload() ![]u8 {
 	return oid.pack_into_bytes()!
 }
 
-// Oid.new creates new Oid from . separated string
+// `Oid.new` creates a new Oid type from dots (`.`) separated string.
 pub fn Oid.new(s string) !Oid {
 	if s.len < 2 {
 		return error('Oid: bad string oid length')
@@ -42,6 +45,7 @@ pub fn Oid.new(s string) !Oid {
 	return oid
 }
 
+// `Oid.from_ints` creates a new Oid type from arrays of int.
 pub fn Oid.from_ints(src []int) !Oid {
 	// allowed value of first int was 0, 1 or 2,
 	// and when first=2, second int was not limited.

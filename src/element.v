@@ -50,7 +50,7 @@ fn (el Element) encode_with_string_options(opt string, rule EncodingRule) ![]u8 
 		out := encode_with_rule(el, rule)!
 		return out
 	}
-	fo := parse_string_option(opt)!
+	fo := FieldOptions.from_string(opt)!
 	out := el.encode_with_field_options(fo, rule)!
 	return out
 }
@@ -285,10 +285,10 @@ fn (el Element) wrap_with_rule(cls TagClass, tagnum int, mode TaggedMode, rule E
 
 // KeyDefault is map of string (field.name) into Element for element with default semantic.
 // its is to be used for building payload of complex structures like sequence.
-// see `build_payload` below.
+// see `make_payload` below.
 pub type KeyDefault = map[string]Element
 
-// `build_payload` builds bytes of payload for some structures contains field of Elements.
+// `make_payload` builds bytes of payload for some structures contains field of Elements.
 // Consider this examples from RFC 5280 defines schema.
 //  ```v
 // Certificate  ::=  SEQUENCE  {
@@ -309,18 +309,18 @@ pub type KeyDefault = map[string]Element
 //
 // ```v
 // cert := Certificate.new()!
-// payload := asn1.build_payload[Certificate](cert)!
+// payload := asn1.make_payload[Certificate](cert)!
 // ```
 //
 // and then you can use the produced payload.
-pub fn build_payload[T](val T, kd KeyDefault) ![]u8 {
+pub fn make_payload[T](val T, kd KeyDefault) ![]u8 {
 	mut out := []u8{}
 	$for field in val.fields {
 		// only serialiaze field that implement interfaces
 		$if field.typ is Element {
 			// if there attributes option
 			if field.attrs.len != 0 {
-				mut fo := parse_attrs_to_field_options(field.attrs)!
+				mut fo := FieldOptions.from_attrs(field.attrs)!
 				// TODO: add keyDefault support
 				if fo.has_default {
 					// install default by getting default element from map

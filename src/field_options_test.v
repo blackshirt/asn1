@@ -21,7 +21,7 @@ fn test_parse_string_option() ! {
 		StringOption{'application:5; optional', none, 'application', 5, true, false, 'explicit', false},
 	]
 	for item in data {
-		fo := parse_string_option(item.src) or {
+		fo := FieldOptions.from_string(item.src) or {
 			assert err == item.err
 			continue
 		}

@@ -19,7 +19,7 @@ module asn1
 
 // max_definite_length_count is a limit tells how many bytes to represent this length.
 // We're going to limit this to 6 bytes following when the length is in long-definite form.
-const max_definite_length_count = 126
+const max_definite_length_count = 6
 const max_definite_length_value = max_i64
 
 // Length represent ASN.1 length value
@@ -37,8 +37,8 @@ pub fn Length.new(v i64) !Length {
 	return Length(v)
 }
 
-// Length.from_bytes read length from bytes array and return the length
-// and the rest of remaining bytes
+// Length.from_bytes tries to read length from bytes array and return the length
+// and the rest of remaining bytes on success, or error on fails.
 pub fn Length.from_bytes(bytes []u8) !(Length, []u8) {
 	length, next := Length.decode(bytes)!
 	if next < bytes.len {
@@ -51,7 +51,7 @@ pub fn Length.from_bytes(bytes []u8) !(Length, []u8) {
 	return error('Length: too short data')
 }
 
-// encode serializes Length v into bytes in .der rule
+// encode serializes the length v into bytes array stored into buffer buf in .der rule.
 pub fn (v Length) encode(mut dst []u8) ! {
 	v.encode_with_rule(mut dst, .der)!
 }

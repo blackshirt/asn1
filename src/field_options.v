@@ -8,7 +8,7 @@ module asn1
 const max_string_option_length = 255
 const max_attributes_length = 5
 
-// FieldOptions is a structure to accomodate and allowing configures your complex structures 
+// FieldOptions is a structure to accomodate and allowing configures your complex structures
 // through string or arrays of string stored in FieldOptions fields.
 // For example, you can tagging your fields of some element with tagging like `@[context_specific:10; optional; mode: explicit]`.
 // Its will be parsed and can be used to drive encoding or decoding of Element.
@@ -71,7 +71,11 @@ fn (fo &FieldOptions) validate_default_part() ! {
 	}
 }
 
-fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
+// install_default tries to install and sets element el as a default value when has_default flag of FieldOptions
+// has been set to true, or error if has_default is false.
+// When default_value has been set with some value before this, its would return error until you force it
+// by set force to true.
+pub fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 	if fo.has_default {
 		if fo.default_value == none {
 			fo.default_value = el
@@ -87,10 +91,10 @@ fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 	return error('you can not install default value when has_default being not set')
 }
 
-// `parse_string_option` parses string as an attribute of field options.
+// `from_string` parses string as an attribute of field options.
 // Its allows string similar to `application:4; optional; has_default` to be treated as an field options.
 // See FieldOptions in `field_options.v` for more detail.
-pub fn parse_string_option(s string) !&FieldOptions {
+pub fn FieldOptions.from_string(s string) !&FieldOptions {
 	if s.len == 0 {
 		return &FieldOptions{}
 	}
@@ -101,13 +105,13 @@ pub fn parse_string_option(s string) !&FieldOptions {
 	trimmed := s.trim_space()
 	attrs := trimmed.split(';')
 
-	opt := parse_attrs_to_field_options(attrs)!
+	opt := FieldOptions.from_attrs(attrs)!
 
 	return opt
 }
 
-// `parse_attrs_to_field_options` parses and validates []string into FieldOptions.
-pub fn parse_attrs_to_field_options(attrs []string) !&FieldOptions {
+// `from_attrs` parses and validates []string into FieldOptions.
+pub fn FieldOptions.from_attrs(attrs []string) !&FieldOptions {
 	mut fo := &FieldOptions{}
 	if attrs.len == 0 {
 		return fo

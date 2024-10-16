@@ -77,12 +77,12 @@ fn (mut ctx ContextElement) set_ctx_mode(mode TaggedMode) ! {
 }
 
 // `explicit_context` creates new ContextElement with explicit mode.
-pub fn explicit_context(tagnum int, inner Element) !ContextElement {
+pub fn ContextElement.explicit_context(tagnum int, inner Element) !ContextElement {
 	return ContextElement.new(.explicit, tagnum, inner)!
 }
 
 // implicit_context creates new ContextElement with implicit mode.
-pub fn implicit_context(tagnum int, inner Element) !ContextElement {
+pub fn ContextElement.implicit_context(tagnum int, inner Element) !ContextElement {
 	return ContextElement.new(.implicit, tagnum, inner)!
 }
 

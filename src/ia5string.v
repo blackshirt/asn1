@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// Default tag of IA5STRING type
+// The default tag of ASN.1 IA5STRING type with tag number 22
 const default_ia5string_tag = Tag{.universal, false, int(TagType.ia5string)}
 
 // ASN.1 IA5String type handling routine.
@@ -24,10 +24,12 @@ pub fn IA5String.new(s string) !IA5String {
 	}
 }
 
+// tag of IA5String type
 pub fn (v IA5String) tag() Tag {
 	return default_ia5string_tag
 }
 
+// payload of IA5String type
 pub fn (v IA5String) payload() ![]u8 {
 	if !v.value.is_ascii() {
 		return error('IA5String: contains non-ascii chars')

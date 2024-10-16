@@ -22,7 +22,8 @@ mut:
 	pad  u8 // numbers of unused bits
 }
 
-const default_bitstring_tag = Tag{.universal, false, int(TagType.bitstring)}
+// The tag of Universal BitString type, ie, with tag number 3
+pub const default_bitstring_tag = Tag{.universal, false, int(TagType.bitstring)}
 
 pub fn (bs BitString) tag() Tag {
 	return default_bitstring_tag
