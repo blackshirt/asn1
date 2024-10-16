@@ -3,9 +3,9 @@
 // that can be found in the LICENSE file.
 module asn1
 
-const default_visiblestring_tag = Tag{.universal, false, int(TagType.visiblestring)}
+pub const default_visiblestring_tag = Tag{.universal, false, int(TagType.visiblestring)}
 
-// ASN.1 VisibleString universal type
+// ASN.1 VisibleString universal type.
 // The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.
 //
 @[noinit]

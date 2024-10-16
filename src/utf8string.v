@@ -5,9 +5,9 @@ module asn1
 
 import encoding.utf8
 
-const default_utf8string_tag = Tag{.universal, false, int(TagType.utf8string)}
+pub const default_utf8string_tag = Tag{.universal, false, int(TagType.utf8string)}
 
-// Utf8String
+// ASN.1 Utf8String type.
 // UTF8 unicode charset
 //
 @[noinit]

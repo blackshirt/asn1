@@ -3,7 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// The default tag of Universal ASN.1 BOOLEAN type with tag number 1.
 pub const default_boolean_tag = Tag{.universal, false, int(TagType.boolean)}
 
 // ASN.1 BOOLEAN

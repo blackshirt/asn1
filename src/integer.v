@@ -6,7 +6,6 @@ module asn1
 import math.big
 import crypto.internal.subtle { constant_time_compare }
 
-// The default tag of an universal ASN.1 INTEGER type with tag number 2.
 pub const default_integer_tag = Tag{.universal, false, int(TagType.integer)}
 
 // ASN.1 INTEGER.

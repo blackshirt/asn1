@@ -3,7 +3,7 @@
 // that can be found in the LICENSE file.
 module asn1
 
-const default_set_tag = Tag{.universal, true, int(TagType.set)}
+pub const default_set_tag = Tag{.universal, true, int(TagType.set)}
 
 // SET and SET OF
 //

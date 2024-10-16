@@ -3,7 +3,10 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// PrintableString
+const printable_symbols = r"(')+,-./:=?".bytes()
+pub const default_printablestring_tag = Tag{.universal, false, int(TagType.printablestring)}
+
+// ASN.1 PRINTABLESTRING TYPE.
 //
 // PrintableString consists of:
 // Latin capital letters A, B, ... Z
@@ -11,9 +14,6 @@ module asn1
 // Digits 0, 1, ... 9
 // symbols:  (space) ' ( ) + , - . / : = ?
 //
-const printable_symbols = r"(')+,-./:=?".bytes()
-const default_printablestring_tag = Tag{.universal, false, int(TagType.printablestring)}
-
 @[noinit]
 pub struct PrintableString {
 pub:

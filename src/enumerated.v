@@ -3,7 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// athe default tag of ASN.1 ENUMERATED type.
 const default_enumerated_tag = Tag{.universal, false, int(TagType.enumerated)}
 
 // ENUMERATED.

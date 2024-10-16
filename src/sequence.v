@@ -3,6 +3,13 @@
 // that can be found in the LICENSE file.
 module asn1
 
+pub const default_sequence_tag = Tag{.universal, true, int(TagType.sequence)}
+
+// constant for sequence(of) and set(of) internal value
+const max_seqset_fields = 256 // max of seq size
+const max_seqset_bytes = (1 << 23 - 1) // 8 MB
+const default_seqset_fields = 64 // default size
+
 // SEQUENCE and SEQUENCE OF handling
 //
 // https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der
@@ -14,15 +21,6 @@ module asn1
 // Sequence structure can represents both SEQUENCE and SEQUENCE OF type.
 // The encoding of a sequence value shall be constructed.
 // in DER encoded of SEQUENCE or SET, never encode a default value.
-
-// default tag of Sequence(Of)
-const default_sequence_tag = Tag{.universal, true, int(TagType.sequence)}
-
-// constant for sequence(of) and set(of) internal value
-const max_seqset_fields = 256 // max of seq size
-const max_seqset_bytes = (1 << 23 - 1) // 8 MB
-const default_seqset_fields = 64 // default size
-
 @[noinit]
 pub struct Sequence {
 mut:

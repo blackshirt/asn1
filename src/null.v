@@ -3,8 +3,7 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// The default tag of ASN.1 NULL type with tag number 5.
-const default_null_tag = Tag{.universal, false, int(TagType.null)}
+pub const default_null_tag = Tag{.universal, false, int(TagType.null)}
 
 // ASN.1 NULL TYPE
 // The ASN.1 NULL type is a placeholder used when there is no value.

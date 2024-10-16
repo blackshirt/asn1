@@ -43,6 +43,8 @@ pub fn Optional.new(el Element) !Optional {
 	}
 }
 
+// set_default sets the default value of this optional. You should provide it with element
+// that has equal tag with the tag of this optional element or error otherwise.
 pub fn (mut opt Optional) set_default(el Element) ! {
 	if !opt.tag.equal(el.tag()) {
 		return error('default value with different tag is not allowed')
@@ -50,12 +52,9 @@ pub fn (mut opt Optional) set_default(el Element) ! {
 	opt.default_value = el
 }
 
-pub fn (mut opt Optional) with_default(el Element) ! {
-	opt.set_default(el)!
-}
-
-pub fn (mut opt Optional) with_present(present bool) {
-	opt.present = present
+// set_to_present make this optional present
+pub fn (mut opt Optional) set_to_present() {
+	opt.present = true
 }
 
 pub fn (opt Optional) tag() Tag {

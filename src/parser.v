@@ -65,20 +65,8 @@ pub fn (mut p Parser) read_tlv() !Element {
 	length := p.read_length()!
 	content := p.read_bytes(length)!
 
-	match tag.class {
-		.universal {
-			return parse_universal(tag, content)!
-		}
-		.application {
-			return parse_application(tag, content)!
-		}
-		.context_specific {
-			return parse_context_specific(tag, content)!
-		}
-		.private {
-			return parse_private(tag, content)!
-		}
-	}
+	elem := parse_element(tag, content)!
+	return elem
 }
 
 // finish end this parser or error if not empty.
@@ -95,7 +83,7 @@ pub fn (mut p Parser) is_empty() bool {
 
 // read_from reads up to buf.len bytes from reader r, places them into buf and then appends
 // to current Parser data.
-pub fn (mut p Parser) read_from(mut r io.Reader, mut buf []u8) !int {
+fn (mut p Parser) read_from(mut r io.Reader, mut buf []u8) !int {
 	n := r.read(mut buf)!
 	p.data << buf
 

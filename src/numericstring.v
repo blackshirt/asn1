@@ -3,7 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// The default tag of ASN.1 NUMERICSTRING type with tag number 18.
 pub const default_numericstring_tag = Tag{.universal, false, int(TagType.numericstring)}
 
 // NumericString.

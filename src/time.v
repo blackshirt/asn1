@@ -3,8 +3,8 @@
 // that can be found in the LICENSE file.
 module asn1
 
-const default_utctime_tag = Tag{.universal, false, int(TagType.utctime)}
-const default_generalizedtime_tag = Tag{.universal, false, int(TagType.generalizedtime)}
+pub const default_utctime_tag = Tag{.universal, false, int(TagType.utctime)}
+pub const default_generalizedtime_tag = Tag{.universal, false, int(TagType.generalizedtime)}
 
 // UtcTime
 // -------

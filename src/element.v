@@ -137,19 +137,21 @@ pub fn (el Element) length() !int {
 
 // into_optional turns this element into Optional
 fn (el Element) into_optional() !Element {
-	return el.into_optional_with_present(false)!
+	if el is Optional {
+		return error('already optional element')
+	}
+	opt := Optional.new(el)!
+	return opt
 }
 
-// into_optional_with_present turns this element into Optional.
-// Its accepts present to mark this optional should be present, ie, negates optionality.
-// if not sure, just set to false
-fn (el Element) into_optional_with_present(present bool) !Element {
+// into_optional_to_present turns this element into Optional with presences semantic.
+fn (el Element) into_optional_to_present() !Element {
 	// maybe removed in the future
 	if el is Optional {
 		return error('already optional element')
 	}
 	mut opt := Optional.new(el)!
-	opt.with_present(present)
+	opt.set_to_present()
 
 	return opt
 }
@@ -161,7 +163,7 @@ fn (el Element) apply_optional_options(fo FieldOptions) !Element {
 		return el
 	}
 	if fo.present {
-		return el.into_optional_with_present(true)!
+		return el.into_optional_to_present()!
 	}
 	return el.into_optional()!
 }

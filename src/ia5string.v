@@ -3,7 +3,6 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// The default tag of ASN.1 IA5STRING type with tag number 22
 const default_ia5string_tag = Tag{.universal, false, int(TagType.ia5string)}
 
 // ASN.1 IA5String type handling routine.

@@ -34,63 +34,6 @@ mut:
 	default_value ?Element
 }
 
-// validate validates FieldOptions to meet criteria
-fn (fo FieldOptions) validate() ! {
-	fo.validate_wrapper_part()!
-	fo.validate_default_part()!
-	// mode present without class wrapper present is error
-	if fo.cls == '' && fo.mode != '' {
-		return error('mode key presents without cls being setted')
-	}
-}
-
-fn (fo FieldOptions) validate_wrapper_part() ! {
-	if fo.cls != '' {
-		if !valid_tagclass_name(fo.cls) {
-			return error('you provides invalid cls')
-		}
-		// provides the tag number
-		if fo.tagnum <= 0 {
-			return error('provides with the correct tagnum')
-		}
-
-		// check when implicit
-		if fo.mode == 'implicit' {
-			if fo.inner <= 0 {
-				return error('inner tag number was not set in implicit mode')
-			}
-		}
-	}
-}
-
-fn (fo FieldOptions) validate_default_part() ! {
-	if fo.has_default {
-		if fo.default_value == none {
-			return error('has_default withoud default value')
-		}
-	}
-}
-
-// install_default tries to install and sets element el as a default value when has_default flag of FieldOptions
-// has been set to true, or error if has_default is false.
-// When default_value has been set with some value before this, its would return error until you force it
-// by set force to true.
-pub fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
-	if fo.has_default {
-		if fo.default_value == none {
-			fo.default_value = el
-			return
-		}
-		// not nil
-		if !force {
-			return error('set force to overide')
-		}
-		// replace the old one, or should we check its matching tag ?
-		fo.default_value = el
-	}
-	return error('you can not install default value when has_default being not set')
-}
-
 // `from_string` parses string as an attribute of field options.
 // Its allows string similar to `application:4; optional; has_default` to be treated as an field options.
 // See FieldOptions in `field_options.v` for more detail.
@@ -186,6 +129,63 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 	}
 
 	return fo
+}
+
+// validate validates FieldOptions to meet criteria
+fn (fo FieldOptions) validate() ! {
+	fo.validate_wrapper_part()!
+	fo.validate_default_part()!
+	// mode present without class wrapper present is error
+	if fo.cls == '' && fo.mode != '' {
+		return error('mode key presents without cls being setted')
+	}
+}
+
+fn (fo FieldOptions) validate_wrapper_part() ! {
+	if fo.cls != '' {
+		if !valid_tagclass_name(fo.cls) {
+			return error('you provides invalid cls')
+		}
+		// provides the tag number
+		if fo.tagnum <= 0 {
+			return error('provides with the correct tagnum')
+		}
+
+		// check when implicit
+		if fo.mode == 'implicit' {
+			if fo.inner <= 0 {
+				return error('inner tag number was not set in implicit mode')
+			}
+		}
+	}
+}
+
+fn (fo FieldOptions) validate_default_part() ! {
+	if fo.has_default {
+		if fo.default_value == none {
+			return error('has_default withoud default value')
+		}
+	}
+}
+
+// install_default tries to install and sets element el as a default value when has_default flag of FieldOptions
+// has been set to true, or error if has_default is false.
+// When default_value has been set with some value before this, its would return error until you force it
+// by set force to true.
+pub fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
+	if fo.has_default {
+		if fo.default_value == none {
+			fo.default_value = el
+			return
+		}
+		// not nil
+		if !force {
+			return error('set force to overide')
+		}
+		// replace the old one, or should we check its matching tag ?
+		fo.default_value = el
+	}
+	return error('you can not install default value when has_default being not set')
 }
 
 // parse 'application:number' format
