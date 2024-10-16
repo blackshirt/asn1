@@ -377,7 +377,7 @@ pub enum TagClass {
 
 // `TagClass.from_int` creates TagClass from integer v.
 // Its return a new TagClass on success or error on fails.
-pub fn TagClass.from_int(v int) !TagClass {
+fn TagClass.from_int(v int) !TagClass {
 	match v {
 		// vfmt off
 		0x00 { return .universal }
@@ -393,7 +393,7 @@ pub fn TagClass.from_int(v int) !TagClass {
 
 // `TagClass.from_string` creates a TagClass from string s.
 // Its return a new TagClass on success or error on fails.
-pub fn TagClass.from_string(s string) !TagClass {
+fn TagClass.from_string(s string) !TagClass {
 	match s {
 		// vfmt off
 		'universal' { return .universal }
@@ -563,7 +563,7 @@ pub enum TaggedMode {
 }
 
 // `from_string` creates TaggedMode from string s.
-pub fn TaggedMode.from_string(s string) !TaggedMode {
+fn TaggedMode.from_string(s string) !TaggedMode {
 	match s {
 		'explicit' { return .explicit }
 		'implicit' { return .implicit }

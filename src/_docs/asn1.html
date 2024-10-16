@@ -768,30 +768,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="TagClass.from_int" class="doc-node">
-			<div class="title"><h2>fn TagClass.from_int <a href="#TagClass.from_int">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> TagClass<span class="token punctuation">.</span><span class="token function">from_int</span><span class="token punctuation">(</span>v <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">!</span>TagClass</code></pre>
-<p><code>TagClass.from_int</code> creates TagClass from integer v. Its return a new TagClass on success or error on fails.</p>
-
-</section>
-
-		<section id="TagClass.from_string" class="doc-node">
-			<div class="title"><h2>fn TagClass.from_string <a href="#TagClass.from_string">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> TagClass<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>TagClass</code></pre>
-<p><code>TagClass.from_string</code> creates a TagClass from string s. Its return a new TagClass on success or error on fails.</p>
-
-</section>
-
-		<section id="TaggedMode.from_string" class="doc-node">
-			<div class="title"><h2>fn TaggedMode.from_string <a href="#TaggedMode.from_string">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> TaggedMode<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>TaggedMode</code></pre>
-<p><code>from_string</code> creates TaggedMode from string s.</p>
-
-</section>
-
 		<section id="UtcTime.decode" class="doc-node">
 			<div class="title"><h2>fn UtcTime.decode <a href="#UtcTime.decode">#</a></h2></div>
 <pre class="signature">
@@ -932,14 +908,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (ElementList) payload <a href="#ElementList.payload">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>els ElementList<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
-
-
-</section>
-
-		<section id="ElementList.payload_with_rule" class="doc-node">
-			<div class="title"><h2>fn (ElementList) payload_with_rule <a href="#ElementList.payload_with_rule">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>els ElementList<span class="token punctuation">)</span> <span class="token function">payload_with_rule</span><span class="token punctuation">(</span>rule EncodingRule<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
 
 
 </section>
@@ -1614,6 +1582,14 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="Optional.set_to_unpresent" class="doc-node">
+			<div class="title"><h2>fn (Optional) set_to_unpresent <a href="#Optional.set_to_unpresent">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> opt Optional<span class="token punctuation">)</span> <span class="token function">set_to_unpresent</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+<p>set_to_unpresent makes this optional was not present</p>
+
+</section>
+
 		<section id="Optional.tag" class="doc-node">
 			<div class="title"><h2>fn (Optional) tag <a href="#Optional.tag">#</a></h2></div>
 <pre class="signature">
@@ -2114,7 +2090,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 16 Oct 2024 08:15:34</div>
+						<div class="footer">Powered by vdoc. Generated on: 16 Oct 2024 08:32:11</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
@@ -2331,15 +2307,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#Tag.new">fn Tag.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#TagClass.from_int">fn TagClass.from_int</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#TagClass.from_string">fn TagClass.from_string</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#TaggedMode.from_string">fn TaggedMode.from_string</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#UtcTime.decode">fn UtcTime.decode</a>        <ul>
 </ul>
 </li>
@@ -2379,7 +2346,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </li>
 <li class="open"><a href="#ElementList">type ElementList</a>        <ul>
 <li><a href="#ElementList.payload">fn payload</a></li>
-<li><a href="#ElementList.payload_with_rule">fn payload_with_rule</a></li>
 <li><a href="#ElementList.encoded_len">fn encoded_len</a></li>
 </ul>
 </li>
@@ -2494,6 +2460,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#Optional">struct Optional</a>        <ul>
 <li><a href="#Optional.set_default">fn set_default</a></li>
 <li><a href="#Optional.set_to_present">fn set_to_present</a></li>
+<li><a href="#Optional.set_to_unpresent">fn set_to_unpresent</a></li>
 <li><a href="#Optional.tag">fn tag</a></li>
 <li><a href="#Optional.payload">fn payload</a></li>
 <li><a href="#Optional.encode">fn encode</a></li>

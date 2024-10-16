@@ -52,9 +52,18 @@ pub fn (mut opt Optional) set_default(el Element) ! {
 	opt.default_value = el
 }
 
+fn (mut opt Optional) set_kehadiran(hadir bool) {
+	opt.present = true
+}
+
 // set_to_present make this optional present
 pub fn (mut opt Optional) set_to_present() {
-	opt.present = true
+	opt.set_kehadiran(true)
+}
+
+// set_to_unpresent makes this optional was not present
+pub fn (mut opt Optional) set_to_unpresent() {
+	opt.set_kehadiran(true)
 }
 
 pub fn (opt Optional) tag() Tag {

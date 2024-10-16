@@ -263,7 +263,6 @@ fn (el Element) wrap_with_rule(cls TagClass, tagnum int, mode TaggedMode, rule E
 	if el_cls != .universal {
 		return error('No need to wrap non-universal class')
 	}
-
 	payload := if mode == .explicit { encode_with_rule(el, rule)! } else { el.payload()! }
 	match cls {
 		.context_specific {
@@ -424,7 +423,7 @@ pub fn (els ElementList) payload() ![]u8 {
 	return els.payload_with_rule(.der)!
 }
 
-pub fn (els ElementList) payload_with_rule(rule EncodingRule) ![]u8 {
+fn (els ElementList) payload_with_rule(rule EncodingRule) ![]u8 {
 	mut out := []u8{}
 	for el in els {
 		bytes := encode_with_rule(el, rule)!
@@ -471,14 +470,19 @@ pub fn decode(src []u8) !Element {
 
 // decode_with_options decodes single element from bytes with options support, its not allowing trailing data.
 // Its accepts options string to drive decoding process.
-pub fn decode_with_options(src []u8, opt string) !Element {
+pub fn decode_with_options(bytes []u8, opt string) !Element {
 	if opt.len == 0 {
-		el, pos := Element.decode(src)!
-		if pos > src.len {
+		el, pos := Element.decode(bytes)!
+		if pos > bytes.len {
 			return error('decode on data with trailing data')
 		}
 		return el
 	}
-	// TODO: apply options
-	return error('decode_with_options is not implemented')
+	fo := FieldOptions.from_string(opt)!
+	return decode_with_field_options(bytes, fo)!
+}
+
+pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
+	// TODO
+	return error('decode_with_field_options not implemented')
 }
