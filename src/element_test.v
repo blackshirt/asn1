@@ -89,23 +89,54 @@ fn test_wrapping_functionality() ! {
 	data := [
 		WrapperTest{'', none, orig_expected},
 		// Tag{.contex_specific, true, 1} = 0b1010_0001
-		WrapperTest{'context_specific:1; mode:explicit', none, [u8(0xa1), 0x03, 0x01, 0x01, 0xff]},
-		WrapperTest{'context_specific:1; mode:implicit; inner:1', none, [u8(0xa1), 0x01, 0xff]},
+		WrapperTest{'context_specific:1; mode:explicit', error('inner value is not set in wrapped mode'), [
+			u8(0xa1),
+			0x03,
+			0x01,
+			0x01,
+			0xff,
+		]},
+		WrapperTest{'context_specific:1; mode:implicit; inner:universal,false,1', none, [
+			u8(0xa1),
+			0x01,
+			0xff,
+		]},
 		// inner is not make sense when encoding
-		WrapperTest{'context_specific:1;mode:implicit;inner:2', none, [u8(0xa1), 0x01, 0xff]},
-		// empty mode treated as an explicit
-		WrapperTest{'application:5', none, [u8(0x65), 0x03, 0x01, 0x01, 0xff]},
-		// marked as optional would not be encoded
-		WrapperTest{'application:5; optional', none, []u8{}},
-		WrapperTest{'application:5', none, [u8(0x65), 0x03, 0x01, 0x01, 0xff]},
+		WrapperTest{'context_specific:1;mode:implicit;inner:universal, false, 2', none, [
+			u8(0xa1),
+			0x01,
+			0xff,
+		]},
+		// empty mode treated as an explicit, without inner would an error
+		WrapperTest{'application:5', error('inner value is not set in wrapped mode'), [
+			u8(0x65),
+			0x03,
+			0x01,
+			0x01,
+			0xff,
+		]},
+		// marked as optional would not be encoded,
+		WrapperTest{'application:5; optional;inner:universal,false,2', none, []u8{}},
+		WrapperTest{'application:5; inner:universal,false,2', none, [
+			u8(0x65),
+			0x03,
+			0x01,
+			0x01,
+			0xff,
+		]},
 		// wrapped into universal is error
-		WrapperTest{'universal:50', error('wraps into same class is not allowed'), orig_expected},
+		WrapperTest{'universal:50;inner:universal,false,3', error('wraps into same class is not allowed'), orig_expected},
 		// marked as an optional
-		WrapperTest{'private:10; optional', none, []u8{}},
-		WrapperTest{'application:5;mode:implicit', error('inner tag number was not set in implicit mode'), []u8{}},
-		WrapperTest{'application:5; mode:implicit; inner:1', none, [u8(0x65), 0x01, 0xff]},
+		WrapperTest{'private:10; optional', error('inner value is not set in wrapped mode'), []u8{}},
+		WrapperTest{'application:5;mode:implicit', error('inner value is not set in wrapped mode'), []u8{}},
+		WrapperTest{'application:5; mode:implicit; inner:universal, false, 1', none, [
+			u8(0x65),
+			0x01,
+			0xff,
+		]},
 	]
 	for i, item in data {
+		dump(i)
 		out := encode_with_options(elem, item.attr) or {
 			assert item.err == err
 			continue

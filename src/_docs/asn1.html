@@ -71,7 +71,7 @@
 					<div class="doc-content">
 								<section id="readme_asn1" class="doc-node">
 			<div class="title"><h1> asn1 <a href="#readme_asn1">#</a></h1></div>
-<h2>asn1</h2><p>Pure V module for handling Abstract Syntax Notation One (ASN.1) <a href="http://www.itu.int/rec/T-REC-X.680/en">[X.680]</a> objects encoded in Distinguished Encoding Rules (DER) <a href="https://www.itu.int/rec/T-REC-X.690/en">[X.690]</a> encoding scheme.</p><h2>tag handling</h2><ul><li>support handling short or long form (multibyte tag), but its sizes was limited to defined constant, <code>max_tag_bytes_length = 5</code> bytes long.</li><li>support almost popular basic type (except for a few types)</li></ul><h2>limitation</h2><ul><li>only support DER encoding</li></ul>
+<h2>asn1</h2><p>Pure V module for handling Abstract Syntax Notation One (ASN.1) <a href="http://www.itu.int/rec/T-REC-X.680/en">[X.680]</a> objects encoded in Distinguished Encoding Rules (DER) <a href="https://www.itu.int/rec/T-REC-X.690/en">[X.690]</a> encoding scheme.</p><blockquote><p>[!CAUTION] &gt; This module is marked as an experimental, so, its a subject to change (even rapidly). &gt; Use it with caution, submit when found a bug and gives yours feedback and review.</p></blockquote><h2>tag handling</h2><ul><li>support handling short or long form (multibyte tag), but its sizes was limited to defined constant, <code>max_tag_length = 3</code> bytes long.</li><li>support almost popular basic type (except for a few types)</li></ul><h2>limitation</h2><ul><li>This module is written in DER encoding in mind, with limited support with BER, so maybe if you use BER would be dropped into error.</li></ul>
 
 </section>
 
@@ -186,6 +186,22 @@
 
 </section>
 
+		<section id="decode" class="doc-node">
+			<div class="title"><h2>fn decode <a href="#decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span>Element</code></pre>
+<p>decode decodes single element from bytes, its not allowing trailing data</p>
+
+</section>
+
+		<section id="decode_with_options" class="doc-node">
+			<div class="title"><h2>fn decode_with_options <a href="#decode_with_options">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">decode_with_options</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> opt <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>Element</code></pre>
+<p>decode_with_options decodes single element from bytes with options support, its not allowing trailing data. Its accepts options string to drive decoding process.</p>
+
+</section>
+
 		<section id="encode" class="doc-node">
 			<div class="title"><h2>fn encode <a href="#encode">#</a></h2></div>
 <pre class="signature">
@@ -239,14 +255,6 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 <pre class="signature">
 <code><span class="token keyword">fn</span> new_setof<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>SetOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span></code></pre>
 <p><code>new_setof</code> creates a new SetOf for generic T. You should make sure T is implement Element interface.</p>
-
-</section>
-
-		<section id="parse_single" class="doc-node">
-			<div class="title"><h2>fn parse_single <a href="#parse_single">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> parse_single<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span>data <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">T</span></code></pre>
-
 
 </section>
 
@@ -349,6 +357,14 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 <code><span class="token keyword">fn</span> Element<span class="token punctuation">.</span>from_object<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span>t <span class="token builtin">T</span><span class="token punctuation">)</span> <span class="token operator">!</span>Element</code></pre>
 <p>from_object[T] transforms and creates a new Element from generic type (maybe universal type, like an OctetString). Its accepts generic element t that you should pass to this function. You should make sure if this element implements required methods of the Element, or an error would be returned.</p><p>Fixme: its not tested. Examples:</p><pre><code class="language-v">oc <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>OctetString<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span><span class="token string">'xxx'</span><span class="token punctuation">)</span><span class="token operator">!</span>
 el <span class="token operator">:=</span> Element<span class="token punctuation">.</span>from_object<span class="token punctuation">[</span>OctetString<span class="token punctuation">]</span><span class="token punctuation">(</span>oc<span class="token punctuation">)</span><span class="token operator">!</span></code></pre><p>and then treats your OctetString as an Element</p>
+
+</section>
+
+		<section id="ElementList.from_bytes" class="doc-node">
+			<div class="title"><h2>fn ElementList.from_bytes <a href="#ElementList.from_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> ElementList<span class="token punctuation">.</span><span class="token function">from_bytes</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span>Element</code></pre>
+<p>ElementList.from_bytes parses bytes in src as series of Element or return error on fails. Its does not support trailing data.</p>
 
 </section>
 
@@ -904,6 +920,38 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="ElementList" class="doc-node">
+			<div class="title"><h2>type ElementList <a href="#ElementList">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">type</span> ElementList <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>Element</code></pre>
+<p>ElementList.</p><p>ElementList is arrays of Element. Many places maybe required this wells, likes Sequence or Set fields.</p>
+
+</section>
+
+		<section id="ElementList.payload" class="doc-node">
+			<div class="title"><h2>fn (ElementList) payload <a href="#ElementList.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>els ElementList<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="ElementList.payload_with_rule" class="doc-node">
+			<div class="title"><h2>fn (ElementList) payload_with_rule <a href="#ElementList.payload_with_rule">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>els ElementList<span class="token punctuation">)</span> <span class="token function">payload_with_rule</span><span class="token punctuation">(</span>rule EncodingRule<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
+		<section id="ElementList.encoded_len" class="doc-node">
+			<div class="title"><h2>fn (ElementList) encoded_len <a href="#ElementList.encoded_len">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>els ElementList<span class="token punctuation">)</span> <span class="token function">encoded_len</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">int</span></code></pre>
+
+
+</section>
+
 		<section id="KeyDefault" class="doc-node">
 			<div class="title"><h2>type KeyDefault <a href="#KeyDefault">#</a></h2></div>
 <pre class="signature">
@@ -1237,25 +1285,37 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">struct</span> <span class="token symbol">FieldOptions</span> <span class="token punctuation">{</span>
 <span class="token keyword">mut</span><span class="token punctuation">:</span>
-	<span class="token comment">// wrapper class</span>
-	cls <span class="token builtin">string</span>
-	<span class="token comment">// tag number for wrapper element when cls != ''</span>
-	tagnum <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
-	<span class="token comment">// mode in 'explicit' or 'implicit' when cls !+ '', default to explicit</span>
-	mode <span class="token builtin">string</span> <span class="token operator">=</span> <span class="token string">'explicit'</span>
-	<span class="token comment">// set to some value when mode = 'impllcit'</span>
-	<span class="token comment">// make sense when you doing decode from implicitly wrapped element</span>
-	inner <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
-	<span class="token comment">// set to true when this should be optional element</span>
+	<span class="token comment">// Following field was for wrapping and unwrapping purposes, applied to (strictly) UNIVERSAL element.</span>
+	<span class="token comment">// In the encoding phase, it would be checked if this options meet the criteria.</span>
+	<span class="token comment">// So, you can wrap (unwrap) your element with this configuration.</span>
+	<span class="token comment">// examples of options string contains: `application:100; mode: explicit; inner:universal, false, 4`.</span>
+	<span class="token comment">// Its would be parsed into: cls=application, tagnum=100; mode: explicit, inner: `universal, false, 4`</span>
+	cls    <span class="token builtin">string</span>
+	tagnum <span class="token builtin">int</span>    <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+	mode   <span class="token builtin">string</span> <span class="token operator">=</span> <span class="token string">'explicit'</span>
+	inner  <span class="token builtin">string</span>
+
+	<span class="token comment">// Following fields applied to element with OPTIONAL keyword behaviour, with or without default value.</span>
+	<span class="token comment">// set to true when this optional element should present (usually element with OPTIONAL keyword is not presents in the data)).</span>
+	<span class="token comment">// where present field tells us if this optional should be marked present in the data, if not sure, just set this field to false.</span>
 	optional <span class="token builtin">bool</span>
-	<span class="token comment">// set to true when optional should present, if unsure, just set to false</span>
-	present <span class="token builtin">bool</span>
-	<span class="token comment">// set to true when element has default value</span>
-	has_default <span class="token builtin">bool</span>
-	<span class="token comment">// default value for element when has_default value is true</span>
+	present  <span class="token builtin">bool</span>
+
+	<span class="token comment">// This field applied to element when has DEFAULT keyword behaviour. Its applied into wrapping element</span>
+	<span class="token comment">// or optionality of the element.</span>
+	<span class="token comment">// If some element has DEFAULT keyword, set this field to true and gives default element into default_value field.</span>
+	has_default   <span class="token builtin">bool</span>
 	default_value <span class="token operator">?</span>Element
 <span class="token punctuation">}</span></code></pre>
 <p>FieldOptions is a structure to accomodate and allowing configures your complex structures through string or arrays of string stored in FieldOptions fields. For example, you can tagging your fields of some element with tagging like <code>@[context_specific:10; optional; mode: explicit]</code>. Its will be parsed and can be used to drive encoding or decoding of Element.</p>
+
+</section>
+
+		<section id="FieldOptions.inner_tag" class="doc-node">
+			<div class="title"><h2>fn (FieldOptions) inner_tag <a href="#FieldOptions.inner_tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>fo FieldOptions<span class="token punctuation">)</span> <span class="token function">inner_tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Tag</code></pre>
+<p>inner_tag gets inner Tag value from field options.</p>
 
 </section>
 
@@ -1263,7 +1323,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (FieldOptions) install_default <a href="#FieldOptions.install_default">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> fo FieldOptions<span class="token punctuation">)</span> <span class="token function">install_default</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> force <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
-<p>install_default tries to install and sets element el as a default value when has_default flag of FieldOptions has been set to true, or error if has_default is false. When default_value has been set with some value before this, its would return error until you force it by set force to true.</p>
+<p>install_default tries to install and sets element el as a default value when has_default flag of FieldOptions has been set into true, or error if has_default is false. When default_value has been set with some value before this, its would return error until you force it by setingt force flag into true.</p>
 
 </section>
 
@@ -2054,10 +2114,16 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 16 Oct 2024 04:43:10</div>
+						<div class="footer">Powered by vdoc. Generated on: 16 Oct 2024 08:15:34</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
+<li class="open"><a href="#decode">fn decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#decode_with_options">fn decode_with_options</a>        <ul>
+</ul>
+</li>
 <li class="open"><a href="#encode">fn encode</a>        <ul>
 </ul>
 </li>
@@ -2074,9 +2140,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#new_setof">fn new_setof</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#parse_single">fn parse_single</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#ApplicationElement.new">fn ApplicationElement.new</a>        <ul>
@@ -2113,6 +2176,9 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#Element.from_object">fn Element.from_object</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#ElementList.from_bytes">fn ElementList.from_bytes</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Enumerated.decode">fn Enumerated.decode</a>        <ul>
@@ -2311,6 +2377,12 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li><a href="#Element.equal">fn equal</a></li>
 </ul>
 </li>
+<li class="open"><a href="#ElementList">type ElementList</a>        <ul>
+<li><a href="#ElementList.payload">fn payload</a></li>
+<li><a href="#ElementList.payload_with_rule">fn payload_with_rule</a></li>
+<li><a href="#ElementList.encoded_len">fn encoded_len</a></li>
+</ul>
+</li>
 <li class="open"><a href="#KeyDefault">type KeyDefault</a>        <ul>
 </ul>
 </li>
@@ -2371,6 +2443,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#FieldOptions">struct FieldOptions</a>        <ul>
+<li><a href="#FieldOptions.inner_tag">fn inner_tag</a></li>
 <li><a href="#FieldOptions.install_default">fn install_default</a></li>
 </ul>
 </li>

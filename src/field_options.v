@@ -20,21 +20,21 @@ mut:
 	// So, you can wrap (unwrap) your element with this configuration.
 	// examples of options string contains: `application:100; mode: explicit; inner:universal, false, 4`.
 	// Its would be parsed into: cls=application, tagnum=100; mode: explicit, inner: `universal, false, 4`
-	cls 	string
-	tagnum 	int = -1
-	mode 	string = 'explicit'
-	inner 	string
-	
+	cls    string
+	tagnum int    = -1
+	mode   string = 'explicit'
+	inner  string
+
 	// Following fields applied to element with OPTIONAL keyword behaviour, with or without default value.
 	// set to true when this optional element should present (usually element with OPTIONAL keyword is not presents in the data)).
 	// where present field tells us if this optional should be marked present in the data, if not sure, just set this field to false.
 	optional bool
-	present bool
-		
+	present  bool
+
 	// This field applied to element when has DEFAULT keyword behaviour. Its applied into wrapping element
 	// or optionality of the element.
 	// If some element has DEFAULT keyword, set this field to true and gives default element into default_value field.
-	has_default bool
+	has_default   bool
 	default_value ?Element
 }
 
@@ -143,13 +143,14 @@ pub fn (fo FieldOptions) inner_tag() !Tag {
 	}
 
 	cls, frm, num := parse_inner_value(fo.inner)!
+
 	class := TagClass.from_string(cls)!
 	form := if frm == 'true' { true } else { false }
 	number := num.int()
 
-	tag := Tag.new(cls, form, number)!
+	tag := Tag.new(class, form, number)!
 
-	return tag 
+	return tag
 }
 
 // validate validates FieldOptions to meet criteria.
@@ -172,11 +173,9 @@ fn (fo FieldOptions) validate_wrapper_part() ! {
 			return error('provides with the correct tagnum')
 		}
 
-		// check when implicit
-		if fo.mode == 'implicit' {
-			if fo.inner <= 0 {
-				return error('inner tag number was not set in implicit mode')
-			}
+		// when wrapped, you should provide inner tag value.
+		if fo.inner == '' {
+			return error('inner value is not set in wrapped mode')
 		}
 	}
 }
@@ -297,7 +296,7 @@ fn parse_inner_tag_marker(attr string) !(string, string) {
 		if item.len != 2 {
 			return error('bad inner tag marker length')
 		}
-		// 'inner' part 
+		// 'inner' part
 		key := item[0].trim_space()
 		if !valid_inner_tag_key(key) {
 			return error('bad inner key')
@@ -312,9 +311,9 @@ fn parse_inner_tag_marker(attr string) !(string, string) {
 }
 
 fn parse_inner_value(s string) !(string, string, string) {
-	// 'class,form,number' part 
+	// 'class,form,number' part
 	value := s.trim_space()
-	// splits by comma 
+	// splits by comma
 	fields := value.split(',')
 	if fields.len != 3 {
 		return error('Bad inner value length')
@@ -329,16 +328,16 @@ fn parse_inner_value(s string) !(string, string, string) {
 	}
 	number := fields[2].trim_space()
 	if !valid_string_tag_number(number) {
-		return error('Bad inner number') 
+		return error('Bad inner number')
 	}
 
-	return class, form, number
+	return cls, form, number
 }
 
 fn is_valid_inner_value(s string) bool {
-	// 'class,form,number' part 
+	// 'class,form,number' part
 	value := s.trim_space()
-	// splits by comma 
+	// splits by comma
 	fields := value.split(',')
 	if fields.len != 3 {
 		return false
@@ -353,9 +352,9 @@ fn is_valid_inner_value(s string) bool {
 	}
 	number := fields[2].trim_space()
 	if !valid_string_tag_number(number) {
-		return false 
+		return false
 	}
-	return true 
+	return true
 }
 
 fn is_inner_tag_marker(s string) bool {

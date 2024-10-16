@@ -110,4 +110,3 @@ fn strip_tlv(data []u8) !(Element, []u8) {
 	return tlv, p.data
 }
 */
-

@@ -466,7 +466,7 @@ pub fn ElementList.from_bytes(src []u8) ![]Element {
 
 // decode decodes single element from bytes, its not allowing trailing data
 pub fn decode(src []u8) !Element {
-	return decode_with_option(src, '')
+	return decode_with_options(src, '')
 }
 
 // decode_with_options decodes single element from bytes with options support, its not allowing trailing data.
@@ -479,6 +479,6 @@ pub fn decode_with_options(src []u8, opt string) !Element {
 		}
 		return el
 	}
-	// TODO: apply options 
+	// TODO: apply options
 	return error('decode_with_options is not implemented')
 }
