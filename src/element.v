@@ -71,12 +71,11 @@ fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
 		return error('Element: unsupported rule')
 	}
 	mut dst := []u8{}
-	// when this element is optional without presence flag, by default would
-	// serialize this element into empty bytes
+
+	// when this element is Optional without presence flag, by default would
+	// serialize this element into empty bytes otherwise, would serialize underlying element.
 	if el is Optional {
-		if !el.present {
-			return dst
-		}
+		return el.encode()!
 	}
 	// otherwise, just serializes as normal
 	el.tag().encode_with_rule(mut dst, rule)!
@@ -137,31 +136,34 @@ pub fn (el Element) length() !int {
 //
 
 // into_optional turns this element into Optional
-fn (el Element) into_optional() !Optional {
+fn (el Element) into_optional() !Element {
 	return el.into_optional_with_present(false)!
 }
 
 // into_optional_with_present turns this element into Optional.
 // Its accepts present to mark this optional should be present, ie, negates optionality.
 // if not sure, just set to false
-fn (el Element) into_optional_with_present(present bool) !Optional {
+fn (el Element) into_optional_with_present(present bool) !Element {
 	// maybe removed in the future
 	if el is Optional {
 		return error('already optional element')
 	}
 	mut opt := Optional.new(el)!
-	return opt.with_present(present)
+	opt.with_present(present)
+
+	return opt
 }
 
 // apply_optional_options turns this element into another element qith optional semantic.
 fn (el Element) apply_optional_options(fo FieldOptions) !Element {
-	if fo.optional {
-		if fo.present {
-			return el.into_optional_with_present(fo.present)!
-		}
-		return el.into_optional()!
+	// not optional
+	if !fo.optional {
+		return el
 	}
-	return el
+	if fo.present {
+		return el.into_optional_with_present(true)!
+	}
+	return el.into_optional()!
 }
 
 // apply_wrappers_options turns this element into another element by wrapping it
@@ -319,7 +321,7 @@ pub fn make_payload[T](val T, kd KeyDefault) ![]u8 {
 				// TODO: add keyDefault support
 				if fo.has_default {
 					// install default by getting default element from map
-					key := field.name 
+					key := field.name
 					def_elem := kd[key] or { return error('missing defaul element') }
 					fo.install_default(def_elem, false)!
 				}

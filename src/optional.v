@@ -50,14 +50,12 @@ pub fn (mut opt Optional) set_default(el Element) ! {
 	opt.default_value = el
 }
 
-pub fn (mut opt Optional) with_default(el Element) !&Optional {
+pub fn (mut opt Optional) with_default(el Element) ! {
 	opt.set_default(el)!
-	return opt
 }
 
-pub fn (mut opt Optional) with_present(present bool) Optional {
+pub fn (mut opt Optional) with_present(present bool) {
 	opt.present = present
-	return opt
 }
 
 pub fn (opt Optional) tag() Tag {
@@ -75,10 +73,7 @@ pub fn (opt Optional) encode() ![]u8 {
 
 fn (opt Optional) encode_with_rule(rule EncodingRule) ![]u8 {
 	if opt.present {
-		elem := RawElement{
-			tag:     opt.tag
-			content: opt.content
-		}
+		elem := opt.into_element()!
 		return encode_with_rule(elem, .der)!
 	}
 	// not present
@@ -86,20 +81,7 @@ fn (opt Optional) encode_with_rule(rule EncodingRule) ![]u8 {
 }
 
 fn (opt Optional) into_element() !Element {
-	match opt.tag.class {
-		.universal {
-			return parse_universal(opt.tag, opt.content)!
-		}
-		.application {
-			return parse_application(opt.tag, opt.content)!
-		}
-		.context_specific {
-			return parse_context_specific(opt.tag, opt.content)!
-		}
-		.private {
-			return parse_private(opt.tag, opt.content)!
-		}
-	}
+	return parse_element(opt.tag, opt.content)!
 }
 
 // `into_object` tries to turns this optional into real underlying object T.

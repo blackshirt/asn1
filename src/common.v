@@ -5,9 +5,25 @@ module asn1
 
 // common parsing routines
 //
+fn parse_element(tag Tag, content []u8) !Element {
+	match tag.class {
+		.universal {
+			return parse_universal(tag, content)!
+		}
+		.context_specific {
+			return parse_context_specific(tag, content)!
+		}
+		.application {
+			return parse_application(tag, content)!
+		}
+		.private {
+			return parse_private(tag, content)!
+		}
+	}
+}
 
 fn parse_universal(tag Tag, content []u8) !Element {
-	if tag.class == .universal {
+	if tag.class != .universal {
 		return error('Non universal class')
 	}
 	if tag.constructed {

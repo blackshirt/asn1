@@ -1,6 +1,5 @@
 module asn1
 
-/*
 type MyOct = string
 
 fn (mo MyOct) tag() Tag {
@@ -37,7 +36,6 @@ fn (t TestStruct) payload() ![]u8 {
 	return out
 }
 
-
 fn test_struct_make_payload() ! {
 	st := TestStruct{
 		a: MyOct('aku')
@@ -49,36 +47,30 @@ fn test_struct_make_payload() ! {
 	// without field option passed, its should be expected value
 	assert out == expected
 }
-*/
 
 fn test_into_optional() ! {
-	// boolean raw, id = 1
-	el := RawElement{
-		tag:     Tag.new(.universal, false, int(TagType.boolean))!
-		content: [u8(0xff)]
-	}
-	orig_exp := [u8(0x01), 0x01, 0xff]
+	el := Boolean.new(true)
+	orig_expected := [u8(0x01), 0x01, 0xff]
 
 	without_option := encode(el)!
-	assert without_option == orig_exp
+	assert without_option == orig_expected
 
-	
 	// marked this element as optional, make its serialized into empty bytes
 	with_option_1 := encode_with_options(el, 'optional')!
 	///assert with_option_1 == []u8{}
 
-	
 	// the same meaning with above 'optional'
 	with_option_2 := encode_with_options(el, 'optional:false')!
 	assert with_option_2 == []u8{}
 
-	
 	// presences of true flag tells this optional to be serializable
 	with_option_3 := encode_with_options(el, 'optional:true')!
-	assert with_option_3 == orig_exp
-	
+	assert with_option_3 == orig_expected
+
+	options_4 := FieldOptions.from_string('optional:true')!
+	with_option_4 := encode_with_field_options(el, options_4)!
+	assert with_option_4 == orig_expected
 }
-/*
 
 // test for wrapping functionality
 struct WrapperTest {
@@ -93,9 +85,9 @@ fn test_wrapping_functionality() ! {
 		tag:     Tag.new(.universal, false, int(TagType.boolean))!
 		content: [u8(0xff)]
 	}
-	orig_exp := [u8(0x01), 0x01, 0xff]
+	orig_expected := [u8(0x01), 0x01, 0xff]
 	data := [
-		WrapperTest{'', none, orig_exp},
+		WrapperTest{'', none, orig_expected},
 		// Tag{.contex_specific, true, 1} = 0b1010_0001
 		WrapperTest{'context_specific:1; mode:explicit', none, [u8(0xa1), 0x03, 0x01, 0x01, 0xff]},
 		WrapperTest{'context_specific:1; mode:implicit; inner:1', none, [u8(0xa1), 0x01, 0xff]},
@@ -107,7 +99,7 @@ fn test_wrapping_functionality() ! {
 		WrapperTest{'application:5; optional', none, []u8{}},
 		WrapperTest{'application:5', none, [u8(0x65), 0x03, 0x01, 0x01, 0xff]},
 		// wrapped into universal is error
-		WrapperTest{'universal:50', error('wraps into same class is not allowed'), orig_exp},
+		WrapperTest{'universal:50', error('wraps into same class is not allowed'), orig_expected},
 		// marked as an optional
 		WrapperTest{'private:10; optional', none, []u8{}},
 		WrapperTest{'application:5;mode:implicit', error('inner tag number was not set in implicit mode'), []u8{}},
@@ -143,4 +135,3 @@ fn test_for_element_list() ! {
 	assert els[0] is Boolean
 	assert els[1] is Boolean
 }
-*/
