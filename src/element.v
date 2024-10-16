@@ -409,42 +409,22 @@ fn Element.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Element, i64
 		}
 	}
 	next_pos := content_pos + length
+	elem := parse_element(tag, bytes)!
 
-	match tag.class {
-		.universal {
-			if tag.constructed {
-				elem := parse_universal_constructed(tag, bytes)!
-				return elem, next_pos
-			}
-			elem := parse_universal_primitive(tag, bytes)!
-			return elem, next_pos
-		}
-		.application {
-			app := parse_application(tag, bytes)!
-			return app, next_pos
-		}
-		.context_specific {
-			ctx := parse_context_specific(tag, bytes)!
-			return ctx, next_pos
-		}
-		.private {
-			prv := parse_private(tag, bytes)!
-			return prv, next_pos
-		}
-	}
+	return elem, next_pos
 }
 
-// ElementList
+// ElementList.
 //
-// ElementList is arrays of Element
-// Many places maybe required this wells, likes Sequence or Set fields
-type ElementList = []Element
+// ElementList is arrays of Element.
+// Many places maybe required this wells, likes Sequence or Set fields.
+pub type ElementList = []Element
 
-fn (els ElementList) payload() ![]u8 {
+pub fn (els ElementList) payload() ![]u8 {
 	return els.payload_with_rule(.der)!
 }
 
-fn (els ElementList) payload_with_rule(rule EncodingRule) ![]u8 {
+pub fn (els ElementList) payload_with_rule(rule EncodingRule) ![]u8 {
 	mut out := []u8{}
 	for el in els {
 		bytes := encode_with_rule(el, rule)!
@@ -453,7 +433,7 @@ fn (els ElementList) payload_with_rule(rule EncodingRule) ![]u8 {
 	return out
 }
 
-fn (els ElementList) encoded_len() int {
+pub fn (els ElementList) encoded_len() int {
 	mut n := 0
 	for el in els {
 		n += el.encoded_len()
@@ -461,8 +441,9 @@ fn (els ElementList) encoded_len() int {
 	return n
 }
 
-// ElementList.from_bytes parses bytes in src as series of Element or return error on fails
-fn ElementList.from_bytes(src []u8) ![]Element {
+// ElementList.from_bytes parses bytes in src as series of Element or return error on fails.
+// Its does not support trailing data.
+pub fn ElementList.from_bytes(src []u8) ![]Element {
 	mut els := []Element{}
 	if src.len == 0 {
 		// empty list
@@ -483,12 +464,21 @@ fn ElementList.from_bytes(src []u8) ![]Element {
 	return els
 }
 
-// decode_single decodes single element from bytes, its not allowing trailing data
-fn decode(src []u8) !Element {
+// decode decodes single element from bytes, its not allowing trailing data
+pub fn decode(src []u8) !Element {
 	return decode_with_option(src, '')
 }
 
-// decode_single decodes single element from bytes with options support, its not allowing trailing data
-fn decode_with_option(src []u8, opt string) !Element {
-	return error('not implemented')
+// decode_with_options decodes single element from bytes with options support, its not allowing trailing data.
+// Its accepts options string to drive decoding process.
+pub fn decode_with_options(src []u8, opt string) !Element {
+	if opt.len == 0 {
+		el, pos := Element.decode(src)!
+		if pos > src.len {
+			return error('decode on data with trailing data')
+		}
+		return el
+	}
+	// TODO: apply options 
+	return error('decode_with_options is not implemented')
 }

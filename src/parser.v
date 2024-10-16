@@ -90,7 +90,7 @@ fn (mut p Parser) read_from(mut r io.Reader, mut buf []u8) !int {
 	return n
 }
 
-pub fn parse_single[T](data []u8) !T {
+fn parse_single[T](data []u8) !T {
 	mut p := Parser.new(data)!
 	out := p.read_element[T]()!
 	return out
@@ -111,5 +111,3 @@ fn strip_tlv(data []u8) !(Element, []u8) {
 }
 */
 
-// type CbParser[T] = fn (T) (mut Parser)() !T
-type ConditionFn[T] = fn (mut p Parser) !T

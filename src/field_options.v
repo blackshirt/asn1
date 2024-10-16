@@ -15,22 +15,26 @@ const max_attributes_length = 5
 @[heap; noinit]
 pub struct FieldOptions {
 mut:
-	// wrapper class
-	cls string
-	// tag number for wrapper element when cls != ''
-	tagnum int = -1
-	// mode in 'explicit' or 'implicit' when cls !+ '', default to explicit
-	mode string = 'explicit'
-	// set to some value when mode = 'impllcit'
-	// make sense when you doing decode from implicitly wrapped element
-	inner int = -1
-	// set to true when this should be optional element
+	// Following field was for wrapping and unwrapping purposes, applied to (strictly) UNIVERSAL element.
+	// In the encoding phase, it would be checked if this options meet the criteria.
+	// So, you can wrap (unwrap) your element with this configuration.
+	// examples of options string contains: `application:100; mode: explicit; inner:universal, false, 4`.
+	// Its would be parsed into: cls=application, tagnum=100; mode: explicit, inner: `universal, false, 4`
+	cls 	string
+	tagnum 	int = -1
+	mode 	string = 'explicit'
+	inner 	string
+	
+	// Following fields applied to element with OPTIONAL keyword behaviour, with or without default value.
+	// set to true when this optional element should present (usually element with OPTIONAL keyword is not presents in the data)).
+	// where present field tells us if this optional should be marked present in the data, if not sure, just set this field to false.
 	optional bool
-	// set to true when optional should present, if unsure, just set to false
 	present bool
-	// set to true when element has default value
+		
+	// This field applied to element when has DEFAULT keyword behaviour. Its applied into wrapping element
+	// or optionality of the element.
+	// If some element has DEFAULT keyword, set this field to true and gives default element into default_value field.
 	has_default bool
-	// default value for element when has_default value is true
 	default_value ?Element
 }
 
@@ -119,19 +123,36 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 			if inn_ctr > 1 {
 				return error('multiples inner tag format defined')
 			}
-			inn_tnum := value.int()
-			if inn_tnum < 0 {
-				return error('bad inner tag number')
+			if !is_valid_inner_value(value) {
+				return error('Bad inner string value')
 			}
-
-			fo.inner = inn_tnum
+			fo.inner = value
 		}
 	}
 
 	return fo
 }
 
-// validate validates FieldOptions to meet criteria
+// inner_tag gets inner Tag value from field options.
+pub fn (fo FieldOptions) inner_tag() !Tag {
+	if fo.inner == '' {
+		return error('You cant create tag from empty inner string')
+	}
+	if !is_valid_inner_value(fo.inner) {
+		return error('FieldOptions contains invalid inner value')
+	}
+
+	cls, frm, num := parse_inner_value(fo.inner)!
+	class := TagClass.from_string(cls)!
+	form := if frm == 'true' { true } else { false }
+	number := num.int()
+
+	tag := Tag.new(cls, form, number)!
+
+	return tag 
+}
+
+// validate validates FieldOptions to meet criteria.
 fn (fo FieldOptions) validate() ! {
 	fo.validate_wrapper_part()!
 	fo.validate_default_part()!
@@ -169,9 +190,9 @@ fn (fo FieldOptions) validate_default_part() ! {
 }
 
 // install_default tries to install and sets element el as a default value when has_default flag of FieldOptions
-// has been set to true, or error if has_default is false.
+// has been set into true, or error if has_default is false.
 // When default_value has been set with some value before this, its would return error until you force it
-// by set force to true.
+// by setingt force flag into true.
 pub fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 	if fo.has_default {
 		if fo.default_value == none {
@@ -188,7 +209,10 @@ pub fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 	return error('you can not install default value when has_default being not set')
 }
 
+// Wrapping (unwrapping) helper.
+//
 // parse 'application:number' format
+// format: `class:number` without constructed keyword.
 fn parse_tag_marker(attr string) !(string, string) {
 	src := attr.trim_space()
 	if is_tag_marker(src) {
@@ -224,8 +248,8 @@ fn valid_string_tag_number(s string) bool {
 	return s.is_int() || s.is_hex()
 }
 
-// parse 'mode:explicit [or implicit]' format
-//
+// parse 'mode:explicit [or implicit]' format.
+// format: `mode: explicit` or `mode: implicit`
 fn parse_mode_marker(s string) !(string, string) {
 	src := s.trim_space()
 	if is_mode_marker(src) {
@@ -263,7 +287,9 @@ fn is_mode_marker(attr string) bool {
 	return attr.starts_with('mode')
 }
 
-// parse inner tag when in implicit mode, inner: 100
+// parse inner value to be used by decoder, only support 'universal' class currently.
+// format : `inner:class,true[or false],number`
+// Its returns inner, class, true (or false), number.
 fn parse_inner_tag_marker(attr string) !(string, string) {
 	src := attr.trim_space()
 	if is_inner_tag_marker(src) {
@@ -271,17 +297,65 @@ fn parse_inner_tag_marker(attr string) !(string, string) {
 		if item.len != 2 {
 			return error('bad inner tag marker length')
 		}
-		first := item[0].trim_space()
-		if !valid_inner_tag_key(first) {
+		// 'inner' part 
+		key := item[0].trim_space()
+		if !valid_inner_tag_key(key) {
 			return error('bad inner key')
 		}
-		second := item[1].trim_space()
-		if !valid_string_tag_number(second) {
-			return error('bad inner tag number')
+		value := item[1].trim_space()
+		if !is_valid_inner_value(value) {
+			return error('Get unexpected inner value')
 		}
-		return first, second
+		return key, value
 	}
 	return error('not inner tag marker')
+}
+
+fn parse_inner_value(s string) !(string, string, string) {
+	// 'class,form,number' part 
+	value := s.trim_space()
+	// splits by comma 
+	fields := value.split(',')
+	if fields.len != 3 {
+		return error('Bad inner value length')
+	}
+	cls := fields[0].trim_space()
+	if !valid_inner_tag_class(cls) {
+		return error('Bad inner class')
+	}
+	form := fields[1].trim_space()
+	if !valid_inner_tag_form(form) {
+		return error('Bad inner form')
+	}
+	number := fields[2].trim_space()
+	if !valid_string_tag_number(number) {
+		return error('Bad inner number') 
+	}
+
+	return class, form, number
+}
+
+fn is_valid_inner_value(s string) bool {
+	// 'class,form,number' part 
+	value := s.trim_space()
+	// splits by comma 
+	fields := value.split(',')
+	if fields.len != 3 {
+		return false
+	}
+	cls := fields[0].trim_space()
+	if !valid_inner_tag_class(cls) {
+		return false
+	}
+	form := fields[1].trim_space()
+	if !valid_inner_tag_form(form) {
+		return false
+	}
+	number := fields[2].trim_space()
+	if !valid_string_tag_number(number) {
+		return false 
+	}
+	return true 
 }
 
 fn is_inner_tag_marker(s string) bool {
@@ -293,10 +367,10 @@ fn valid_inner_tag_key(s string) bool {
 }
 
 fn valid_inner_tag_class(s string) bool {
-	return s == 'universal'
+	return s == 'universal' // || s == 'application' || s == 'private'
 }
 
-fn valii_inner_tag_form(s string) bool {
+fn valid_inner_tag_form(s string) bool {
 	return s == 'false' || s == 'true'
 }
 
