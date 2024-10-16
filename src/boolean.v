@@ -123,8 +123,8 @@ fn Boolean.from_bytes_with_rule(bytes []u8, rule EncodingRule) !Boolean {
 	}
 }
 
-// value gets the boolean value represented by underlying byte value
-// It returnz FALSE ob the byte == 0x00 and TRUE otherwise.
+// value gets the boolean value represented by underlying byte value.
+// It returns FALSE if the byte == 0x00 and TRUE otherwise.
 pub fn (b Boolean) value() bool {
 	return b.value_with_rule(.der)
 }

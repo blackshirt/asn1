@@ -88,7 +88,7 @@ fn test_x509_certificate_signature() ! {
 	//    algorithm   OBJECT IDENTIFIER,
 	//    parameters  ANY DEFINED BY algorithm OPTIONAL
 	//  }
-	oid := Oid.new('1.3.101.112')!
+	oid := ObjectIdentifier.new('1.3.101.112')!
 
 	mut seq := Sequence{}
 	seq.add_element(oid)!

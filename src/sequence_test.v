@@ -131,8 +131,8 @@ fn test_sequence_add_and_encode_boolean() {
 fn test_sequence_add_encode_oid() ! {
 	mut seq := Sequence{}
 
-	o1 := Oid.new('1.2.3')! // size = 4
-	o2 := Oid.new('1.2.4')! // size = 4
+	o1 := ObjectIdentifier.new('1.2.3')! // size = 4
+	o2 := ObjectIdentifier.new('1.2.4')! // size = 4
 	o3 := Boolean.new(true) // size = 3
 
 	seq.add_element(o1)!

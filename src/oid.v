@@ -7,28 +7,28 @@ module asn1
 const max_oid_length = 128
 const default_oid_tag = Tag{.universal, false, int(TagType.oid)}
 
-// ASN.1 ObjectIdentifier
+// ASN.1 ObjectIdentifier type.
 // The ASN. 1 OBJECT IDENTIFIER type is used when you need to provide a unique identifier.
 @[noinit]
-pub struct Oid {
+pub struct ObjectIdentifier {
 mut:
 	value []int
 }
 
-// The tag of Oid type.
-pub fn (oid Oid) tag() Tag {
+// The tag of ObjectIdentifier type.
+pub fn (oid ObjectIdentifier) tag() Tag {
 	return default_oid_tag
 }
 
-// The payload of Oid type
-pub fn (oid Oid) payload() ![]u8 {
+// The payload of ObjectIdentifier type
+pub fn (oid ObjectIdentifier) payload() ![]u8 {
 	return oid.pack_into_bytes()!
 }
 
-// `Oid.new` creates a new Oid type from dots (`.`) separated string.
-pub fn Oid.new(s string) !Oid {
+// `ObjectIdentifier.new` creates a new ObjectIdentifier type from dots (`.`) separated string.
+pub fn ObjectIdentifier.new(s string) !ObjectIdentifier {
 	if s.len < 2 {
-		return error('Oid: bad string oid length')
+		return error('ObjectIdentifier: bad string oid length')
 	}
 	mut result := []int{}
 	src := s.split('.')
@@ -36,42 +36,42 @@ pub fn Oid.new(s string) !Oid {
 		v := n.parse_int(10, 32)!
 		result << int(v)
 	}
-	oid := Oid{
+	oid := ObjectIdentifier{
 		value: result
 	}
 	if !oid.validate() {
-		return error('Oid: bad oid string')
+		return error('ObjectIdentifier: bad oid string')
 	}
 	return oid
 }
 
-// `Oid.from_ints` creates a new Oid type from arrays of int.
-pub fn Oid.from_ints(src []int) !Oid {
+// `ObjectIdentifier.from_ints` creates a new ObjectIdentifier type from arrays of int.
+pub fn ObjectIdentifier.from_ints(src []int) !ObjectIdentifier {
 	// allowed value of first int was 0, 1 or 2,
 	// and when first=2, second int was not limited.
 	// contrary, when first < 2, second <= 39
 	if src.len < 2 || src[0] > 2 || (src[0] < 2 && src[1] >= 40) {
-		return error('Oid: bad oid int array')
+		return error('ObjectIdentifier: bad oid int array')
 	}
 	// doing check for overflow
 	for k in src {
 		if k > max_i32 {
-			return error('Oid: overflow parse_int result')
+			return error('ObjectIdentifier: overflow parse_int result')
 		}
 	}
-	oid := Oid{
+	oid := ObjectIdentifier{
 		value: src
 	}
 	if !oid.validate() {
-		return error('Oid: bad oid int array')
+		return error('ObjectIdentifier: bad oid int array')
 	}
 	return oid
 }
 
-fn Oid.from_bytes(src []u8) !Oid {
+fn ObjectIdentifier.from_bytes(src []u8) !ObjectIdentifier {
 	// maybe two integer fits in 1 bytes
 	if src.len == 0 {
-		return error('Oid: bad string oid length')
+		return error('ObjectIdentifier: bad string oid length')
 	}
 	mut s := []int{len: src.len + 1}
 
@@ -91,21 +91,21 @@ fn Oid.from_bytes(src []u8) !Oid {
 	}
 	s = unsafe { s[0..i] }
 
-	oid := Oid{
+	oid := ObjectIdentifier{
 		value: s
 	}
 	if !oid.validate() {
-		return error('Oid: failed to validate')
+		return error('ObjectIdentifier: failed to validate')
 	}
 	return oid
 }
 
-fn (oid Oid) pack_into_bytes() ![]u8 {
+fn (oid ObjectIdentifier) pack_into_bytes() ![]u8 {
 	if !oid.validate() {
-		return error('Oid: failed to validate')
+		return error('ObjectIdentifier: failed to validate')
 	}
 	mut dst := []u8{}
-	// the first two components (a.b) of Oid are encoded as 40*a+b
+	// the first two components (a.b) of ObjectIdentifier are encoded as 40*a+b
 	encode_base128_int(mut dst, i64(oid.value[0] * 40 + oid.value[1]))
 	for i := 2; i < oid.value.len; i++ {
 		encode_base128_int(mut dst, i64(oid.value[i]))
@@ -113,24 +113,24 @@ fn (oid Oid) pack_into_bytes() ![]u8 {
 	return dst
 }
 
-pub fn Oid.parse(mut p Parser) !Oid {
+pub fn ObjectIdentifier.parse(mut p Parser) !ObjectIdentifier {
 	tag := p.read_tag()!
 	if !tag.equal(default_oid_tag) {
-		return error('Bad Oid tag')
+		return error('Bad ObjectIdentifier tag')
 	}
 	length := p.read_length()!
 	bytes := p.read_bytes(length)!
 
-	res := Oid.from_bytes(bytes)!
+	res := ObjectIdentifier.from_bytes(bytes)!
 
 	return res
 }
 
-pub fn Oid.decode(src []u8) !(Oid, i64) {
-	return Oid.decode_with_rule(src, .der)!
+pub fn ObjectIdentifier.decode(src []u8) !(ObjectIdentifier, i64) {
+	return ObjectIdentifier.decode_with_rule(src, .der)!
 }
 
-fn Oid.decode_with_rule(bytes []u8, rule EncodingRule) !(Oid, i64) {
+fn ObjectIdentifier.decode_with_rule(bytes []u8, rule EncodingRule) !(ObjectIdentifier, i64) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_oid_tag) {
 		return error('Unexpected non-oid tag')
@@ -140,18 +140,18 @@ fn Oid.decode_with_rule(bytes []u8, rule EncodingRule) !(Oid, i64) {
 		[]u8{}
 	} else {
 		if content_pos >= bytes.len || content_pos + length > bytes.len {
-			return error('Oid: truncated payload bytes')
+			return error('ObjectIdentifier: truncated payload bytes')
 		}
 		unsafe { bytes[content_pos..content_pos + length] }
 	}
 
-	oid := Oid.from_bytes(content)!
+	oid := ObjectIdentifier.from_bytes(content)!
 	next := content_pos + length
 
 	return oid, next
 }
 
-pub fn (oid Oid) equal(oth Oid) bool {
+pub fn (oid ObjectIdentifier) equal(oth ObjectIdentifier) bool {
 	if oid.tag != oth.tag {
 		return false
 	}
@@ -166,7 +166,7 @@ pub fn (oid Oid) equal(oth Oid) bool {
 	return true
 }
 
-fn (oid Oid) str() string {
+fn (oid ObjectIdentifier) str() string {
 	if oid.value.len == 0 {
 		return 'nil'
 	}
@@ -177,7 +177,7 @@ fn (oid Oid) str() string {
 	return s.join('.')
 }
 
-fn (oid Oid) validate() bool {
+fn (oid ObjectIdentifier) validate() bool {
 	if oid.value.len > max_oid_length {
 		return false
 	}
@@ -187,7 +187,7 @@ fn (oid Oid) validate() bool {
 	return true
 }
 
-fn (oid Oid) oid_length() int {
+fn (oid ObjectIdentifier) oid_length() int {
 	mut n := base128_int_length(i64(oid.value[0] * 40 + oid.value[1]))
 	for i := 2; i < oid.value.len; i++ {
 		n += base128_int_length(i64(oid.value[i]))

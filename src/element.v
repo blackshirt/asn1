@@ -40,7 +40,7 @@ pub fn encode_with_options(el Element, opt string) ![]u8 {
 }
 
 // `encode_with_field_options` serializes this element into bytes array with options defined in fo.
-pub fn encode_with_field_options(el Element, fo &FieldOptions) ![]u8 {
+pub fn encode_with_field_options(el Element, fo FieldOptions) ![]u8 {
 	return el.encode_with_field_options(fo, .der)
 }
 
@@ -55,14 +55,9 @@ fn (el Element) encode_with_string_options(opt string, rule EncodingRule) ![]u8 
 	return out
 }
 
-fn (el Element) encode_with_field_options(fo &FieldOptions, rule EncodingRule) ![]u8 {
+fn (el Element) encode_with_field_options(fo FieldOptions, rule EncodingRule) ![]u8 {
 	if rule != .der && rule != .ber {
 		return error('unsupported rule')
-	}
-	// treated as without option when nil
-	if fo == unsafe { nil } {
-		out := encode_with_rule(el, rule)!
-		return out
 	}
 
 	new_element := el.apply_field_options(fo)!
@@ -159,7 +154,7 @@ fn (el Element) into_optional_with_present(present bool) !Optional {
 }
 
 // apply_optional_options turns this element into another element qith optional semantic.
-fn (el Element) apply_optional_options(fo &FieldOptions) !Element {
+fn (el Element) apply_optional_options(fo FieldOptions) !Element {
 	if fo.optional {
 		if fo.present {
 			return el.into_optional_with_present(fo.present)!
@@ -171,7 +166,7 @@ fn (el Element) apply_optional_options(fo &FieldOptions) !Element {
 
 // apply_wrappers_options turns this element into another element by wrapping it
 // with the some options defined in field options.
-fn (el Element) apply_wrappers_options(fo &FieldOptions) !Element {
+fn (el Element) apply_wrappers_options(fo FieldOptions) !Element {
 	// no wraps, and discard other wrappe options
 	if fo.cls == '' {
 		return el
@@ -194,7 +189,7 @@ fn (el Element) apply_wrappers_options(fo &FieldOptions) !Element {
 
 // validate_wrapper validates wrapper's part of fields options again element being
 // to be wrapped to meet requirement. Its return error on fail to validate.
-fn (el Element) validate_wrapper(fo &FieldOptions) ! {
+fn (el Element) validate_wrapper(fo FieldOptions) ! {
 	// wrapper into the same class is not allowed
 	el_cls := el.tag().tag_class().str().to_lower()
 	if el_cls == fo.cls.to_lower() {
@@ -206,7 +201,7 @@ fn (el Element) validate_wrapper(fo &FieldOptions) ! {
 }
 
 // validate_default validates has_default part of field options
-fn (el Element) validate_default(fo &FieldOptions) ! {
+fn (el Element) validate_default(fo FieldOptions) ! {
 	fo.validate_default_part()!
 	default := fo.default_value or { return err }
 	if el.tag() != default.tag() {
@@ -218,7 +213,7 @@ fn (el Element) validate_default(fo &FieldOptions) ! {
 // and turns this into another element.
 // by default, optional attribute is more higher precedence over wrapper attribut, ie,
 // take the wrap step and then turn into optional (if true)
-fn (el Element) apply_field_options(fo &FieldOptions) !Element {
+fn (el Element) apply_field_options(fo FieldOptions) !Element {
 	wrapped := el.apply_wrappers_options(fo)!
 	// optional options take precedence over wrapper
 	// wehen fo.optional is false, new_el is current wrapped element
@@ -324,7 +319,7 @@ pub fn make_payload[T](val T, kd KeyDefault) ![]u8 {
 				// TODO: add keyDefault support
 				if fo.has_default {
 					// install default by getting default element from map
-					key := unsafe { field.name }
+					key := field.name 
 					def_elem := kd[key] or { return error('missing defaul element') }
 					fo.install_default(def_elem, false)!
 				}

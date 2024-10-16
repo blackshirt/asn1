@@ -34,8 +34,8 @@ MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCjmcr22TtipralMR7+k8TWRzl8oFqY+lzdty1oFqsW
 
 	els0 := els[0] as Sequence
 	assert els0.fields.len == 2
-	assert els0.fields[0] is Oid
-	oid := els0.fields[0] as Oid
+	assert els0.fields[0] is ObjectIdentifier
+	oid := els0.fields[0] as ObjectIdentifier
 	assert oid.str() == '1.2.840.113549.1.1.1'
 	assert els0.fields[1] is Null
 }
@@ -74,10 +74,10 @@ MC4CAQAwBQYDK2VwBCIEINTuctv5E1hK1bbY8fdp+K06/nwoy/HU++CXqI9EdVhC
 	assert els[1] is Sequence
 	b := els[1] as Sequence
 
-	assert b.fields()[0] is Oid
+	assert b.fields()[0] is ObjectIdentifier
 	assert b.fields()[0].length()! == 3
 
-	oid := b.fields()[0] as Oid
+	oid := b.fields()[0] as ObjectIdentifier
 	assert oid.str() == '1.3.101.112'
 
 	assert els[2] is OctetString

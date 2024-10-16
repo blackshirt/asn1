@@ -31,7 +31,7 @@ fn parse_universal_primitive(tag Tag, content []u8) !Element {
 			return Null.from_bytes(content)!
 		}
 		int(TagType.oid) {
-			return Oid.from_bytes(content)!
+			return ObjectIdentifier.from_bytes(content)!
 		}
 		int(TagType.integer) {
 			return Integer.from_bytes(content)!

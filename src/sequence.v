@@ -209,9 +209,9 @@ pub fn (seq Sequence) into_sequence_of[T]() !SequenceOf[T] {
 	return sqof
 }
 
-// SEQUENCE OF
-// T should fullfill Element interface
-// generic type aliases are not yet implemented
+// ASN.1 SEQUENCE OF TYPE.
+// SequenceOf[T] is an arrays of generic T, so the generic T should fullfill Element interface.
+// We dont use generic aliases because generic type aliases are not yet implemented.
 @[heap; noinit]
 pub struct SequenceOf[T] {
 mut:

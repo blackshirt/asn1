@@ -36,7 +36,7 @@
 						<div class="info">
 							<div class="module">asn1</div>
 							<div class="toggle-version-container">
-								<span> 5aa6eaf</span>
+								<span> fde9516</span>
 								<div
 									id="dark-mode-toggle"
 									role="switch"
@@ -127,7 +127,7 @@
 		<section id="encode_with_field_options" class="doc-node">
 			<div class="title"><h2>fn encode_with_field_options <a href="#encode_with_field_options">#</a></h2></div>
 <pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token function">encode_with_field_options</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> fo <span class="token operator">&</span>FieldOptions<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+<code><span class="token keyword">fn</span> <span class="token function">encode_with_field_options</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> fo FieldOptions<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
 <p><code>encode_with_field_options</code> serializes this element into bytes array with options defined in fo.</p>
 
 </section>
@@ -309,7 +309,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 		<section id="FieldOptions.from_attrs" class="doc-node">
 			<div class="title"><h2>fn FieldOptions.from_attrs <a href="#FieldOptions.from_attrs">#</a></h2></div>
 <pre class="signature">
-<code><span class="token keyword">fn</span> FieldOptions<span class="token punctuation">.</span><span class="token function">from_attrs</span><span class="token punctuation">(</span>attrs <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token operator">&</span>FieldOptions</code></pre>
+<code><span class="token keyword">fn</span> FieldOptions<span class="token punctuation">.</span><span class="token function">from_attrs</span><span class="token punctuation">(</span>attrs <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>FieldOptions</code></pre>
 <p><code>from_attrs</code> parses and validates []string into FieldOptions.</p>
 
 </section>
@@ -317,7 +317,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 		<section id="FieldOptions.from_string" class="doc-node">
 			<div class="title"><h2>fn FieldOptions.from_string <a href="#FieldOptions.from_string">#</a></h2></div>
 <pre class="signature">
-<code><span class="token keyword">fn</span> FieldOptions<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token operator">&</span>FieldOptions</code></pre>
+<code><span class="token keyword">fn</span> FieldOptions<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>FieldOptions</code></pre>
 <p><code>from_string</code> parses string as an attribute of field options. Its allows string similar to <code>application:4; optional; has_default</code> to be treated as an field options. See FieldOptions in <code>field_options.v</code> for more detail.</p>
 
 </section>
@@ -506,6 +506,38 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="ObjectIdentifier.decode" class="doc-node">
+			<div class="title"><h2>fn ObjectIdentifier.decode <a href="#ObjectIdentifier.decode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> ObjectIdentifier<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>ObjectIdentifier<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="ObjectIdentifier.from_ints" class="doc-node">
+			<div class="title"><h2>fn ObjectIdentifier.from_ints <a href="#ObjectIdentifier.from_ints">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> ObjectIdentifier<span class="token punctuation">.</span><span class="token function">from_ints</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">!</span>ObjectIdentifier</code></pre>
+<p><code>ObjectIdentifier.from_ints</code> creates a new ObjectIdentifier type from arrays of int.</p>
+
+</section>
+
+		<section id="ObjectIdentifier.new" class="doc-node">
+			<div class="title"><h2>fn ObjectIdentifier.new <a href="#ObjectIdentifier.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> ObjectIdentifier<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>ObjectIdentifier</code></pre>
+<p><code>ObjectIdentifier.new</code> creates a new ObjectIdentifier type from dots (<code>.</code>) separated string.</p>
+
+</section>
+
+		<section id="ObjectIdentifier.parse" class="doc-node">
+			<div class="title"><h2>fn ObjectIdentifier.parse <a href="#ObjectIdentifier.parse">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> ObjectIdentifier<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>ObjectIdentifier</code></pre>
+
+
+</section>
+
 		<section id="OctetString.decode" class="doc-node">
 			<div class="title"><h2>fn OctetString.decode <a href="#OctetString.decode">#</a></h2></div>
 <pre class="signature">
@@ -527,38 +559,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">fn</span> OctetString<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>OctetString</code></pre>
 <p>parse an OctetString from ongoing Parser</p>
-
-</section>
-
-		<section id="Oid.decode" class="doc-node">
-			<div class="title"><h2>fn Oid.decode <a href="#Oid.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Oid<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Oid<span class="token punctuation">,</span> <span class="token builtin">i64</span><span class="token punctuation">)</span></code></pre>
-
-
-</section>
-
-		<section id="Oid.from_ints" class="doc-node">
-			<div class="title"><h2>fn Oid.from_ints <a href="#Oid.from_ints">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Oid<span class="token punctuation">.</span><span class="token function">from_ints</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">!</span>Oid</code></pre>
-<p><code>Oid.from_ints</code> creates a new Oid type from arrays of int.</p>
-
-</section>
-
-		<section id="Oid.new" class="doc-node">
-			<div class="title"><h2>fn Oid.new <a href="#Oid.new">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Oid<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>Oid</code></pre>
-<p><code>Oid.new</code> creates a new Oid type from dots (<code>.</code>) separated string.</p>
-
-</section>
-
-		<section id="Oid.parse" class="doc-node">
-			<div class="title"><h2>fn Oid.parse <a href="#Oid.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Oid<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>Oid</code></pre>
-
 
 </section>
 
@@ -1089,7 +1089,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (Boolean) value <a href="#Boolean.value">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>b Boolean<span class="token punctuation">)</span> <span class="token function">value</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span></code></pre>
-<p>value gets the boolean value represented by underlying byte value It returnz FALSE ob the byte == 0x00 and TRUE otherwise.</p>
+<p>value gets the boolean value represented by underlying byte value. It returns FALSE if the byte == 0x00 and TRUE otherwise.</p>
 
 </section>
 
@@ -1385,6 +1385,42 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="ObjectIdentifier" class="doc-node">
+			<div class="title"><h2>struct ObjectIdentifier <a href="#ObjectIdentifier">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">ObjectIdentifier</span> <span class="token punctuation">{</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	value <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
+<span class="token punctuation">}</span></code></pre>
+<p>ASN.1 ObjectIdentifier type. The ASN. 1 OBJECT IDENTIFIER type is used when you need to provide a unique identifier.</p>
+
+</section>
+
+		<section id="ObjectIdentifier.tag" class="doc-node">
+			<div class="title"><h2>fn (ObjectIdentifier) tag <a href="#ObjectIdentifier.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid ObjectIdentifier<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+<p>The tag of ObjectIdentifier type.</p>
+
+</section>
+
+		<section id="ObjectIdentifier.payload" class="doc-node">
+			<div class="title"><h2>fn (ObjectIdentifier) payload <a href="#ObjectIdentifier.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid ObjectIdentifier<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+<p>The payload of ObjectIdentifier type</p>
+
+</section>
+
+		<section id="ObjectIdentifier.equal" class="doc-node">
+			<div class="title"><h2>fn (ObjectIdentifier) equal <a href="#ObjectIdentifier.equal">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid ObjectIdentifier<span class="token punctuation">)</span> <span class="token function">equal</span><span class="token punctuation">(</span>oth ObjectIdentifier<span class="token punctuation">)</span> <span class="token builtin">bool</span></code></pre>
+
+
+</section>
+
 		<section id="OctetString" class="doc-node">
 			<div class="title"><h2>struct OctetString <a href="#OctetString">#</a></h2></div>
 <div class="attributes"><div class="attribute">@[noinit]</div></div>
@@ -1409,42 +1445,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (OctetString) payload <a href="#OctetString.payload">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oct OctetString<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
-
-
-</section>
-
-		<section id="Oid" class="doc-node">
-			<div class="title"><h2>struct Oid <a href="#Oid">#</a></h2></div>
-<div class="attributes"><div class="attribute">@[noinit]</div></div>
-<pre class="signature">
-<code><span class="token keyword">struct</span> <span class="token symbol">Oid</span> <span class="token punctuation">{</span>
-<span class="token keyword">mut</span><span class="token punctuation">:</span>
-	value <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
-<span class="token punctuation">}</span></code></pre>
-<p>ASN.1 ObjectIdentifier The ASN. 1 OBJECT IDENTIFIER type is used when you need to provide a unique identifier.</p>
-
-</section>
-
-		<section id="Oid.tag" class="doc-node">
-			<div class="title"><h2>fn (Oid) tag <a href="#Oid.tag">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
-<p>The tag of Oid type.</p>
-
-</section>
-
-		<section id="Oid.payload" class="doc-node">
-			<div class="title"><h2>fn (Oid) payload <a href="#Oid.payload">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
-<p>The payload of Oid type</p>
-
-</section>
-
-		<section id="Oid.equal" class="doc-node">
-			<div class="title"><h2>fn (Oid) equal <a href="#Oid.equal">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>oid Oid<span class="token punctuation">)</span> <span class="token function">equal</span><span class="token punctuation">(</span>oth Oid<span class="token punctuation">)</span> <span class="token builtin">bool</span></code></pre>
 
 
 </section>
@@ -1781,7 +1781,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	size   <span class="token builtin">int</span> <span class="token operator">=</span> default_seqset_fields
 	fields <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">T</span>
 <span class="token punctuation">}</span></code></pre>
-<p>SEQUENCE OF T should fullfill Element interface generic type aliases are not yet implemented</p>
+<p>ASN.1 SEQUENCE OF TYPE. SequenceOf[T] is an arrays of generic T, so the generic T should fullfill Element interface. We dont use generic aliases because generic type aliases are not yet implemented.</p>
 
 </section>
 
@@ -2000,7 +2000,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 16 Oct 2024 01:24:07</div>
+						<div class="footer">Powered by vdoc. Generated on: 16 Oct 2024 02:21:15</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
@@ -2145,6 +2145,18 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#NumericString.parse">fn NumericString.parse</a>        <ul>
 </ul>
 </li>
+<li class="open"><a href="#ObjectIdentifier.decode">fn ObjectIdentifier.decode</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#ObjectIdentifier.from_ints">fn ObjectIdentifier.from_ints</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#ObjectIdentifier.new">fn ObjectIdentifier.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#ObjectIdentifier.parse">fn ObjectIdentifier.parse</a>        <ul>
+</ul>
+</li>
 <li class="open"><a href="#OctetString.decode">fn OctetString.decode</a>        <ul>
 </ul>
 </li>
@@ -2152,18 +2164,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#OctetString.parse">fn OctetString.parse</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Oid.decode">fn Oid.decode</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Oid.from_ints">fn Oid.from_ints</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Oid.new">fn Oid.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Oid.parse">fn Oid.parse</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Optional.new">fn Optional.new</a>        <ul>
@@ -2353,15 +2353,15 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li><a href="#NumericString.payload">fn payload</a></li>
 </ul>
 </li>
+<li class="open"><a href="#ObjectIdentifier">struct ObjectIdentifier</a>        <ul>
+<li><a href="#ObjectIdentifier.tag">fn tag</a></li>
+<li><a href="#ObjectIdentifier.payload">fn payload</a></li>
+<li><a href="#ObjectIdentifier.equal">fn equal</a></li>
+</ul>
+</li>
 <li class="open"><a href="#OctetString">struct OctetString</a>        <ul>
 <li><a href="#OctetString.tag">fn tag</a></li>
 <li><a href="#OctetString.payload">fn payload</a></li>
-</ul>
-</li>
-<li class="open"><a href="#Oid">struct Oid</a>        <ul>
-<li><a href="#Oid.tag">fn tag</a></li>
-<li><a href="#Oid.payload">fn payload</a></li>
-<li><a href="#Oid.equal">fn equal</a></li>
 </ul>
 </li>
 <li class="open"><a href="#Optional">struct Optional</a>        <ul>

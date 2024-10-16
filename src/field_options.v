@@ -35,7 +35,7 @@ mut:
 }
 
 // validate validates FieldOptions to meet criteria
-fn (fo &FieldOptions) validate() ! {
+fn (fo FieldOptions) validate() ! {
 	fo.validate_wrapper_part()!
 	fo.validate_default_part()!
 	// mode present without class wrapper present is error
@@ -44,7 +44,7 @@ fn (fo &FieldOptions) validate() ! {
 	}
 }
 
-fn (fo &FieldOptions) validate_wrapper_part() ! {
+fn (fo FieldOptions) validate_wrapper_part() ! {
 	if fo.cls != '' {
 		if !valid_tagclass_name(fo.cls) {
 			return error('you provides invalid cls')
@@ -63,7 +63,7 @@ fn (fo &FieldOptions) validate_wrapper_part() ! {
 	}
 }
 
-fn (fo &FieldOptions) validate_default_part() ! {
+fn (fo FieldOptions) validate_default_part() ! {
 	if fo.has_default {
 		if fo.default_value == none {
 			return error('has_default withoud default value')
@@ -94,9 +94,9 @@ pub fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 // `from_string` parses string as an attribute of field options.
 // Its allows string similar to `application:4; optional; has_default` to be treated as an field options.
 // See FieldOptions in `field_options.v` for more detail.
-pub fn FieldOptions.from_string(s string) !&FieldOptions {
+pub fn FieldOptions.from_string(s string) !FieldOptions {
 	if s.len == 0 {
-		return &FieldOptions{}
+		return FieldOptions{}
 	}
 	if s.len > max_string_option_length {
 		return error('string option exceed limit')
@@ -111,8 +111,8 @@ pub fn FieldOptions.from_string(s string) !&FieldOptions {
 }
 
 // `from_attrs` parses and validates []string into FieldOptions.
-pub fn FieldOptions.from_attrs(attrs []string) !&FieldOptions {
-	mut fo := &FieldOptions{}
+pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
+	mut fo := FieldOptions{}
 	if attrs.len == 0 {
 		return fo
 	}
@@ -325,7 +325,7 @@ fn parse_optional_marker(attr string) !(string, string) {
 	src := attr.trim_space()
 	if is_optional_marker(src) {
 		item := src.split(':')
-		// only allow 'optional' or 'optional:true'
+		// only allow 'optional' [same as: `optional:false] or 'optional:true'
 		if item.len != 1 && item.len != 2 {
 			return error('bad optional marker length')
 		}

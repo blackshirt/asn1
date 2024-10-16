@@ -45,7 +45,7 @@ Example ::= SEQUENCE {
     type    [1] EXPLICIT OBJECT IDENTIFIER
 }
 ```*/
-	oid := Oid.new('1.3.6.1.3')!
+	oid := ObjectIdentifier.new('1.3.6.1.3')!
 	expl := ContextElement.explicit_context(1, oid)!
 	mut seq := Sequence{}
 	seq.add_element(Utf8String.new('Hello')!)! // tag : 12

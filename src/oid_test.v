@@ -11,12 +11,12 @@ struct OidWriteTest {
 
 fn test_write_oid() ! {
 	dt := [
-		OidWriteTest{[], [], error('Oid: bad oid int array')}, // empty arc
-		OidWriteTest{[0], [u8(0x00)], error('Oid: bad oid int array')}, // only root arc
+		OidWriteTest{[], [], error('ObjectIdentifier: bad oid int array')}, // empty arc
+		OidWriteTest{[0], [u8(0x00)], error('ObjectIdentifier: bad oid int array')}, // only root arc
 		OidWriteTest{[0, 0], [u8(0x00)], none},
-		OidWriteTest{[3, 0], [u8(0x00)], error('Oid: bad oid int array')}, // first arc, 3 is not allowed value
-		OidWriteTest{[0, 40], [u8(0x00)], error('Oid: bad oid int array')}, // second arc, 40 is not allowed (its should <= 39)
-		OidWriteTest{[1, 40], [u8(0x00)], error('Oid: bad oid int array')}, // second arc, 40 is not allowed (its should <= 39)
+		OidWriteTest{[3, 0], [u8(0x00)], error('ObjectIdentifier: bad oid int array')}, // first arc, 3 is not allowed value
+		OidWriteTest{[0, 40], [u8(0x00)], error('ObjectIdentifier: bad oid int array')}, // second arc, 40 is not allowed (its should <= 39)
+		OidWriteTest{[1, 40], [u8(0x00)], error('ObjectIdentifier: bad oid int array')}, // second arc, 40 is not allowed (its should <= 39)
 		OidWriteTest{[1, 2], [u8(0x2a)], none},
 		OidWriteTest{[2, 5], [u8(0x55)], none},
 		OidWriteTest{[1, 2, 840], [u8(0x2a), 0x86, 0x48], none},
@@ -25,7 +25,7 @@ fn test_write_oid() ! {
 	]
 
 	for item in dt {
-		oid := Oid.from_ints(item.inp) or {
+		oid := ObjectIdentifier.from_ints(item.inp) or {
 			assert err == item.err
 			continue
 		}
@@ -38,54 +38,54 @@ fn test_write_oid() ! {
 
 struct BuildOidTest {
 	inp []int
-	out Oid
+	out ObjectIdentifier
 	err IError
 }
 
 fn test_oid_from_ints() ! {
 	td := [
-		BuildOidTest{[1, 2], Oid{
+		BuildOidTest{[1, 2], ObjectIdentifier{
 			value: [1, 2]
 		}, none},
-		BuildOidTest{[1, 2, 3], Oid{
+		BuildOidTest{[1, 2, 3], ObjectIdentifier{
 			value: [1, 2, 3]
 		}, none},
-		BuildOidTest{[1, 4, 4], Oid{
+		BuildOidTest{[1, 4, 4], ObjectIdentifier{
 			value: [1, 4, 4]
 		}, none},
-		BuildOidTest{[1, 39, 6, 256], Oid{
+		BuildOidTest{[1, 39, 6, 256], ObjectIdentifier{
 			value: [1, 39, 6, 256]
 		}, none},
 		// second >= 40 when first < 2 not allowed
-		BuildOidTest{[1, 40, 4], Oid{
+		BuildOidTest{[1, 40, 4], ObjectIdentifier{
 			value: [1, 40, 4]
-		}, error('Oid: bad oid int array')},
+		}, error('ObjectIdentifier: bad oid int array')},
 		// first value bigger than 2 was not allowed
-		BuildOidTest{[4, 5, 6], Oid{
+		BuildOidTest{[4, 5, 6], ObjectIdentifier{
 			value: [4, 5, 6]
-		}, error('Oid: bad oid int array')},
+		}, error('ObjectIdentifier: bad oid int array')},
 		// second value >= 40 was not allowed when first < 2
-		BuildOidTest{[1, 40, 6], Oid{
+		BuildOidTest{[1, 40, 6], ObjectIdentifier{
 			value: [1, 40, 6]
-		}, error('Oid: bad oid int array')},
-		BuildOidTest{[2, 50, 6], Oid{
+		}, error('ObjectIdentifier: bad oid int array')},
+		BuildOidTest{[2, 50, 6], ObjectIdentifier{
 			value: [2, 50, 6]
-		}, error('Oid: bad oid int array')},
-		BuildOidTest{[1, 4, 4555555555555555555], Oid{
+		}, error('ObjectIdentifier: bad oid int array')},
+		BuildOidTest{[1, 4, 4555555555555555555], ObjectIdentifier{
 			value: [1, 4, 4555555555555555555]
 		}, error('overflow parse_int result')},
-		BuildOidTest{[4, 0xab, 4], Oid{
+		BuildOidTest{[4, 0xab, 4], ObjectIdentifier{
 			value: [4, 0xab, 4]
-		}, error('Oid: bad oid int array')},
-		BuildOidTest{[4, 0x0c, 4], Oid{
+		}, error('ObjectIdentifier: bad oid int array')},
+		BuildOidTest{[4, 0x0c, 4], ObjectIdentifier{
 			value: [4, 0x0c, 4]
-		}, error('Oid: bad oid int array')},
-		BuildOidTest{[2], Oid{
+		}, error('ObjectIdentifier: bad oid int array')},
+		BuildOidTest{[2], ObjectIdentifier{
 			value: [2]
-		}, error('Oid: bad oid int array')},
+		}, error('ObjectIdentifier: bad oid int array')},
 	]
 	for i, c in td {
-		s := Oid.from_ints(c.inp) or {
+		s := ObjectIdentifier.from_ints(c.inp) or {
 			assert err == c.err
 			continue
 		}
@@ -95,45 +95,45 @@ fn test_oid_from_ints() ! {
 
 struct OidStrTest {
 	inp string
-	out Oid
+	out ObjectIdentifier
 	err IError
 }
 
 fn test_oid_from_string() ! {
 	td := [
-		OidStrTest{'1.2.840.113549', Oid{
+		OidStrTest{'1.2.840.113549', ObjectIdentifier{
 			value: [1, 2, 840, 113549]
 		}, none},
-		OidStrTest{'1.3.6.1.3', Oid{
+		OidStrTest{'1.3.6.1.3', ObjectIdentifier{
 			value: [1, 3, 6, 1, 3]
 		}, none},
-		OidStrTest{'1.2', Oid{
+		OidStrTest{'1.2', ObjectIdentifier{
 			value: [1, 2]
 		}, none},
-		OidStrTest{'1.4.4', Oid{
+		OidStrTest{'1.4.4', ObjectIdentifier{
 			value: [1, 4, 4]
 		}, none},
-		OidStrTest{'1.4.x', Oid{
+		OidStrTest{'1.4.x', ObjectIdentifier{
 			value: [1, 4, 4]
 		}, error('common_parse_uint: syntax error x')}, // invalid char
-		OidStrTest{'4.4.4', Oid{
+		OidStrTest{'4.4.4', ObjectIdentifier{
 			value: [4, 4, 4]
-		}, error('Oid: bad oid string')},
-		OidStrTest{'1.4.4555555555555555555', Oid{
+		}, error('ObjectIdentifier: bad oid string')},
+		OidStrTest{'1.4.4555555555555555555', ObjectIdentifier{
 			value: [4, 4, 4555555555555555555]
 		}, error('common_parse_uint: integer overflow 4555555555555555555')},
-		OidStrTest{'4.ab.4', Oid{
+		OidStrTest{'4.ab.4', ObjectIdentifier{
 			value: [4, 0xab, 4]
 		}, error('common_parse_uint: syntax error ab')}, // invalid char
-		OidStrTest{'4.c.4', Oid{
+		OidStrTest{'4.c.4', ObjectIdentifier{
 			value: [4, 0x0c, 4]
 		}, error('common_parse_uint: syntax error c')}, // invalid char
-		OidStrTest{'2', Oid{
+		OidStrTest{'2', ObjectIdentifier{
 			value: [2]
-		}, error('Oid: bad string oid length')},
+		}, error('ObjectIdentifier: bad string oid length')},
 	]
 	for s in td {
-		v := Oid.new(s.inp) or {
+		v := ObjectIdentifier.new(s.inp) or {
 			assert err == s.err
 			continue
 		}
@@ -145,7 +145,7 @@ fn test_serialize_oid_basic() {
 	// https://www.oss.com/asn1/resources/asn1-made-simple/asn1-quick-reference/object-identifier.html
 	inp := [1, 0, 8571, 2, 1]
 	exp := [u8(6), 5, 0x28, 0xC2, 0x7B, 0x02, 0x01]
-	oid := Oid.from_ints(inp)!
+	oid := ObjectIdentifier.from_ints(inp)!
 
 	out := encode(oid)!
 
@@ -174,12 +174,12 @@ fn test_serialize_decode_oid() {
 		OidSerializeTest{[1, 2, 840, 133549, 1, 1, 5], [u8(0x06), 0x09, 0x2a, 0x86, 0x48, 0x88,
 			0x93, 0x2d, 0x01, 0x01, 0x05], none},
 		OidSerializeTest{[2, 100, 3], [u8(0x06), 0x03, 0x81, 0x34, 0x03], none},
-		OidSerializeTest{[1, 100, 3], [u8(0x06), 0x03, 0x81, 0x34, 0x03], error('Oid: bad oid int array')},
-		OidSerializeTest{[4, 100, 3], [u8(0x06), 0x03, 0x81, 0x34, 0x03], error('Oid: bad oid int array')},
+		OidSerializeTest{[1, 100, 3], [u8(0x06), 0x03, 0x81, 0x34, 0x03], error('ObjectIdentifier: bad oid int array')},
+		OidSerializeTest{[4, 100, 3], [u8(0x06), 0x03, 0x81, 0x34, 0x03], error('ObjectIdentifier: bad oid int array')},
 	]
 	for t in td {
 		// dump(t.inp)
-		oid := Oid.from_ints(t.inp) or {
+		oid := ObjectIdentifier.from_ints(t.inp) or {
 			assert err == t.err
 			continue
 		}
@@ -191,7 +191,7 @@ fn test_serialize_decode_oid() {
 		assert out == t.exp
 		// dump(out)
 		// decode back
-		oidback, next := Oid.decode(out)!
+		oidback, next := ObjectIdentifier.decode(out)!
 
 		assert oidback.tag().tag_number() == int(TagType.oid)
 		assert oidback == oid
@@ -201,14 +201,14 @@ fn test_serialize_decode_oid() {
 fn test_oid_encode_decode() ! {
 	inp := '1.2.840.113549'
 
-	src := Oid.new(inp)!
+	src := ObjectIdentifier.new(inp)!
 
 	out := encode(src)!
 	exp := [u8(0x06), 0x06, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d]
 
 	assert out == exp
 
-	oidback, _ := Oid.decode(out)!
+	oidback, _ := ObjectIdentifier.decode(out)!
 
 	assert oidback.str() == inp
 	assert oidback.tag().tag_number() == 6
@@ -217,7 +217,7 @@ fn test_oid_encode_decode() ! {
 fn test_tc21_long_format_of_oid_encoding_should_error_in_der() ! {
 	data := [u8(0x06), 0x06, 0x80, 0x80, 0x51, 0x80, 0x80, 0x01]
 
-	_, _ := Oid.decode(data) or {
+	_, _ := ObjectIdentifier.decode(data) or {
 		assert err == error('integer is not minimaly encoded')
 		return
 	}
@@ -227,7 +227,7 @@ fn test_tc22_too_big_value_oid() ! {
 	data := [u8(0x06), 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f,
 		0x85, 0x03, 0x02, 0x02, 0x03]
 
-	_, _ := Oid.decode(data) or {
+	_, _ := ObjectIdentifier.decode(data) or {
 		assert err == error('integer is not minimaly encoded')
 		return
 	}
