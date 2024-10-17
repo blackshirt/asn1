@@ -35,7 +35,7 @@ fn (opt Optional) validate() ! {
 	*/
 }
 
-// Optional.new creates and marked element as an Optional from some element.
+// Optional.new creates and marked element as an Optional element.
 pub fn Optional.new(el Element) !Optional {
 	return Optional{
 		tag:     el.tag()

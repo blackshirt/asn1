@@ -142,7 +142,7 @@ pub fn (fo FieldOptions) wrapper_tag() !Tag {
 	if fo.cls == '' {
 		return error('You cant build wrapper tag from empty string')
 	}
-	fo.validate_wrapper_part()!
+	fo.check_wrapper()!
 	cls := TagClass.from_string(fo.cls)!
 	return Tag.new(cls, true, fo.tagnum)!
 }
@@ -167,41 +167,6 @@ pub fn (fo FieldOptions) inner_tag() !Tag {
 	return tag
 }
 
-// validate validates FieldOptions to meet criteria.
-fn (fo FieldOptions) validate() ! {
-	fo.validate_wrapper_part()!
-	fo.validate_default_part()!
-	// mode present without class wrapper present is error
-	if fo.cls == '' && fo.mode != '' {
-		return error('mode key presents without cls being setted')
-	}
-}
-
-fn (fo FieldOptions) validate_wrapper_part() ! {
-	if fo.cls != '' {
-		if !valid_tagclass_name(fo.cls) {
-			return error('you provides invalid cls')
-		}
-		// provides the tag number
-		if fo.tagnum <= 0 {
-			return error('provides with the correct tagnum')
-		}
-
-		// when wrapped, you should provide inner tag value.
-		if fo.inner == '' {
-			return error('inner value is not set in wrapped mode')
-		}
-	}
-}
-
-fn (fo FieldOptions) validate_default_part() ! {
-	if fo.has_default {
-		if fo.default_value == none {
-			return error('has_default withoud default value')
-		}
-	}
-}
-
 // install_default tries to install and sets element el as a default value when has_default flag of FieldOptions
 // has been set into true, or error if has_default is false.
 // When default_value has been set with some value before this, its would return error until you force it
@@ -220,6 +185,40 @@ pub fn (mut fo FieldOptions) install_default(el Element, force bool) ! {
 		fo.default_value = el
 	}
 	return error('you can not install default value when has_default being not set')
+}
+
+// check_wrapper validates wrapper's part of fields options.
+fn (fo FieldOptions) check_wrapper() ! {
+	// Validates wrapper part
+	// Its discard all check when fo.cls is empty string, its marked as non-wrapped element.
+	if fo.cls != '' {
+		if !valid_tagclass_name(fo.cls) {
+			return error('Get unexpected fo.cls value:${fo.cls}')
+		}
+		// provides the tag number
+		if fo.tagnum <= 0 {
+			return error('Get unexpected fo.tagnum: ${fo.tagnum}')
+		}
+		// wraps into UNIVERSAL type is not allowed
+		if fo.cls == 'universal' {
+			return error('wraps into universal class is not allowed')
+		}
+		// provides wrap mode, ie, explicit or implicit
+		if fo.mode == '' {
+			return error('You have not provides mode')
+		}
+		if !valid_mode_value(fo.mode) {
+			return error('Get unexpected mode value:${fo.mode}')
+		}
+		// when wrapped, you should provide inner tag value.
+		if fo.inner == '' {
+			return error('You have not provides mode')
+		}
+		// Provides with correct inner value
+		if !is_valid_inner_value(fo.inner) {
+			return error('Get unexpected fo.inner value:${fo.inner}')
+		}
+	}
 }
 
 // Wrapping (unwrapping) helper.
@@ -267,17 +266,14 @@ fn parse_mode_marker(s string) !(string, string) {
 	src := s.trim_space()
 	if is_mode_marker(src) {
 		item := src.split(':')
-		if item.len != 1 && item.len != 2 {
+		if item.len != 2 {
 			return error('bad mode marker')
 		}
 		key := item[0].trim_space()
 		if !valid_mode_key(key) {
 			return error('bad mode key')
 		}
-		if item.len == 1 {
-			// without mode, just set to explicit
-			return key, 'explicit'
-		}
+	
 		value := item[1].trim_space()
 		if !valid_mode_value(value) {
 			return error('bad mode value')

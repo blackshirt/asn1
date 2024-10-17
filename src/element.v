@@ -137,55 +137,32 @@ pub fn (el Element) length() !int {
 
 // Helper for validates FieldOptions.
 //
-// validate_field_options validates FieldOptions is a valid option agains current element.
-fn (el Element) validate_field_options(fo FieldOptions) ! {
-	el.validate_wrapper_part(fo)!
-	el.validate_optional_part(fo)!
-	el.validate_default_part(fo)!
+// validate_options validates FieldOptions is a valid option agains current element.
+fn (el Element) validate_options(fo FieldOptions) ! {
+	el.validate_wrapper(fo)!
+	el.validate_optional(fo)!
+	el.validate_default(fo)!
 }
 
-// validate_wrapper_part validates wrapper's part of fields options again element being
-// wrapped to meet requirement. Its return error on fail to validate.
-fn (el Element) validate_wrapper_part(fo FieldOptions) ! {
+// validate_wrapper validates wrapper's part of fields options.
+fn (el Element) validate_wrapper(fo FieldOptions) ! {
 	// Validates wrapper part
 	// Its discard all check when fo.cls is empty string, its marked as non-wrapped element.
 	if fo.cls != '' {
-		if !valid_tagclass_name(fo.cls) {
-			return error('Get unexpected fo.cls value:${fo.cls}')
-		}
-		// provides the tag number
-		if fo.tagnum <= 0 {
-			return error('Get unexpected fo.tagnum: ${fo.tagnum}')
-		}
 		// wraps into the same class is not allowed
 		el_cls := el.tag().tag_class().str().to_lower()
 		if el_cls == fo.cls.to_lower() {
 			return error('wraps into same class is not allowed')
 		}
-		// wraps into UNIVERSAL type is not allowed
-		if fo.cls == 'universal' {
-			return error('wraps into universal class is not allowed')
+		if el is Optional {
+			return error('You cant wrap Optional')
 		}
-		// provides wrap mode, ie, explicit or implicit
-		if fo.mode == '' {
-			return error('You have not provides mode')
-		}
-		if !valid_mode_value(fo.mode) {
-			return error('Get unexpected mode value:${fo.mode}')
-		}
-		// when wrapped, you should provide inner tag value.
-		if fo.inner == '' {
-			return error('You have not provides mode')
-		}
-		// Provides with correct inner value
-		if !is_valid_inner_value(fo.inner) {
-			return error('Get unexpected fo.inner value:${fo.inner}')
-		}
+		fo.check_wrapper()!
 	}
 }
 
-// validate_default_part validates has_default part of field options
-fn (el Element) validate_default_part(fo FieldOptions) ! {
+// validate_default validates has_default part of field options
+fn (el Element) validate_default(fo FieldOptions) ! {
 	// Validates default part
 	if fo.has_default {
 		if fo.default_value == none {
@@ -198,7 +175,7 @@ fn (el Element) validate_default_part(fo FieldOptions) ! {
 	}
 }
 
-fn (el Element) validate_optional_part(fo FieldOptions) ! {
+fn (el Element) validate_optional(fo FieldOptions) ! {
 	// Validates Optional part
 	// If the element is already optional, you cant make it optional again by setting optional=true
 	if fo.optional {
@@ -217,9 +194,9 @@ fn (el Element) apply_wrappers_options(fo FieldOptions) !Element {
 	if fo.cls == '' {
 		return el
 	}
-	el.validate_wrapper_part(fo)!
+	el.validate_wrapper(fo)!
 	if fo.has_default {
-		el.validate_default_part(fo)!
+		el.validate_default(fo)!
 	}
 
 	cls := TagClass.from_string(fo.cls)!
@@ -238,7 +215,7 @@ fn (el Element) apply_optional_options(fo FieldOptions) !Element {
 	if !fo.optional {
 		return el
 	}
-	el.validate_optional_part(fo)!
+	el.validate_optional(fo)!
 	if fo.optional && fo.present {
 		return el.into_optional_to_present()!
 	}
@@ -284,7 +261,7 @@ fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
 		return error('unmatching tag of default value')
 	}
 	fo.install_default(value, false)!
-	el.validate_default_part(fo)!
+	el.validate_default(fo)!
 }
 
 // wrap only universal class, and other class that has primitive form
@@ -297,7 +274,7 @@ fn (el Element) unwrap(fo FieldOptions) !Element {
 	if !el.tag().is_constructed() {
 		return error('You cant unwrap non-constructed element')
 	}
-	el.validate_wrapper_part(fo)!
+	el.validate_wrapper(fo)!
 
 	// if unwrapping, el.tag() should == fo.inner produced by wrap operation
 	return error('Not implemented')

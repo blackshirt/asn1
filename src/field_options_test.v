@@ -14,11 +14,13 @@ struct StringOption {
 
 fn test_parse_string_option() ! {
 	data := [
-		StringOption{'application:20', none, 'application', 20, false, false, 'explicit', false},
-		StringOption{'private:0x20', none, 'private', 32, false, false, 'explicit', false},
+		StringOption{'application:20;mode:explicit', none, 'application', 20, false, false, 'explicit', false},
+		StringOption{'private:0x20;mode:implicit', none, 'private', 32, false, false, 'implicit', false},
+		StringOption{'application:20', error(' `bad mode marker`'), 'application', 20, false, false, '', false},
+		StringOption{'private:0x20', error(' `bad mode marker`'), 'private', 32, false, false, '', false},
 		StringOption{'context_specific:0x20; optional; has_default; mode:explicit', none, 'context_specific', 32, true, true, 'explicit', false},
 		StringOption{'context_specific:0x20; optional; has_default; mode:implicit', none, 'context_specific', 32, true, true, 'implicit', false},
-		StringOption{'application:5; optional', none, 'application', 5, true, false, 'explicit', false},
+		StringOption{'application:5; optional', none, 'application', 5, true, false, '', false},
 	]
 	for item in data {
 		fo := FieldOptions.from_string(item.src) or {
@@ -147,9 +149,10 @@ fn test_mode_marker_parsing() ! {
 		// bad key or value
 		TaggedModeMarker{'model:implicit', '', error('bad mode key')},
 		TaggedModeMarker{'mode:implicitkey', '', error('bad mode value')},
-		TaggedModeMarker{'modelimplicit', '', error('bad mode key')},
+		TaggedModeMarker{'modelimplicit', '', error('bad mode marker')},
 	]
-	for item in data {
+	for i, item in data {
+		//dump(i)
 		k, v := parse_mode_marker(item.attr) or {
 			assert err == item.err
 			continue
