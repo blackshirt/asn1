@@ -45,11 +45,13 @@ pub fn BitString.parse(mut p Parser) !BitString {
 		return error('Get unexpected non bitstring tag')
 	}
 	length := p.read_length()!
-	bytes := if length == 0 { []u8{} } else {
+	bytes := if length == 0 {
+		[]u8{}
+	} else {
 		p.read_bytes(length)!
 	}
 	bs := BitString.from_bytes(bytes)!
-	
+
 	return bs
 }
 

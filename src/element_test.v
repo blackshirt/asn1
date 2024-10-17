@@ -136,7 +136,6 @@ fn test_wrapping_functionality() ! {
 		]},
 	]
 	for i, item in data {
-		dump(i)
 		out := encode_with_options(elem, item.attr) or {
 			assert item.err == err
 			continue

@@ -35,7 +35,7 @@ mut:
 	optional bool
 	present  bool
 
-	// This field applied to element with DEFAULT keyword behaviour. 
+	// This field applied to element with DEFAULT keyword behaviour.
 	// Its applied into wrapping of element or optionality of the element.
 	// If some element has DEFAULT keyword, set this field to true and gives default element into `default_value` field.
 	has_default   bool

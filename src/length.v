@@ -21,7 +21,7 @@ const max_definite_length_value = max_i64
 //
 // This module only support definite length, in short or long form. Its required for DER encoding
 // the length octets should be in definite length.
-// 
+//
 // Length represent ASN.1 length value
 pub type Length = i64
 
