@@ -15,25 +15,27 @@ const max_attributes_length = 5
 @[heap; noinit]
 pub struct FieldOptions {
 mut:
-	// Following fields, ie, `cls`, `tagnum`, `mode` and `inner` was for wrapping (and unwrapping) purposes.
-	// This fields currently applied to (strictly) UNIVERSAL element.
-	// In the encoding (decoding) phase, it would be checked if this options meet the criteria.
-	// So, you can wrap (unwrap) your element with this configuration.
-	// examples of options string contains: `application:100; mode: explicit; inner:universal, false, 4`.
-	// Its would be parsed into: cls=application, tagnum=100; mode: explicit, inner: `universal, false, 4`
-	cls    string
-	tagnum int = -1
-	mode   string
-	inner  string
-
-	// Following fields applied to element with OPTIONAL behaviour, with or without DEFAULT value.
+	// The fields `cls`, `tagnum`, `mode` and `inner` was used 
+	// for wrapping (and unwrapping) purposes. turn some element 
+	// into another element configured with this options.
+	// This fields currently strictly applied to UNIVERSAL element.
+	// In the encoding (decoding) phase, it would be checked 
+	// if this options meet required criteria.
+	// Limitation applied on the wrapper fielda:
+	// 1. Wrap into universal is not allowed (cls != universal)
+	// 2. Wrapped element should have UNIVERSAL class.
+	// 3. You should provide mode for wrapping, explicit or implicit.
+	// 4. If cls == '', no wrapping is performed, discarding all wrapper options 
+	cls    string // should cls != 'universal'
+	tagnum int = -1 // Provides with wrapper tag number.
+	mode   string // explicit or implicit, depends on definition schema.
+	inner  int = -1 // should valid universal tag number.
+ 
+	// optional field applied to element with OPTIONAL behaviour, 
+	// with or without DEFAULT value.
 	// Set `optional` to true when this element has OPTIONAL keyword in the definition of element.
 	// Usually element with OPTIONAL keyword is not presents in the encoding (decoding) data.
-	// The `present` field tells us if this optional be marked to be present in the data (encoding or decoding).
-	// This present field negates optionality of the element, efectively marked as present.
-	// If not sure, just set this field to false.
 	optional bool
-	present  bool
 
 	// This field applied to element with DEFAULT keyword behaviour.
 	// Its applied into wrapping of element or optionality of the element.
@@ -97,14 +99,13 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 			fo.tagnum = tnum
 		}
 		if is_optional_marker(item) {
-			_, status := parse_optional_marker(item)!
+			opt := parse_optional_marker(item)!
 			opt_ctr += 1
 			if opt_ctr > 1 {
 				return error('multiples optional tag')
 			}
-			present := if status == 'true' { true } else { false }
+			present := if opt == 'optional' { true } else { false }
 			fo.optional = true
-			fo.present = present
 		}
 		if is_default_marker(item) {
 			_ := parse_default_marker(item)!
@@ -115,7 +116,7 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 			fo.has_default = true
 		}
 		if is_mode_marker(item) {
-			_, value := parse_mode_marker(item)!
+			value := parse_mode_marker(item)!
 			mod_ctr += 1
 			if mod_ctr > 1 {
 				return error('multiples mode key defined')
@@ -128,9 +129,10 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 				return error('multiples inner tag format defined')
 			}
 			if !is_valid_inner_value(value) {
-				return error('Bad inner string value')
+				return error('Bad inner value')
 			}
-			fo.inner = value
+			num := value.int()
+			fo.inner = num
 		}
 	}
 
@@ -149,22 +151,12 @@ pub fn (fo FieldOptions) wrapper_tag() !Tag {
 
 // inner_tag gets inner Tag from FieldOptions.
 pub fn (fo FieldOptions) inner_tag() !Tag {
-	if fo.inner == '' {
+	if fo.inner < 0 || fo.inner > max_universal_tagnumber {
 		return error('You cant create tag from empty inner string')
 	}
-	if !is_valid_inner_value(fo.inner) {
-		return error('FieldOptions contains invalid inner value')
-	}
+    utag := universal_tag_from_int(fo.inner)!
 
-	cls, frm, num := parse_inner_value(fo.inner)!
-
-	class := TagClass.from_string(cls)!
-	form := if frm == 'true' { true } else { false }
-	number := num.int()
-
-	tag := Tag.new(class, form, number)!
-
-	return tag
+	return utag
 }
 
 // install_default tries to install and sets element el as a default value when has_default flag of FieldOptions
@@ -196,7 +188,7 @@ fn (fo FieldOptions) check_wrapper() ! {
 			return error('Get unexpected fo.cls value:${fo.cls}')
 		}
 		// provides the tag number
-		if fo.tagnum <= 0 {
+		if fo.tagnum < 0 {
 			return error('Get unexpected fo.tagnum: ${fo.tagnum}')
 		}
 		// wraps into UNIVERSAL type is not allowed
@@ -210,14 +202,11 @@ fn (fo FieldOptions) check_wrapper() ! {
 		if !valid_mode_value(fo.mode) {
 			return error('Get unexpected mode value:${fo.mode}')
 		}
-		// when wrapped, you should provide inner tag value.
-		if fo.inner == '' {
+		// when wrapped, you should provide inner tag number value.
+		if fo.inner < 0 || fo.inner > max_universal_tagnumber {
 			return error('You have not provides mode')
 		}
-		// Provides with correct inner value
-		if !is_valid_inner_value(fo.inner) {
-			return error('Get unexpected fo.inner value:${fo.inner}')
-		}
+		
 	}
 }
 
@@ -247,12 +236,11 @@ fn parse_tag_marker(attr string) !(string, string) {
 
 fn is_tag_marker(attr string) bool {
 	return attr.starts_with('application') || attr.starts_with('private')
-		|| attr.starts_with('context_specific') || attr.starts_with('universal')
+		|| attr.starts_with('context_specific')
 }
 
 fn valid_tagclass_name(tag string) bool {
 	return tag == 'application' || tag == 'private' || tag == 'context_specific'
-		|| tag == 'universal'
 }
 
 // it should be represented in int or hex number
@@ -260,32 +248,17 @@ fn valid_string_tag_number(s string) bool {
 	return s.is_int() || s.is_hex()
 }
 
-// parse 'mode:explicit [or implicit]' format.
-// format: `mode: explicit` or `mode: implicit`
-fn parse_mode_marker(s string) !(string, string) {
-	src := s.trim_space()
-	if is_mode_marker(src) {
-		item := src.split(':')
-		if item.len != 2 {
-			return error('bad mode marker')
-		}
-		key := item[0].trim_space()
-		if !valid_mode_key(key) {
-			return error('bad mode key')
-		}
-
-		value := item[1].trim_space()
-		if !valid_mode_value(value) {
+// parse 'explicit [or implicit]' format.
+fn parse_mode_marker(s string) !string {
+	item := s.trim_space()
+	if is_mode_marker(item) {
+		if !valid_mode_value(item) {
 			return error('bad mode value')
 		}
 
-		return key, value
+		return item
 	}
 	return error('not mode marker')
-}
-
-fn valid_mode_key(s string) bool {
-	return s == 'mode'
 }
 
 fn valid_mode_value(s string) bool {
@@ -293,12 +266,11 @@ fn valid_mode_value(s string) bool {
 }
 
 fn is_mode_marker(attr string) bool {
-	return attr.starts_with('mode')
+	return attr.starts_with('explicit') || attr.starts_with('implicit')
 }
 
 // parse inner value to be used by decoder, only support 'universal' class currently.
-// format : `inner:class,true[or false],number`
-// Its returns inner, class, true (or false), number.
+// format : `inner:number`
 fn parse_inner_tag_marker(attr string) !(string, string) {
 	src := attr.trim_space()
 	if is_inner_tag_marker(src) {
@@ -306,13 +278,13 @@ fn parse_inner_tag_marker(attr string) !(string, string) {
 		if item.len != 2 {
 			return error('bad inner tag marker length')
 		}
-		// 'inner' part
+		// 'inner:number' part
 		key := item[0].trim_space()
 		if !valid_inner_tag_key(key) {
 			return error('bad inner key')
 		}
 		value := item[1].trim_space()
-		if !is_valid_inner_value(value) {
+		if !valid_inner_value(value) {
 			return error('Get unexpected inner value')
 		}
 		return key, value
@@ -320,51 +292,10 @@ fn parse_inner_tag_marker(attr string) !(string, string) {
 	return error('not inner tag marker')
 }
 
-fn parse_inner_value(s string) !(string, string, string) {
-	// 'class,form,number' part
+fn valid_inner_value(s string) bool {
+	// 'inner: number' part
 	value := s.trim_space()
-	// splits by comma
-	fields := value.split(',')
-	if fields.len != 3 {
-		return error('Bad inner value length')
-	}
-	cls := fields[0].trim_space()
-	if !valid_inner_tag_class(cls) {
-		return error('Bad inner class')
-	}
-	form := fields[1].trim_space()
-	if !valid_inner_tag_form(form) {
-		return error('Bad inner form')
-	}
-	number := fields[2].trim_space()
-	if !valid_string_tag_number(number) {
-		return error('Bad inner number')
-	}
-
-	return cls, form, number
-}
-
-fn is_valid_inner_value(s string) bool {
-	// 'class,form,number' part
-	value := s.trim_space()
-	// splits by comma
-	fields := value.split(',')
-	if fields.len != 3 {
-		return false
-	}
-	cls := fields[0].trim_space()
-	if !valid_inner_tag_class(cls) {
-		return false
-	}
-	form := fields[1].trim_space()
-	if !valid_inner_tag_form(form) {
-		return false
-	}
-	number := fields[2].trim_space()
-	if !valid_string_tag_number(number) {
-		return false
-	}
-	return true
+	return valid_string_tag_number(value)
 }
 
 fn is_inner_tag_marker(s string) bool {
@@ -375,22 +306,14 @@ fn valid_inner_tag_key(s string) bool {
 	return s == 'inner'
 }
 
-fn valid_inner_tag_class(s string) bool {
-	return s == 'universal' // || s == 'application' || s == 'private'
-}
-
-fn valid_inner_tag_form(s string) bool {
-	return s == 'false' || s == 'true'
-}
-
 // parse 'has_default' marker
 fn parse_default_marker(attr string) !string {
-	src := attr.trim_space()
-	if is_default_marker(src) {
-		if valid_default_marker(src) {
-			return src
+	item := attr.trim_space()
+	if is_default_marker(item) {
+		if !valid_default_marker(item) {
+			return error('bad has_default marker')
 		}
-		return error('bad has_default marker')
+		return item
 	}
 	return error('not has_default marker')
 }
@@ -403,32 +326,14 @@ fn valid_default_marker(attr string) bool {
 	return attr == 'has_default'
 }
 
-// parse 'optional' or 'optional:true [false]' marker
-fn parse_optional_marker(attr string) !(string, string) {
-	src := attr.trim_space()
-	if is_optional_marker(src) {
-		item := src.split(':')
-		// only allow 'optional' [same as: `optional:false] or 'optional:true'
-		if item.len != 1 && item.len != 2 {
-			return error('bad optional marker length')
-		}
-		key := item[0].trim_space()
+// parse 'optional' marker
+fn parse_optional_marker(attr string) !string {
+	key := attr.trim_space()
+	if is_optional_marker(key) {
 		if !valid_optional_key(key) {
 			return error('bad optional key')
 		}
-
-		mut present := 'false'
-		if item.len == 2 {
-			value := item[1].trim_space()
-			if !valid_optional_present_value(value) {
-				return error('bad optional value')
-			}
-			if value == 'true' {
-				present = 'true'
-			}
-		}
-
-		return key, present
+		return key
 	}
 	return error('not optional marker')
 }
@@ -439,10 +344,6 @@ fn is_optional_marker(attr string) bool {
 
 fn valid_optional_key(attr string) bool {
 	return attr == 'optional'
-}
-
-fn valid_optional_present_value(attr string) bool {
-	return attr == 'true' || attr == 'false'
 }
 
 // is_element check whethers T is fullfills Element
