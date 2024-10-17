@@ -3,7 +3,8 @@
 // that can be found in the LICENSE file.
 module asn1
 
-pub const default_generalstring_tag = Tag{.universal, false, int(TagType.generalstring)}
+// The default tag of ASN.1 GENERALSTRING type.
+const default_generalstring_tag = Tag{.universal, false, int(TagType.generalstring)}
 
 // ASN.1 GENERALSTRING Handling
 // It may contain any characters from a "G" and "C" set of any standardized character sets.

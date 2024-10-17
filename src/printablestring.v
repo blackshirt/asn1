@@ -4,7 +4,8 @@
 module asn1
 
 const printable_symbols = r"(')+,-./:=?".bytes()
-pub const default_printablestring_tag = Tag{.universal, false, int(TagType.printablestring)}
+// The default tag of ASN.1 PRINTABLESTRING type.
+const default_printablestring_tag = Tag{.universal, false, int(TagType.printablestring)}
 
 // ASN.1 PRINTABLESTRING TYPE.
 //

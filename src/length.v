@@ -3,6 +3,11 @@
 // that can be found in the LICENSE file.
 module asn1
 
+// max_definite_length_count is a limit tells how many bytes to represent this length.
+// We're going to limit this to 6 bytes following when the length is in long-definite form.
+const max_definite_length_count = 6
+const max_definite_length_value = max_i64
+
 // ASN.1 length handling routines.
 //
 // The standard of X.690 ITU document defines two length types - definite and indefinite.
@@ -16,12 +21,7 @@ module asn1
 //
 // This module only support definite length, in short or long form. Its required for DER encoding
 // the length octets should be in definite length.
-
-// max_definite_length_count is a limit tells how many bytes to represent this length.
-// We're going to limit this to 6 bytes following when the length is in long-definite form.
-const max_definite_length_count = 6
-const max_definite_length_value = max_i64
-
+// 
 // Length represent ASN.1 length value
 pub type Length = i64
 

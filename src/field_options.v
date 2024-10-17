@@ -1,10 +1,10 @@
 module asn1
 
 // This file is for supporting configure through string options.
-// so, you can tag your struct field with attributes, for example @[context_specific:10; optional; has_default. tagged: explicit]
+// so, you can tag your struct field with attributes, for example @[context_specific:10; optional; has_default. mode: explicit]
 // Field options attributes handling
 
-// limit of string option length
+// Limit of string option length
 const max_string_option_length = 255
 const max_attributes_length = 5
 
@@ -15,8 +15,9 @@ const max_attributes_length = 5
 @[heap; noinit]
 pub struct FieldOptions {
 mut:
-	// Following field was for wrapping and unwrapping purposes, applied to (strictly) UNIVERSAL element.
-	// In the encoding phase, it would be checked if this options meet the criteria.
+	// Following fields, ie, `cls`, `tagnum`, `mode` and `inner` was for wrapping (and unwrapping) purposes.
+	// This fields currently applied to (strictly) UNIVERSAL element.
+	// In the encoding (decoding) phase, it would be checked if this options meet the criteria.
 	// So, you can wrap (unwrap) your element with this configuration.
 	// examples of options string contains: `application:100; mode: explicit; inner:universal, false, 4`.
 	// Its would be parsed into: cls=application, tagnum=100; mode: explicit, inner: `universal, false, 4`
@@ -25,15 +26,18 @@ mut:
 	mode   string = 'explicit'
 	inner  string
 
-	// Following fields applied to element with OPTIONAL keyword behaviour, with or without default value.
-	// set to true when this optional element should present (usually element with OPTIONAL keyword is not presents in the data)).
-	// where present field tells us if this optional should be marked present in the data, if not sure, just set this field to false.
+	// Following fields applied to element with OPTIONAL behaviour, with or without DEFAULT value.
+	// Set `optional` to true when this element has OPTIONAL keyword in the definition of element.
+	// Usually element with OPTIONAL keyword is not presents in the encoding (decoding) data.
+	// The `present` field tells us if this optional be marked to be present in the data (encoding or decoding).
+	// This present field negates optionality of the element, efectively marked as present.
+	// If not sure, just set this field to false.
 	optional bool
 	present  bool
 
-	// This field applied to element when has DEFAULT keyword behaviour. Its applied into wrapping element
-	// or optionality of the element.
-	// If some element has DEFAULT keyword, set this field to true and gives default element into default_value field.
+	// This field applied to element with DEFAULT keyword behaviour. 
+	// Its applied into wrapping of element or optionality of the element.
+	// If some element has DEFAULT keyword, set this field to true and gives default element into `default_value` field.
 	has_default   bool
 	default_value ?Element
 }

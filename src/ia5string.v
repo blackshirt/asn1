@@ -3,7 +3,8 @@
 // that can be found in the LICENSE file.
 module asn1
 
-const default_ia5string_tag = Tag{.universal, false, int(TagType.ia5string)}
+// The default tag of ASN.1 IA5STRING type.
+default_ia5string_tag = Tag{.universal, false, int(TagType.ia5string)}
 
 // ASN.1 IA5String type handling routine.
 // IA5String is a standard ASCII characters

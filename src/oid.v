@@ -5,7 +5,8 @@ module asn1
 
 // TODO: doing check for limiting oid array length.
 const max_oid_length = 128
-pub const default_oid_tag = Tag{.universal, false, int(TagType.oid)}
+// The default tag of ASN.1 OBJECTIDENTIFIER type.
+const default_oid_tag = Tag{.universal, false, int(TagType.oid)}
 
 // ASN.1 ObjectIdentifier type.
 // The ASN. 1 OBJECT IDENTIFIER type is used when you need to provide a unique identifier.

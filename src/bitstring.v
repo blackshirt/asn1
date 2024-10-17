@@ -22,12 +22,15 @@ mut:
 	pad  u8 // numbers of unused bits
 }
 
-pub const default_bitstring_tag = Tag{.universal, false, int(TagType.bitstring)}
+// The default tag of ASN.1 BITSTRING type.
+const default_bitstring_tag = Tag{.universal, false, int(TagType.bitstring)}
 
+// The tag of BITSTRING type.
 pub fn (bs BitString) tag() Tag {
 	return default_bitstring_tag
 }
 
+// The payload of BITSTRING instance.
 pub fn (bs BitString) payload() ![]u8 {
 	mut out := []u8{}
 	out << bs.pad
@@ -35,14 +38,18 @@ pub fn (bs BitString) payload() ![]u8 {
 	return out
 }
 
-// parse BitString using Parser
+// parse BitString using ongoing Parser.
 pub fn BitString.parse(mut p Parser) !BitString {
-	bs, next := BitString.decode(p.data)!
-	if next > p.data.len {
-		return error('more bytes needed')
+	tag := p.read_tag()!
+	if !tag.equal(default_bitstring_tag) {
+		return error('Get unexpected non bitstring tag')
 	}
-	rest := if next == p.data.len { []u8{} } else { unsafe { p.data[next..] } }
-	p.data = rest
+	length := p.read_length()!
+	bytes := if length == 0 { []u8{} } else {
+		p.read_bytes(length)!
+	}
+	bs := BitString.from_bytes(bytes)!
+	
 	return bs
 }
 

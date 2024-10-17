@@ -3,6 +3,7 @@
 // that can be found in the LICENSE file.
 module asn1
 
+// The default tag of ASN.1 ENUMERATED type.
 const default_enumerated_tag = Tag{.universal, false, int(TagType.enumerated)}
 
 // ENUMERATED.
@@ -19,6 +20,7 @@ fn (e Enumerated) str() string {
 	return 'Enumerated: ({e.value})'
 }
 
+// new creates a new Enumerated from int value.
 pub fn Enumerated.new(val int) Enumerated {
 	return Enumerated{
 		value: val
@@ -54,6 +56,7 @@ fn Enumerated.from_bytes(bytes []u8) !Enumerated {
 	}
 }
 
+// parse into Enumerated type from parser p.
 pub fn Enumerated.parse(mut p Parser) !Enumerated {
 	tag := p.read_tag()!
 	if !tag.equal(default_enumerated_tag) {

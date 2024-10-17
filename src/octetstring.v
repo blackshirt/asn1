@@ -3,7 +3,8 @@
 // that can be found in the LICENSE file.
 module asn1
 
-pub const default_octetstring_tag = Tag{.universal, false, int(TagType.octetstring)}
+// The default tag of ASN.1 OCTETSTRING type.
+const default_octetstring_tag = Tag{.universal, false, int(TagType.octetstring)}
 const max_octetstring_length = 1 << 32 - 1
 
 // OCTETSTRING
