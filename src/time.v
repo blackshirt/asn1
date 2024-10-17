@@ -4,9 +4,9 @@
 module asn1
 
 // The default tag of ASN.1 UTCTIME type.
-const default_utctime_tag = Tag{.universal, false, int(TagType.utctime)}
+pub const default_utctime_tag = Tag{.universal, false, int(TagType.utctime)}
 // The default tag of ASN.1 GENERALIZEDTIME type.
-const default_generalizedtime_tag = Tag{.universal, false, int(TagType.generalizedtime)}
+pub const default_generalizedtime_tag = Tag{.universal, false, int(TagType.generalizedtime)}
 
 // UtcTime
 // -------

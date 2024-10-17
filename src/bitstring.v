@@ -23,7 +23,7 @@ mut:
 }
 
 // The default tag of ASN.1 BITSTRING type.
-const default_bitstring_tag = Tag{.universal, false, int(TagType.bitstring)}
+pub const default_bitstring_tag = Tag{.universal, false, int(TagType.bitstring)}
 
 // The tag of BITSTRING type.
 pub fn (bs BitString) tag() Tag {

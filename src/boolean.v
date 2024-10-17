@@ -4,7 +4,7 @@
 module asn1
 
 // The default tag of ASN.1 BOOLEAN type.
-const default_boolean_tag = Tag{.universal, false, int(TagType.boolean)}
+pub const default_boolean_tag = Tag{.universal, false, int(TagType.boolean)}
 
 // ASN.1 BOOLEAN
 //

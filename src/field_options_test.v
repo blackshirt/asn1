@@ -152,7 +152,7 @@ fn test_mode_marker_parsing() ! {
 		TaggedModeMarker{'modelimplicit', '', error('bad mode marker')},
 	]
 	for i, item in data {
-		//dump(i)
+		// dump(i)
 		k, v := parse_mode_marker(item.attr) or {
 			assert err == item.err
 			continue

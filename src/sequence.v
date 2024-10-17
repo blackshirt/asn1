@@ -4,7 +4,7 @@
 module asn1
 
 // The default tag of ASN.1 SEQUENCE (SEQUENCE OF) type.
-const default_sequence_tag = Tag{.universal, true, int(TagType.sequence)}
+pub const default_sequence_tag = Tag{.universal, true, int(TagType.sequence)}
 
 // constant for sequence(of) and set(of) internal value
 const max_seqset_fields = 256 // max of seq size

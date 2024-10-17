@@ -4,7 +4,7 @@
 module asn1
 
 // The default tag of ASN.1 VISIBLESTRING type.
-const default_visiblestring_tag = Tag{.universal, false, int(TagType.visiblestring)}
+pub const default_visiblestring_tag = Tag{.universal, false, int(TagType.visiblestring)}
 
 // ASN.1 VisibleString universal type.
 // The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.

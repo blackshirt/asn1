@@ -4,7 +4,7 @@
 module asn1
 
 // The default tag of ASN.1 SET (SET OF) type.
-const default_set_tag = Tag{.universal, true, int(TagType.set)}
+pub const default_set_tag = Tag{.universal, true, int(TagType.set)}
 
 // SET and SET OF
 //

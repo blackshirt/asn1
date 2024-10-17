@@ -4,7 +4,7 @@
 module asn1
 
 // The default tag of ASN.1 NUMERICSTRING type.
-const default_numericstring_tag = Tag{.universal, false, int(TagType.numericstring)}
+pub const default_numericstring_tag = Tag{.universal, false, int(TagType.numericstring)}
 
 // NumericString.
 //

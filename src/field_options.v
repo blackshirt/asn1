@@ -273,7 +273,7 @@ fn parse_mode_marker(s string) !(string, string) {
 		if !valid_mode_key(key) {
 			return error('bad mode key')
 		}
-	
+
 		value := item[1].trim_space()
 		if !valid_mode_value(value) {
 			return error('bad mode value')

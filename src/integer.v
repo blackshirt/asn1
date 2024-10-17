@@ -7,7 +7,7 @@ import math.big
 import crypto.internal.subtle { constant_time_compare }
 
 // The default of ASN.1 INTEGER type.
-const default_integer_tag = Tag{.universal, false, int(TagType.integer)}
+pub const default_integer_tag = Tag{.universal, false, int(TagType.integer)}
 
 // ASN.1 INTEGER.
 //
