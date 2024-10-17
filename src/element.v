@@ -135,7 +135,117 @@ pub fn (el Element) length() !int {
 // UTILITY HELPER FOR ELEMENT
 //
 
-// into_optional turns this element into Optional
+// Helper for validates FieldOptions.
+//
+// validate_field_options validates FieldOptions is a valid option agains current element.
+fn (el Element) validate_field_options(fo FieldOptions) ! {
+	el.validate_wrapper_part(fo)!
+	el.validate_optional_part(fo)!
+	el.validate_default_part(fo)!
+}
+
+// validate_wrapper_part validates wrapper's part of fields options again element being
+// wrapped to meet requirement. Its return error on fail to validate.
+fn (el Element) validate_wrapper_part(fo FieldOptions) ! {
+	// Validates wrapper part
+	// Its discard all check when fo.cls is empty string, its marked as non-wrapped element.
+	if fo.cls != '' {
+		if !valid_tagclass_name(fo.cls) {
+			return error('Get unexpected fo.cls value:${fo.cls}')
+		}
+		// provides the tag number
+		if fo.tagnum <= 0 {
+			return error('Get unexpected fo.tagnum: ${fo.tagnum}')
+		}
+		// wraps into the same class is not allowed
+		el_cls := el.tag().tag_class().str().to_lower()
+		if el_cls == fo.cls.to_lower() {
+			return error('wraps into same class is not allowed')
+		}
+		// wraps into UNIVERSAL type is not allowed
+		if fo.cls == 'universal' {
+			return error('wraps into universal class is not allowed')
+		}
+		// provides wrap mode, ie, explicit or implicit
+		if fo.mode == '' {
+			return error('You have not provides mode')
+		}
+		if !valid_mode_value(fo.mode) {
+			return error('Get unexpected mode value:${fo.mode}')
+		}
+		// when wrapped, you should provide inner tag value.
+		if fo.inner == '' {
+			return error('You have not provides mode')
+		}
+		// Provides with correct inner value
+		if !is_valid_inner_value(fo.inner) {
+			return error('Get unexpected fo.inner value:${fo.inner}')
+		}
+	}
+}
+
+// validate_default_part validates has_default part of field options
+fn (el Element) validate_default_part(fo FieldOptions) ! {
+	// Validates default part
+	if fo.has_default {
+		if fo.default_value == none {
+			return error('has_default withoud default value')
+		}
+		def := fo.default_value or { return err }
+		if !el.tag().equal(def.tag()) {
+			return error('You provides different tag of default_value with  tag of current element')
+		}
+	}
+}
+
+fn (el Element) validate_optional_part(fo FieldOptions) ! {
+	// Validates Optional part
+	// If the element is already optional, you cant make it optional again by setting optional=true
+	if fo.optional {
+		if el is Optional {
+			return error('You cant mark Optional element as nested Optional')
+		}
+	}
+}
+
+// Helper for wrapping element
+//
+// apply_wrappers_options turns this element into another element by wrapping it
+// with the some options defined in FieldOptions.
+fn (el Element) apply_wrappers_options(fo FieldOptions) !Element {
+	// no wraps, and discard other wrapper options
+	if fo.cls == '' {
+		return el
+	}
+	el.validate_wrapper_part(fo)!
+	if fo.has_default {
+		el.validate_default_part(fo)!
+	}
+
+	cls := TagClass.from_string(fo.cls)!
+	mode := TaggedMode.from_string(fo.mode)!
+
+	new_el := el.wrap(cls, fo.tagnum, mode)!
+
+	return new_el
+}
+
+// Helper for turns the element into Optional.
+//
+// apply_optional_options turns this element into another element with OPTIONAL semantic.
+fn (el Element) apply_optional_options(fo FieldOptions) !Element {
+	// not an optional element, just return the current element.
+	if !fo.optional {
+		return el
+	}
+	el.validate_optional_part(fo)!
+	if fo.optional && fo.present {
+		return el.into_optional_to_present()!
+	}
+	return el.into_optional()!
+}
+
+// into_optional turns this element into Optional.
 fn (el Element) into_optional() !Element {
 	if el is Optional {
 		return error('already optional element')
@@ -156,63 +266,6 @@ fn (el Element) into_optional_to_present() !Element {
 	return opt
 }
 
-// apply_optional_options turns this element into another element qith optional semantic.
-fn (el Element) apply_optional_options(fo FieldOptions) !Element {
-	// not optional
-	if !fo.optional {
-		return el
-	}
-	if fo.present {
-		return el.into_optional_to_present()!
-	}
-	return el.into_optional()!
-}
-
-// apply_wrappers_options turns this element into another element by wrapping it
-// with the some options defined in field options.
-fn (el Element) apply_wrappers_options(fo FieldOptions) !Element {
-	// no wraps, and discard other wrappe options
-	if fo.cls == '' {
-		return el
-	}
-	// validates class wrapper
-	fo.validate_wrapper_part()!
-	el.validate_wrapper(fo)!
-
-	if fo.has_default {
-		el.validate_default(fo)!
-	}
-
-	cls := TagClass.from_string(fo.cls)!
-	mode := TaggedMode.from_string(fo.mode)!
-
-	new_el := el.wrap(cls, fo.tagnum, mode)!
-
-	return new_el
-}
-
-// validate_wrapper validates wrapper's part of fields options again element being
-// to be wrapped to meet requirement. Its return error on fail to validate.
-fn (el Element) validate_wrapper(fo FieldOptions) ! {
-	// wrapper into the same class is not allowed
-	el_cls := el.tag().tag_class().str().to_lower()
-	if el_cls == fo.cls.to_lower() {
-		return error('wraps into same class is not allowed')
-	}
-	if fo.cls == 'universal' {
-		return error('wraps into universal class is not allowed')
-	}
-}
-
-// validate_default validates has_default part of field options
-fn (el Element) validate_default(fo FieldOptions) ! {
-	fo.validate_default_part()!
-	default := fo.default_value or { return err }
-	if el.tag() != default.tag() {
-		return error('unmatching tag of default value with the current element tag')
-	}
-}
-
 // apply_field_options applies rules in field options into current element
 // and turns this into another element.
 // by default, optional attribute is more higher precedence over wrapper attribut, ie,
@@ -231,12 +284,23 @@ fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
 		return error('unmatching tag of default value')
 	}
 	fo.install_default(value, false)!
-	el.validate_default(fo)!
+	el.validate_default_part(fo)!
 }
 
 // wrap only universal class, and other class that has primitive form
 fn (el Element) wrap(cls TagClass, num int, mode TaggedMode) !Element {
 	return el.wrap_with_rule(cls, num, mode, .der)!
+}
+
+fn (el Element) unwrap(fo FieldOptions) !Element {
+	// unwrap only element with constructed form
+	if !el.tag().is_constructed() {
+		return error('You cant unwrap non-constructed element')
+	}
+	el.validate_wrapper_part(fo)!
+
+	// if unwrapping, el.tag() should == fo.inner produced by wrap operation
+	return error('Not implemented')
 }
 
 // wrap_with_rule wraps universal element into another constructed class.

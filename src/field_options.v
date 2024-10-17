@@ -22,8 +22,8 @@ mut:
 	// examples of options string contains: `application:100; mode: explicit; inner:universal, false, 4`.
 	// Its would be parsed into: cls=application, tagnum=100; mode: explicit, inner: `universal, false, 4`
 	cls    string
-	tagnum int    = -1
-	mode   string = 'explicit'
+	tagnum int = -1
+	mode   string
 	inner  string
 
 	// Following fields applied to element with OPTIONAL behaviour, with or without DEFAULT value.
@@ -137,7 +137,17 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 	return fo
 }
 
-// inner_tag gets inner Tag value from field options.
+// wrapper_tag gets wrapper Tag from FieldOptions
+pub fn (fo FieldOptions) wrapper_tag() !Tag {
+	if fo.cls == '' {
+		return error('You cant build wrapper tag from empty string')
+	}
+	fo.validate_wrapper_part()!
+	cls := TagClass.from_string(fo.cls)!
+	return Tag.new(cls, true, fo.tagnum)!
+}
+
+// inner_tag gets inner Tag from FieldOptions.
 pub fn (fo FieldOptions) inner_tag() !Tag {
 	if fo.inner == '' {
 		return error('You cant create tag from empty inner string')

@@ -75,19 +75,6 @@
 
 </section>
 
-		<section id="Constants" class="doc-node const">
-			<div class="title"><h2>Constants <a href="#Constants">#</a></h2></div>
-
-
-</section>
-
-		<section id="" class="doc-node const">
-<pre class="signature">
-<code><span class="token keyword">const</span> default_boolean_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>boolean<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
-
-
-</section>
-
 		<section id="decode" class="doc-node">
 			<div class="title"><h2>fn decode <a href="#decode">#</a></h2></div>
 <pre class="signature">
@@ -1170,8 +1157,8 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	<span class="token comment">// examples of options string contains: `application:100; mode: explicit; inner:universal, false, 4`.</span>
 	<span class="token comment">// Its would be parsed into: cls=application, tagnum=100; mode: explicit, inner: `universal, false, 4`</span>
 	cls    <span class="token builtin">string</span>
-	tagnum <span class="token builtin">int</span>    <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
-	mode   <span class="token builtin">string</span> <span class="token operator">=</span> <span class="token string">'explicit'</span>
+	tagnum <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
+	mode   <span class="token builtin">string</span>
 	inner  <span class="token builtin">string</span>
 
 	<span class="token comment">// Following fields applied to element with OPTIONAL behaviour, with or without DEFAULT value.</span>
@@ -1193,11 +1180,19 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="FieldOptions.wrapper_tag" class="doc-node">
+			<div class="title"><h2>fn (FieldOptions) wrapper_tag <a href="#FieldOptions.wrapper_tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>fo FieldOptions<span class="token punctuation">)</span> <span class="token function">wrapper_tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Tag</code></pre>
+<p>wrapper_tag gets wrapper Tag from FieldOptions</p>
+
+</section>
+
 		<section id="FieldOptions.inner_tag" class="doc-node">
 			<div class="title"><h2>fn (FieldOptions) inner_tag <a href="#FieldOptions.inner_tag">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>fo FieldOptions<span class="token punctuation">)</span> <span class="token function">inner_tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Tag</code></pre>
-<p>inner_tag gets inner Tag value from field options.</p>
+<p>inner_tag gets inner Tag from FieldOptions.</p>
 
 </section>
 
@@ -2004,10 +1999,9 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 17 Oct 2024 03:57:27</div>
+						<div class="footer">Powered by vdoc. Generated on: 17 Oct 2024 05:04:37</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
-<li class="open"><a href="#Constants">Constants</a></li>
 <li class="open"><a href="#decode">fn decode</a>        <ul>
 </ul>
 </li>
@@ -2326,6 +2320,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#FieldOptions">struct FieldOptions</a>        <ul>
+<li><a href="#FieldOptions.wrapper_tag">fn wrapper_tag</a></li>
 <li><a href="#FieldOptions.inner_tag">fn inner_tag</a></li>
 <li><a href="#FieldOptions.install_default">fn install_default</a></li>
 </ul>
