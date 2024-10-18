@@ -223,7 +223,7 @@ fn (fo FieldOptions) check_wrapper() ! {
 }
 
 // take_asn1_marker takes asn1 marker from arrays of string.
-// Thing like attributes from T.fields field : @[required; asn1:'universal:100;explicit;inner:5;optional;has_default']
+// Thing like attributes from T.fields field : @[required; asn1:'universal=100;explicit;inner=5;optional;has_default']
 // Its return 
 fn take_asn1_marker(attrs []string) !string {
 	if attrs.len == 0 {
@@ -341,13 +341,13 @@ fn is_asn1_marker(s string) bool {
 }
 
 fn valid_asn1_key(key string) bool {
-	return key == 'asn1
+	return key == 'asn1'
 }
 
 // Wrapping (unwrapping) helper.
 //
-// parse 'application:number' format
-// format: `class:number` without constructed keyword.
+// parse 'application=number' format
+// format: `class=number` without constructed keyword.
 fn parse_tag_marker(attr string) !(string, string) {
 	src := attr.trim_space()
 	if is_tag_marker(src) {
@@ -404,7 +404,7 @@ fn is_mode_marker(attr string) bool {
 }
 
 // parse inner value to be used by decoder, only support 'universal' class currently.
-// format : `inner:number`
+// format : `inner=number`
 fn parse_inner_tag_marker(attr string) !(string, string) {
 	src := attr.trim_space()
 	if is_inner_tag_marker(src) {
