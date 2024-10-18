@@ -94,8 +94,8 @@ pub fn BitString.from_binary_string(s string) !BitString {
 	return BitString.new_with_pad(res, u8(pad))!
 }
 
-// from_string creates a new BitString from regular string s
-pub fn BitString.from_string(s string) !BitString {
+// new creates a new BitString from regular string s
+pub fn BitString.new(s string) !BitString {
 	return BitString.from_bytes(s.bytes())!
 }
 

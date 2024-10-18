@@ -95,7 +95,7 @@ fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
 // FIXME: its not tested.
 // Examples:
 // ```v
-// oc := asn1.OctetString.from_string("xxx")!
+// oc := asn1.OctetString.new("xxx")!
 // el := Element.from_object[OctetString](oc)!
 // ```
 // and then treats your OctetString as an Element
@@ -111,7 +111,7 @@ pub fn Element.from_object[T](t T) !Element {
 // NOTE: Not tested.
 // Examples:
 // ```v
-// oc := asn1.OctetString.from_string("xxx")!
+// oc := asn1.OctetString.new("xxx")!
 // el := Element.from_object[OctetString](oc)!
 // ```
 // cast back the element into OctetString.
