@@ -527,3 +527,23 @@ pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 	// TODO
 	return error('decode_with_field_options not implemented')
 }
+
+
+// Utility function
+//
+// is_element check whethers T is fullfills Element
+fn is_element[T]() bool {
+	s := $if T is Element { true } $else { false }
+	return s
+}
+
+fn has_tag_method[T]() bool {
+	$for method in T.methods {
+		$if method.name == 'tag' {
+			$if method.return_type is Tag {
+				return true
+			}
+		}
+	}
+	return false
+}

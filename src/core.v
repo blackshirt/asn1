@@ -500,6 +500,38 @@ fn (t TagType) str() string {
 	}
 }
 
+// universal_tag_from_int gets default Tag for universal class type from integer value v.
+fn universal_tag_from_int(v int) !Tag {
+	if v < 0 || v > max_universal_tagnumber {
+		return error('Get unexpected tag number for universal type')
+	}
+	match v {
+		// vfmt off 
+		1 { return default_boolean_tag }
+		2 { return default_integer_tag }
+		3 { return default_bitstring_tag }
+		4 { return default_octetstring_tag }
+		5 { return default_null_tag }
+		6 { return default_oid_tag }
+		10 { return default_enumerated_tag }
+		12 { return default_utf8string_tag }
+		16 { return default_sequence_tag }
+		17 { return default_set_tag }
+		18 { return default_numericstring_tag }
+		19 { return default_printablestring_tag }
+		22 { return default_ia5string_tag }
+		23 { return default_utctime_tag }
+		24 { return default_generalizedtime_tag }
+		26 { return default_visiblestring_tag }
+		else {
+			// should in primitive form 
+			return Tag{.universal, false, v}
+		}
+		// vfmt on 
+	}
+}
+
+
 // Params is optional params passed to encode or decodeing
 // of tag, length or ASN.1 element to drive how encoding works.
 @[params]

@@ -1,7 +1,7 @@
 module asn1
 
 // This file is for supporting configure through string options.
-// so, you can tag your struct field with attributes, for example 
+// so, you can tag your struct field with supported attributes defined here.
 
 // Limit of string option length
 const max_string_option_length = 255
@@ -9,19 +9,20 @@ const max_attributes_length = 5
 
 // Configuration format for field tagging.
 //
-// You can tag your field of struct by this support format.
-// a.`class:nunber`, examole: `private:100`.
-// b: `explicit` or `imolicit` mode.
-// c. `inner:5` the tag of element being wrapped, should in UNIVERSAL class.
-// first of three is for wrapping, ie `private=100` , `explicit` and `inner=100`
+// You can tag your field of struct by this supported format.
+// a.`class:number`, for wrapping the element with other class, for examole: `private:100`.
+// b: `explicit` or `implicit` mode.
+// c. `inner:5` the tag number of element being wrapped, should in UNIVERSAL class.
 // b. `optional` tagging for element with OPTIONAL behaviour.
 // c. `has_default` tagging for element with DEFAULT behaviour.
+// First of three above is for wrapping (unwrapping) element.
 
 // Field options attributes handling.
 //
 // FieldOptions is a structure to accomodate and allowing configures your complex structures
 // through string or arrays of string stored in FieldOptions fields.
-// For example, you can tagging your fields of some element with tagging like `@[context_specific:10; optional; mode: explicit]`.
+// For example, you can tagging your fields of some element with tagging 
+// like `@[context_specific:10; optional; explicit; inner:5]`.
 // Its will be parsed and can be used to drive encoding or decoding of Element.
 @[heap; noinit]
 pub struct FieldOptions {
@@ -77,7 +78,7 @@ pub fn FieldOptions.from_string(s string) !FieldOptions {
 	return opt
 }
 
-// filtered_attrs filters and takes only supported asn1 marker.
+// filtered_attrs filters and takes only supported asn1 marker from arrays of string.
 fn filtered_attrs(attrs []string) []string {
 	mut filtered := []string{}
 	for attr in attrs {
@@ -95,10 +96,7 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 	if attrs.len == 0 {
 		return fo
 	}
-	if attrs.len > max_attributes_length {
-		return error('max allowed attrs.len')
-	}
-
+	
 	mut tag_ctr := 0 // tag marker counter
 	mut opt_ctr := 0 // optional marker counter
 	mut def_ctr := 0 // has_default marker counter
@@ -107,7 +105,10 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 
     // take only valid supported asn1 marker
 	filtered := filtered_attrs(attrs)
-	
+	if filtered.len > max_attributes_length {
+		return error('max allowed filtered.len')
+	}
+
 	for attr in filtered {
 		item := attr.trim_space()
 		if !is_tag_marker(item) && !is_optional_marker(item) && !is_default_marker(item)
@@ -239,136 +240,14 @@ fn (fo FieldOptions) check_wrapper() ! {
 	}
 }
 
-// take_asn1_marker takes asn1 marker from arrays of string.
-// Thing like attributes from T.fields field : @[required; asn1:'universal=100;explicit;inner=5;optional;has_default']
-// Its return 
-fn take_asn1_marker(attrs []string) !string {
-	if attrs.len == 0 {
-		return ''
-	}
-	mut result := []string{}
-	for attr in attrs {
-		field := attr.trim_space()
-		// if starts_with 'asn1` take this field 
-		if is_asn1_marker(field) {
-			result << field 
-		}
-	}
-	if result.len > 1 {
-		return error('Multiples asn1 marker is present')
-	}
-	marker := if result.len == 0 {''} else { result[0]}
-	return marker 
-}
-
-
-fn parse_asn1_marker(attr string) !(string, string) {
-	item := attr.trim_space()
-	if is_asn1_marker(item) {
-		field := src.split(':')
-		if field.len != 2 {
-			return error('bad tag marker length')
-		}
-		first := field[0].trim_space()
-		if !valid_asn1_key(first) {
-			return error('bad asn1 key name')
-		}
-		second := field[1].trim_space()
-		return first, second
-	}
-	return error('Get unexpected non-asn1 marker')
-}
-
-fn parse_asn1_marker_value(s string) ![]string {
-	// s is asn1 marker value 
-	item := s.trim_space()
-	mut attrs := []string{}
-	fields := item.split(';')
-
-	if fields.len > max_attributes_length {
-		return error('max allowed fields.len')
-	}
-
-	mut tag_ctr := 0 // tag marker counter
-	mut opt_ctr := 0 // optional marker counter
-	mut def_ctr := 0 // has_default marker counter
-	mut mod_ctr := 0 // mode marker counter
-	mut inn_ctr := 0 // inner counter
-
-	for field in fields {
-		item := field.trim_space()
-		if !is_tag_marker(item) && !is_optional_marker(item) && !is_default_marker(item)
-			&& !is_mode_marker(item) && !is_inner_tag_marker(item) {
-			return error('Get unsupported keyword')
-		}
-		if is_tag_marker(item) {
-			cls, num := parse_tag_marker(item)!
-			tag_ctr += 1
-			if tag_ctr > 1 {
-				return error('multiples tag format defined')
-			}
-			tnum := num.int()
-			if tnum < 0 {
-				return error('bad tag number')
-			}
-			fo.cls = cls
-			fo.tagnum = tnum
-		}
-		if is_optional_marker(item) {
-			opt := parse_optional_marker(item)!
-			opt_ctr += 1
-			if opt_ctr > 1 {
-				return error('multiples optional tag')
-			}
-			present := if opt == 'optional' { true } else { false }
-			fo.optional = true
-		}
-		if is_default_marker(item) {
-			_ := parse_default_marker(item)!
-			def_ctr += 1
-			if def_ctr > 1 {
-				return error('multiples has_default flag')
-			}
-			fo.has_default = true
-		}
-		if is_mode_marker(item) {
-			value := parse_mode_marker(item)!
-			mod_ctr += 1
-			if mod_ctr > 1 {
-				return error('multiples mode key defined')
-			}
-			fo.mode = value
-		}
-		if is_inner_tag_marker(item) {
-			_, value := parse_inner_tag_marker(item)!
-			if inn_ctr > 1 {
-				return error('multiples inner tag format defined')
-			}
-			if !is_valid_inner_value(value) {
-				return error('Bad inner value')
-			}
-			num := value.int()
-			fo.inner = num
-		}
-	}
-}
-
-fn is_asn1_marker(s string) bool {
-	return s.starts_with('asn1')
-}
-
-fn valid_asn1_key(key string) bool {
-	return key == 'asn1'
-}
-
-// Wrapping (unwrapping) helper.
+// WRAPPING (UNWRAPPING) OPTIONS.
 //
 // parse 'application=number' format
 // format: `class=number` without constructed keyword.
 fn parse_tag_marker(attr string) !(string, string) {
 	src := attr.trim_space()
 	if is_tag_marker(src) {
-		field := src.split('=')
+		field := src.split(':')
 		if field.len != 2 {
 			return error('bad tag marker length')
 		}
@@ -385,19 +264,6 @@ fn parse_tag_marker(attr string) !(string, string) {
 	return error('not a tag marker')
 }
 
-// is_asn1_options_marker checks if provided string is valid supported 
-// field options string 
-fn is_asn1_options_marker(s string) bool {
-	item := s.trim_space()
-	valid := is_tag_marker(item)
-	|| is_mode_marker(item)
-	|| is_inner_tag_marker(item) 
-	|| is_default_marker(item)
-	|| is_optional_marker(item)
-
-	return valid
-}
-
 fn is_tag_marker(attr string) bool {
 	return attr.starts_with('application') || attr.starts_with('private')
 		|| attr.starts_with('context_specific')
@@ -412,6 +278,8 @@ fn valid_string_tag_number(s string) bool {
 	return s.is_int() || s.is_hex()
 }
 
+// EXPLICIT OR IMPLICIT OPTIONS.
+//
 // parse 'explicit [or implicit]' format.
 fn parse_mode_marker(s string) !string {
 	item := s.trim_space()
@@ -425,20 +293,22 @@ fn parse_mode_marker(s string) !string {
 	return error('not mode marker')
 }
 
-fn valid_mode_value(s string) bool {
-	return s == 'explicit' || s == 'implicit'
-}
-
 fn is_mode_marker(attr string) bool {
 	return attr.starts_with('explicit') || attr.starts_with('implicit')
 }
 
+fn valid_mode_value(s string) bool {
+	return s == 'explicit' || s == 'implicit'
+}
+
+// INNER TAG OPTIONS.
+//
 // parse inner value to be used by decoder, only support 'universal' class currently.
 // format : `inner=number`
 fn parse_inner_tag_marker(attr string) !(string, string) {
 	src := attr.trim_space()
 	if is_inner_tag_marker(src) {
-		item := src.split('=')
+		item := src.split(':')
 		if item.len != 2 {
 			return error('bad inner tag marker length')
 		}
@@ -456,12 +326,6 @@ fn parse_inner_tag_marker(attr string) !(string, string) {
 	return error('not inner tag marker')
 }
 
-fn valid_inner_value(s string) bool {
-	// 'inner: number' part
-	value := s.trim_space()
-	return valid_string_tag_number(value)
-}
-
 fn is_inner_tag_marker(s string) bool {
 	return s.starts_with('inner')
 }
@@ -470,26 +334,14 @@ fn valid_inner_tag_key(s string) bool {
 	return s == 'inner'
 }
 
-// parse 'has_default' marker
-fn parse_default_marker(attr string) !string {
-	item := attr.trim_space()
-	if is_default_marker(item) {
-		if !valid_default_marker(item) {
-			return error('bad has_default marker')
-		}
-		return item
-	}
-	return error('not has_default marker')
+fn valid_inner_value(s string) bool {
+	// 'inner: number' part
+	value := s.trim_space()
+	return valid_string_tag_number(value)
 }
 
-fn is_default_marker(attr string) bool {
-	return attr.starts_with('has_default')
-}
-
-fn valid_default_marker(attr string) bool {
-	return attr == 'has_default'
-}
-
+// OPTIONAL.
+//
 // parse 'optional' marker
 fn parse_optional_marker(attr string) !string {
 	key := attr.trim_space()
@@ -510,19 +362,35 @@ fn valid_optional_key(attr string) bool {
 	return attr == 'optional'
 }
 
-// is_element check whethers T is fullfills Element
-fn is_element[T]() bool {
-	s := $if T is Element { true } $else { false }
-	return s
+// DEFAULT OPTIONS.
+//
+// parse 'has_default' marker
+fn parse_default_marker(attr string) !string {
+	item := attr.trim_space()
+	if is_default_marker(item) {
+		if !valid_default_marker(item) {
+			return error('bad has_default marker')
+		}
+		return item
+	}
+	return error('not has_default marker')
 }
 
-fn has_tag_method[T]() bool {
-	$for method in T.methods {
-		$if method.name == 'tag' {
-			$if method.return_type is Tag {
-				return true
-			}
-		}
-	}
-	return false
+fn is_default_marker(attr string) bool {
+	return attr.starts_with('has_default')
+}
+
+fn valid_default_marker(attr string) bool {
+	return attr == 'has_default'
+}
+
+// UTILTIY 
+//
+// is_asn1_options_marker checks if provided string is valid supported field options string.
+fn is_asn1_options_marker(s string) bool {
+	item := s.trim_space()
+	// belowng to one of five supported marker.
+	valid := is_tag_marker(item) || is_mode_marker(item) || is_inner_tag_marker(item)  || is_optional_marker(item) || is_default_marker(item) 
+
+	return valid
 }
