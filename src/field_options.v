@@ -9,12 +9,11 @@ const max_attributes_length = 5
 
 // Configuration format for field tagging.
 //
-// You can tag your field of struct by this format.
-// - Start with `asn1` key followed by `:`
-// - Then followed by your tagging in single string.
-// Examples full format: `asn1:'private=100;explicit;inner=100;optional;has_default'`
-// Insides `asn1` tagging, its support 5 (five) options, ie,
-// a. first of three is for wrapping, ie `private=100` , `explicit` and `inner=100`
+// You can tag your field of struct by this support format.
+// a.`class:nunber`, examole: `private:100`.
+// b: `explicit` or `imolicit` mode.
+// c. `inner:5` the tag of element being wrapped, should in UNIVERSAL class.
+// first of three is for wrapping, ie `private=100` , `explicit` and `inner=100`
 // b. `optional` tagging for element with OPTIONAL behaviour.
 // c. `has_default` tagging for element with DEFAULT behaviour.
 
@@ -68,11 +67,26 @@ pub fn FieldOptions.from_string(s string) !FieldOptions {
 	}
 
 	trimmed := s.trim_space()
+	// check whether this string is a valid one.
+	if !is_asn1_options_marker(trimmed) {
+		return error('You have not provides correct options marker')
+	}
 	attrs := trimmed.split(';')
-
 	opt := FieldOptions.from_attrs(attrs)!
 
 	return opt
+}
+
+// filtered_attrs filters and takes only supported asn1 marker.
+fn filtered_attrs(attrs []string) []string {
+	mut filtered := []string{}
+	for attr in attrs {
+		item := attr.trim_space()
+		if is_asn1_options_marker(item) {
+			filtered << item
+		}
+	}
+    return filtered
 }
 
 // `from_attrs` parses and validates []string into FieldOptions.
@@ -91,7 +105,10 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 	mut mod_ctr := 0 // mode marker counter
 	mut inn_ctr := 0 // inner counter
 
-	for attr in attrs {
+    // take only valid supported asn1 marker
+	filtered := filtered_attrs(attrs)
+	
+	for attr in filtered {
 		item := attr.trim_space()
 		if !is_tag_marker(item) && !is_optional_marker(item) && !is_default_marker(item)
 			&& !is_mode_marker(item) && !is_inner_tag_marker(item) {
@@ -366,6 +383,19 @@ fn parse_tag_marker(attr string) !(string, string) {
 		return first, second
 	}
 	return error('not a tag marker')
+}
+
+// is_asn1_options_marker checks if provided string is valid supported 
+// field options string 
+fn is_asn1_options_marker(s string) bool {
+	item := s.trim_space()
+	valid := is_tag_marker(item)
+	|| is_mode_marker(item)
+	|| is_inner_tag_marker(item) 
+	|| is_default_marker(item)
+	|| is_optional_marker(item)
+
+	return valid
 }
 
 fn is_tag_marker(attr string) bool {
