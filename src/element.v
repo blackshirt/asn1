@@ -71,9 +71,18 @@ fn (el Element) encode_with_field_options(fo FieldOptions, rule EncodingRule) ![
 	if rule != .der && rule != .ber {
 		return error('unsupported rule')
 	}
-
+	if el is Optional {
+		return el.encode()
+	}
+	el.validate_options(fo)!
+	if fo.has_default {
+		def_element := fo.default_value or {return error('bad default_value')}
+		if el.equal(def_element) {
+			return []u8{}
+		}
+	}
 	new_element := el.apply_field_options(fo)!
-	out := encode_with_rule(new_element, rule)!
+	out := encode_with_rule(new_element, .der)!
 	return out
 }
 
