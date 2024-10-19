@@ -55,6 +55,18 @@ fn (el Element) encode_with_string_options(opt string, rule EncodingRule) ![]u8 
 	return out
 }
 
+fn wrap(el,fo FieldOptions) !Element {
+	el.validate_options(fo)!
+	new_el := if fo.cls == '' {el} else {
+		el.wrap_with_options(fo.cls, fo.tagnum, fo.mode)
+	}
+	mut maybe_opt := if fo.optional {el.into_optional()} else {new_el}
+	if fo.has_default {
+		maybe_opt := 
+		
+	}
+}
+		
 fn (el Element) encode_with_field_options(fo FieldOptions, rule EncodingRule) ![]u8 {
 	if rule != .der && rule != .ber {
 		return error('unsupported rule')
@@ -285,26 +297,26 @@ fn (el Element) unwrap(fo FieldOptions) !Element {
 // 1. wrapping into .universal class is not allowed
 // 2. wrapping with the same class is not allowed too
 // 3. wrapping non-universal class element is not allowed (maybe removed on futures.)
-fn (el Element) wrap_with_rule(cls TagClass, tagnum int, mode TaggedMode, rule EncodingRule) !Element {
+fn (el Element) wrap_with_options(fo FieldOptions) !Element {
 	// we dont allow optional element to be wrapped
 	if el is Optional {
 		return error('optional is not allowed to be wrapped')
 	}
 	// wraps into .universal is not allowed
-	if cls == .universal {
+	if fo.cls == .universal {
 		return error('no need to wrap into universal class')
 	}
 
 	el_cls := el.tag().tag_class()
 	// error when in the same class
-	if el_cls == cls {
+	if el_cls == fo.cls {
 		return error('no need to wrap into same class')
 	}
 	// we dont allow other than .universal class to be wrapped
 	if el_cls != .universal {
 		return error('No need to wrap non-universal class')
 	}
-	payload := if mode == .explicit { encode_with_rule(el, rule)! } else { el.payload()! }
+	payload := if fo.mode == .explicit { encode_with_rule(el, rule)! } else { el.payload()! }
 	match cls {
 		.context_specific {
 			// should be constructed
