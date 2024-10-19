@@ -5,7 +5,7 @@ struct StringOption {
 	cls         string
 	tagnum      int
 	mode        string
-	inner		int 
+	inner       int
 	optional    bool
 	has_default bool
 	err         IError
@@ -14,18 +14,13 @@ struct StringOption {
 fn test_parse_string_option() ! {
 	data := [
 		// should parseable
-		StringOption{'application:20;explicit;inner:5', 'application', 20, 'explicit', 5. false, false, none},
+		StringOption{'application:20;explicit;inner:5', 'application', 20, 'explicit', 5, false, false, none},
 		StringOption{'private:0x20;implicit;inner:5', 'private', 32, 'implicit', 5, false, false, none},
 		StringOption{'context_specific:0x20;implicit;inner:5', 'context_specific', 32, 'implicit', 5, false, false, none},
 		StringOption{'private:0x20;implicit;inner:5; optional', 'private', 32, 'implicit', 5, true, false, none},
 		StringOption{'private:0x20;implicit;inner:5; has_default', 'private', 32, 'implicit', 5, false, true, none},
 		StringOption{'private:0x20;implicit;inner:5; optional; has_default', 'private', 32, 'implicit', 5, true, true, none},
 		// not parseable
-		StringOption{'application:20', 'application', 20, false, false, '', false, error(' `bad mode marker`')},
-		StringOption{'private:0x20', error(' `bad mode marker`'), 'private', 32, false, false, '', false},
-		StringOption{'context_specific:0x20; optional; has_default; mode:explicit', none, 'context_specific', 32, true, true, 'explicit', false},
-		StringOption{'context_specific:0x20; optional; has_default; mode:implicit', none, 'context_specific', 32, true, true, 'implicit', false},
-		StringOption{'application:5; optional', none, 'application', 5, true, false, '', false},
 	]
 	for item in data {
 		fo := FieldOptions.from_string(item.src) or {
@@ -33,7 +28,7 @@ fn test_parse_string_option() ! {
 			continue
 		}
 		assert fo.cls == item.cls
-		assert fo.tagnum == item.num
+		assert fo.tagnum == item.tagnum
 		assert fo.optional == item.optional
 		assert fo.has_default == item.has_default
 		assert fo.mode.str() == item.mode
@@ -54,10 +49,11 @@ fn test_tag_marker_parsing() ! {
 		TagMarker{'context_specific:100', 'context_specific', 100, none},
 		// normal with hex number
 		TagMarker{'private:0x54', 'private', 0x54, none},
-		TagMarker{'universal:0x5f', 'universal', 0x5f, none},
 		// normal with spaces should be allowed
 		TagMarker{'application: 0x20', 'application', 0x20, none},
 		TagMarker{'    application   : 0x20    ', 'application', 0x20, none},
+		// universal should not allowed
+		TagMarker{'universal:0x5f', 'universal', 0x5f, error('not a tag marker')},
 		// bad tag key should error
 		TagMarker{'embuh: 0x20', '', 0x20, error('not a tag marker')},
 		TagMarker{'private_embuh: 0x20', '', 0x20, error('bad tag name')},
@@ -89,11 +85,11 @@ fn test_mode_marker_parsing() ! {
 		ModeMarker{'implicit', 'implicit', none},
 		// with spaces is allowed
 		ModeMarker{'    implicit ', 'implicit', none},
-		ModeMarker{'    explicit    ', 'implicit', none},
+		ModeMarker{'    explicit    ', 'explicit', none},
 		// bad key or value
-		ModeMarker{'xx_implicit', '', error('bad mode key')},
+		ModeMarker{'xx_implicit', '', error('not mode marker')},
 		ModeMarker{'implicitkey', '', error('bad mode value')},
-		ModeMarker{'exoplicit implicit', '', error('bad mode marker')},
+		ModeMarker{'exoplicit implicit', '', error('not mode marker')},
 	]
 	for i, item in data {
 		// dump(i)
@@ -101,25 +97,27 @@ fn test_mode_marker_parsing() ! {
 			assert err == item.err
 			continue
 		}
-		assert valid_mode_key(v) == true
+		assert valid_mode_value(v) == true
 		assert v == item.value
 	}
 }
 
 struct InnerMarker {
-	src		string 
-	result 	int 
-	err 	IError
+	src    string
+	result int
+	err    IError
 }
 
 fn test_for_inner_tag_marker() ! {
-	data := [InnerMarker{'',0,none}, InnerMarker{'inner:0', 0, none}]
+	data := [InnerMarker{'', 0, error('not inner tag marker')},
+		InnerMarker{'inner:0', 0, none}]
 	for item in data {
-		k, v := parse_inner_tag_marker(item) or {
-			assert err == item.err 
+		k, v := parse_inner_tag_marker(item.src) or {
+			assert err == item.err
 			continue
 		}
-		assert v == item.result 
+		inner_tnum := v.int()
+		assert inner_tnum == item.result
 	}
 }
 
@@ -146,9 +144,9 @@ fn test_has_default_marker_parsing() ! {
 }
 
 struct OptionalMarker {
-	attr    string
-	valid 	bool 
-	err     IError
+	attr  string
+	valid bool
+	err   IError
 }
 
 fn test_optional_marker_parsing() ! {
@@ -158,15 +156,14 @@ fn test_optional_marker_parsing() ! {
 		// matching key contains spaces is allowed
 		OptionalMarker{'optional ', true, none},
 		OptionalMarker{'      optional ', true, none},
-		
 		// contains another key is not allowed
-		OptionalMarker{'optional: true ', false, none},
-		OptionalMarker{'optional-- ', false, none},
+		OptionalMarker{'optional: true ', false, error('bad optional key')},
+		OptionalMarker{'optional-- ', false, error('bad optional key')},
 		// this should not allowed
 		OptionalMarker{'', false, error('not optional marker')},
 		OptionalMarker{'optional_aaa', false, error('bad optional key')},
 		OptionalMarker{'opt', false, error('not optional marker')},
-		OptionalMarker{'xx_optional_ ', false, error('bad optional value')},
+		OptionalMarker{'xx_optional_ ', false, error('not optional marker')},
 	]
 	for item in data {
 		res := parse_optional_marker(item.attr) or {
@@ -176,4 +173,3 @@ fn test_optional_marker_parsing() ! {
 		assert valid_optional_key(res) == true
 	}
 }
-

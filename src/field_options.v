@@ -21,34 +21,32 @@ const max_attributes_length = 5
 //
 // FieldOptions is a structure to accomodate and allowing configures your complex structures
 // through string or arrays of string stored in FieldOptions fields.
-// For example, you can tagging your fields of some element with tagging 
+// For example, you can tagging your fields of some element with tagging
 // like `@[context_specific:10; optional; explicit; inner:5]`.
 // Its will be parsed and can be used to drive encoding or decoding of Element.
 @[heap; noinit]
 pub struct FieldOptions {
 mut:
-	// The fields `cls`, `tagnum`, `mode` and `inner` was used 
-	// for wrapping (and unwrapping) purposes. turn some element 
+	// The fields `cls`, `tagnum`, `mode` and `inner` was used
+	// for wrapping (and unwrapping) purposes. turn some element
 	// into another element configured with this options.
 	// This fields currently strictly applied to UNIVERSAL element.
-	// In the encoding (decoding) phase, it would be checked 
+	// In the encoding (decoding) phase, it would be checked
 	// if this options meet required criteria.
 	// Limitation applied on the wrapper fields:
 	// 1. Wrap into universal is not allowed (cls != universal)
 	// 2. Wrapped element should have UNIVERSAL class.
 	// 3. You should provide mode for wrapping, explicit or implicit.
-	// 4. If cls == '', no wrapping is performed, discarding all wrapper options 
+	// 4. If cls == '', no wrapping is performed, discarding all wrapper options
 	cls    string // should cls != 'universal'
 	tagnum int = -1 // Provides with wrapper tag number.
 	mode   string // explicit or implicit, depends on definition schema.
 	inner  int = -1 // should valid universal tag number.
- 
-	// optional field applied to element with OPTIONAL behaviour, 
+	// optional field applied to element with OPTIONAL behaviour,
 	// with or without DEFAULT value.
 	// Set `optional` to true when this element has OPTIONAL keyword in the definition of element.
 	// Usually element with OPTIONAL keyword is not presents in the encoding (decoding) data.
 	optional bool
-
 	// This field applied to element with DEFAULT keyword behaviour.
 	// Its applied into wrapping of element or optionality of the element.
 	// If some element has DEFAULT keyword, set this field to true and gives default element into `default_value` field.
@@ -87,7 +85,7 @@ fn filtered_attrs(attrs []string) []string {
 			filtered << item
 		}
 	}
-    return filtered
+	return filtered
 }
 
 // `from_attrs` parses and validates []string into FieldOptions.
@@ -96,14 +94,14 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 	if attrs.len == 0 {
 		return fo
 	}
-	
+
 	mut tag_ctr := 0 // tag marker counter
 	mut opt_ctr := 0 // optional marker counter
 	mut def_ctr := 0 // has_default marker counter
 	mut mod_ctr := 0 // mode marker counter
 	mut inn_ctr := 0 // inner counter
 
-    // take only valid supported asn1 marker
+	// take only valid supported asn1 marker
 	filtered := filtered_attrs(attrs)
 	if filtered.len > max_attributes_length {
 		return error('max allowed filtered.len')
@@ -134,16 +132,17 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 			if opt_ctr > 1 {
 				return error('multiples optional tag')
 			}
-			present := if opt == 'optional' { true } else { false }
-			fo.optional = true
+			present := if valid_optional_key(opt) { true } else { false }
+			fo.optional = present
 		}
 		if is_default_marker(item) {
-			_ := parse_default_marker(item)!
+			default_marker := parse_default_marker(item)!
 			def_ctr += 1
 			if def_ctr > 1 {
 				return error('multiples has_default flag')
 			}
-			fo.has_default = true
+			has_default := if valid_default_marker(default_marker) { true } else { false }
+			fo.has_default = has_default
 		}
 		if is_mode_marker(item) {
 			value := parse_mode_marker(item)!
@@ -158,7 +157,7 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 			if inn_ctr > 1 {
 				return error('multiples inner tag format defined')
 			}
-			if !is_valid_inner_value(value) {
+			if !valid_inner_value(value) {
 				return error('Bad inner value')
 			}
 			num := value.int()
@@ -184,7 +183,7 @@ pub fn (fo FieldOptions) inner_tag() !Tag {
 	if fo.inner < 0 || fo.inner > max_universal_tagnumber {
 		return error('You cant create tag from empty inner string')
 	}
-    utag := universal_tag_from_int(fo.inner)!
+	utag := universal_tag_from_int(fo.inner)!
 
 	return utag
 }
@@ -236,7 +235,6 @@ fn (fo FieldOptions) check_wrapper() ! {
 		if fo.inner < 0 || fo.inner > max_universal_tagnumber {
 			return error('You have not provides mode')
 		}
-		
 	}
 }
 
@@ -384,13 +382,14 @@ fn valid_default_marker(attr string) bool {
 	return attr == 'has_default'
 }
 
-// UTILTIY 
+// UTILTIY
 //
 // is_asn1_options_marker checks if provided string is valid supported field options string.
 fn is_asn1_options_marker(s string) bool {
 	item := s.trim_space()
 	// belowng to one of five supported marker.
-	valid := is_tag_marker(item) || is_mode_marker(item) || is_inner_tag_marker(item)  || is_optional_marker(item) || is_default_marker(item) 
+	valid := is_tag_marker(item) || is_mode_marker(item) || is_inner_tag_marker(item)
+		|| is_optional_marker(item) || is_default_marker(item)
 
 	return valid
 }

@@ -36,7 +36,7 @@
 						<div class="info">
 							<div class="module">asn1</div>
 							<div class="toggle-version-container">
-								<span> fde9516</span>
+								<span> d1b0370</span>
 								<div
 									id="dark-mode-toggle"
 									role="switch"
@@ -72,6 +72,124 @@
 								<section id="readme_asn1" class="doc-node">
 			<div class="title"><h1> asn1 <a href="#readme_asn1">#</a></h1></div>
 <h2>asn1</h2><p>Pure V module for handling Abstract Syntax Notation One (ASN.1) <a href="http://www.itu.int/rec/T-REC-X.680/en">[X.680]</a> objects encoded in Distinguished Encoding Rules (DER) <a href="https://www.itu.int/rec/T-REC-X.690/en">[X.690]</a> encoding scheme.</p><blockquote><p>[!CAUTION] &gt; This module is marked as an experimental, so, its a subject to change (even rapidly). &gt; Use it with caution, submit when found a bug and gives yours feedback and review.</p></blockquote><h2>tag handling</h2><ul><li>support handling short or long form (multibyte tag), but its sizes was limited to defined constant, <code>max_tag_length = 3</code> bytes long.</li><li>support almost popular basic type (except for a few types)</li></ul><h2>limitation</h2><ul><li>This module is written in DER encoding in mind, with limited support with BER, so maybe if you use BER would be dropped into error.</li></ul>
+
+</section>
+
+		<section id="Constants" class="doc-node const">
+			<div class="title"><h2>Constants <a href="#Constants">#</a></h2></div>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_visiblestring_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>visiblestring<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 VISIBLESTRING type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_bitstring_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>bitstring<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 BITSTRING type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_utf8string_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>utf8string<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 UTF8STRING type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_oid_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>oid<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 OBJECTIDENTIFIER type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_generalizedtime_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>generalizedtime<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 GENERALIZEDTIME type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_numericstring_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>numericstring<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 NUMERICSTRING type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_set_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>set<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 SET (SET OF) type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_printablestring_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>printablestring<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 PRINTABLESTRING type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_ia5string_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>ia5string<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 IA5STRING type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_octetstring_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>octetstring<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 OCTETSTRING type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_null_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>null<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 NULL type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_generalstring_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>generalstring<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 GENERALSTRING type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_utctime_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>utctime<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 UTCTIME type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_boolean_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>boolean<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 BOOLEAN type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_integer_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>integer<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default of ASN.1 INTEGER type.</p>
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> default_sequence_tag <span class="token operator">=</span> <span class="token symbol">Tag</span><span class="token punctuation">{</span><span class="token punctuation">.</span>universal<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">(</span>TagType<span class="token punctuation">.</span>sequence<span class="token punctuation">)</span><span class="token punctuation">}</span></code></pre>
+<p>The default tag of ASN.1 SEQUENCE (SEQUENCE OF) type.</p>
 
 </section>
 
@@ -184,11 +302,11 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 </section>
 </section>
 
-		<section id="BitString.from_string" class="doc-node">
-			<div class="title"><h2>fn BitString.from_string <a href="#BitString.from_string">#</a></h2></div>
+		<section id="BitString.new" class="doc-node">
+			<div class="title"><h2>fn BitString.new <a href="#BitString.new">#</a></h2></div>
 <pre class="signature">
-<code><span class="token keyword">fn</span> BitString<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>BitString</code></pre>
-<p>from_string creates a new BitString from regular string s</p>
+<code><span class="token keyword">fn</span> BitString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>BitString</code></pre>
+<p>new creates a new BitString from regular string s</p>
 
 </section>
 
@@ -252,7 +370,7 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 			<div class="title"><h2>fn Element.from_object <a href="#Element.from_object">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> Element<span class="token punctuation">.</span>from_object<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span>t <span class="token builtin">T</span><span class="token punctuation">)</span> <span class="token operator">!</span>Element</code></pre>
-<p>from_object[T] transforms and creates a new Element from generic type (maybe universal type, like an OctetString). Its accepts generic element t that you should pass to this function. You should make sure if this element implements required methods of the Element, or an error would be returned.</p><p>Fixme: its not tested. Examples:</p><pre><code class="language-v">oc <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>OctetString<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span><span class="token string">'xxx'</span><span class="token punctuation">)</span><span class="token operator">!</span>
+<p>from_object[T] transforms and creates a new Element from generic type (maybe universal type, like an OctetString). Its accepts generic element t that you should pass to this function. You should make sure if this element implements required methods of the Element, or an error would be returned.</p><p>Fixme: its not tested. Examples:</p><pre><code class="language-v">oc <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>OctetString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token string">'xxx'</span><span class="token punctuation">)</span><span class="token operator">!</span>
 el <span class="token operator">:=</span> Element<span class="token punctuation">.</span>from_object<span class="token punctuation">[</span>OctetString<span class="token punctuation">]</span><span class="token punctuation">(</span>oc<span class="token punctuation">)</span><span class="token operator">!</span></code></pre><p>and then treats your OctetString as an Element</p>
 
 </section>
@@ -764,7 +882,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (Element) into_object <a href="#Element.into_object">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>el Element<span class="token punctuation">)</span> into_object<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">T</span></code></pre>
-<p>into_object[T] transforms and tries to cast element el into generic object T if the element not holding object T, it would return error.</p><p>Note: Not tested. Examples:</p><pre><code class="language-v">oc <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>OctetString<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span><span class="token string">'xxx'</span><span class="token punctuation">)</span><span class="token operator">!</span>
+<p>into_object[T] transforms and tries to cast element el into generic object T if the element not holding object T, it would return error.</p><p>Note: Not tested. Examples:</p><pre><code class="language-v">oc <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>OctetString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token string">'xxx'</span><span class="token punctuation">)</span><span class="token operator">!</span>
 el <span class="token operator">:=</span> Element<span class="token punctuation">.</span>from_object<span class="token punctuation">[</span>OctetString<span class="token punctuation">]</span><span class="token punctuation">(</span>oc<span class="token punctuation">)</span><span class="token operator">!</span></code></pre><p>cast back the element into OctetString.</p><pre><code class="language-v">os <span class="token operator">:=</span> el<span class="token punctuation">.</span>into_object<span class="token punctuation">[</span>OctetString<span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">!</span></code></pre><p>and then treats os as an OctetString.</p>
 
 </section>
@@ -1150,33 +1268,33 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">struct</span> <span class="token symbol">FieldOptions</span> <span class="token punctuation">{</span>
 <span class="token keyword">mut</span><span class="token punctuation">:</span>
-	<span class="token comment">// Following fields, ie, `cls`, `tagnum`, `mode` and `inner` was for wrapping (and unwrapping) purposes.</span>
-	<span class="token comment">// This fields currently applied to (strictly) UNIVERSAL element.</span>
-	<span class="token comment">// In the encoding (decoding) phase, it would be checked if this options meet the criteria.</span>
-	<span class="token comment">// So, you can wrap (unwrap) your element with this configuration.</span>
-	<span class="token comment">// examples of options string contains: `application:100; mode: explicit; inner:universal, false, 4`.</span>
-	<span class="token comment">// Its would be parsed into: cls=application, tagnum=100; mode: explicit, inner: `universal, false, 4`</span>
-	cls    <span class="token builtin">string</span>
-	tagnum <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>
-	mode   <span class="token builtin">string</span>
-	inner  <span class="token builtin">string</span>
-
-	<span class="token comment">// Following fields applied to element with OPTIONAL behaviour, with or without DEFAULT value.</span>
+	<span class="token comment">// The fields `cls`, `tagnum`, `mode` and `inner` was used</span>
+	<span class="token comment">// for wrapping (and unwrapping) purposes. turn some element</span>
+	<span class="token comment">// into another element configured with this options.</span>
+	<span class="token comment">// This fields currently strictly applied to UNIVERSAL element.</span>
+	<span class="token comment">// In the encoding (decoding) phase, it would be checked</span>
+	<span class="token comment">// if this options meet required criteria.</span>
+	<span class="token comment">// Limitation applied on the wrapper fields:</span>
+	<span class="token comment">// 1. Wrap into universal is not allowed (cls != universal)</span>
+	<span class="token comment">// 2. Wrapped element should have UNIVERSAL class.</span>
+	<span class="token comment">// 3. You should provide mode for wrapping, explicit or implicit.</span>
+	<span class="token comment">// 4. If cls == '', no wrapping is performed, discarding all wrapper options</span>
+	cls    <span class="token builtin">string</span> <span class="token comment">// should cls != 'universal'</span>
+	tagnum <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token comment">// Provides with wrapper tag number.</span>
+	mode   <span class="token builtin">string</span> <span class="token comment">// explicit or implicit, depends on definition schema.</span>
+	inner  <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token comment">// should valid universal tag number.</span>
+	<span class="token comment">// optional field applied to element with OPTIONAL behaviour,</span>
+	<span class="token comment">// with or without DEFAULT value.</span>
 	<span class="token comment">// Set `optional` to true when this element has OPTIONAL keyword in the definition of element.</span>
 	<span class="token comment">// Usually element with OPTIONAL keyword is not presents in the encoding (decoding) data.</span>
-	<span class="token comment">// The `present` field tells us if this optional be marked to be present in the data (encoding or decoding).</span>
-	<span class="token comment">// This present field negates optionality of the element, efectively marked as present.</span>
-	<span class="token comment">// If not sure, just set this field to false.</span>
 	optional <span class="token builtin">bool</span>
-	present  <span class="token builtin">bool</span>
-
 	<span class="token comment">// This field applied to element with DEFAULT keyword behaviour.</span>
 	<span class="token comment">// Its applied into wrapping of element or optionality of the element.</span>
 	<span class="token comment">// If some element has DEFAULT keyword, set this field to true and gives default element into `default_value` field.</span>
 	has_default   <span class="token builtin">bool</span>
 	default_value <span class="token operator">?</span>Element
 <span class="token punctuation">}</span></code></pre>
-<p>FieldOptions is a structure to accomodate and allowing configures your complex structures through string or arrays of string stored in FieldOptions fields. For example, you can tagging your fields of some element with tagging like <code>@[context_specific:10; optional; mode: explicit]</code>. Its will be parsed and can be used to drive encoding or decoding of Element.</p>
+<p>Field options attributes handling.</p><p>FieldOptions is a structure to accomodate and allowing configures your complex structures through string or arrays of string stored in FieldOptions fields. For example, you can tagging your fields of some element with tagging like <code>@[context_specific:10; optional; explicit; inner:5]</code>. Its will be parsed and can be used to drive encoding or decoding of Element.</p>
 
 </section>
 
@@ -1999,9 +2117,10 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 17 Oct 2024 08:06:37</div>
+						<div class="footer">Powered by vdoc. Generated on: 19 Oct 2024 12:54:55</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
+<li class="open"><a href="#Constants">Constants</a></li>
 <li class="open"><a href="#decode">fn decode</a>        <ul>
 </ul>
 </li>
@@ -2038,7 +2157,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#BitString.from_binary_string">fn BitString.from_binary_string</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#BitString.from_string">fn BitString.from_string</a>        <ul>
+<li class="open"><a href="#BitString.new">fn BitString.new</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#BitString.parse">fn BitString.parse</a>        <ul>

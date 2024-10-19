@@ -506,7 +506,7 @@ fn universal_tag_from_int(v int) !Tag {
 		return error('Get unexpected tag number for universal type')
 	}
 	match v {
-		// vfmt off 
+		// vfmt off
 		1 { return default_boolean_tag }
 		2 { return default_integer_tag }
 		3 { return default_bitstring_tag }
@@ -527,10 +527,9 @@ fn universal_tag_from_int(v int) !Tag {
 			// should in primitive form 
 			return Tag{.universal, false, v}
 		}
-		// vfmt on 
+		// vfmt on
 	}
 }
-
 
 // Params is optional params passed to encode or decodeing
 // of tag, length or ASN.1 element to drive how encoding works.

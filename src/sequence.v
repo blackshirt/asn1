@@ -8,7 +8,9 @@ pub const default_sequence_tag = Tag{.universal, true, int(TagType.sequence)}
 
 // constant for sequence(of) and set(of) internal value
 const max_seqset_fields = 256 // max of seq size
+
 const max_seqset_bytes = (1 << 23 - 1) // 8 MB
+
 const default_seqset_fields = 64 // default size
 
 // SEQUENCE and SEQUENCE OF handling

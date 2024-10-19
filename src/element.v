@@ -216,7 +216,7 @@ fn (el Element) apply_optional_options(fo FieldOptions) !Element {
 		return el
 	}
 	el.validate_optional(fo)!
-	if fo.optional && fo.present {
+	if fo.optional {
 		return el.into_optional_to_present()!
 	}
 	return el.into_optional()!
@@ -527,7 +527,6 @@ pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 	// TODO
 	return error('decode_with_field_options not implemented')
 }
-
 
 // Utility function
 //

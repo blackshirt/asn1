@@ -55,7 +55,8 @@ pub fn (mut p Parser) read_bytes(length int) ![]u8 {
 // read_element read an element T from the current parser.
 // Note: somes builtin have not this method.
 pub fn (mut p Parser) read_element[T]() !T {
-	return T.parse(mut p)
+	result := T.parse(mut p)!
+	return result
 }
 
 // read_tlv read an Element from the parser data.
