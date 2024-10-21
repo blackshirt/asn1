@@ -148,11 +148,11 @@ fn (b Boolean) value_with_rule(rule EncodingRule) bool {
 }
 
 // decode tries to decode bytes array into Booelan type or error on fails.
-pub fn Boolean.decode(src []u8) !(Boolean, i64) {
+pub fn Boolean.decode(src []u8) !(Boolean, int) {
 	return Boolean.decode_with_rule(src, 0, .der)!
 }
 
-fn Boolean.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Boolean, i64) {
+fn Boolean.decode_with_rule(src []u8, loc int, rule EncodingRule) !(Boolean, int) {
 	if src.len < 3 {
 		return error('Boolean: bad length bytes')
 	}

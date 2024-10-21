@@ -21,6 +21,11 @@ fn test_parse_string_option() ! {
 		StringOption{'private:0x20;implicit;inner:5; has_default', 'private', 32, 'implicit', 5, false, true, none},
 		StringOption{'private:0x20;implicit;inner:5; optional; has_default', 'private', 32, 'implicit', 5, true, true, none},
 		// not parseable
+		// Without mode or inner
+		StringOption{'application:20', 'application', 0, '', 5, false, false, error('Invalid zonk or uncorerct mode value')},
+		StringOption{'application:20; inner:4', 'application', 0, '', 0, false, false, error('Invalid zonk or uncorerct mode value')},
+		StringOption{'application:20; implicit', 'application', 0, '', 0, false, false, error('You provides incorrect inner number')},
+		StringOption{'implicit;inner:33', '', -1, 'implicit', 33, false, false, error('You provides incorrect inner number')},
 	]
 	for item in data {
 		fo := FieldOptions.from_string(item.src) or {
@@ -31,7 +36,8 @@ fn test_parse_string_option() ! {
 		assert fo.tagnum == item.tagnum
 		assert fo.optional == item.optional
 		assert fo.has_default == item.has_default
-		assert fo.mode.str() == item.mode
+		assert fo.mode == item.mode
+		assert fo.inner == item.inner
 	}
 }
 

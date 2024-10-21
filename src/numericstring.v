@@ -69,12 +69,12 @@ fn NumericString.from_bytes(bytes []u8) !NumericString {
 	}
 }
 
-fn NumericString.decode(bytes []u8) !(NumericString, i64) {
+fn NumericString.decode(bytes []u8) !(NumericString, int) {
 	ns, next := NumericString.decode_with_rule(bytes, .der)!
 	return ns, next
 }
 
-fn NumericString.decode_with_rule(bytes []u8, rule EncodingRule) !(NumericString, i64) {
+fn NumericString.decode_with_rule(bytes []u8, rule EncodingRule) !(NumericString, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_numericstring_tag) {
 		return error('Unexpected non-numericstring tag')

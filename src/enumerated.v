@@ -39,16 +39,16 @@ fn Enumerated.from_bytes(bytes []u8) !Enumerated {
 	if !valid_bytes(bytes, true) {
 		return error('Enumerated: failed check')
 	}
-	mut ret := i64(0)
+	mut ret := int(0)
 	for i := 0; i < bytes.len; i++ {
 		ret <<= 8
-		ret |= i64(bytes[i])
+		ret |= int(bytes[i])
 	}
 
 	ret <<= 64 - u8(bytes.len) * 8
 	ret >>= 64 - u8(bytes.len) * 8
 
-	if ret != i64(int(ret)) {
+	if ret != int(int(ret)) {
 		return error('integer too large')
 	}
 	return Enumerated{
@@ -70,11 +70,11 @@ pub fn Enumerated.parse(mut p Parser) !Enumerated {
 	return res
 }
 
-pub fn Enumerated.decode(src []u8) !(Enumerated, i64) {
+pub fn Enumerated.decode(src []u8) !(Enumerated, int) {
 	return Enumerated.decode_with_rule(src, .der)!
 }
 
-fn Enumerated.decode_with_rule(bytes []u8, rule EncodingRule) !(Enumerated, i64) {
+fn Enumerated.decode_with_rule(bytes []u8, rule EncodingRule) !(Enumerated, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_enumerated_tag) {
 		return error('Unexpected non-Enumerated tag')

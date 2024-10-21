@@ -102,11 +102,11 @@ pub fn Sequence.parse(mut p Parser) !Sequence {
 // decode tries to decode bytes into Sequence.
 // Its return a decoded Sequence and next offset to read on
 // if possible, or return error on fails.
-pub fn Sequence.decode(bytes []u8) !(Sequence, i64) {
+pub fn Sequence.decode(bytes []u8) !(Sequence, int) {
 	return Sequence.decode_with_rule(bytes, 0, .der)!
 }
 
-fn Sequence.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Sequence, i64) {
+fn Sequence.decode_with_rule(bytes []u8, loc int, rule EncodingRule) !(Sequence, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, loc, rule)!
 	if !tag.equal(default_sequence_tag) {
 		return error('Get unexpected non-sequence tag')
@@ -131,7 +131,7 @@ fn Sequence.from_bytes(bytes []u8) !Sequence {
 	if bytes.len == 0 {
 		return seq
 	}
-	mut i := i64(0)
+	mut i := 0
 	for i < bytes.len {
 		el, pos := Element.decode_with_rule(bytes, i, .der)!
 		i = pos

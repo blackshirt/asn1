@@ -66,11 +66,11 @@ pub fn VisibleString.parse(mut p Parser) !VisibleString {
 	return res
 }
 
-pub fn VisibleString.decode(src []u8) !(VisibleString, i64) {
+pub fn VisibleString.decode(src []u8) !(VisibleString, int) {
 	return VisibleString.decode_with_rule(src, .der)!
 }
 
-fn VisibleString.decode_with_rule(bytes []u8, rule EncodingRule) !(VisibleString, i64) {
+fn VisibleString.decode_with_rule(bytes []u8, rule EncodingRule) !(VisibleString, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_visiblestring_tag) {
 		return error('Unexpected non-visiblestring tag')

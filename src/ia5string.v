@@ -57,12 +57,12 @@ pub fn IA5String.parse(mut p Parser) !IA5String {
 	return res
 }
 
-pub fn IA5String.decode(bytes []u8) !(IA5String, i64) {
+pub fn IA5String.decode(bytes []u8) !(IA5String, int) {
 	bs, next := IA5String.decode_with_rule(bytes, .der)!
 	return bs, next
 }
 
-fn IA5String.decode_with_rule(bytes []u8, rule EncodingRule) !(IA5String, i64) {
+fn IA5String.decode_with_rule(bytes []u8, rule EncodingRule) !(IA5String, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_ia5string_tag) {
 		return error('Unexpected non-ia5string tag')

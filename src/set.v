@@ -88,11 +88,11 @@ pub fn Set.parse(mut p Parser) !Set {
 	return error('not yet implemented')
 }
 
-pub fn Set.decode(bytes []u8) !(Set, i64) {
+pub fn Set.decode(bytes []u8) !(Set, int) {
 	return Set.decode_with_rule(bytes, 0, .der)!
 }
 
-fn Set.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Set, i64) {
+fn Set.decode_with_rule(bytes []u8, loc int, rule EncodingRule) !(Set, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, loc, rule)!
 	if !tag.equal(default_set_tag) {
 		return error('Get unexpected non-set tag')
@@ -117,7 +117,7 @@ fn Set.from_bytes(bytes []u8) !Set {
 	if bytes.len == 0 {
 		return set
 	}
-	mut i := i64(0)
+	mut i := 0
 	for i < bytes.len {
 		el, pos := Element.decode_with_rule(bytes, i, .der)!
 		i = pos

@@ -127,11 +127,11 @@ pub fn ObjectIdentifier.parse(mut p Parser) !ObjectIdentifier {
 	return res
 }
 
-pub fn ObjectIdentifier.decode(src []u8) !(ObjectIdentifier, i64) {
+pub fn ObjectIdentifier.decode(src []u8) !(ObjectIdentifier, int) {
 	return ObjectIdentifier.decode_with_rule(src, .der)!
 }
 
-fn ObjectIdentifier.decode_with_rule(bytes []u8, rule EncodingRule) !(ObjectIdentifier, i64) {
+fn ObjectIdentifier.decode_with_rule(bytes []u8, rule EncodingRule) !(ObjectIdentifier, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_oid_tag) {
 		return error('Unexpected non-oid tag')

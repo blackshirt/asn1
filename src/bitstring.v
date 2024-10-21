@@ -55,12 +55,12 @@ pub fn BitString.parse(mut p Parser) !BitString {
 	return bs
 }
 
-pub fn BitString.decode(bytes []u8) !(BitString, i64) {
+pub fn BitString.decode(bytes []u8) !(BitString, int) {
 	bs, next := BitString.decode_with_rule(bytes, .der)!
 	return bs, next
 }
 
-fn BitString.decode_with_rule(bytes []u8, rule EncodingRule) !(BitString, i64) {
+fn BitString.decode_with_rule(bytes []u8, rule EncodingRule) !(BitString, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_bitstring_tag) {
 		return error('Unexpected non-bitstring tag')

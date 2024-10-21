@@ -73,11 +73,11 @@ pub fn Utf8String.parse(mut p Parser) !Utf8String {
 	return res
 }
 
-pub fn Utf8String.decode(src []u8) !(Utf8String, i64) {
+pub fn Utf8String.decode(src []u8) !(Utf8String, int) {
 	return Utf8String.decode_with_rule(src, .der)!
 }
 
-fn Utf8String.decode_with_rule(bytes []u8, rule EncodingRule) !(Utf8String, i64) {
+fn Utf8String.decode_with_rule(bytes []u8, rule EncodingRule) !(Utf8String, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_utf8string_tag) {
 		return error('Unexpected non-utf8string tag')

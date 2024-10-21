@@ -67,11 +67,11 @@ pub fn PrintableString.parse(mut p Parser) !PrintableString {
 	return pst
 }
 
-pub fn PrintableString.decode(src []u8) !(PrintableString, i64) {
+pub fn PrintableString.decode(src []u8) !(PrintableString, int) {
 	return PrintableString.decode_with_rule(src, .der)!
 }
 
-fn PrintableString.decode_with_rule(bytes []u8, rule EncodingRule) !(PrintableString, i64) {
+fn PrintableString.decode_with_rule(bytes []u8, rule EncodingRule) !(PrintableString, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_printablestring_tag) {
 		return error('Unexpected non-printablestring tag')

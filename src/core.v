@@ -148,13 +148,13 @@ fn (t Tag) encode_with_rule(mut dst []u8, rule EncodingRule) ! {
 
 // Tag.decode tries to deserializes bytes into Tag.
 // Its return error on fails.
-fn Tag.decode(bytes []u8) !(Tag, i64) {
+fn Tag.decode(bytes []u8) !(Tag, int) {
 	tag, next := Tag.decode_from_offset(bytes, 0)!
 	return tag, next
 }
 
 // Tag.decode tries to deserializes bytes into Tag. its return error on fails.
-fn Tag.decode_from_offset(bytes []u8, pos i64) !(Tag, i64) {
+fn Tag.decode_from_offset(bytes []u8, pos int) !(Tag, int) {
 	// default rule
 	tag, next := Tag.decode_with_rule(bytes, pos, .der)!
 	return tag, next
@@ -163,7 +163,7 @@ fn Tag.decode_from_offset(bytes []u8, pos i64) !(Tag, i64) {
 // Tag.decode_with_rule deserializes bytes back into Tag structure start from `loc` offset.
 // By default, its decodes in .der encoding rule, if you want more control, pass your `Params`.
 // Its return Tag and next offset to operate on, and return error if it fails to decode.
-fn Tag.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Tag, i64) {
+fn Tag.decode_with_rule(bytes []u8, loc int, rule EncodingRule) !(Tag, int) {
 	// preliminary check
 	if bytes.len < 1 {
 		return error('Tag: bytes underflow')
@@ -260,14 +260,14 @@ fn (t Tag) to_bytes_in_base128(mut dst []u8) ! {
 
 // Tag.read_tagnum read the tag number from bytes from offset pos in base 128.
 // Its return deserialized Tag number and next offset to process on.
-fn Tag.read_tagnum(bytes []u8, pos i64) !(int, i64) {
+fn Tag.read_tagnum(bytes []u8, pos int) !(int, int) {
 	tnum, next := Tag.read_tagnum_with_rule(bytes, pos, .der)!
 	return tnum, next
 }
 
 // read_tagnum_with_rule is the main routine to read the tag number part in the bytes source,
 // start from offset loc in base 128. Its return the tag number and next offset to process on, or error on fails.
-fn Tag.read_tagnum_with_rule(bytes []u8, loc i64, rule EncodingRule) !(int, i64) {
+fn Tag.read_tagnum_with_rule(bytes []u8, loc int, rule EncodingRule) !(int, int) {
 	if loc > bytes.len {
 		return error('Tag number: invalid pos')
 	}

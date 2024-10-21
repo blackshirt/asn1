@@ -36,47 +36,32 @@ pub fn encode(el Element) ![]u8 {
 
 // `encode_with_options` serializes element into bytes array with options string passed to drive the result.
 pub fn encode_with_options(el Element, opt string) ![]u8 {
-	return el.encode_with_string_options(opt, .der)!
+	return el.encode_with_string_options(opt)!
 }
 
 // `encode_with_field_options` serializes this element into bytes array with options defined in fo.
 pub fn encode_with_field_options(el Element, fo FieldOptions) ![]u8 {
-	return el.encode_with_field_options(fo, .der)
+	return el.encode_with_field_options(fo)
 }
 
-fn (el Element) encode_with_string_options(opt string, rule EncodingRule) ![]u8 {
+fn (el Element) encode_with_string_options(opt string) ![]u8 {
 	// treated as without option when nil
 	if opt.len == 0 {
-		out := encode_with_rule(el, rule)!
+		out := encode_with_rule(el, .der)!
 		return out
 	}
 	fo := FieldOptions.from_string(opt)!
-	out := el.encode_with_field_options(fo, rule)!
+	out := el.encode_with_field_options(fo)!
 	return out
 }
 
-fn wrap(el,fo FieldOptions) !Element {
-	el.validate_options(fo)!
-	new_el := if fo.cls == '' {el} else {
-		el.wrap_with_options(fo.cls, fo.tagnum, fo.mode)
-	}
-	mut maybe_opt := if fo.optional {el.into_optional()} else {new_el}
-	if fo.has_default {
-		maybe_opt := 
-		
-	}
-}
-		
-fn (el Element) encode_with_field_options(fo FieldOptions, rule EncodingRule) ![]u8 {
-	if rule != .der && rule != .ber {
-		return error('unsupported rule')
-	}
+fn (el Element) encode_with_field_options(fo FieldOptions) ![]u8 {
 	if el is Optional {
 		return el.encode()
 	}
 	el.validate_options(fo)!
 	if fo.has_default {
-		def_element := fo.default_value or {return error('bad default_value')}
+		def_element := fo.default_value or { return error('bad default_value') }
 		if el.equal(def_element) {
 			return []u8{}
 		}
@@ -220,10 +205,7 @@ fn (el Element) apply_wrappers_options(fo FieldOptions) !Element {
 		el.validate_default(fo)!
 	}
 
-	cls := TagClass.from_string(fo.cls)!
-	mode := TaggedMode.from_string(fo.mode)!
-
-	new_el := el.wrap(cls, fo.tagnum, mode)!
+	new_el := el.wrap_with_options(fo)!
 
 	return new_el
 }
@@ -237,30 +219,17 @@ fn (el Element) apply_optional_options(fo FieldOptions) !Element {
 		return el
 	}
 	el.validate_optional(fo)!
-	if fo.optional {
-		return el.into_optional_to_present()!
-	}
-	return el.into_optional()!
-}
+	opt := if fo.optional { el.into_optional(fo.default_value)! } else { el }
 
-// into_optional turns this element into Optional.
-fn (el Element) into_optional() !Element {
-	if el is Optional {
-		return error('already optional element')
-	}
-	opt := Optional.new(el)!
 	return opt
 }
 
-// into_optional_to_present turns this element into Optional with presences semantic.
-fn (el Element) into_optional_to_present() !Element {
-	// maybe removed in the future
+// into_optional turns this element into Optional with default_value if there.
+fn (el Element) into_optional(with_default ?Element) !Element {
 	if el is Optional {
 		return error('already optional element')
 	}
-	mut opt := Optional.new(el)!
-	opt.set_to_present()
-
+	opt := Optional.new(el, with_default)!
 	return opt
 }
 
@@ -285,11 +254,6 @@ fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
 	el.validate_default(fo)!
 }
 
-// wrap only universal class, and other class that has primitive form
-fn (el Element) wrap(cls TagClass, num int, mode TaggedMode) !Element {
-	return el.wrap_with_rule(cls, num, mode, .der)!
-}
-
 fn (el Element) unwrap(fo FieldOptions) !Element {
 	// unwrap only element with constructed form
 	if !el.tag().is_constructed() {
@@ -307,35 +271,38 @@ fn (el Element) unwrap(fo FieldOptions) !Element {
 // 2. wrapping with the same class is not allowed too
 // 3. wrapping non-universal class element is not allowed (maybe removed on futures.)
 fn (el Element) wrap_with_options(fo FieldOptions) !Element {
+	el.validate_options(fo)!
 	// we dont allow optional element to be wrapped
 	if el is Optional {
 		return error('optional is not allowed to be wrapped')
 	}
 	// wraps into .universal is not allowed
-	if fo.cls == .universal {
+	if fo.cls == 'universal' {
 		return error('no need to wrap into universal class')
 	}
 
 	el_cls := el.tag().tag_class()
 	// error when in the same class
-	if el_cls == fo.cls {
+	if el_cls == TagClass.from_string(fo.cls)! {
 		return error('no need to wrap into same class')
 	}
 	// we dont allow other than .universal class to be wrapped
 	if el_cls != .universal {
 		return error('No need to wrap non-universal class')
 	}
-	payload := if fo.mode == .explicit { encode_with_rule(el, rule)! } else { el.payload()! }
+	payload := if fo.mode == 'explicit' { encode_with_rule(el, .der)! } else { el.payload()! }
+	mode := TaggedMode.from_string(fo.mode)!
+	cls := TagClass.from_string(fo.cls)!
 	match cls {
 		.context_specific {
 			// should be constructed
-			return ContextElement.new(mode, tagnum, el)!
+			return ContextElement.new(mode, fo.tagnum, el)!
 		}
 		.application {
-			return ApplicationElement.new(true, tagnum, payload)!
+			return ApplicationElement.new(true, fo.tagnum, payload)!
 		}
 		.private {
-			return PrivateELement.new(true, tagnum, payload)!
+			return PrivateELement.new(true, fo.tagnum, payload)!
 		}
 		else {
 			return error('class wrapper not allowed')
@@ -449,14 +416,14 @@ fn Element.parse(mut p Parser) !Element {
 	return el
 }
 
-fn Element.decode(src []u8) !(Element, i64) {
+fn Element.decode(src []u8) !(Element, int) {
 	el, pos := Element.decode_with_rule(src, 0, .der)!
 	return el, pos
 }
 
 // decode deserializes back bytes in src from offet `loc` into Element.
 // Basically, its tries to parse a Universal class Element when it is possible.
-fn Element.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Element, i64) {
+fn Element.decode_with_rule(src []u8, loc int, rule EncodingRule) !(Element, int) {
 	tag, length_pos := Tag.decode_with_rule(src, loc, rule)!
 	length, content_pos := Length.decode_with_rule(src, length_pos, rule)!
 	// get the bytes
@@ -510,7 +477,7 @@ pub fn ElementList.from_bytes(src []u8) ![]Element {
 		// empty list
 		return els
 	}
-	mut i := i64(0)
+	mut i := int(0)
 	for i < src.len {
 		el, pos := Element.decode_with_rule(src, i, .der)!
 		i = pos

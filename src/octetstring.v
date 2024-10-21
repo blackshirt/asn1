@@ -64,11 +64,11 @@ pub fn OctetString.parse(mut p Parser) !OctetString {
 	return oct
 }
 
-pub fn OctetString.decode(src []u8) !(OctetString, i64) {
+pub fn OctetString.decode(src []u8) !(OctetString, int) {
 	return OctetString.decode_with_rule(src, .der)!
 }
 
-fn OctetString.decode_with_rule(bytes []u8, rule EncodingRule) !(OctetString, i64) {
+fn OctetString.decode_with_rule(bytes []u8, rule EncodingRule) !(OctetString, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_octetstring_tag) {
 		return error('Unexpected non-octetstring tag')

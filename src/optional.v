@@ -11,8 +11,7 @@ module asn1
 @[heap; noinit]
 pub struct Optional {
 	// underlying element marked as an optional
-	tag     Tag
-	content []u8
+	elem Element
 mut:
 	// presence of this flag negates optionality of this elemeent.
 	// set to true when its should present, if notu sure, just set to to false
@@ -36,17 +35,20 @@ fn (opt Optional) validate() ! {
 }
 
 // Optional.new creates and marked element as an Optional element.
-pub fn Optional.new(el Element) !Optional {
+pub fn Optional.new(el Element, with_default ?Element) !Optional {
+	if el is Optional {
+		return error('recursive optional is not allowed')
+	}
 	return Optional{
-		tag:     el.tag()
-		content: el.payload()!
+		elem:          el
+		default_value: with_default
 	}
 }
 
 // set_default sets the default value of this optional. You should provide it with element
 // that has equal tag with the tag of this optional element or error otherwise.
 pub fn (mut opt Optional) set_default(el Element) ! {
-	if !opt.tag.equal(el.tag()) {
+	if !opt.tag().equal(el.tag()) {
 		return error('default value with different tag is not allowed')
 	}
 	opt.default_value = el
@@ -63,16 +65,16 @@ pub fn (mut opt Optional) set_to_present() {
 
 // set_to_unpresent makes this optional was not present
 pub fn (mut opt Optional) set_to_unpresent() {
-	opt.set_kehadiran(true)
+	opt.set_kehadiran(false)
 }
 
 pub fn (opt Optional) tag() Tag {
-	return opt.tag()
+	return opt.elem.tag()
 }
 
 pub fn (opt Optional) payload() ![]u8 {
 	// opt.validate()!
-	return opt.content
+	return opt.elem.payload()!
 }
 
 pub fn (opt Optional) encode() ![]u8 {
@@ -89,7 +91,7 @@ fn (opt Optional) encode_with_rule(rule EncodingRule) ![]u8 {
 }
 
 fn (opt Optional) into_element() !Element {
-	return parse_element(opt.tag, opt.content)!
+	return parse_element(opt.tag(), opt.payload()!)!
 }
 
 // `into_object` tries to turns this optional into real underlying object T.

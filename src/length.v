@@ -6,7 +6,7 @@ module asn1
 // max_definite_length_count is a limit tells how many bytes to represent this length.
 // We're going to limit this to 6 bytes following when the length is in long-definite form.
 const max_definite_length_count = 6
-const max_definite_length_value = max_i64
+const max_definite_length_value = max_int
 
 // ASN.1 length handling routines.
 //
@@ -23,13 +23,13 @@ const max_definite_length_value = max_i64
 // the length octets should be in definite length.
 //
 // Length represent ASN.1 length value
-pub type Length = i64
+pub type Length = int
 
-// new creates Length from i64  value. Passing negative value (<0) for length
+// new creates Length from integer  value. Passing negative value (<0) for length
 // is not make a sense, so just return error instead if it happen.
-pub fn Length.new(v i64) !Length {
+pub fn Length.new(v int) !Length {
 	if v < 0 {
-		return error('Length: supply with positive i64')
+		return error('Length: supply with positive int')
 	}
 	if v > max_definite_length_value {
 		return error('Length: value provided exceed limit')
@@ -121,20 +121,20 @@ fn (v Length) length_size_with_rule(rule EncodingRule) !int {
 }
 
 // decode read length from bytes src with default context or return error on fails.
-fn Length.decode(src []u8) !(Length, i64) {
+fn Length.decode(src []u8) !(Length, int) {
 	ret, next := Length.decode_from_offset(src, 0)!
 	return ret, next
 }
 
 // decode_from_offset read length from src bytes start from offset pos or return error on fails.
-fn Length.decode_from_offset(src []u8, pos i64) !(Length, i64) {
+fn Length.decode_from_offset(src []u8, pos int) !(Length, int) {
 	ret, next := Length.decode_with_rule(src, pos, .der)!
 	return ret, next
 }
 
 // decode_with_rule tries to decode and deserializes buffer in src into Length form, start from offset loc in the buffer.
 // Its return Length and next offset in the buffer to process on, or return error on fails.
-fn Length.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Length, i64) {
+fn Length.decode_with_rule(src []u8, loc int, rule EncodingRule) !(Length, int) {
 	if src.len < 1 {
 		return error('Length: truncated length')
 	}
@@ -150,7 +150,7 @@ fn Length.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Length, i64) 
 	mut pos := loc
 	mut b := src[pos]
 	pos += 1
-	mut length := i64(0)
+	mut length := 0
 	// check for the most bit is set or not
 	if b & 0x80 == 0 {
 		// for lengths between 0 and 127, the one-octet short form can be used.
@@ -182,7 +182,7 @@ fn Length.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Length, i64) 
 			pos += 1
 
 			// currently, we're only support limited length.
-			// The length is in i64 range
+			// The length is in int range
 			if length > max_definite_length_value {
 				return error('Length: length exceed limit value')
 			}
@@ -197,7 +197,7 @@ fn Length.decode_with_rule(src []u8, loc i64, rule EncodingRule) !(Length, i64) 
 			}
 		}
 		// do not allow values < 0x80 to be encoded in long form
-		if length < i64(0x80) {
+		if length < 0x80 {
 			// TODO: allow in BER
 			return error('Length: dont needed in long form')
 		}

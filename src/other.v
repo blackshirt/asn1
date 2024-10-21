@@ -14,9 +14,13 @@ mut:
 	// `content` is the value of a TLV
 	content []u8
 	// mode when the tag is constructed.
-	// make sense when this raw formwed from 
+	// make sense when this raw formwed from
 	// wrapping process.
 	mode ?TaggedMode
+	// inner tag when this is wrapped element
+	inner_tag ?Tag
+	// default value for this element when it exists.
+	default_value ?Element
 }
 
 pub fn (a RawElement) tag() Tag {
@@ -25,28 +29,25 @@ pub fn (a RawElement) tag() Tag {
 
 pub fn (r RawElement) payload() ![]u8 {
 	if r.tag.constructed {
-		if r.mode == none {
-			return error('you dont set mode on non-primitive tag' )
-		}
-		match r.mode {
+		mode := r.mode or { return error('you dont set mode on non-primitive tag') }
+		match mode {
 			.implicit {
 				return r.content
 			}
 			.explicit {
 				elem := parse_element(r.tag, r.content)!
-                out := encode_with_rule(elem, .der)!
+				out := encode_with_rule(elem, .der)!
 
 				return out
 			}
 		}
 	}
-	return a.content
+	return r.content
 }
 
-pub fn RawElement.new(tag Tag, content []u8) RawElement {
+pub fn RawElement.new(tag Tag) RawElement {
 	new := RawElement{
-		tag:     tag
-		content: content
+		tag: tag
 	}
 	return new
 }
@@ -58,7 +59,7 @@ fn (mut r RawElement) set_mode(m TaggedMode) ! {
 			return error('mode has been set')
 		}
 		r.mode = m
-   }
+	}
 }
 
 @[noinit]

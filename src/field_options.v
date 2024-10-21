@@ -72,6 +72,8 @@ pub fn FieldOptions.from_string(s string) !FieldOptions {
 	}
 	attrs := trimmed.split(';')
 	opt := FieldOptions.from_attrs(attrs)!
+	// checks
+	opt.check_wrapper()!
 
 	return opt
 }
@@ -126,6 +128,29 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 			fo.cls = cls
 			fo.tagnum = tnum
 		}
+		if is_mode_marker(item) {
+			value := parse_mode_marker(item)!
+			mod_ctr += 1
+			if mod_ctr > 1 {
+				return error('multiples mode key defined')
+			}
+			if !valid_mode_value(value) {
+				return error('Bad mode values')
+			}
+			fo.mode = value
+		}
+		if is_inner_tag_marker(item) {
+			_, value := parse_inner_tag_marker(item)!
+			inn_ctr += 1
+			if inn_ctr > 1 {
+				return error('multiples inner tag format defined')
+			}
+			if !valid_inner_value(value) {
+				return error('Bad inner value')
+			}
+			num := value.int()
+			fo.inner = num
+		}
 		if is_optional_marker(item) {
 			opt := parse_optional_marker(item)!
 			opt_ctr += 1
@@ -144,26 +169,10 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 			has_default := if valid_default_marker(default_marker) { true } else { false }
 			fo.has_default = has_default
 		}
-		if is_mode_marker(item) {
-			value := parse_mode_marker(item)!
-			mod_ctr += 1
-			if mod_ctr > 1 {
-				return error('multiples mode key defined')
-			}
-			fo.mode = value
-		}
-		if is_inner_tag_marker(item) {
-			_, value := parse_inner_tag_marker(item)!
-			if inn_ctr > 1 {
-				return error('multiples inner tag format defined')
-			}
-			if !valid_inner_value(value) {
-				return error('Bad inner value')
-			}
-			num := value.int()
-			fo.inner = num
-		}
 	}
+
+	// check
+	fo.check_wrapper()!
 
 	return fo
 }
@@ -214,26 +223,25 @@ fn (fo FieldOptions) check_wrapper() ! {
 	// Its discard all check when fo.cls is empty string, its marked as non-wrapped element.
 	if fo.cls != '' {
 		if !valid_tagclass_name(fo.cls) {
-			return error('Get unexpected fo.cls value:${fo.cls}')
+			return error('Get unexpected fo.cls value')
 		}
 		// provides the tag number
 		if fo.tagnum < 0 {
-			return error('Get unexpected fo.tagnum: ${fo.tagnum}')
+			return error('Get unexpected fo.tagnum}')
 		}
 		// wraps into UNIVERSAL type is not allowed
 		if fo.cls == 'universal' {
 			return error('wraps into universal class is not allowed')
 		}
-		// provides wrap mode, ie, explicit or implicit
-		if fo.mode == '' {
-			return error('You have not provides mode')
-		}
 		if !valid_mode_value(fo.mode) {
-			return error('Get unexpected mode value:${fo.mode}')
+			return error('Invalid zonk or uncorerct mode value')
 		}
 		// when wrapped, you should provide inner tag number value.
-		if fo.inner < 0 || fo.inner > max_universal_tagnumber {
-			return error('You have not provides mode')
+		if fo.inner < 0 {
+			return error('You provides incorrect inner number')
+		}
+		if fo.inner > max_universal_tagnumber {
+			return error('Inner number exceed universal limit')
 		}
 	}
 }

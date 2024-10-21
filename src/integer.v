@@ -288,14 +288,14 @@ pub fn Integer.parse(mut p Parser) !Integer {
 }
 
 // decode tries to decode bytes array into Integer type or error on fails
-pub fn Integer.decode(bytes []u8) !(Integer, i64) {
+pub fn Integer.decode(bytes []u8) !(Integer, int) {
 	return Integer.decode_with_rule(bytes, 0, .der)!
 }
 
 // decode_with_rule tries to decode bytes back into ASN.1 Integer.
 // Its accepts `loc` params, the location (offset) within bytes where the unpack start from.
 // If not sure set to 0 to drive unpacking and rule of `Encodingrule`, currently only support`.der`.
-fn Integer.decode_with_rule(bytes []u8, loc i64, rule EncodingRule) !(Integer, i64) {
+fn Integer.decode_with_rule(bytes []u8, loc int, rule EncodingRule) !(Integer, int) {
 	if bytes.len < 3 {
 		return error('Integer: bad bytes length')
 	}

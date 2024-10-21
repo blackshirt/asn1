@@ -91,11 +91,11 @@ pub fn UtcTime.parse(mut p Parser) !UtcTime {
 }
 
 // UtcTime.decode tries to decode bytes into UtcTime with DER rule
-pub fn UtcTime.decode(src []u8) !(UtcTime, i64) {
+pub fn UtcTime.decode(src []u8) !(UtcTime, int) {
 	return UtcTime.decode_with_rule(src, .der)!
 }
 
-fn UtcTime.decode_with_rule(bytes []u8, rule EncodingRule) !(UtcTime, i64) {
+fn UtcTime.decode_with_rule(bytes []u8, rule EncodingRule) !(UtcTime, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_utctime_tag) {
 		return error('Unexpected non-utctime tag')
@@ -226,11 +226,11 @@ pub fn GeneralizedTime.parse(mut p Parser) !GeneralizedTime {
 	return res
 }
 
-pub fn GeneralizedTime.decode(bytes []u8) !(GeneralizedTime, i64) {
+pub fn GeneralizedTime.decode(bytes []u8) !(GeneralizedTime, int) {
 	return GeneralizedTime.decode_with_rule(bytes, .der)!
 }
 
-fn GeneralizedTime.decode_with_rule(bytes []u8, rule EncodingRule) !(GeneralizedTime, i64) {
+fn GeneralizedTime.decode_with_rule(bytes []u8, rule EncodingRule) !(GeneralizedTime, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, rule)!
 	if !tag.equal(default_generalizedtime_tag) {
 		return error('Get bad GeneralizedTime tag')

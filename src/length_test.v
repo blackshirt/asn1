@@ -47,7 +47,7 @@ fn test_tagandlength_handling() ! {
 		// Lengths up to the maximum size of an int should work.
 		TagAndLengthTest{[u8(0xa0), 0x84, 0x7f, 0xff, 0xff, 0xff], Tag{.context_specific, true, 0}, 0x7fffffff, 6, none}, //{2, 0, 0x7fffffff, true}},
 		// Lengths that would overflow an int should be rejected.
-		TagAndLengthTest{[u8(0xa0), 0x84, 0x80, 0x00, 0x00, 0x00], Tag{.context_specific, true, 0}, 2147483648, 6, none}, //{}},
+		TagAndLengthTest{[u8(0xa0), 0x84, 0x80, 0x00, 0x00, 0x00], Tag{.context_specific, true, 0}, 2147483648, 6, error('Length: dont needed in long form')}, //{}},
 		// Long length form may not be used for lengths that fit in short form.
 		TagAndLengthTest{[u8(0xa0), 0x81, 0x7f], Tag{.context_specific, true, 0}, 0, 0, error('Length: dont needed in long form')}, //{}},
 		// Tag numbers which would overflow int32 are rejected. (The number below is 2^31.)
@@ -59,6 +59,7 @@ fn test_tagandlength_handling() ! {
 	]
 
 	for i, c in bs {
+		// dump(i)
 		tag, pos := Tag.decode(c.bytes) or {
 			assert err == c.err
 			continue
@@ -73,7 +74,7 @@ fn test_tagandlength_handling() ! {
 }
 
 struct LengthPackTest {
-	value    i64
+	value    int
 	expected []u8
 	err      IError
 }
@@ -105,7 +106,7 @@ fn test_length_pack_and_unpack_tofrom_asn() ! {
 }
 
 struct ByteLengthTest {
-	value    i64
+	value    int
 	expected []u8
 }
 
@@ -147,7 +148,7 @@ fn test_length_pack_and_append() ! {
 }
 
 struct LengthTest {
-	value    i64
+	value    int
 	expected int
 }
 
