@@ -296,7 +296,7 @@ fn (el Element) wrap_with_options(fo FieldOptions) !Element {
 	match cls {
 		.context_specific {
 			// should be constructed
-			return ContextElement.new(mode, fo.tagnum, el)!
+			return ContextElement.new(fo.tagnum, mode, el)!
 		}
 		.application {
 			return ApplicationElement.new(true, fo.tagnum, payload)!

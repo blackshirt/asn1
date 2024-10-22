@@ -22,12 +22,12 @@ pub fn (r RawElement) tag() Tag {
 }
 
 pub fn (r RawElement) inner_tag(expected Tag, mode TaggedMode) !Tag {
-	elem := r.iner_element(expected, mode)!
+	elem := r.inner_element(expected, mode)!
 	return elem.tag()
 }
 
 pub fn (r RawElement) inner_element(expected Tag, mode TaggedMode) !Element {
-	if r.tag.constructed {
+	if !r.tag.constructed {
 		return error('RawElement is primitive')
 	}
 
@@ -38,7 +38,7 @@ pub fn (r RawElement) inner_element(expected Tag, mode TaggedMode) !Element {
 	}
 	// otherwise, treats it in explicit mode.
 	// read an inner tag from r.content
-	mut p := Parser.new(r.content)!
+	mut p := Parser.new(r.content)
 	tag := p.peek_tag()!
 	if !tag.equal(expected) {
 		return error('Get unexpected inner tag')
@@ -68,8 +68,8 @@ pub struct ContextElement {
 mut:
 	outer     int  // outer tag number
 	content   []u8 // just content or serialized inner element, depends on mode.
-	inner_tag Tag
-	mode      TaggedMode // mode of tagged type
+	inner_tag ?Tag
+	mode      ?TaggedMode // mode of tagged type
 }
 
 // ContextElement.new creates a new tagged type of ContextElement from some element in inner.
@@ -88,24 +88,34 @@ pub fn ContextElement.new(tagnum int, mode TaggedMode, inner Element) !ContextEl
 	return ctx
 }
 
+pub fn (mut ctx ContextElement) set_inner_tag(tag Tag) ! {
+	ctx.inner_tag = tag
+	ctx.check_inner_tag()!
+}
+
+pub fn (mut ctx ContextElement) set_mode(mode TaggedMode) {
+	ctx.mode = mode
+}
+
 fn (ctx ContextElement) check_inner_tag() ! {
-	if ctx.mode != .explicit {
+	mode := ctx.mode or { return error('You dont set any context_specific mode') }
+	if mode != .explicit {
 		return
 	}
 	// read an inner tag from content
-	tag, _ := Tag.decode_with_rule(ctx.content, .der)!
-
-	if !tag.equal(ctx.inner_tag) {
+	tag, _ := Tag.decode_with_rule(ctx.content, 0, .der)!
+	inner_tag := ctx.inner_tag or { return error('You dont set an inner_tag') }
+	if !tag.equal(inner_tag) {
 		return error('Get unexpected inner tag from bytes')
 	}
 }
 
 pub fn (ctx ContextElement) tag() Tag {
-	tag := Tag.new(.context_specific, true, ctx.outer) or { return error('bad context tagnum') }
+	tag := Tag.new(.context_specific, true, ctx.outer) or { panic(err) }
 	return tag
 }
 
-pub fn (ctx ContextElement) inner_tag() Tag {
+pub fn (ctx ContextElement) inner_tag() ?Tag {
 	return ctx.inner_tag
 }
 
@@ -123,12 +133,12 @@ pub fn ContextElement.implicit_context(tagnum int, inner Element) !ContextElemen
 	return ContextElement.new(tagnum, .implicit, inner)!
 }
 
-fn ContextElement.decode(bytes []u8) !(ContextElement, int) {
+fn ContextElement.decode_raw(bytes []u8) !(ContextElement, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, .der)!
-	if tag.tag_class() != .context_specific {
+	if tag.class != .context_specific {
 		return error('Get non ContextSpecific tag')
 	}
-	if !tag.is_constructed() {
+	if !tag.constructed {
 		return error('Get non-constructed ContextSpecific tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, .der)!
@@ -141,16 +151,32 @@ fn ContextElement.decode(bytes []u8) !(ContextElement, int) {
 		unsafe { bytes[content_pos..content_pos + length] }
 	}
 	next := content_pos + length
-	ctx := parse_context_specific(tag, content)!
+	// Raw ContextElement, you should provide mode and inner tag.
+	ctx := ContextElement{
+		outer:   tag.number
+		content: content
+	}
 	return ctx, next
 }
 
-fn ContextElement.decode_with_mode(bytes []u8, mode TaggedMode) !(ContextElement, int) {
+fn ContextElement.decode_with_options(bytes []u8, opt string) !(ContextElement, int) {
+	if opt.len == 0 {
+		return ContextElement.decode_raw(bytes)!
+	}
+	fo := FieldOptions.from_string(opt)!
+	// get mode and inner tag
+	if !valid_mode_value(fo.mode) {
+		return error('Get unexpected mode option for ContextElement')
+	}
+	mode := TaggedMode.from_string(fo.mode)!
+	inner_tag := universal_tag_from_int(fo.inner)!
+
+	// outer tag from bytes
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, .der)!
-	if tag.tag_class() != .context_specific {
+	if tag.class != .context_specific {
 		return error('Get non ContextSpecific tag')
 	}
-	if !tag.is_constructed() {
+	if !tag.constructed {
 		return error('Get non-constructed ContextSpecific tag')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, .der)!
@@ -164,12 +190,24 @@ fn ContextElement.decode_with_mode(bytes []u8, mode TaggedMode) !(ContextElement
 	}
 	next := content_pos + length
 
-	mut ctx := parse_context_specific_with_mode(tag, content, mode)!
-	ctx_mode := ctx.mode or { return error('Mode is not set') }
-	if ctx_mode == .explicit {
-		inner_tag := ctx.read_innertag_from_content()!
-		ctx.set_inner_tag(inner_tag)!
+	if mode == .implicit {
+		ctx := ContextElement{
+			outer:     tag.number
+			content:   content
+			inner_tag: inner_tag
+			mode:      .implicit
+		}
+		return ctx, next
 	}
+	// explicit one
+	ctx := ContextElement{
+		outer:     tag.number
+		content:   content
+		inner_tag: inner_tag
+		mode:      .explicit
+	}
+	ctx.check_inner_tag()!
+
 	return ctx, next
 }
 

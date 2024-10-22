@@ -11,7 +11,7 @@ fn test_explicit_context_null_pack_unpack() ! {
 	exp := [u8(0xa0), 0x02, 0x05, 0x00]
 	assert out == exp
 	// unpack back
-	ttback, _ := ContextElement.decode_with_mode(out, .explicit)!
+	ttback, _ := ContextElement.decode_with_options(out, 'explicit;inner:5')!
 	// ctxback := parse_context_specific_with_mode(tag Tag, content []u8, mode TaggedMode) !ContextElement {
 	// ttback, _ := TaggedType.decode(out, 0, .explicit, el.tag())!
 	assert ttback == ex1
@@ -66,7 +66,7 @@ Example ::= SEQUENCE {
 	assert els[1] is Integer
 	mut els2 := els[2] as ContextElement
 
-	els2.set_ctx_mode(.explicit)!
+	els2.set_mode(.explicit)
 	els2.set_inner_tag(default_oid_tag)!
 	// els2_tagged := els2.as_tagged(.explicit, oid.tag())!
 	// assert els2_tagged == expl

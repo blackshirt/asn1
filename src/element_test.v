@@ -103,10 +103,9 @@ fn test_wrapping_functionality() ! {
 			0x01,
 			0xff,
 		]},
+		// same as above, but with implicit mode
 		WrapperTest{'application:5;implicit;inner:1', none, [
 			u8(0x65),
-			0x03,
-			0x01,
 			0x01,
 			0xff,
 		]},
@@ -123,7 +122,7 @@ fn test_wrapping_functionality() ! {
 		WrapperTest{'universal:50; explicit; inner:3', error('You have not provides correct options marker'), orig_expected},
 		// marked as an optional
 		WrapperTest{'private:10; optional', error('Invalid zonk or uncorerct mode value'), []u8{}},
-		WrapperTest{'application:5;mode:implicit', error('Invalid zonk or uncorerct mode value'), []u8{}},
+		WrapperTest{'application:5;implicit', error('You provides incorrect inner number'), []u8{}},
 		WrapperTest{'application:5; implicit; inner:1', none, [
 			u8(0x65),
 			0x01,

@@ -154,7 +154,7 @@ fn parse_context_specific_with_mode(tag Tag, content []u8, inner_tag Tag, mode T
 	}
 	// explicit
 	// read an inner tag from content
-	mut p := Parser.new(content)!
+	mut p := Parser.new(content)
 	intag := p.peek_tag()!
 	if !intag.equal(inner_tag) {
 		return error('Get unexpected inner tag')
@@ -163,7 +163,7 @@ fn parse_context_specific_with_mode(tag Tag, content []u8, inner_tag Tag, mode T
 	// should finish
 	p.finish()!
 
-	ctx := ContextElement.new(tag.number, .explicit, inner_el)
+	ctx := ContextElement.new(tag.number, .explicit, inner_el)!
 
 	return ctx
 }
