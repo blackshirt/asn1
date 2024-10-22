@@ -140,9 +140,30 @@ fn parse_application(tag Tag, content []u8) !ApplicationElement {
 }
 
 // parse_context_specific_with_mode parses tag and content as ContextElement when mode is availables
-fn parse_context_specific_with_mode(tag Tag, content []u8, mode TaggedMode) !ContextElement {
-	mut ctx := parse_context_specific(tag, content)!
-	ctx.set_ctx_mode(mode)!
+fn parse_context_specific_with_mode(tag Tag, content []u8, inner_tag Tag, mode TaggedMode) !ContextElement {
+	if tag.tag_class() != .context_specific {
+		return error('parse on non-context-specific class')
+	}
+	if !tag.constructed {
+		return error('ContextSpecific tag shoud be constructed')
+	}
+	if mode == .implicit {
+		inner := parse_element(inner_tag, content)!
+		ctx := ContextElement.new(tag.number, mode, inner)!
+		return ctx
+	}
+	// explicit
+	// read an inner tag from content
+	mut p := Parser.new(content)!
+	intag := p.peek_tag()!
+	if !intag.equal(inner_tag) {
+		return error('Get unexpected inner tag')
+	}
+	inner_el := p.read_tlv()!
+	// should finish
+	p.finish()!
+
+	ctx := ContextElement.new(tag.number, .explicit, inner_el)
 
 	return ctx
 }
@@ -160,8 +181,8 @@ fn parse_context_specific(tag Tag, content []u8) !ContextElement {
 	// mode and inner_tag is not set here without additional information,
 	// So its still none here, and you should set it with correct value
 	ctx := ContextElement{
-		outer_tag: tag
-		content:   content
+		outer:   tag.number
+		content: content
 		// inner_tag: ?
 		// mode: ?
 	}

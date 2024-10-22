@@ -3,133 +3,127 @@
 // that can be found in the LICENSE file.
 module asn1
 
-// Limited support for other class of ASN.1 Element
+// Limited support for other of ASN.1 Element.
 //
 
+// ASN.1 RawElement.
 @[noinit]
 pub struct RawElement {
 mut:
-	// tag is the tag of the TLV
+	// The (outer) tag is the tag of the TLV, if this a wrpper.
 	tag Tag
-	// `content` is the value of a TLV
+	// `content` is the value of a TLV. Its depends on the context.
 	content []u8
-	// mode when the tag is constructed.
-	// make sense when this raw formwed from
-	// wrapping process.
-	mode ?TaggedMode
-	// inner tag when this is wrapped element
-	inner_tag ?Tag
-	// default value for this element when it exists.
-	default_value ?Element
 }
 
-pub fn (a RawElement) tag() Tag {
-	return a.tag
+// outer tag when its a wrapper.
+pub fn (r RawElement) tag() Tag {
+	return r.tag
+}
+
+pub fn (r RawElement) inner_tag(expected Tag, mode TaggedMode) !Tag {
+	elem := r.iner_element(expected, mode)!
+	return elem.tag()
+}
+
+pub fn (r RawElement) inner_element(expected Tag, mode TaggedMode) !Element {
+	if r.tag.constructed {
+		return error('RawElement is primitive')
+	}
+
+	// in implicit, r.content is inner element content with inner tag
+	if mode == .implicit {
+		elem := parse_element(expected, r.content)!
+		return elem
+	}
+	// otherwise, treats it in explicit mode.
+	// read an inner tag from r.content
+	mut p := Parser.new(r.content)!
+	tag := p.peek_tag()!
+	if !tag.equal(expected) {
+		return error('Get unexpected inner tag')
+	}
+	el := p.read_tlv()!
+	// should finish
+	p.finish()!
+	return el
 }
 
 pub fn (r RawElement) payload() ![]u8 {
-	if r.tag.constructed {
-		mode := r.mode or { return error('you dont set mode on non-primitive tag') }
-		match mode {
-			.implicit {
-				return r.content
-			}
-			.explicit {
-				elem := parse_element(r.tag, r.content)!
-				out := encode_with_rule(elem, .der)!
-
-				return out
-			}
-		}
-	}
 	return r.content
 }
 
-pub fn RawElement.new(tag Tag) RawElement {
+pub fn RawElement.new(tag Tag, content []u8) RawElement {
 	new := RawElement{
-		tag: tag
+		tag:     tag
+		content: content
 	}
 	return new
 }
 
-// do nothing on non-constructed tag.
-fn (mut r RawElement) set_mode(m TaggedMode) ! {
-	if r.tag.constructed {
-		if r.mode != none {
-			return error('mode has been set')
-		}
-		r.mode = m
-	}
-}
-
+// ContextSpecific tagged type element.
+// Its always constructed (non-primitive).
 @[noinit]
 pub struct ContextElement {
 mut:
-	outer_tag Tag  // outer tag number
-	inner_tag ?Tag // inner tag,
-	// when in .explicit mode, the content should include inner_tag bytes
-	content []u8        // payload
-	mode    ?TaggedMode // mode of tagged type
+	outer     int  // outer tag number
+	content   []u8 // just content or serialized inner element, depends on mode.
+	inner_tag Tag
+	mode      TaggedMode // mode of tagged type
 }
 
 // ContextElement.new creates a new tagged type of ContextElement from some element in inner.
-pub fn ContextElement.new(mode TaggedMode, tagnum int, inner Element) !ContextElement {
-	tag := Tag.new(.context_specific, true, tagnum)!
-	content := if mode == .explicit {
-		encode(inner)!
-	} else {
-		inner.payload()!
+pub fn ContextElement.new(tagnum int, mode TaggedMode, inner Element) !ContextElement {
+	if tagnum < 0 || tagnum > max_tag_number {
+		return error('Unallowed tagnum was provided')
 	}
+	content := if mode == .implicit { inner.payload()! } else { encode_with_rule(inner, .der)! }
 	ctx := ContextElement{
-		outer_tag: tag
-		inner_tag: inner.tag()
+		outer:     tagnum
 		content:   content
+		inner_tag: inner.tag()
 		mode:      mode
 	}
 
 	return ctx
 }
 
-fn (mut ctx ContextElement) set_inner_tag(tag Tag) ! {
-	if ctx.inner_tag != none {
-		return error('already has inner_tag')
+fn (ctx ContextElement) check_inner_tag() ! {
+	if ctx.mode != .explicit {
+		return
 	}
-	if ctx.mode == none {
-		return error('You should set mode first')
+	// read an inner tag from content
+	tag, _ := Tag.decode_with_rule(ctx.content, .der)!
+
+	if !tag.equal(ctx.inner_tag) {
+		return error('Get unexpected inner tag from bytes')
 	}
-	ctx.inner_tag = tag
 }
 
-fn (mut ctx ContextElement) set_ctx_mode(mode TaggedMode) ! {
-	if ctx.mode != none {
-		return error('already has ctx mode')
-	}
-	ctx.mode = mode
+pub fn (ctx ContextElement) tag() Tag {
+	tag := Tag.new(.context_specific, true, ctx.outer) or { return error('bad context tagnum') }
+	return tag
+}
+
+pub fn (ctx ContextElement) inner_tag() Tag {
+	return ctx.inner_tag
+}
+
+pub fn (ctx ContextElement) payload() ![]u8 {
+	return ctx.content
 }
 
 // `explicit_context` creates new ContextElement with explicit mode.
 pub fn ContextElement.explicit_context(tagnum int, inner Element) !ContextElement {
-	return ContextElement.new(.explicit, tagnum, inner)!
+	return ContextElement.new(tagnum, .explicit, inner)!
 }
 
 // implicit_context creates new ContextElement with implicit mode.
 pub fn ContextElement.implicit_context(tagnum int, inner Element) !ContextElement {
-	return ContextElement.new(.implicit, tagnum, inner)!
+	return ContextElement.new(tagnum, .implicit, inner)!
 }
 
-fn (ce ContextElement) read_innertag_from_content() !Tag {
-	if ce.mode == none {
-		return error('Mode is not set')
-	}
-	ctx_mode := ce.mode or { return error('mode is not set') }
-	if ctx_mode == .implicit {
-		return error('You can not read inner_tag from implicit mode')
-	}
-	tag, _ := Tag.from_bytes(ce.content)!
-	return tag
-}
-
-fn ContextElement.decode(bytes []u8) !(ContextElement, i64) {
+fn ContextElement.decode(bytes []u8) !(ContextElement, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, .der)!
 	if tag.tag_class() != .context_specific {
 		return error('Get non ContextSpecific tag')
@@ -151,7 +145,7 @@ fn ContextElement.decode(bytes []u8) !(ContextElement, i64) {
 	return ctx, next
 }
 
-fn ContextElement.decode_with_mode(bytes []u8, mode TaggedMode) !(ContextElement, i64) {
+fn ContextElement.decode_with_mode(bytes []u8, mode TaggedMode) !(ContextElement, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, .der)!
 	if tag.tag_class() != .context_specific {
 		return error('Get non ContextSpecific tag')
@@ -177,23 +171,6 @@ fn ContextElement.decode_with_mode(bytes []u8, mode TaggedMode) !(ContextElement
 		ctx.set_inner_tag(inner_tag)!
 	}
 	return ctx, next
-}
-
-fn (ce ContextElement) inner_element() !Element {
-	return error('not implemented')
-}
-
-// outer tag
-pub fn (ce ContextElement) tag() Tag {
-	return ce.outer_tag
-}
-
-pub fn (ce ContextElement) payload() ![]u8 {
-	return ce.content
-}
-
-pub fn (ce ContextElement) inner_tag() ?Tag {
-	return ce.inner_tag
 }
 
 fn ContextElement.from_bytes(bytes []u8) !ContextElement {
