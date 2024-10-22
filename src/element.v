@@ -513,7 +513,30 @@ pub fn decode_with_options(bytes []u8, opt string) !Element {
 
 pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 	// TODO
-	return error('decode_with_field_options not implemented')
+	if bytes.len == 0 {
+		return error('Empty bytes')
+	}
+	fo.validate_options()!
+	if fo.cls != '' {
+		// unwrap
+		mut p := Parser.new(bytes)
+		tag := p.peek_tag()!
+		fo_cls := TagClass.from_string(fo.cls)!
+		if tag.class != fo_cls {
+			return error('Get different class')
+		}
+		if !tag.constructed {
+			return error('Options on primitive')
+		}
+		if tag.number != fo.tagnum {
+			return error('failed tagnum match')
+		}
+		el := p.read_tlv()!
+		p.finish()!
+
+		return el
+	}
+	return error('decode_with_field_options failed')
 }
 
 // Utility function
