@@ -28,73 +28,6 @@ pub interface Element {
 	payload() ![]u8
 }
 
-// `encode` serializes element into bytes array. By default, its encode in .der rule with empty options.
-// See  `encode_with_options` if you want pass an option string. See `field.v` for more option in detail.
-pub fn encode(el Element) ![]u8 {
-	return encode_with_options(el, '')!
-}
-
-// `encode_with_options` serializes element into bytes array with options string passed to drive the result.
-pub fn encode_with_options(el Element, opt string) ![]u8 {
-	return el.encode_with_string_options(opt)!
-}
-
-// `encode_with_field_options` serializes this element into bytes array with options defined in fo.
-pub fn encode_with_field_options(el Element, fo FieldOptions) ![]u8 {
-	return el.encode_with_field_options(fo)
-}
-
-fn (el Element) encode_with_string_options(opt string) ![]u8 {
-	// treated as without option when nil
-	if opt.len == 0 {
-		out := encode_with_rule(el, .der)!
-		return out
-	}
-	fo := FieldOptions.from_string(opt)!
-	out := el.encode_with_field_options(fo)!
-	return out
-}
-
-fn (el Element) encode_with_field_options(fo FieldOptions) ![]u8 {
-	if el is Optional {
-		return el.encode()
-	}
-	el.validate_options(fo)!
-	if fo.has_default {
-		def_element := fo.default_value or { return error('bad default_value') }
-		if el.equal(def_element) {
-			return []u8{}
-		}
-	}
-	new_element := el.apply_field_options(fo)!
-	out := encode_with_rule(new_element, .der)!
-	return out
-}
-
-// encode_with_rule encodes element into bytes with encoding rule
-fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
-	if rule != .der && rule != .ber {
-		return error('Element: unsupported rule')
-	}
-	mut dst := []u8{}
-
-	// when this element is Optional without presence flag, by default would
-	// serialize this element into empty bytes otherwise, would serialize underlying element.
-	if el is Optional {
-		return el.encode()!
-	}
-	// otherwise, just serializes as normal
-	el.tag().encode_with_rule(mut dst, rule)!
-	// calculates the length of element,  and serialize this length
-	payload := el.payload()!
-	length := Length.new(payload.len)!
-	length.encode_with_rule(mut dst, rule)!
-	// append the element payload to destination
-	dst << payload
-
-	return dst
-}
-
 // from_object[T] transforms and creates a new Element from generic type (maybe universal type, like an OctetString).
 // Its accepts generic element t that you should pass to this function. You should make sure if this element implements
 // required methods of the Element, or an error would be returned.
@@ -490,54 +423,6 @@ pub fn ElementList.from_bytes(src []u8) ![]Element {
 		return error('The src contains unprocessed bytes')
 	}
 	return els
-}
-
-// decode decodes single element from bytes, its not allowing trailing data
-pub fn decode(src []u8) !Element {
-	return decode_with_options(src, '')
-}
-
-// decode_with_options decodes single element from bytes with options support, its not allowing trailing data.
-// Its accepts options string to drive decoding process.
-pub fn decode_with_options(bytes []u8, opt string) !Element {
-	if opt.len == 0 {
-		el, pos := Element.decode(bytes)!
-		if pos > bytes.len {
-			return error('decode on data with trailing data')
-		}
-		return el
-	}
-	fo := FieldOptions.from_string(opt)!
-	return decode_with_field_options(bytes, fo)!
-}
-
-pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
-	// TODO
-	if bytes.len == 0 {
-		return error('Empty bytes')
-	}
-	fo.validate_options()!
-	if fo.cls != '' {
-		// unwrap
-		mut p := Parser.new(bytes)
-		curr_tag := p.peek_tag()!
-		wrp_tag := fo.wrapper_tag()!
-
-		if curr_tag.class != wrp_tag.class {
-			return error('Get different class')
-		}
-		if !curr_tag.constructed {
-			return error('Options on primitive')
-		}
-		if curr_tag.number != wrp_tag.tagnum {
-			return error('Get different tag number')
-		}
-		el := p.read_tlv()!
-		p.finish()!
-
-		return el
-	}
-	return error('decode_with_field_options failed')
 }
 
 // Utility function

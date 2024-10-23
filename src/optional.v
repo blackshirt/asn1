@@ -55,7 +55,7 @@ pub fn (mut opt Optional) set_default(el Element) ! {
 }
 
 fn (mut opt Optional) set_kehadiran(hadir bool) {
-	opt.present = true
+	opt.present = hadir
 }
 
 // set_to_present make this optional present

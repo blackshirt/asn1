@@ -56,7 +56,7 @@ fn test_into_optional() ! {
 	assert without_option == orig_expected
 
 	// marked this element as optional, make its serialized into empty bytes
-	with_option_1 := encode_with_options(el, 'optional')!
+	with_option_1 := encode_with_string_options(el, 'optional')!
 	assert with_option_1 == []u8{}
 }
 
@@ -131,7 +131,7 @@ fn test_wrapping_functionality() ! {
 	]
 	for i, item in data {
 		// dump(i)
-		out := encode_with_options(elem, item.attr) or {
+		out := encode_with_string_options(elem, item.attr) or {
 			assert err == item.err
 			continue
 		}
