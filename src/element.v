@@ -363,11 +363,10 @@ fn Element.decode_with_rule(src []u8, loc int, rule EncodingRule) !(Element, int
 	bytes := if length == 0 {
 		[]u8{}
 	} else {
-		if content_pos == src.len {
-			[]u8{}
-		} else {
-			unsafe { src[content_pos..content_pos + length] }
+		if content_pos >= src.len || content_pos + length > src.len {
+			return error('Need more bytes to read content')
 		}
+		unsafe { src[content_pos..content_pos + length] }
 	}
 	next_pos := content_pos + length
 	elem := parse_element(tag, bytes)!

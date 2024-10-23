@@ -101,7 +101,10 @@ pub fn BitString.new(s string) !BitString {
 
 // from_bytes creates a new BitString from bytes array in src
 fn BitString.from_bytes(src []u8) !BitString {
-	return BitString.new_with_pad(src, u8(0x00))!
+	if src.len < 1 {
+		return error('BitString error: need more bytes')
+	}
+	return BitString.new_with_pad(src[1..], src[0])!
 }
 
 // new_with_pad creates a new BitString from bytes array in bytes with specific

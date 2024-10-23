@@ -95,8 +95,18 @@ fn test_serialize_and_decode_bitstring() ! {
 	}
 }
 
-fn test_bitstring_from_bytes() ! {
-	// from https://learn.microsoft.com/en-us/windows/win32/seccertenroll/about-bit-string
+// This data is taken from https://learn.microsoft.com/en-us/windows/win32/seccertenroll/about-bit-string
+// 0299:    03 81 81           ; BIT_STRING (81 Bytes)
+// 029c:       00
+// 029d:       47 eb 99 5a df 9e 70 0d  fb a7 31 32 c1 5f 5c 24
+// 02ad:       c2 e0 bf c6 24 af 15 66  0e b8 6a 2e ab 2b c4 97
+// 02bd:       1f e3 cb dc 63 a5 25 ec  c7 b4 28 61 66 36 a1 31
+// 02cd:       1b bf dd d0 fc bf 17 94  90 1d e5 5e c7 11 5e c9
+// 02dd:       55 9f eb a3 3e 14 c7 99  a6 cb ba a1 46 0f 39 d4
+// 02ed:       44 c4 c8 4b 76 0e 20 5d  6d a9 34 9e d4 d5 87 42
+// 02fd:       eb 24 26 51 14 90 b4 0f  06 5e 52 88 32 7a 95 20
+// 030d:       a0 fd f7 e5 7d 60 dd 72  68 9b f5 7b 05 8f 6d 1e
+fn test_bitstring_from_bytes_arrays() ! {
 	data := [u8(0x03), 0x81, 0x81, 0x00, 0x47, 0xeb, 0x99, 0x5a, 0xdf, 0x9e, 0x70, 0x0d, 0xfb,
 		0xa7, 0x31, 0x32, 0xc1, 0x5f, 0x5c, 0x24, 0xc2, 0xe0, 0xbf, 0xc6, 0x24, 0xaf, 0x15, 0x66,
 		0x0e, 0xb8, 0x6a, 0x2e, 0xab, 0x2b, 0xc4, 0x97, 0x1f, 0xe3, 0xcb, 0xdc, 0x63, 0xa5, 0x25,
@@ -108,10 +118,26 @@ fn test_bitstring_from_bytes() ! {
 		0xf7, 0xe5, 0x7d, 0x60, 0xdd, 0x72, 0x68, 0x9b, 0xf5, 0x7b, 0x05, 0x8f, 0x6d, 0x1e]
 
 	bs, idx := BitString.decode(data)!
+	assert idx == data.len
 
 	assert bs.tag().tag_number() == int(TagType.bitstring)
 	assert bs.bytes_len() == 0x81
 	assert bs.pad == 0x00
+
+	// serializes bitstring back
+	bs_back := encode(bs)!
+	assert bs_back == data
+
+	// with decode
+	bsd := decode(data)!
+	assert bsd.tag() == bs.tag()
+	assert bsd.payload()! == bs.payload()!
+
+	// with parse
+	mut p := Parser.new(data)
+	bs_parse := BitString.parse(mut p)!
+	assert bs_parse.tag() == bs.tag()
+	assert bs_parse.payload()! == bs.payload()!
 }
 
 // test for BitString from binary string
