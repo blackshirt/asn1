@@ -9,20 +9,19 @@ const max_attributes_length = 5
 
 // Configuration format for field tagging.
 //
-// You can tag your field of struct by this supported format.
-// a.`class:number`, for wrapping the element with other class, for examole: `private:100`.
+// Currently, this configurations option support following string config, ie,
+// a. `class:number`, for wrapping the element with other non-universal class, for examole: `private:100`.
 // b: `explicit` or `implicit` mode.
 // c. `inner:5` the tag number of element being wrapped, should in UNIVERSAL class.
 // b. `optional` tagging for element with OPTIONAL behaviour.
 // c. `has_default` tagging for element with DEFAULT behaviour.
-// First of three above is for wrapping (unwrapping) element.
 
 // Field options attributes handling.
 //
 // FieldOptions is a structure to accomodate and allowing configures your complex structures
 // through string or arrays of string stored in FieldOptions fields.
 // For example, you can tagging your fields of some element with tagging
-// like `@[context_specific:10; optional; explicit; inner:5]`.
+// like `@[context_specific:10; explicit; inner:5; optional]`.
 // Its will be parsed and can be used to drive encoding or decoding of Element.
 @[heap; noinit]
 pub struct FieldOptions {
@@ -34,7 +33,7 @@ mut:
 	// In the encoding (decoding) phase, it would be checked
 	// if this options meet required criteria.
 	// Limitation applied on the wrapper fields:
-	// 1. Wrap into universal is not allowed (cls != universal)
+	// 1. Wrap into UNIVERSAL is not allowed (cls != universal)
 	// 2. Wrapped element should have UNIVERSAL class.
 	// 3. You should provide mode for wrapping, explicit or implicit.
 	// 4. If cls == '', no wrapping is performed, discarding all wrapper options
@@ -42,11 +41,12 @@ mut:
 	tagnum int = -1 // Provides with wrapper tag number.
 	mode   string // explicit or implicit, depends on definition schema.
 	inner  int = -1 // should valid universal tag number.
-	// optional field applied to element with OPTIONAL behaviour,
-	// with or without DEFAULT value.
+
+	// optional field applied to element with OPTIONAL behaviour, with or without DEFAULT value.
 	// Set `optional` to true when this element has OPTIONAL keyword in the definition of element.
 	// Usually element with OPTIONAL keyword is not presents in the encoding (decoding) data.
 	optional bool
+
 	// This field applied to element with DEFAULT keyword behaviour.
 	// Its applied into wrapping of element or optionality of the element.
 	// If some element has DEFAULT keyword, set this field to true and gives default element into `default_value` field.
@@ -177,8 +177,30 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 	return fo
 }
 
+// wrapper_tag makes a wrapper Tag from FieldOptions for current element.
+// The form of wrapper tag depends on tagged mode being supplied,
+// if implicit, its follows the inner tag being wrapped (primitive or constructed one)
+// If explicit, the wrapper tag would in non-primitive form.
+fn (fo FieldOptions) wrapper_tag() !Tag {
+	if fo.cls == '' {
+		return error('You cant build wrapper tag from empty string')
+	}
+	fo.check_wrapper()!
+	cls := TagClass.from_string(fo.cls)!
+	if !valid_mode_value(fo.mode) {
+		return error('Invalid mode')
+	}
+	inner_tag := fo.inner_tag()!
+	if fo.mode == 'implicit' {
+		// implicit tagging allows to be applied on non-constructed element, inherited from inner.
+		form := if inner_tag.constructed { true } else { false }
+		return Tag.new(cls, form, fo.tagnum)!
+	}
+	return Tag.new(cls, true, fo.tagnum)!
+}
+
 // inner_tag gets inner Tag from FieldOptions.
-pub fn (fo FieldOptions) inner_tag() !Tag {
+fn (fo FieldOptions) inner_tag() !Tag {
 	if fo.inner < 0 || fo.inner > max_universal_tagnumber {
 		return error('You cant create tag from empty inner string')
 	}

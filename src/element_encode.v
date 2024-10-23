@@ -7,14 +7,14 @@ module asn1
 //
 
 // `encode` serializes element into bytes array. By default, its encode in .der rule with empty options.
-// See  `encode_with_string_options` if you want pass an option string. See `field.v` for more option in detail.
+// See  `encode_with_options` if you want pass an option string. See `field.v` for more option in detail.
 pub fn encode(el Element) ![]u8 {
-	return encode_with_string_options(el, '')!
+	return encode_with_options(el, '')!
 }
 
-// `encode_with_string_options` serializes element into bytes array with options string passed to drive the result.
-pub fn encode_with_string_options(el Element, opt string) ![]u8 {
-	return el.encode_with_string_options(opt)!
+// `encode_with_options` serializes element into bytes array with options string passed to drive the result.
+pub fn encode_with_options(el Element, opt string) ![]u8 {
+	return el.encode_with_options(opt)!
 }
 
 // `encode_with_field_options` serializes this element into bytes array with options defined in fo.
@@ -22,7 +22,7 @@ pub fn encode_with_field_options(el Element, fo FieldOptions) ![]u8 {
 	return el.encode_with_field_options(fo)
 }
 
-fn (el Element) encode_with_string_options(opt string) ![]u8 {
+fn (el Element) encode_with_options(opt string) ![]u8 {
 	// treated as without option when nil
 	if opt.len == 0 {
 		out := encode_with_rule(el, .der)!

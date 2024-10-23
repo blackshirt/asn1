@@ -8,12 +8,12 @@ module asn1
 
 // decode decodes single element from bytes, its not allowing trailing data
 pub fn decode(src []u8) !Element {
-	return decode_with_string_options(src, '')
+	return decode_with_options(src, '')
 }
 
-// decode_with_string_options decodes single element from bytes with options support, its not allowing trailing data.
+// decode_with_options decodes single element from bytes with options support, its not allowing trailing data.
 // Its accepts options string to drive decoding process.
-pub fn decode_with_string_options(bytes []u8, opt string) !Element {
+pub fn decode_with_options(bytes []u8, opt string) !Element {
 	if opt.len == 0 {
 		el, pos := Element.decode(bytes)!
 		if pos > bytes.len {
@@ -70,4 +70,15 @@ fn decode_optional(bytes []u8, expected_tag Tag) !Element {
 	el := RawElement.new(expected_tag, []u8{})
 	opt := Optional.new(el, none)!
 	return opt
+}
+
+fn (el Element) unwrap_with_options(fo FieldOptions) !Element {
+	// unwrap only element with constructed form
+	if !el.tag().is_constructed() {
+		return error('You cant unwrap non-constructed element')
+	}
+	el.validate_wrapper(fo)!
+
+	// if unwrapping, el.tag() should == fo.inner produced by wrap operation
+	return error('Not implemented')
 }

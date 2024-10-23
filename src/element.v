@@ -93,9 +93,7 @@ fn (el Element) validate_wrapper(fo FieldOptions) ! {
 		if el_cls == fo.cls.to_lower() {
 			return error('wraps into same class is not allowed')
 		}
-		if el is Optional {
-			return error('You cant wrap Optional')
-		}
+
 		fo.check_wrapper()!
 	}
 }
@@ -126,27 +124,6 @@ fn (el Element) validate_optional(fo FieldOptions) ! {
 
 // Helper for wrapping element
 //
-
-// wrapper_tag makes a wrapper Tag from FieldOptions for current element.
-// The form of wrapper tag depends on tagged mode being supplied,
-// if implicit, its follows the inner tag being wrapped (primitive or constructed one)
-// If explicit, the wrapper tag would in non-primitive form.
-fn (el Element) wrapper_tag(fo FieldOptions) !Tag {
-	if fo.cls == '' {
-		return error('You cant build wrapper tag from empty string')
-	}
-	fo.check_wrapper()!
-	cls := TagClass.from_string(fo.cls)!
-	if !valid_mode_value(fo.mode) {
-		return error('Invalid mode')
-	}
-	if fo.mode == 'implicit' {
-		// implicit tagging allows to be applied on non-constructed element, inherited from inner.
-		form := if el.tag().is_constructed() { true } else { false }
-		return Tag.new(cls, form, fo.tagnum)!
-	}
-	return Tag.new(cls, true, fo.tagnum)!
-}
 
 // apply_wrappers_options turns this element into another element by wrapping it
 // with the some options defined in FieldOptions.
@@ -209,18 +186,7 @@ fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
 	el.validate_default(fo)!
 }
 
-fn (el Element) unwrap(fo FieldOptions) !Element {
-	// unwrap only element with constructed form
-	if !el.tag().is_constructed() {
-		return error('You cant unwrap non-constructed element')
-	}
-	el.validate_wrapper(fo)!
-
-	// if unwrapping, el.tag() should == fo.inner produced by wrap operation
-	return error('Not implemented')
-}
-
-// wrap_with_rule wraps universal element into another constructed class.
+// wrap_with_rule wraps universal element into another class.
 // we prohibit dan defines some rules when its happen and  returns an error instead
 // 1. wrapping into .universal class is not allowed
 // 2. wrapping with the same class is not allowed too
@@ -253,19 +219,21 @@ fn (el Element) wrap_with_options(fo FieldOptions) !Element {
 	if el_cls != .universal {
 		return error('No need to wrap non-universal class')
 	}
-	payload := if fo.mode == 'explicit' { encode_with_rule(el, .der)! } else { el.payload()! }
 	mode := TaggedMode.from_string(fo.mode)!
+	payload := if mode == .explicit { encode_with_rule(el, .der)! } else { el.payload()! }
 	cls := TagClass.from_string(fo.cls)!
+	inner_form := el.tag().is_constructed()
+	constructed := if mode == .implicit { inner_form } else { true }
 	match cls {
 		.context_specific {
-			// should be constructed
+			// maybe constructed or primitive.
 			return ContextElement.new(fo.tagnum, mode, el)!
 		}
 		.application {
-			return ApplicationElement.new(true, fo.tagnum, payload)!
+			return ApplicationElement.new(constructed, fo.tagnum, payload)!
 		}
 		.private {
-			return PrivateELement.new(true, fo.tagnum, payload)!
+			return PrivateELement.new(constructed, fo.tagnum, payload)!
 		}
 		else {
 			return error('class wrapper not allowed')

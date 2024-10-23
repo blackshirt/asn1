@@ -56,7 +56,7 @@ fn test_into_optional() ! {
 	assert without_option == orig_expected
 
 	// marked this element as optional, make its serialized into empty bytes
-	with_option_1 := encode_with_string_options(el, 'optional')!
+	with_option_1 := encode_with_options(el, 'optional')!
 	assert with_option_1 == []u8{}
 }
 
@@ -69,10 +69,7 @@ struct WrapperTest {
 
 fn test_wrapping_functionality() ! {
 	// raw boolean element
-	elem := RawElement{
-		tag:     Tag.new(.universal, false, int(TagType.boolean))!
-		content: [u8(0xff)]
-	}
+	elem := Boolean.new(true)
 	orig_expected := [u8(0x01), 0x01, 0xff]
 
 	data := [
@@ -86,7 +83,7 @@ fn test_wrapping_functionality() ! {
 			0xff,
 		]},
 		WrapperTest{'context_specific:1; implicit; inner:1', none, [
-			u8(0xa1),
+			u8(0xa1), // 
 			0x01,
 			0xff,
 		]},
@@ -130,8 +127,8 @@ fn test_wrapping_functionality() ! {
 		]},
 	]
 	for i, item in data {
-		// dump(i)
-		out := encode_with_string_options(elem, item.attr) or {
+		dump(i)
+		out := encode_with_options(elem, item.attr) or {
 			assert err == item.err
 			continue
 		}

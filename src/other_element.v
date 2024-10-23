@@ -66,10 +66,11 @@ pub fn RawElement.new(tag Tag, content []u8) RawElement {
 @[noinit]
 pub struct ContextElement {
 mut:
-	outer     int  // outer tag number
-	content   []u8 // just content or serialized inner element, depends on mode.
-	inner_tag ?Tag
-	mode      ?TaggedMode // mode of tagged type
+	constructed bool
+	outer       int  // outer tag number
+	content     []u8 // just content or serialized inner element, depends on mode.
+	inner_tag   ?Tag
+	mode        ?TaggedMode // mode of tagged type
 }
 
 // ContextElement.new creates a new tagged type of ContextElement from some element in inner.
@@ -77,12 +78,16 @@ pub fn ContextElement.new(tagnum int, mode TaggedMode, inner Element) !ContextEl
 	if tagnum < 0 || tagnum > max_tag_number {
 		return error('Unallowed tagnum was provided')
 	}
+	inner_form := if inner.tag().is_constructed() { true } else { false }
+	constructed := if mode == .implicit { inner_form } else { true }
 	content := if mode == .implicit { inner.payload()! } else { encode_with_rule(inner, .der)! }
+
 	ctx := ContextElement{
-		outer:     tagnum
-		content:   content
-		inner_tag: inner.tag()
-		mode:      mode
+		constructed: constructed
+		outer:       tagnum
+		content:     content
+		inner_tag:   inner.tag()
+		mode:        mode
 	}
 
 	return ctx
