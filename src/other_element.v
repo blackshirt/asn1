@@ -27,10 +27,14 @@ pub fn (r RawElement) inner_tag(expected Tag, mode TaggedMode) !Tag {
 }
 
 pub fn (r RawElement) inner_element(expected Tag, mode TaggedMode) !Element {
-	if !r.tag.constructed {
-		return error('RawElement is primitive')
+	if r.tag.class == .universal {
+		return error('RawElement with universal class has no inner element')
 	}
-
+	if mode == .explicit {
+		if !r.tag.constructed {
+			return error('Its possible to read inner within primitive element with explicit mode')
+		}
+	}
 	// in implicit, r.content is inner element content with inner tag
 	if mode == .implicit {
 		elem := parse_element(expected, r.content)!
