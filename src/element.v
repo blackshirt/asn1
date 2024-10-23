@@ -126,6 +126,28 @@ fn (el Element) validate_optional(fo FieldOptions) ! {
 
 // Helper for wrapping element
 //
+
+// wrapper_tag makes a wrapper Tag from FieldOptions for current element.
+// The form of wrapper tag depends on tagged mode being supplied,
+// if implicit, its follows the inner tag being wrapped (primitive or constructed one)
+// If explicit, the wrapper tag would in non-primitive form.
+fn (el Element) wrapper_tag(fo FieldOptions) !Tag {
+	if fo.cls == '' {
+		return error('You cant build wrapper tag from empty string')
+	}
+	fo.check_wrapper()!
+	cls := TagClass.from_string(fo.cls)!
+	if !valid_mode_value(fo.mode) {
+		return error('Invalid mode')
+	}
+	if fo.mode == 'implicit' {
+		// implicit tagging allows to be applied on non-constructed element, inherited from inner.
+		form := if el.tag().is_constructed() { true } else { false }
+		return Tag.new(cls, form, fo.tagnum)!
+	}
+	return Tag.new(cls, true, fo.tagnum)!
+}
+
 // apply_wrappers_options turns this element into another element by wrapping it
 // with the some options defined in FieldOptions.
 fn (el Element) apply_wrappers_options(fo FieldOptions) !Element {

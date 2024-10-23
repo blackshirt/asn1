@@ -177,16 +177,6 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 	return fo
 }
 
-// wrapper_tag gets wrapper Tag from FieldOptions
-pub fn (fo FieldOptions) wrapper_tag() !Tag {
-	if fo.cls == '' {
-		return error('You cant build wrapper tag from empty string')
-	}
-	fo.check_wrapper()!
-	cls := TagClass.from_string(fo.cls)!
-	return Tag.new(cls, true, fo.tagnum)!
-}
-
 // inner_tag gets inner Tag from FieldOptions.
 pub fn (fo FieldOptions) inner_tag() !Tag {
 	if fo.inner < 0 || fo.inner > max_universal_tagnumber {
