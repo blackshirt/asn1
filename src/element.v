@@ -203,6 +203,14 @@ fn (el Element) unwrap(fo FieldOptions) !Element {
 // 1. wrapping into .universal class is not allowed
 // 2. wrapping with the same class is not allowed too
 // 3. wrapping non-universal class element is not allowed (maybe removed on futures.)
+// Notes :
+// Three additional information about tagging:
+//		CHOICEs are always explicitly tagged even if implicit tagging is in effect.
+//		EXPLICIT TAGs are always constructed, they encapsulate the TLV they prefix.
+//		An IMPLICIT TAG 'inherits' the constructed bit of the TLV whose 'T' is overwritten,
+//		examples:
+//		a) '[5] IMPLICIT INTEGER' has tag 0x85 (overwriting 0x02 = INTEGER)
+//		b) '[5] IMPLICIT SEQUENCE' has tag 0xA5 (overwriting 0x30 = SEQUENCE, CONSTRUCTED)
 fn (el Element) wrap_with_options(fo FieldOptions) !Element {
 	el.validate_options(fo)!
 	// we dont allow optional element to be wrapped
