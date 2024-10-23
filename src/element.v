@@ -520,16 +520,17 @@ pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 	if fo.cls != '' {
 		// unwrap
 		mut p := Parser.new(bytes)
-		tag := p.peek_tag()!
-		fo_cls := TagClass.from_string(fo.cls)!
-		if tag.class != fo_cls {
+		curr_tag := p.peek_tag()!
+		wrp_tag := fo.wrapper_tag()!
+
+		if curr_tag.class != wrp_tag.class {
 			return error('Get different class')
 		}
-		if !tag.constructed {
+		if !curr_tag.constructed {
 			return error('Options on primitive')
 		}
-		if tag.number != fo.tagnum {
-			return error('failed tagnum match')
+		if curr_tag.number != wrp_tag.tagnum {
+			return error('Get different tag number')
 		}
 		el := p.read_tlv()!
 		p.finish()!
