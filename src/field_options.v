@@ -191,9 +191,9 @@ fn (fo FieldOptions) wrapper_tag() !Tag {
 		return error('Invalid mode')
 	}
 	inner_tag := fo.inner_tag()!
+	form := inner_tag.constructed
 	if fo.mode == 'implicit' {
 		// implicit tagging allows to be applied on non-constructed element, inherited from inner.
-		form := if inner_tag.constructed { true } else { false }
 		return Tag.new(cls, form, fo.tagnum)!
 	}
 	return Tag.new(cls, true, fo.tagnum)!

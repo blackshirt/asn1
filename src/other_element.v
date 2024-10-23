@@ -78,7 +78,7 @@ pub fn ContextElement.new(tagnum int, mode TaggedMode, inner Element) !ContextEl
 	if tagnum < 0 || tagnum > max_tag_number {
 		return error('Unallowed tagnum was provided')
 	}
-	inner_form := if inner.tag().is_constructed() { true } else { false }
+	inner_form := inner.tag().is_constructed()
 	constructed := if mode == .implicit { inner_form } else { true }
 	content := if mode == .implicit { inner.payload()! } else { encode_with_rule(inner, .der)! }
 
@@ -89,7 +89,6 @@ pub fn ContextElement.new(tagnum int, mode TaggedMode, inner Element) !ContextEl
 		inner_tag:   inner.tag()
 		mode:        mode
 	}
-
 	return ctx
 }
 
@@ -116,7 +115,7 @@ fn (ctx ContextElement) check_inner_tag() ! {
 }
 
 pub fn (ctx ContextElement) tag() Tag {
-	tag := Tag.new(.context_specific, true, ctx.outer) or { panic(err) }
+	tag := Tag{.context_specific, ctx.constructed, ctx.outer}
 	return tag
 }
 

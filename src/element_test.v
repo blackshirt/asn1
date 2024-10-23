@@ -82,8 +82,9 @@ fn test_wrapping_functionality() ! {
 			0x01,
 			0xff,
 		]},
+		// Tag{.contex_specific, false, 1} // 0b1000_0001 = 0x81 = 129
 		WrapperTest{'context_specific:1; implicit; inner:1', none, [
-			u8(0xa1), // 
+			u8(0x81), //
 			0x01,
 			0xff,
 		]},
@@ -100,9 +101,9 @@ fn test_wrapping_functionality() ! {
 			0x01,
 			0xff,
 		]},
-		// same as above, but with implicit mode
+		// same as above, but with implicit mode, 0b_01_0_00101
 		WrapperTest{'application:5;implicit;inner:1', none, [
-			u8(0x65),
+			u8(0x45),
 			0x01,
 			0xff,
 		]},
@@ -120,14 +121,14 @@ fn test_wrapping_functionality() ! {
 		// marked as an optional
 		WrapperTest{'private:10; optional', error('Invalid zonk or uncorerct mode value'), []u8{}},
 		WrapperTest{'application:5;implicit', error('You provides incorrect inner number'), []u8{}},
-		WrapperTest{'application:5; implicit; inner:1', none, [
-			u8(0x65),
+		// 0b_11_0_00101 = c5
+		WrapperTest{'private:5; implicit; inner:1', none, [
+			u8(0xC5),
 			0x01,
 			0xff,
 		]},
 	]
 	for i, item in data {
-		dump(i)
 		out := encode_with_options(elem, item.attr) or {
 			assert err == item.err
 			continue

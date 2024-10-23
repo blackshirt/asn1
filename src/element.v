@@ -224,6 +224,7 @@ fn (el Element) wrap_with_options(fo FieldOptions) !Element {
 	cls := TagClass.from_string(fo.cls)!
 	inner_form := el.tag().is_constructed()
 	constructed := if mode == .implicit { inner_form } else { true }
+
 	match cls {
 		.context_specific {
 			// maybe constructed or primitive.

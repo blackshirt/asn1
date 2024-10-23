@@ -144,9 +144,6 @@ fn parse_context_specific_with_mode(tag Tag, content []u8, inner_tag Tag, mode T
 	if tag.tag_class() != .context_specific {
 		return error('parse on non-context-specific class')
 	}
-	if !tag.constructed {
-		return error('ContextSpecific tag shoud be constructed')
-	}
 	if mode == .implicit {
 		inner := parse_element(inner_tag, content)!
 		ctx := ContextElement.new(tag.number, mode, inner)!
