@@ -1,3 +1,7 @@
+module asn1
+
+// Unified error handling
+//
 enum ErrorKind {
 	// vfmt off
 	invalid_tag_class 		= 0
