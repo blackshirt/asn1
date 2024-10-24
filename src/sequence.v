@@ -7,11 +7,11 @@ module asn1
 pub const default_sequence_tag = Tag{.universal, true, int(TagType.sequence)}
 
 // constant for sequence(of) and set(of) internal value
-const max_seqset_fields = 256 // max of seq size
-
-const max_seqset_bytes = (1 << 23 - 1) // 8 MB
-
+// vfmt off
+const max_seqset_fields 	= 256 // max of seq size
+const max_seqset_bytes 		= (1 << 23 - 1) // 8 MB
 const default_seqset_fields = 64 // default size
+// vfmt on 
 
 // SEQUENCE and SEQUENCE OF handling
 //
@@ -36,6 +36,12 @@ mut:
 // new creates new Sequence with default size
 pub fn Sequence.new() !Sequence {
 	return Sequence.new_with_size(default_seqset_fields)!
+}
+
+pub fn Sequence.from_element_list(els []Element) Sequence {
+	return Sequence{
+		fields: els
+	}
 }
 
 fn Sequence.new_with_size(size int) !Sequence {
@@ -220,6 +226,15 @@ mut:
 	fields []T
 }
 
+fn SequenceOf.new[T](els []T) !SequenceOf[T] {
+	$if T !is Element {
+		return error('T not hold element')
+	}
+	return SequenceOf[T]{
+		fields: els
+	}
+}
+
 pub fn (so SequenceOf[T]) tag() Tag {
 	return default_sequence_tag
 }
@@ -234,7 +249,10 @@ fn (so SequenceOf[T]) payload_with_rule(rule EncodingRule) ![]u8 {
 	}
 	mut out := []u8{}
 	for el in so.fields {
-		obj := encode_with_rule(el, rule)!
+		// placing el directly bring into error: `el` cannot be used as interface object
+		// outside `unsafe` blocks as it might be stored on stack.
+		curr := unsafe { el }
+		obj := encode_with_rule(curr, rule)!
 		out << obj
 	}
 	return out

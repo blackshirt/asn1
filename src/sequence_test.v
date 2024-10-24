@@ -304,3 +304,67 @@ fn test_sequnce_of_sequence() {
 		assert two.fields()[1].payload()!.len == 5
 	}
 }
+
+// Taken from https://letsencrypt.org/id/docs/a-warm-welcome-to-asn1-and-der/
+//
+// As an example, RFC 5280 defines AlgorithmIdentifier as a SEQUENCE:
+//
+//	AlgorithmIdentifier  ::=  SEQUENCE  {
+//        algorithm               OBJECT IDENTIFIER,
+//        parameters              ANY DEFINED BY algorithm OPTIONAL
+// }
+// Here’s the encoding of the AlgorithmIdentifier containing 1.2.840.113549.1.1.11.
+// RFC 8017 says “parameters” should have the type NULL for this algorithm.
+// was serialized into: 30 0d 06 09 2a 86 48 86 f7 0d 01 01 0b 05 00
+struct AlgorithmIdentifier {
+	algorithm  ObjectIdentifier
+	parameters Any
+}
+
+fn (a AlgorithmIdentifier) tag() Tag {
+	return default_sequence_tag
+}
+
+fn (a AlgorithmIdentifier) payload() ![]u8 {
+	mut out := []u8{}
+	out << encode(a.algorithm)!
+	out << encode(a.parameters)!
+
+	return out
+}
+
+fn test_sequence_algorithm_identifier() ! {
+	expected := [u8(0x30), 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x0b,
+		0x05, 0x00]
+	algo := AlgorithmIdentifier{
+		algorithm:  ObjectIdentifier.new('1.2.840.113549.1.1.11')!
+		parameters: Any.new('null', Null.new())
+	}
+	out := encode(algo)!
+	assert out == expected
+
+	sback := decode(out)!
+	seq := sback as Sequence
+	s0 := seq.fields[0] as ObjectIdentifier
+	assert s0 == algo.algorithm
+
+	s1 := seq.fields[1] as Null
+	prm := algo.parameters.params() as Null
+	assert s1 == prm
+}
+
+// Here is the encoding of a SEQUENCE OF INTEGER containing the numbers 7, 8, and 9:
+//
+// encoded into: 30 09 02 01 07 02 01 08 02 01 09
+fn test_sequence_of_integer() ! {
+	expected := [u8(0x30), 0x09, 0x02, 0x01, 0x07, 0x02, 0x01, 0x08, 0x02, 0x01, 0x09]
+
+	mut els := []Integer{}
+	els << Integer.from_int(7)
+	els << Integer.from_int(8)
+	els << Integer.from_int(9)
+
+	seqof := SequenceOf.new[Integer](els)!
+	out := encode(seqof)!
+	assert out == expected
+}

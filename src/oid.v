@@ -153,7 +153,7 @@ fn ObjectIdentifier.decode_with_rule(bytes []u8, rule EncodingRule) !(ObjectIden
 }
 
 pub fn (oid ObjectIdentifier) equal(oth ObjectIdentifier) bool {
-	if oid.tag != oth.tag {
+	if !oid.tag().equal(oth.tag()) {
 		return false
 	}
 	if oid.value.len != oth.value.len {

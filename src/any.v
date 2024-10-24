@@ -26,3 +26,7 @@ fn (a Any) tag() Tag {
 fn (a Any) payload() ![]u8 {
 	return a.params.payload()!
 }
+
+fn (a Any) params() Element {
+	return a.params
+}

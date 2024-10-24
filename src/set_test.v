@@ -37,7 +37,7 @@ fn test_sort_the_set() {
 }
 
 fn test_sort_the_setof() ! {
-	mut objs := new_setof[Integer]()!
+	mut objs := SetOf.new[Integer]()!
 
 	val1 := Integer.from_i64(1)
 	val2 := Integer.from_i64(12)
@@ -89,7 +89,7 @@ fn test_set_encode() ! {
 }
 
 fn test_setof_encode() ! {
-	mut set1 := new_setof[Integer]()!
+	mut set1 := SetOf.new[Integer]()!
 
 	set1.add_element(Integer.from_int(55))!
 	set1.add_element(Integer.from_int(4))!

@@ -222,3 +222,22 @@ fn test_integer_decode_encode_with_real_data() ! {
 	el := decode(data)!
 	assert el.equal(val)
 }
+
+// This is taken from https://letsencrypt.org/id/docs/a-warm-welcome-to-asn1-and-der/
+// for integer encoding
+fn test_integer_encoding() ! {
+	data := [u8(0x02), 0x09, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01]
+	// try to decode
+	val, pos := Integer.decode(data)!
+	value := val.as_bigint()! // big.Integer
+	assert pos == data.len
+
+	// serialized back
+	int_element := Integer.from_bigint(value)
+	serialized_int := encode(int_element)!
+	assert serialized_int == data
+
+	// with decode
+	el := decode(data)!
+	assert el.equal(val)
+}

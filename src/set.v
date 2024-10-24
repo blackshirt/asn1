@@ -207,27 +207,24 @@ mut:
 	fields []T
 }
 
-// `new_setof` creates a new SetOf for generic T.
-// You should make sure T is implement Element interface.
-pub fn new_setof[T]() !SetOf[T] {
-	return new_setof_with_size[T](default_seqset_fields)!
-}
-
-fn new_setof_with_size[T](size int) !SetOf[T] {
+// creates an empty SetOf type T
+pub fn SetOf.new[T]() !SetOf[T] {
 	$if T !is Element {
 		return error('Yur T is not Element')
 	}
-	if size > max_seqset_fields {
-		return error('size is exceed limit')
-	}
-	if size < 0 {
-		return error('Provides with correct size')
-	}
+	return SetOf[T]{}
+}
 
-	// if size is 0, use default_seqset_fields
-	limit := if size == 0 { default_seqset_fields } else { size }
+// creates new SetOf type T from arrays of T.
+pub fn SetOf.from_list[T](els []T) !SetOf[T] {
+	$if T !is Element {
+		return error('Yur T is not Element')
+	}
+	if els.len > max_seqset_fields {
+		return error('[]T length is exceed limit')
+	}
 	return SetOf[T]{
-		size: limit
+		fields: els
 	}
 }
 

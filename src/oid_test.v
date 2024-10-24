@@ -232,3 +232,19 @@ fn test_tc22_too_big_value_oid() ! {
 		return
 	}
 }
+
+// Taken from https://letsencrypt.org/id/docs/a-warm-welcome-to-asn1-and-der/
+//
+// OID 1.2.840.113549.1.1.11 (representing sha256WithRSAEncryption) is encoded like so:
+// 06 09 2a 86 48 86 f7 0d 01 01 0b
+fn test_sha256withrsaencryption_oid() ! {
+	oid := ObjectIdentifier.new('1.2.840.113549.1.1.11')!
+	expected := [u8(0x06), 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x0b]
+
+	out := encode(oid)!
+	assert out == expected
+
+	// decode back
+	ob, _ := ObjectIdentifier.decode(out)!
+	assert ob.equal(oid)
+}

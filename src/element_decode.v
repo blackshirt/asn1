@@ -73,11 +73,7 @@ fn decode_optional(bytes []u8, expected_tag Tag) !Element {
 }
 
 fn (el Element) unwrap_with_options(fo FieldOptions) !Element {
-	// unwrap only element with constructed form
-	if !el.tag().is_constructed() {
-		return error('You cant unwrap non-constructed element')
-	}
-	el.validate_wrapper(fo)!
+	el.validate_options(fo)!
 
 	// if unwrapping, el.tag() should == fo.inner produced by wrap operation
 	return error('Not implemented')
