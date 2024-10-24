@@ -8,7 +8,9 @@ module asn1
 
 // `encode` serializes element into bytes array. By default, its encode in .der rule with empty options.
 // See  `encode_with_options` if you want pass an option string. See `field.v` for more option in detail.
+//
 // Examples:
+//
 // ```v
 // obj := asn1.Utf8String.new('hi')!
 // out := asn1.encode(obj)!
@@ -19,9 +21,12 @@ pub fn encode(el Element) ![]u8 {
 }
 
 // `encode_with_options` serializes element into bytes array with options string passed to drive the result.
+//
 // Examples:
-// Utf8String defined as [5] IMPLICIT UTF8String was encoded into 85 02 68 69
-// Utf8String defined as [5] EXPLICIT UTF8String was encoded into A5 04 0C 02 68 69
+//
+// `Utf8String` defined as `[5] IMPLICIT UTF8String` was encoded into `85 02 68 69`.
+//
+// `Utf8String` defined as `[5] EXPLICIT UTF8String` was encoded into `A5 04 0C 02 68 69`.
 //
 // ```v
 // obj := asn1.Utf8String.new('hi')!
