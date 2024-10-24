@@ -5,6 +5,8 @@ module asn1
 
 // The default tag of ASN.1 SET (SET OF) type.
 pub const default_set_tag = Tag{.universal, true, int(TagType.set)}
+const default_set_size = 64
+const max_set_size = 255
 
 // SET and SET OF
 //
@@ -16,26 +18,26 @@ pub const default_set_tag = Tag{.universal, true, int(TagType.set)}
 pub struct Set {
 mut:
 	//	maximal size of this set fields
-	size int = default_seqset_fields
+	size int = default_set_size
 	// fields is the elements of the set
 	fields []Element
 }
 
 // creates a new Set with default size
 pub fn Set.new() !Set {
-	return Set.new_with_size(default_seqset_fields)!
+	return Set.new_with_size(default_set_size)!
 }
 
 fn Set.new_with_size(size int) !Set {
-	if size > max_seqset_fields {
+	if size > max_set_size {
 		return error('size is exceed limit')
 	}
 	if size < 0 {
 		return error('Provides with correct size')
 	}
 
-	// if size is 0, use default_seqset_fields
-	limit := if size == 0 { default_seqset_fields } else { size }
+	// if size is 0, use default_set_size
+	limit := if size == 0 { default_set_size } else { size }
 	return Set{
 		size: limit
 	}
@@ -172,7 +174,7 @@ pub fn (mut set Set) set_size(size int) ! {
 	if size < 0 {
 		return error('provides the correct size')
 	}
-	if size > max_seqset_fields {
+	if size > max_set_size {
 		return error('Provided limit was exceed current one')
 	}
 	set.size = size
@@ -203,7 +205,7 @@ fn (mut set Set) sort_set_fields() {
 @[heap; noinit]
 pub struct SetOf[T] {
 mut:
-	size   int = default_seqset_fields
+	size   int = default_set_size
 	fields []T
 }
 
@@ -220,7 +222,7 @@ pub fn SetOf.from_list[T](els []T) !SetOf[T] {
 	$if T !is Element {
 		return error('Yur T is not Element')
 	}
-	if els.len > max_seqset_fields {
+	if els.len > max_set_size {
 		return error('[]T length is exceed limit')
 	}
 	return SetOf[T]{

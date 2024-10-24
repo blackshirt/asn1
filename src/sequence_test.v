@@ -364,7 +364,7 @@ fn test_sequence_of_integer() ! {
 	els << Integer.from_int(8)
 	els << Integer.from_int(9)
 
-	seqof := SequenceOf.new[Integer](els)!
+	seqof := SequenceOf.from_list[Integer](els)!
 	out := encode(seqof)!
 	assert out == expected
 }

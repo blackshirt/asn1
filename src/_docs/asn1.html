@@ -265,14 +265,6 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 
 </section>
 
-		<section id="new_setof" class="doc-node">
-			<div class="title"><h2>fn new_setof <a href="#new_setof">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> new_setof<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>SetOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span></code></pre>
-<p><code>new_setof</code> creates a new SetOf for generic T. You should make sure T is implement Element interface.</p>
-
-</section>
-
 		<section id="ApplicationElement.new" class="doc-node">
 			<div class="title"><h2>fn ApplicationElement.new <a href="#ApplicationElement.new">#</a></h2></div>
 <pre class="signature">
@@ -727,6 +719,14 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="Sequence.from_list" class="doc-node">
+			<div class="title"><h2>fn Sequence.from_list <a href="#Sequence.from_list">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Sequence<span class="token punctuation">.</span><span class="token function">from_list</span><span class="token punctuation">(</span>els <span class="token punctuation">[</span><span class="token punctuation">]</span>Element<span class="token punctuation">)</span> <span class="token operator">!</span>Sequence</code></pre>
+
+
+</section>
+
 		<section id="Sequence.new" class="doc-node">
 			<div class="title"><h2>fn Sequence.new <a href="#Sequence.new">#</a></h2></div>
 <pre class="signature">
@@ -740,6 +740,22 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">fn</span> Sequence<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>Sequence</code></pre>
 <p>parse tries to parse into Sequence from ongoing Parser p. Uts return a parsed Sequence or error on fails.</p>
+
+</section>
+
+		<section id="SequenceOf.from_list" class="doc-node">
+			<div class="title"><h2>fn SequenceOf.from_list <a href="#SequenceOf.from_list">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> SequenceOf<span class="token punctuation">.</span>from_list<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span>els <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">T</span><span class="token punctuation">)</span> <span class="token operator">!</span>SequenceOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span></code></pre>
+<p>SequenceOf.from_list creates a new SequenceOf[T] from arrays of T type.</p>
+
+</section>
+
+		<section id="SequenceOf.new" class="doc-node">
+			<div class="title"><h2>fn SequenceOf.new <a href="#SequenceOf.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> SequenceOf<span class="token punctuation">.</span>new<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span> SequenceOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span></code></pre>
+<p>SequenceOf.new creates a new SequenceOf[T]</p>
 
 </section>
 
@@ -764,6 +780,22 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">fn</span> Set<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>Set</code></pre>
 
+
+</section>
+
+		<section id="SetOf.from_list" class="doc-node">
+			<div class="title"><h2>fn SetOf.from_list <a href="#SetOf.from_list">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> SetOf<span class="token punctuation">.</span>from_list<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span>els <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">T</span><span class="token punctuation">)</span> <span class="token operator">!</span>SetOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span></code></pre>
+<p>creates new SetOf type T from arrays of T.</p>
+
+</section>
+
+		<section id="SetOf.new" class="doc-node">
+			<div class="title"><h2>fn SetOf.new <a href="#SetOf.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> SetOf<span class="token punctuation">.</span>new<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>SetOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span></code></pre>
+<p>creates an empty SetOf type T</p>
 
 </section>
 
@@ -1200,7 +1232,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">struct</span> <span class="token symbol">ContextElement</span> <span class="token punctuation">{</span>
 <span class="token keyword">mut</span><span class="token punctuation">:</span>
-	outer     <span class="token builtin">int</span>  <span class="token comment">// outer tag number</span>
+	outer_tag Tag  <span class="token comment">// outer tag</span>
 	content   <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span> <span class="token comment">// just content or serialized inner element, depends on mode.</span>
 	inner_tag <span class="token operator">?</span>Tag
 	mode      <span class="token operator">?</span>TaggedMode <span class="token comment">// mode of tagged type</span>
@@ -1290,7 +1322,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	<span class="token comment">// In the encoding (decoding) phase, it would be checked</span>
 	<span class="token comment">// if this options meet required criteria.</span>
 	<span class="token comment">// Limitation applied on the wrapper fields:</span>
-	<span class="token comment">// 1. Wrap into universal is not allowed (cls != universal)</span>
+	<span class="token comment">// 1. Wrap into UNIVERSAL is not allowed (cls != universal)</span>
 	<span class="token comment">// 2. Wrapped element should have UNIVERSAL class.</span>
 	<span class="token comment">// 3. You should provide mode for wrapping, explicit or implicit.</span>
 	<span class="token comment">// 4. If cls == '', no wrapping is performed, discarding all wrapper options</span>
@@ -1298,34 +1330,19 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	tagnum <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token comment">// Provides with wrapper tag number.</span>
 	mode   <span class="token builtin">string</span> <span class="token comment">// explicit or implicit, depends on definition schema.</span>
 	inner  <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token comment">// should valid universal tag number.</span>
-	<span class="token comment">// optional field applied to element with OPTIONAL behaviour,</span>
-	<span class="token comment">// with or without DEFAULT value.</span>
+
+	<span class="token comment">// optional field applied to element with OPTIONAL behaviour, with or without DEFAULT value.</span>
 	<span class="token comment">// Set `optional` to true when this element has OPTIONAL keyword in the definition of element.</span>
 	<span class="token comment">// Usually element with OPTIONAL keyword is not presents in the encoding (decoding) data.</span>
 	optional <span class="token builtin">bool</span>
+
 	<span class="token comment">// This field applied to element with DEFAULT keyword behaviour.</span>
 	<span class="token comment">// Its applied into wrapping of element or optionality of the element.</span>
 	<span class="token comment">// If some element has DEFAULT keyword, set this field to true and gives default element into `default_value` field.</span>
 	has_default   <span class="token builtin">bool</span>
 	default_value <span class="token operator">?</span>Element
 <span class="token punctuation">}</span></code></pre>
-<p>Field options attributes handling.</p><p>FieldOptions is a structure to accomodate and allowing configures your complex structures through string or arrays of string stored in FieldOptions fields. For example, you can tagging your fields of some element with tagging like <code>@[context_specific:10; optional; explicit; inner:5]</code>. Its will be parsed and can be used to drive encoding or decoding of Element.</p>
-
-</section>
-
-		<section id="FieldOptions.wrapper_tag" class="doc-node">
-			<div class="title"><h2>fn (FieldOptions) wrapper_tag <a href="#FieldOptions.wrapper_tag">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>fo FieldOptions<span class="token punctuation">)</span> <span class="token function">wrapper_tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Tag</code></pre>
-<p>wrapper_tag gets wrapper Tag from FieldOptions</p>
-
-</section>
-
-		<section id="FieldOptions.inner_tag" class="doc-node">
-			<div class="title"><h2>fn (FieldOptions) inner_tag <a href="#FieldOptions.inner_tag">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>fo FieldOptions<span class="token punctuation">)</span> <span class="token function">inner_tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Tag</code></pre>
-<p>inner_tag gets inner Tag from FieldOptions.</p>
+<p>Field options attributes handling.</p><p>FieldOptions is a structure to accomodate and allowing configures your complex structures through string or arrays of string stored in FieldOptions fields. For example, you can tagging your fields of some element with tagging like <code>@[context_specific:10; explicit; inner:5; optional]</code>. Its will be parsed and can be used to drive encoding or decoding of Element.</p>
 
 </section>
 
@@ -1855,7 +1872,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <code><span class="token keyword">struct</span> <span class="token symbol">Sequence</span> <span class="token punctuation">{</span>
 <span class="token keyword">mut</span><span class="token punctuation">:</span>
 	<span class="token comment">//	maximal size of this sequence fields</span>
-	size <span class="token builtin">int</span> <span class="token operator">=</span> default_seqset_fields
+	size <span class="token builtin">int</span> <span class="token operator">=</span> default_sequence_size
 	<span class="token comment">// fields is the elements of the sequence</span>
 	fields <span class="token punctuation">[</span><span class="token punctuation">]</span>Element
 <span class="token punctuation">}</span></code></pre>
@@ -1925,7 +1942,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">struct</span> SequenceOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
 <span class="token keyword">mut</span><span class="token punctuation">:</span>
-	size   <span class="token builtin">int</span> <span class="token operator">=</span> default_seqset_fields
+	size   <span class="token builtin">int</span> <span class="token operator">=</span> default_sequence_size
 	fields <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">T</span>
 <span class="token punctuation">}</span></code></pre>
 <p>ASN.1 SEQUENCE OF TYPE. SequenceOf[T] is an arrays of generic T, so the generic T should fullfill Element interface. We dont use generic aliases because generic type aliases are not yet implemented.</p>
@@ -1939,7 +1956,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <code><span class="token keyword">struct</span> <span class="token symbol">Set</span> <span class="token punctuation">{</span>
 <span class="token keyword">mut</span><span class="token punctuation">:</span>
 	<span class="token comment">//	maximal size of this set fields</span>
-	size <span class="token builtin">int</span> <span class="token operator">=</span> default_seqset_fields
+	size <span class="token builtin">int</span> <span class="token operator">=</span> default_set_size
 	<span class="token comment">// fields is the elements of the set</span>
 	fields <span class="token punctuation">[</span><span class="token punctuation">]</span>Element
 <span class="token punctuation">}</span></code></pre>
@@ -1985,7 +2002,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">struct</span> SetOf<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
 <span class="token keyword">mut</span><span class="token punctuation">:</span>
-	size   <span class="token builtin">int</span> <span class="token operator">=</span> default_seqset_fields
+	size   <span class="token builtin">int</span> <span class="token operator">=</span> default_set_size
 	fields <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">T</span>
 <span class="token punctuation">}</span></code></pre>
 <p>ASN.1 SET OF</p>
@@ -2147,7 +2164,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 23 Oct 2024 01:03:17</div>
+						<div class="footer">Powered by vdoc. Generated on: 24 Oct 2024 07:47:51</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
@@ -2173,9 +2190,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#make_payload">fn make_payload</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#new_setof">fn new_setof</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#ApplicationElement.new">fn ApplicationElement.new</a>        <ul>
@@ -2346,10 +2360,19 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#Sequence.decode">fn Sequence.decode</a>        <ul>
 </ul>
 </li>
+<li class="open"><a href="#Sequence.from_list">fn Sequence.from_list</a>        <ul>
+</ul>
+</li>
 <li class="open"><a href="#Sequence.new">fn Sequence.new</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Sequence.parse">fn Sequence.parse</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#SequenceOf.from_list">fn SequenceOf.from_list</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#SequenceOf.new">fn SequenceOf.new</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Set.decode">fn Set.decode</a>        <ul>
@@ -2359,6 +2382,12 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#Set.parse">fn Set.parse</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#SetOf.from_list">fn SetOf.from_list</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#SetOf.new">fn SetOf.new</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Tag.from_bytes">fn Tag.from_bytes</a>        <ul>
@@ -2471,8 +2500,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#FieldOptions">struct FieldOptions</a>        <ul>
-<li><a href="#FieldOptions.wrapper_tag">fn wrapper_tag</a></li>
-<li><a href="#FieldOptions.inner_tag">fn inner_tag</a></li>
 <li><a href="#FieldOptions.install_default">fn install_default</a></li>
 </ul>
 </li>

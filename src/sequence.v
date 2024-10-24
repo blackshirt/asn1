@@ -8,10 +8,10 @@ pub const default_sequence_tag = Tag{.universal, true, int(TagType.sequence)}
 
 // constant for sequence(of) and set(of) internal value
 // vfmt off
-const max_seqset_fields 	= 256 // max of seq size
-const max_seqset_bytes 		= (1 << 23 - 1) // 8 MB
-const default_seqset_fields = 64 // default size
-// vfmt on 
+const max_sequence_size 		= 256 // max of seq size
+const max_sequence_bytes_length = (1 << 23 - 1) // 
+const default_sequence_size 	= 64 // default size
+// vfmt on
 
 // SEQUENCE and SEQUENCE OF handling
 //
@@ -28,32 +28,35 @@ const default_seqset_fields = 64 // default size
 pub struct Sequence {
 mut:
 	//	maximal size of this sequence fields
-	size int = default_seqset_fields
+	size int = default_sequence_size
 	// fields is the elements of the sequence
 	fields []Element
 }
 
 // new creates new Sequence with default size
 pub fn Sequence.new() !Sequence {
-	return Sequence.new_with_size(default_seqset_fields)!
+	return Sequence.new_with_size(default_sequence_size)!
 }
 
-pub fn Sequence.from_element_list(els []Element) Sequence {
+pub fn Sequence.from_list(els []Element) !Sequence {
+	if els.len > max_sequence_size {
+		return error('Sequence size exceed limit')
+	}
 	return Sequence{
 		fields: els
 	}
 }
 
 fn Sequence.new_with_size(size int) !Sequence {
-	if size > max_seqset_fields {
+	if size > max_sequence_size {
 		return error('size is exceed limit')
 	}
 	if size < 0 {
 		return error('Provides with correct size')
 	}
 
-	// if size is 0, use default_seqset_fields
-	limit := if size == 0 { default_seqset_fields } else { size }
+	// if size is 0, use default_sequence_size
+	limit := if size == 0 { default_sequence_size } else { size }
 	return Sequence{
 		size: limit
 	}
@@ -158,7 +161,7 @@ pub fn (mut seq Sequence) set_size(size int) ! {
 	if size <= 0 {
 		return error('provides with correct limit')
 	}
-	if size > max_seqset_fields {
+	if size > max_sequence_size {
 		return error('Provided limit was exceed current one')
 	}
 	seq.size = size
@@ -222,11 +225,20 @@ pub fn (seq Sequence) into_sequence_of[T]() !SequenceOf[T] {
 @[heap; noinit]
 pub struct SequenceOf[T] {
 mut:
-	size   int = default_seqset_fields
+	size   int = default_sequence_size
 	fields []T
 }
 
-fn SequenceOf.new[T](els []T) !SequenceOf[T] {
+// SequenceOf.new creates a new SequenceOf[T]
+pub fn SequenceOf.new[T]() SequenceOf[T] {
+	return SequenceOf[T]{}
+}
+
+// SequenceOf.from_list creates a new SequenceOf[T] from arrays of T type.
+pub fn SequenceOf.from_list[T](els []T) !SequenceOf[T] {
+	if els.len > max_sequence_size {
+		return error('SequenceOf size exceed limit')
+	}
 	$if T !is Element {
 		return error('T not hold element')
 	}
