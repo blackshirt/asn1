@@ -221,7 +221,9 @@
 			<div class="title"><h2>fn encode <a href="#encode">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token function">encode</span><span class="token punctuation">(</span>el Element<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
-<p><code>encode</code> serializes element into bytes array. By default, its encode in .der rule with empty options. See  <code>encode_with_options</code> if you want pass an option string. See <code>field.v</code> for more option in detail.</p>
+<p><code>encode</code> serializes element into bytes array. By default, its encode in .der rule with empty options. See  <code>encode_with_options</code> if you want pass an option string. See <code>field.v</code> for more option in detail. Examples:</p><pre><code class="language-v">obj <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>Utf8String<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token string">'hi'</span><span class="token punctuation">)</span><span class="token operator">!</span>
+out <span class="token operator">:=</span> asn1<span class="token punctuation">.</span><span class="token function">encode</span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span><span class="token operator">!</span>
+<span class="token keyword">assert</span> out <span class="token operator">==</span> <span class="token punctuation">[</span><span class="token builtin">u8</span><span class="token punctuation">(</span><span class="token number">0x0C</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0x02</span><span class="token punctuation">,</span> <span class="token number">0x68</span><span class="token punctuation">,</span> <span class="token number">0x69</span><span class="token punctuation">]</span></code></pre>
 
 </section>
 
@@ -237,7 +239,12 @@
 			<div class="title"><h2>fn encode_with_options <a href="#encode_with_options">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token function">encode_with_options</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> opt <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
-<p><code>encode_with_options</code> serializes element into bytes array with options string passed to drive the result.</p>
+<p><code>encode_with_options</code> serializes element into bytes array with options string passed to drive the result. Examples: Utf8String defined as [5] IMPLICIT UTF8String was encoded into 85 02 68 69 Utf8String defined as [5] EXPLICIT UTF8String was encoded into A5 04 0C 02 68 69</p><pre><code class="language-v">obj <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>Utf8String<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token string">'hi'</span><span class="token punctuation">)</span><span class="token operator">!</span>
+implicit_out <span class="token operator">:=</span> asn1<span class="token punctuation">.</span><span class="token function">encode_with_options</span><span class="token punctuation">(</span>obj<span class="token punctuation">,</span> <span class="token string">'context_specific:5;implicit;inner:12'</span><span class="token punctuation">)</span><span class="token operator">!</span>
+<span class="token keyword">assert</span> implicit_out <span class="token operator">==</span> <span class="token punctuation">[</span><span class="token builtin">u8</span><span class="token punctuation">(</span><span class="token number">0x85</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0x02</span><span class="token punctuation">,</span> <span class="token number">0x68</span><span class="token punctuation">,</span> <span class="token number">0x69</span><span class="token punctuation">]</span>
+
+explicit_out <span class="token operator">:=</span> asn1<span class="token punctuation">.</span><span class="token function">encode_with_options</span><span class="token punctuation">(</span>obj<span class="token punctuation">,</span> <span class="token string">'context_specific:5;explicit;inner:0x0c'</span><span class="token punctuation">)</span><span class="token operator">!</span>
+<span class="token keyword">assert</span> explicit_out <span class="token operator">==</span> <span class="token punctuation">[</span><span class="token builtin">u8</span><span class="token punctuation">(</span><span class="token number">0xA5</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0x04</span><span class="token punctuation">,</span> <span class="token number">0x0C</span><span class="token punctuation">,</span> <span class="token number">0x02</span><span class="token punctuation">,</span> <span class="token number">0x68</span><span class="token punctuation">,</span> <span class="token number">0x69</span><span class="token punctuation">]</span></code></pre>
 
 </section>
 
@@ -2164,7 +2171,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 24 Oct 2024 07:47:51</div>
+						<div class="footer">Powered by vdoc. Generated on: 24 Oct 2024 08:31:28</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
