@@ -172,14 +172,11 @@ fn parse_context_specific(tag Tag, content []u8) !ContextElement {
 	if tag.tag_class() != .context_specific {
 		return error('parse on non-context-specific class')
 	}
-	if !tag.is_constructed() {
-		return error('ContextSpecific tag shoud be constructed')
-	}
 	// mode and inner_tag is not set here without additional information,
 	// So its still none here, and you should set it with correct value
 	ctx := ContextElement{
-		outer:   tag.number
-		content: content
+		outer_tag: tag
+		content:   content
 		// inner_tag: ?
 		// mode: ?
 	}

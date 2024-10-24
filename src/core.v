@@ -60,12 +60,7 @@ pub fn Tag.new(cls TagClass, constructed bool, number int) !Tag {
 			}
 		}
 	}
-	if cls == .context_specific {
-		// in CONTEXT_SPECIFIC class, treats is as tagged type in constructed form
-		if !constructed {
-			return error('Context Specific should be in constructed form')
-		}
-	}
+
 	// otherwise, ok
 	tag := Tag{
 		class:       cls

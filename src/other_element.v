@@ -70,11 +70,10 @@ pub fn RawElement.new(tag Tag, content []u8) RawElement {
 @[noinit]
 pub struct ContextElement {
 mut:
-	constructed bool
-	outer       int  // outer tag number
-	content     []u8 // just content or serialized inner element, depends on mode.
-	inner_tag   ?Tag
-	mode        ?TaggedMode // mode of tagged type
+	outer_tag Tag  // outer tag
+	content   []u8 // just content or serialized inner element, depends on mode.
+	inner_tag ?Tag
+	mode      ?TaggedMode // mode of tagged type
 }
 
 // ContextElement.new creates a new tagged type of ContextElement from some element in inner.
@@ -82,16 +81,24 @@ pub fn ContextElement.new(tagnum int, mode TaggedMode, inner Element) !ContextEl
 	if tagnum < 0 || tagnum > max_tag_number {
 		return error('Unallowed tagnum was provided')
 	}
+
+	// check universal-ity of the inner element
+	if inner.tag().class != .universal {
+		return asn1_error(.invalid_tag_class, 'ContextElement', '${inner.tag().class}',
+			'universal')
+	}
+	// gets inner form, was used if in implicit mode, or constructed in explicit mode.
 	inner_form := inner.tag().is_constructed()
 	constructed := if mode == .implicit { inner_form } else { true }
 	content := if mode == .implicit { inner.payload()! } else { encode_with_rule(inner, .der)! }
 
+	outer_tag := Tag.new(.context_specific, constructed, tagnum)!
+
 	ctx := ContextElement{
-		constructed: constructed
-		outer:       tagnum
-		content:     content
-		inner_tag:   inner.tag()
-		mode:        mode
+		outer_tag: outer_tag
+		content:   content
+		inner_tag: inner.tag()
+		mode:      mode
 	}
 	return ctx
 }
@@ -119,8 +126,7 @@ fn (ctx ContextElement) check_inner_tag() ! {
 }
 
 pub fn (ctx ContextElement) tag() Tag {
-	tag := Tag{.context_specific, ctx.constructed, ctx.outer}
-	return tag
+	return ctx.outer_tag
 }
 
 pub fn (ctx ContextElement) inner_tag() ?Tag {
@@ -144,10 +150,7 @@ pub fn ContextElement.implicit_context(tagnum int, inner Element) !ContextElemen
 fn ContextElement.decode_raw(bytes []u8) !(ContextElement, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, .der)!
 	if tag.class != .context_specific {
-		return error('Get non ContextSpecific tag')
-	}
-	if !tag.constructed {
-		return error('Get non-constructed ContextSpecific tag')
+		return asn1_error(.invalid_tag_class, 'ContextElement', '${tag.class}', 'context_specific')
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, .der)!
 	content := if length == 0 {
@@ -161,8 +164,8 @@ fn ContextElement.decode_raw(bytes []u8) !(ContextElement, int) {
 	next := content_pos + length
 	// Raw ContextElement, you should provide mode and inner tag.
 	ctx := ContextElement{
-		outer:   tag.number
-		content: content
+		outer_tag: tag
+		content:   content
 	}
 	return ctx, next
 }
@@ -184,8 +187,12 @@ fn ContextElement.decode_with_options(bytes []u8, opt string) !(ContextElement, 
 	if tag.class != .context_specific {
 		return error('Get non ContextSpecific tag')
 	}
-	if !tag.constructed {
-		return error('Get non-constructed ContextSpecific tag')
+
+	// if mode is explicit without constructed form, its would return on error.
+	if mode == .explicit {
+		if !tag.constructed {
+			return error('explicit need constructed form')
+		}
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, .der)!
 	content := if length == 0 {
@@ -200,16 +207,16 @@ fn ContextElement.decode_with_options(bytes []u8, opt string) !(ContextElement, 
 
 	if mode == .implicit {
 		ctx := ContextElement{
-			outer:     tag.number
+			outer_tag: tag
 			content:   content
 			inner_tag: inner_tag
 			mode:      .implicit
 		}
 		return ctx, next
 	}
-	// explicit one
+	// explicit one, build ContextElement and performs checks for inner_tag validity.
 	ctx := ContextElement{
-		outer:     tag.number
+		outer_tag: tag
 		content:   content
 		inner_tag: inner_tag
 		mode:      .explicit

@@ -15,8 +15,8 @@ fn test_tagandlength_handling() ! {
 	// from golang asn.1 test
 	bs := [
 		// Context Specific should be in constructed form
-		TagAndLengthTest{[u8(0x80), 0x01], Tag{.context_specific, true, 0}, 1, 2, error('Context Specific should be in constructed form')},
-		TagAndLengthTest{[u8(0xa0), 0x01], Tag{.context_specific, true, 0}, 1, 2, none},
+		TagAndLengthTest{[u8(0x80), 0x01], Tag{.context_specific, false, 0}, 1, 2, none}, // 0b_10_0_00000
+		TagAndLengthTest{[u8(0xa0), 0x01], Tag{.context_specific, true, 0}, 1, 2, none}, // 0b_10_1_00000
 		TagAndLengthTest{[u8(0x02), 0x00], Tag{.universal, false, 2}, 0, 2, none},
 		TagAndLengthTest{[u8(0xfe), 0x00], Tag{.private, true, 30}, 0, 2, none},
 		TagAndLengthTest{[u8(0x1f), 0x1f, 0x00], Tag{.universal, false, 31}, 0, 3, none}, // high tag form

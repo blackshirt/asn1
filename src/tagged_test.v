@@ -23,16 +23,8 @@ fn test_explicit_context_nested_pack_unpack() ! {
 	el := Null.new()
 
 	ex1 := ContextElement.explicit_context(1, el)!
-	ex2 := ContextElement.explicit_context(2, ex1)!
 
-	mut out := encode(ex2)!
-	exp := [u8(0xa2), 0x04, 0xa1, 0x02, 0x05, 0x00]
-
-	assert out == exp
-
-	// clears out
-	out.clear()
-	out = encode(ex1)!
+	out := encode(ex1)!
 	assert out == [u8(0xa1), 0x02, u8(0x05), 0x00]
 }
 

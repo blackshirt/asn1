@@ -96,7 +96,7 @@ struct TagDecodeTest {
 fn test_tag_decode() ! {
 	data := [
 		// 0b1000_000 telss its class is .context_specific, but constructed bit was not set
-		TagDecodeTest{[u8(0x80), 0x01], .context_specific, true, 0, 1, error('Context Specific should be in constructed form')},
+		TagDecodeTest{[u8(0x80), 0x01], .context_specific, false, 0, 1, none},
 		TagDecodeTest{[u8(0xa0), 0x01], .context_specific, true, 0, 1, none}, //{2, 0, 1, true}},
 		TagDecodeTest{[u8(0x02), 0x00], .universal, false, 2, 1, none},
 		TagDecodeTest{[u8(0xfe), 0x00], .private, true, 30, 1, none},
@@ -112,6 +112,7 @@ fn test_tag_decode() ! {
 	]
 
 	for i, c in data {
+		// dump(i)
 		tag, pos := Tag.decode(c.bytes) or {
 			assert err == c.err
 			continue

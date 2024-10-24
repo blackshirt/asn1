@@ -74,3 +74,130 @@ fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
 
 	return dst
 }
+
+// Helper for wrapping element
+//
+
+// apply_wrappers_options turns this element into another element by wrapping it
+// with the some options defined in FieldOptions.
+fn (el Element) apply_wrappers_options(fo FieldOptions) !Element {
+	// no wraps, and discard other wrapper options
+	if fo.cls == '' {
+		return el
+	}
+	// element being wrapped should have universal class
+	if el.tag().class != .universal {
+		return error('non-universal going to wrapped')
+	}
+	el.validate_wrapper(fo)!
+	if fo.has_default {
+		el.validate_default(fo)!
+	}
+
+	new_el := el.wrap_with_options(fo)!
+
+	return new_el
+}
+
+// Helper for turns the element into Optional.
+//
+// apply_optional_options turns this element into another element with OPTIONAL semantic.
+fn (el Element) apply_optional_options(fo FieldOptions) !Element {
+	// not an optional element, just return the current element.
+	if !fo.optional {
+		return el
+	}
+	el.validate_optional(fo)!
+	opt := if fo.optional { el.into_optional(fo.default_value)! } else { el }
+
+	return opt
+}
+
+// into_optional turns this element into Optional with default_value if there.
+fn (el Element) into_optional(with_default ?Element) !Element {
+	if el is Optional {
+		return error('already optional element')
+	}
+	opt := Optional.new(el, with_default)!
+	return opt
+}
+
+// apply_field_options applies rules in field options into current element
+// and turns this into another element.
+// by default, optional attribute is more higher precedence over wrapper attribut, ie,
+// take the wrap step and then turn into optional (if true)
+fn (el Element) apply_field_options(fo FieldOptions) !Element {
+	wrapped := el.apply_wrappers_options(fo)!
+	// optional options take precedence over wrapper
+	// wehen fo.optional is false, new_el is current wrapped element
+	new_el := wrapped.apply_optional_options(fo)!
+	return new_el
+}
+
+fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
+	// the default tag should match with the current tag
+	if el.tag() != value.tag() {
+		return error('unmatching tag of default value')
+	}
+	fo.install_default(value, false)!
+	el.validate_default(fo)!
+}
+
+// wrap_with_rule wraps universal element into another class.
+// we prohibit dan defines some rules when its happen and  returns an error instead
+// 1. wrapping into .universal class is not allowed
+// 2. wrapping with the same class is not allowed too
+// 3. wrapping non-universal class element is not allowed (maybe removed on futures.)
+// Notes :
+// Three additional information about tagging:
+//		CHOICEs are always explicitly tagged even if implicit tagging is in effect.
+//		EXPLICIT TAGs are always constructed, they encapsulate the TLV they prefix.
+//		An IMPLICIT TAG 'inherits' the constructed bit of the TLV whose 'T' is overwritten,
+//		examples:
+//		a) '[5] IMPLICIT INTEGER' has tag 0x85 (overwriting 0x02 = INTEGER)
+//		b) '[5] IMPLICIT SEQUENCE' has tag 0xA5 (overwriting 0x30 = SEQUENCE, CONSTRUCTED)
+fn (el Element) wrap_with_options(fo FieldOptions) !Element {
+	el.validate_options(fo)!
+	// we dont allow optional element to be wrapped
+	if el is Optional {
+		return error('optional is not allowed to be wrapped')
+	}
+	// wraps into .universal is not allowed
+	if fo.cls == 'universal' {
+		return error('no need to wrap into universal class')
+	}
+
+	el_cls := el.tag().tag_class()
+	// error when in the same class
+	if el_cls == TagClass.from_string(fo.cls)! {
+		return error('no need to wrap into same class')
+	}
+	// we dont allow other than .universal class to be wrapped
+	if el_cls != .universal {
+		return error('No need to wrap non-universal class')
+	}
+	mode := TaggedMode.from_string(fo.mode)!
+	payload := if mode == .explicit { encode_with_rule(el, .der)! } else { el.payload()! }
+	cls := TagClass.from_string(fo.cls)!
+
+	// when in implicit mode, wrapper's tag depends on form of element being wrapped.
+	// otherwise, when in explicit mode, should be in constructed form.
+	inner_form := el.tag().is_constructed()
+	constructed := if mode == .implicit { inner_form } else { true }
+
+	match cls {
+		.context_specific {
+			// maybe constructed or primitive.
+			return ContextElement.new(fo.tagnum, mode, el)!
+		}
+		.application {
+			return ApplicationElement.new(constructed, fo.tagnum, payload)!
+		}
+		.private {
+			return PrivateELement.new(constructed, fo.tagnum, payload)!
+		}
+		else {
+			return error('class wrapper not allowed')
+		}
+	}
+}
