@@ -32,6 +32,17 @@ pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 	}
 	fo.check_wrapper()!
 	if fo.cls != '' {
+		cls := TagClass.from_string(fo.cls)!
+		mode := TaggedMode.from_string(fo.mode)!
+		inner_tag := universal_tag(fo.inner)!
+
+		inner_form := inner_tag.constructed
+		constructed := if mode == .implicit {inner_form} else {true}
+		outer_tag := Tag.new(cls, constructed, fo.tagnum)!
+		if fo.optional {
+			opt := decode_optional(bytes, outer_tag)!
+			return opt
+		}
 		// unwrap
 		mut p := Parser.new(bytes)
 		curr_tag := p.peek_tag()!
@@ -39,9 +50,6 @@ pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 
 		if curr_tag.class != wrp_tag.class {
 			return error('Get different class')
-		}
-		if !curr_tag.constructed {
-			return error('Options on primitive')
 		}
 		if curr_tag.number != wrp_tag.number {
 			return error('Get different tag number')
