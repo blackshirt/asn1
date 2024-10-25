@@ -59,8 +59,12 @@ fn (er Asn1Error) msg() string {
 	return 'Error on ${er.object}: ${er.kind.str()} with error ${er.msg}'
 }
 
-fn asn1_error(kind ErrorKind, obj string, msg string) &Asn1Error {
-	return &Asn1Error{
+fn (er Asn1Error) code() int {
+	return er.code()
+}
+
+fn asn1_error(kind ErrorKind, obj string, msg string) !Asn1Error {
+	return Asn1Error{
 		kind:   kind
 		object: obj
 		msg:    msg

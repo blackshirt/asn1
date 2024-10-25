@@ -146,7 +146,7 @@ fn parse_context_specific_with_mode(tag Tag, content []u8, inner_tag Tag, mode T
 	}
 	if mode == .implicit {
 		inner := parse_element(inner_tag, content)!
-		ctx := ContextElement.new(tag.number, mode, inner)!
+		ctx := ContextElement.new(inner, tag.number, mode)!
 		return ctx
 	}
 	// explicit
@@ -160,7 +160,7 @@ fn parse_context_specific_with_mode(tag Tag, content []u8, inner_tag Tag, mode T
 	// should finish
 	p.finish()!
 
-	ctx := ContextElement.new(tag.number, .explicit, inner_el)!
+	ctx := ContextElement.new(inner_el, tag.number, .explicit)!
 
 	return ctx
 }
@@ -175,8 +175,8 @@ fn parse_context_specific(tag Tag, content []u8) !ContextElement {
 	// mode and inner_tag is not set here without additional information,
 	// So its still none here, and you should set it with correct value
 	ctx := ContextElement{
-		outer_tag: tag
-		content:   content
+		tag:     tag
+		content: content
 		// inner_tag: ?
 		// mode: ?
 	}

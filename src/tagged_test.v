@@ -5,7 +5,7 @@ module asn1
 
 fn test_explicit_context_null_pack_unpack() ! {
 	el := Null.new()
-	ex1 := ContextElement.explicit_context(0, el)!
+	ex1 := ContextElement.explicit_context(el, 0)!
 
 	out := encode(ex1)!
 	exp := [u8(0xa0), 0x02, 0x05, 0x00]
@@ -22,7 +22,7 @@ fn test_explicit_context_null_pack_unpack() ! {
 fn test_explicit_context_nested_pack_unpack() ! {
 	el := Null.new()
 
-	ex1 := ContextElement.explicit_context(1, el)!
+	ex1 := ContextElement.explicit_context(el, 1)!
 
 	out := encode(ex1)!
 	assert out == [u8(0xa1), 0x02, u8(0x05), 0x00]
@@ -38,7 +38,7 @@ Example ::= SEQUENCE {
 }
 ```*/
 	oid := ObjectIdentifier.new('1.3.6.1.3')!
-	expl := ContextElement.explicit_context(1, oid)!
+	expl := ContextElement.explicit_context(oid, 1)!
 	mut seq := Sequence{}
 	seq.add_element(Utf8String.new('Hello')!)! // tag : 12
 	seq.add_element(Integer.from_i64(i64(42)))! // tag 2
@@ -58,7 +58,7 @@ Example ::= SEQUENCE {
 	assert els[1] is Integer
 	mut els2 := els[2] as ContextElement
 
-	els2.set_mode(.explicit)
+	els2.set_raw_mode(.explicit)!
 	els2.set_inner_tag(default_oid_tag)!
 	// els2_tagged := els2.as_tagged(.explicit, oid.tag())!
 	// assert els2_tagged == expl

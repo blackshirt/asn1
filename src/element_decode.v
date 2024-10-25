@@ -34,7 +34,7 @@ pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 	if fo.cls != '' {
 		cls := TagClass.from_string(fo.cls)!
 		mode := TaggedMode.from_string(fo.mode)!
-		inner_tag := universal_tag(fo.inner)!
+		inner_tag := universal_tag_from_int(fo.inner)!
 
 		inner_form := inner_tag.constructed
 		constructed := if mode == .implicit { inner_form } else { true }
@@ -75,7 +75,7 @@ fn decode_optional(bytes []u8, expected_tag Tag) !Element {
 		return opt
 	}
 	// optional element with no-presence semantic
-	el := RawElement.new(expected_tag, []u8{})
+	el := RawElement.new(expected_tag, []u8{})!
 	opt := Optional.new(el, none)!
 	return opt
 }
