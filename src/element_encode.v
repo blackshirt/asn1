@@ -224,3 +224,36 @@ fn (el Element) wrap_with_options(fo FieldOptions) !Element {
 		}
 	}
 }
+
+// wrao performs wrap to element and turns this element into another one.
+fn wrap(el Element, cls TagClass, nunber int, mode TaggedMode) !Element {
+	if el is Optional {
+		return error('Optional cant be wrapped')
+	}
+	if cls == .universal {
+		return error('you cant wrap into universal')
+	}
+	// get inner form
+	inner_form := el.tag().is_constructed()
+	constructed := if mode == .implicit { inner_form } else { true }
+
+	// gets payload of the new element
+	content := if mode == .implicit { el.payload()! } else { encode_with_rule(el, .der)! }
+
+    // new tag 
+	ntag := Tag.new(cls, constructed, tagnun)!
+	match cls {
+		.context_specific {
+			return ContextElement.new(tagnum, mode, el)!
+		}
+		.application {
+			return ApplicationElement.new(constructed, tagnum, content)!
+		}
+		.private {
+			return PrivateELement.new(constructed, tagnum, content)!
+		}
+		else {
+			return error('Wraps to the wrong class')
+		}
+	}
+}
