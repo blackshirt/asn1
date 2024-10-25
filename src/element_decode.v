@@ -37,7 +37,7 @@ pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 		inner_tag := universal_tag(fo.inner)!
 
 		inner_form := inner_tag.constructed
-		constructed := if mode == .implicit {inner_form} else {true}
+		constructed := if mode == .implicit { inner_form } else { true }
 		outer_tag := Tag.new(cls, constructed, fo.tagnum)!
 		if fo.optional {
 			opt := decode_optional(bytes, outer_tag)!

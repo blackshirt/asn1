@@ -21,6 +21,7 @@ enum ErrorKind {
 	unsupported_format		= 14
 	invalid_value			= 15
 	unmeet_requirement		= 16
+	unallowed_operation		= 17
 	// vfmt on
 }
 
@@ -43,6 +44,7 @@ fn (ek ErrorKind) str() string {
 		.unsupported_format { return 'unsupported_format' }
 		.invalid_value { return 'invalid_value' }
 		.unmeet_requirement { return 'unmeet_requirement' }
+		.unallowed_operation { return 'unallowed_operation' }
 	}
 }
 
@@ -50,20 +52,17 @@ struct Asn1Error {
 	Error
 	kind   ErrorKind
 	object string
-	exact  string
-	expect string
+	msg    string
 }
 
 fn (er Asn1Error) msg() string {
-	msg := 'Error on ${er.object}: ${er.kind.str()} get: ${er.exact}, expected: ${er.expect}'
-	return msg
+	return 'Error on ${er.object}: ${er.kind.str()} with error ${er.msg}'
 }
 
-fn asn1_error(kind ErrorKind, obj string, exact string, expect string) &Asn1Error {
+fn asn1_error(kind ErrorKind, obj string, msg string) &Asn1Error {
 	return &Asn1Error{
 		kind:   kind
 		object: obj
-		exact:  exact
-		expect: expect
+		msg:    msg
 	}
 }

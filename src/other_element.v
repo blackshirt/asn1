@@ -14,6 +14,78 @@ mut:
 	tag Tag
 	// `content` is the value of a TLV. Its depends on the context.
 	content []u8
+	// Optional fields
+	inner_tag     ?Tag
+	mode          ?TaggedMode
+	default_value ?Element
+}
+
+pub fn RawElement.new(tag Tag, content []u8) !RawElement {
+	// universal class with constructed form only valid for sequence(of) and set(of) type.
+	if tag.class == .universal && tag.constructed {
+		if tag.number != int(TagType.sequence) && tag.number != int(TagType.set) {
+			return asn1_error(.invalid_tag_format, '${@METHOD}', 'required sequence or set number')
+		}
+	}
+	// otherwise, treats as a RawElement
+	return RawElement{
+		tag:     tag
+		content: content
+	}
+}
+
+// wrap into RawElement
+pub fn RawElement.from_element(el Element, cls TagClass, tagnum int, mode TaggedMode) !RawElement {
+	if cls == .universal {
+		return asn1_error(.unallowed_operation, '${@METHOD}', 'wrap with universal class is unallowed')
+	}
+	inner_form := el.tag().is_constructed()
+	constructed := if mode == .explicit { true } else { inner_form }
+	content := if mode == .explicit { encode_with_rule(el, .der)! } else { el.payload()! }
+
+	outer_tag := Tag.new(cls, constructed, tagnum)!
+	raw := RawElement{
+		tag:       outer_tag
+		content:   content
+		inner_tag: el.tag()
+		mode:      mode
+	}
+
+	return raw
+}
+
+pub fn (r RawElement) payload() ![]u8 {
+	return r.content
+}
+
+pub fn (mut r RawElement) set_mode_and_inner_tag(mode TaggedMode, inner_tag Tag) ! {
+	if r.mode != none {
+		return asn1_error(.unallowed_operation, '${@METHOD}', 'r.mode != none')
+	}
+	if r.inner_tag != none {
+		return asn1_error(.unallowed_operation, '${@METHOD}', 'r.inner_tag != none')
+	}
+	if r.tag.class == .universal {
+		return asn1_error(.unallowed_operation, '${@METHOD}', 'set on universal class is unallowed')
+	}
+	if mode == .explicit {
+		if !r.tag.constructed {
+			return asn1_error(.unmeet_requirement, '${@METHOD}', 'explicit on non-constructed',
+				'tag should constructed')
+		}
+		// check inner_tag
+		itt, _ := Tag.decode(r.content)!
+		if !itt.equal(inner_tag) {
+			return asn1_error(.unmeet_requirement, '${@METHOD}', 'supplied:${inner_tag}',
+				'${itt}')
+		}
+		r.mode = .explicit
+		r.inner_tag = inner_tag
+	}
+	if mode == .implicit {
+		r.mode = .implicit
+		r.inner_tag = inner_tag
+	}
 }
 
 // outer tag when its a wrapper.
@@ -21,31 +93,39 @@ pub fn (r RawElement) tag() Tag {
 	return r.tag
 }
 
-pub fn (r RawElement) inner_tag(expected Tag, mode TaggedMode) !Tag {
-	elem := r.inner_element(expected, mode)!
-	return elem.tag()
+pub fn (r RawElement) inner_tag() !Tag {
+	inner_tag := r.inner_tag or {
+		return asn1_error(.invalid_value, '${@METHOD}', ' r.inner_tag is not set')
+	}
+
+	return inner_tag
 }
 
-pub fn (r RawElement) inner_element(expected Tag, mode TaggedMode) !Element {
+pub fn (r RawElement) inner_element() !Element {
 	if r.tag.class == .universal {
-		return error('RawElement with universal class has no inner element')
+		return asn1_error(.unallowed_operation, '${@METHOD}', 'inner element from universal class is not availables')
 	}
+	mode := r.mode or { return asn1_error(.invalid_value, '${@METHOD}', ' r.mode is not set') }
+	inner_tag := r.inner_tag or {
+		return asn1_error(.invalid_value, '${@METHOD}', ' r.inner_tag is not set')
+	}
+
 	if mode == .explicit {
 		if !r.tag.constructed {
-			return error('Its possible to read inner within primitive element with explicit mode')
+			return asn1_error(.unmeet_requirement, '${@METHOD}', 'tag should be constructed when in explicit')
 		}
 	}
 	// in implicit, r.content is inner element content with inner tag
 	if mode == .implicit {
-		elem := parse_element(expected, r.content)!
+		elem := parse_element(inner_tag, r.content)!
 		return elem
 	}
 	// otherwise, treats it in explicit mode.
 	// read an inner tag from r.content
 	mut p := Parser.new(r.content)
 	tag := p.peek_tag()!
-	if !tag.equal(expected) {
-		return error('Get unexpected inner tag')
+	if !tag.equal(inner_tag) {
+		return asn1_error(.invalid_value, '${@METHOD}', 'gets unequal inner_tag')
 	}
 	el := p.read_tlv()!
 	// should finish
@@ -53,27 +133,11 @@ pub fn (r RawElement) inner_element(expected Tag, mode TaggedMode) !Element {
 	return el
 }
 
-pub fn (r RawElement) payload() ![]u8 {
-	return r.content
-}
-
-pub fn RawElement.new(tag Tag, content []u8) RawElement {
-	new := RawElement{
-		tag:     tag
-		content: content
-	}
-	return new
-}
-
 // ContextSpecific tagged type element.
 // Its always constructed (non-primitive).
 @[noinit]
 pub struct ContextElement {
-mut:
-	outer_tag Tag  // outer tag
-	content   []u8 // just content or serialized inner element, depends on mode.
-	inner_tag ?Tag
-	mode      ?TaggedMode // mode of tagged type
+	RawElement
 }
 
 // ContextElement.new creates a new tagged type of ContextElement from some element in inner.
@@ -81,35 +145,10 @@ pub fn ContextElement.new(tagnum int, mode TaggedMode, inner Element) !ContextEl
 	if tagnum < 0 || tagnum > max_tag_number {
 		return error('Unallowed tagnum was provided')
 	}
+	raw := RawElement.from_element(inner, .context_specific, tagnum, mode)!
 
-	// check universal-ity of the inner element
-	if inner.tag().class != .universal {
-		return asn1_error(.invalid_tag_class, 'ContextElement', '${inner.tag().class}',
-			'universal')
-	}
-	// gets inner form, was used if in implicit mode, or constructed in explicit mode.
-	inner_form := inner.tag().is_constructed()
-	constructed := if mode == .implicit { inner_form } else { true }
-	content := if mode == .implicit { inner.payload()! } else { encode_with_rule(inner, .der)! }
-
-	outer_tag := Tag.new(.context_specific, constructed, tagnum)!
-
-	ctx := ContextElement{
-		outer_tag: outer_tag
-		content:   content
-		inner_tag: inner.tag()
-		mode:      mode
-	}
+	ctx := ContextElement{raw}
 	return ctx
-}
-
-pub fn (mut ctx ContextElement) set_inner_tag(tag Tag) ! {
-	ctx.inner_tag = tag
-	ctx.check_inner_tag()!
-}
-
-pub fn (mut ctx ContextElement) set_mode(mode TaggedMode) {
-	ctx.mode = mode
 }
 
 fn (ctx ContextElement) check_inner_tag() ! {
@@ -126,7 +165,7 @@ fn (ctx ContextElement) check_inner_tag() ! {
 }
 
 pub fn (ctx ContextElement) tag() Tag {
-	return ctx.outer_tag
+	return ctx.tag
 }
 
 pub fn (ctx ContextElement) inner_tag() ?Tag {

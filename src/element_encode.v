@@ -240,7 +240,7 @@ fn wrap(el Element, cls TagClass, nunber int, mode TaggedMode) !Element {
 	// gets payload of the new element
 	content := if mode == .implicit { el.payload()! } else { encode_with_rule(el, .der)! }
 
-    // new tag 
+	// new tag
 	ntag := Tag.new(cls, constructed, tagnun)!
 	match cls {
 		.context_specific {
