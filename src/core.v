@@ -11,13 +11,6 @@ const tag_number_mask 	= 0x1f //  31, bits 1-5
 // vfmt on
 
 // Maximum number of bytes to represent tag number, includes the tag byte.
-// ASN.1 imposes no limit on the tag number, but the NIST Stable Implementation Agreements (1991)
-// and its European and Asian counterparts limit the size of tags to 16383.
-// see https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation
-// We impose limit on the tag number to be in range 0..16383.
-// Its big enough to accomodate and represent different of yours own tag number.
-// Its represents 2 bytes length where maximum bytes arrays to represent tag number
-// in multibyte (long) form is `[u8(0x1f), 0xff, 0x7f]` or 16383 in base 128.
 const max_tag_length = 3
 const max_tag_number = 16383
 
@@ -32,7 +25,14 @@ const max_universal_tagnumber = 255
 // ASN.1 Tag number can be represented in two form, the short form and the long form.
 // The short form for tag number below <= 30 and stored enough in single byte.
 // The long form for tag number > 30, and stored in two or more bytes.
-// See limit restriction comment above.
+//
+// ASN.1 imposes no limit on the tag number, but the NIST Stable Implementation Agreements (1991)
+// and its European and Asian counterparts limit the size of tags to 16383.
+// see https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation
+// We impose limit on the tag number to be in range 0..16383.
+// Its big enough to accomodate and represent different of yours own tag number.
+// Its represents 2 bytes length where maximum bytes arrays to represent tag number
+// in multibyte (long) form is `[u8(0x1f), 0xff, 0x7f]` or 16383 in base 128.
 @[noinit]
 pub struct Tag {
 mut:

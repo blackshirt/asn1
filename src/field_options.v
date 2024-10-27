@@ -9,7 +9,8 @@ const max_attributes_length = 5
 
 // Configuration format for field tagging.
 //
-// Currently, this configurations option support following string config, ie,
+// Currently, this configurations option support following string config, ie.
+//
 // - `class:number`, for wrapping the element with other non-universal class, for examole: `private:100`.
 // - `explicit` or `implicit` mode.
 // - `inner:5` the tag number of element being wrapped, should in UNIVERSAL class.

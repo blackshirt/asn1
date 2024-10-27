@@ -6,7 +6,8 @@ module asn1
 // The default tag of ASN.1 NULL type.
 pub const default_null_tag = Tag{.universal, false, int(TagType.null)}
 
-// ASN.1 NULL TYPE
+// ASN.1 UNIVERSAL CLASS OF NULL TYPE.
+//
 // The ASN.1 NULL type is a placeholder used when there is no value.
 // It's a simple, non-string type with the UNIVERSAL TAG number 5.
 // The NULL type can be used in situations where the presence of a type is important, but no concrete value is needed.

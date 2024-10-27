@@ -1113,7 +1113,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	has_default   <span class="token builtin">bool</span>
 	default_value <span class="token operator">?</span>Element
 <span class="token punctuation">}</span></code></pre>
-<p>Configuration format for field tagging.</p><p>Currently, this configurations option support following string config, ie,- <code>class:number</code>, for wrapping the element with other non-universal class, for examole: <code>private:100</code>.</p><ul><li><code>explicit</code> or <code>implicit</code> mode.</li><li><code>inner:5</code> the tag number of element being wrapped, should in UNIVERSAL class.</li><li><code>optional</code> tagging for element with OPTIONAL behaviour.</li><li><code>has_default</code> tagging for element with DEFAULT behaviour.</li></ul><p>Field options attributes handling.</p><p>FieldOptions is a structure to accomodate and allowing configures your complex structures through string or arrays of string stored in FieldOptions fields. For example, you can tagging your fields of some element with tagging like <code>@[context_specific:10; explicit; inner:5; optional]</code>. Its will be parsed and can be used to drive encoding or decoding of Element.</p>
+<p>Configuration format for field tagging.</p><p>Currently, this configurations option support following string config, ie.</p><ul><li><code>class:number</code>, for wrapping the element with other non-universal class, for examole: <code>private:100</code>.</li><li><code>explicit</code> or <code>implicit</code> mode.</li><li><code>inner:5</code> the tag number of element being wrapped, should in UNIVERSAL class.</li><li><code>optional</code> tagging for element with OPTIONAL behaviour.</li><li><code>has_default</code> tagging for element with DEFAULT behaviour.</li></ul><p>Field options attributes handling.</p><p>FieldOptions is a structure to accomodate and allowing configures your complex structures through string or arrays of string stored in FieldOptions fields. For example, you can tagging your fields of some element with tagging like <code>@[context_specific:10; explicit; inner:5; optional]</code>. Its will be parsed and can be used to drive encoding or decoding of Element.</p>
 
 </section>
 
@@ -1265,7 +1265,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>struct Null <a href="#Null">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">struct</span> <span class="token symbol">Null</span> <span class="token punctuation">{</span><span class="token punctuation">}</span></code></pre>
-<p>ASN.1 NULL TYPE The ASN.1 NULL type is a placeholder used when there is no value. It's a simple, non-string type with the UNIVERSAL TAG number 5. The NULL type can be used in situations where the presence of a type is important, but no concrete value is needed.</p>
+<p>ASN.1 UNIVERSAL CLASS OF NULL TYPE.</p><p>The ASN.1 NULL type is a placeholder used when there is no value. It's a simple, non-string type with the UNIVERSAL TAG number 5. The NULL type can be used in situations where the presence of a type is important, but no concrete value is needed.</p>
 
 </section>
 
@@ -1834,7 +1834,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	constructed <span class="token builtin">bool</span>
 	number      <span class="token builtin">int</span>
 <span class="token punctuation">}</span></code></pre>
-<p>ASN.1 Tag identifier handling.</p><p>Tag represents identifier of the ASN.1 element (object). ASN.1 Tag number can be represented in two form, the short form and the long form. The short form for tag number below &lt;= 30 and stored enough in single byte. The long form for tag number &gt; 30, and stored in two or more bytes. See limit restriction comment above.</p>
+<p>ASN.1 Tag identifier handling.</p><p>Tag represents identifier of the ASN.1 element (object). ASN.1 Tag number can be represented in two form, the short form and the long form. The short form for tag number below &lt;= 30 and stored enough in single byte. The long form for tag number &gt; 30, and stored in two or more bytes.</p><p>ASN.1 imposes no limit on the tag number, but the NIST Stable Implementation Agreements (1991) and its European and Asian counterparts limit the size of tags to 16383. see <a href="https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation">https://www.oss.com/asn1/resources/asn1-faq.html#tag-limitation</a> We impose limit on the tag number to be in range 0..16383. Its big enough to accomodate and represent different of yours own tag number. Its represents 2 bytes length where maximum bytes arrays to represent tag number in multibyte (long) form is <code>[u8(0x1f), 0xff, 0x7f]</code> or 16383 in base 128.</p>
 
 </section>
 
@@ -1979,7 +1979,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 27 Oct 2024 14:21:08</div>
+						<div class="footer">Powered by vdoc. Generated on: 27 Oct 2024 14:34:42</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
