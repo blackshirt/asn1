@@ -9,6 +9,7 @@ const max_oid_length = 128
 pub const default_oid_tag = Tag{.universal, false, int(TagType.oid)}
 
 // ASN.1 ObjectIdentifier type.
+//
 // The ASN. 1 OBJECT IDENTIFIER type is used when you need to provide a unique identifier.
 @[noinit]
 pub struct ObjectIdentifier {
@@ -114,7 +115,7 @@ fn (oid ObjectIdentifier) pack_into_bytes() ![]u8 {
 	return dst
 }
 
-pub fn ObjectIdentifier.parse(mut p Parser) !ObjectIdentifier {
+fn ObjectIdentifier.parse(mut p Parser) !ObjectIdentifier {
 	tag := p.read_tag()!
 	if !tag.equal(default_oid_tag) {
 		return error('Bad ObjectIdentifier tag')
@@ -127,7 +128,7 @@ pub fn ObjectIdentifier.parse(mut p Parser) !ObjectIdentifier {
 	return res
 }
 
-pub fn ObjectIdentifier.decode(src []u8) !(ObjectIdentifier, int) {
+fn ObjectIdentifier.decode(src []u8) !(ObjectIdentifier, int) {
 	return ObjectIdentifier.decode_with_rule(src, .der)!
 }
 

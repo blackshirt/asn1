@@ -272,7 +272,7 @@ pub fn (v Integer) as_i64() !i64 {
 }
 
 // parse tries to read and parse into Integer type or return error on fails.
-pub fn Integer.parse(mut p Parser) !Integer {
+fn Integer.parse(mut p Parser) !Integer {
 	tag := p.read_tag()!
 	if !tag.equal(default_integer_tag) {
 		return error('Get unexected non Integer tag')
@@ -288,7 +288,7 @@ pub fn Integer.parse(mut p Parser) !Integer {
 }
 
 // decode tries to decode bytes array into Integer type or error on fails
-pub fn Integer.decode(bytes []u8) !(Integer, int) {
+fn Integer.decode(bytes []u8) !(Integer, int) {
 	return Integer.decode_with_rule(bytes, 0, .der)!
 }
 

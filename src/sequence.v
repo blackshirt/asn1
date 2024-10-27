@@ -13,7 +13,7 @@ const max_sequence_bytes_length = (1 << 23 - 1) //
 const default_sequence_size 	= 64 // default size
 // vfmt on
 
-// SEQUENCE and SEQUENCE OF handling
+// ASN.1 UNIVERSAL CLASS OF SEQUENCE and SEQUENCE OF TYPE.
 //
 // https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der
 // These are two very different types.
@@ -96,7 +96,7 @@ pub fn (seq Sequence) fields() []Element {
 
 // parse tries to parse into Sequence from ongoing Parser p.
 // Uts return a parsed Sequence or error on fails.
-pub fn Sequence.parse(mut p Parser) !Sequence {
+fn Sequence.parse(mut p Parser) !Sequence {
 	tag := p.read_tag()!
 	if !tag.equal(default_sequence_tag) {
 		return error('Get non Sequence tag')
@@ -111,7 +111,7 @@ pub fn Sequence.parse(mut p Parser) !Sequence {
 // decode tries to decode bytes into Sequence.
 // Its return a decoded Sequence and next offset to read on
 // if possible, or return error on fails.
-pub fn Sequence.decode(bytes []u8) !(Sequence, int) {
+fn Sequence.decode(bytes []u8) !(Sequence, int) {
 	return Sequence.decode_with_rule(bytes, 0, .der)!
 }
 

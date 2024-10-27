@@ -6,7 +6,8 @@ module asn1
 // The default tag of ASN.1 ENUMERATED type.
 const default_enumerated_tag = Tag{.universal, false, int(TagType.enumerated)}
 
-// ENUMERATED.
+// ASN.1 ENUMERATED TYPE.
+//
 // Enumerated type treated as ordinary integer, only differs on tag value.
 // The encoding of an enumerated value shall be that of the integer value with which it is associated.
 // NOTE: It is primitive.
@@ -27,10 +28,12 @@ pub fn Enumerated.new(val int) Enumerated {
 	}
 }
 
+// The tag of enumerated element.
 pub fn (e Enumerated) tag() Tag {
 	return default_enumerated_tag
 }
 
+// The payload of the enumerated element.
 pub fn (e Enumerated) payload() ![]u8 {
 	return e.payload_with_rule(.der)!
 }
@@ -57,7 +60,7 @@ fn Enumerated.from_bytes(bytes []u8) !Enumerated {
 }
 
 // parse into Enumerated type from parser p.
-pub fn Enumerated.parse(mut p Parser) !Enumerated {
+fn Enumerated.parse(mut p Parser) !Enumerated {
 	tag := p.read_tag()!
 	if !tag.equal(default_enumerated_tag) {
 		return error('Bad Enumerated tag')
@@ -70,7 +73,7 @@ pub fn Enumerated.parse(mut p Parser) !Enumerated {
 	return res
 }
 
-pub fn Enumerated.decode(src []u8) !(Enumerated, int) {
+fn Enumerated.decode(src []u8) !(Enumerated, int) {
 	return Enumerated.decode_with_rule(src, .der)!
 }
 
@@ -126,7 +129,7 @@ fn (e Enumerated) enumerated_len() int {
 }
 
 // Utility function
-
+//
 // valid_bytes validates bytes meets some requirement for BER/DER encoding.
 fn valid_bytes(src []u8, signed bool) bool {
 	// Requirement for der encoding

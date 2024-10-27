@@ -70,7 +70,7 @@ fn GeneralString.from_bytes(b []u8) !GeneralString {
 }
 
 // parse tries to read into GeneralString from parser p or return error on fails.
-pub fn GeneralString.parse(mut p Parser) !GeneralString {
+fn GeneralString.parse(mut p Parser) !GeneralString {
 	tag := p.read_tag()!
 	if !tag.equal(default_generalstring_tag) {
 		return error('Bad GeneralString tag')
@@ -84,7 +84,7 @@ pub fn GeneralString.parse(mut p Parser) !GeneralString {
 }
 
 // decode tries to decode bytes array into GeneralString or return error on fails.
-pub fn GeneralString.decode(src []u8) !(GeneralString, int) {
+fn GeneralString.decode(src []u8) !(GeneralString, int) {
 	return GeneralString.decode_with_rule(src, .der)!
 }
 

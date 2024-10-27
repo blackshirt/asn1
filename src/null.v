@@ -32,7 +32,7 @@ fn (n Null) str() string {
 }
 
 // `Null.parse` tries to read into Null type from ongoing parser.
-pub fn Null.parse(mut p Parser) !Null {
+fn Null.parse(mut p Parser) !Null {
 	tag := p.read_tag()!
 	if !tag.equal(default_null_tag) {
 		return error('Get unexpected null tag')
@@ -47,7 +47,7 @@ pub fn Null.parse(mut p Parser) !Null {
 }
 
 // Null.decode read Null from bytes.
-pub fn Null.decode(bytes []u8) !(Null, int) {
+fn Null.decode(bytes []u8) !(Null, int) {
 	tag, length_pos := Tag.decode(bytes)!
 	if !tag.equal(default_null_tag) {
 		return error('Null: get unexpected tag')

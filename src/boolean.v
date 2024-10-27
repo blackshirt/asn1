@@ -6,7 +6,7 @@ module asn1
 // The default tag of ASN.1 BOOLEAN type.
 pub const default_boolean_tag = Tag{.universal, false, int(TagType.boolean)}
 
-// ASN.1 BOOLEAN
+// ASN.1 UNIVERSAL CLASS OF BOOLEAN TYPE.
 //
 // A Boolean value can take true or false.
 // ASN.1 DER encoding restricts encoding of boolean true value into 0xff
@@ -75,7 +75,7 @@ fn parse_boolean(mut p Parser) !Boolean {
 }
 
 // parse tries to read a Boolean type from parser or return error on fails
-pub fn Boolean.parse(mut p Parser) !Boolean {
+fn Boolean.parse(mut p Parser) !Boolean {
 	tag := p.read_tag()!
 	if !tag.equal(default_boolean_tag) {
 		return error('Get unexpected non boolean tag')
@@ -148,7 +148,7 @@ fn (b Boolean) value_with_rule(rule EncodingRule) bool {
 }
 
 // decode tries to decode bytes array into Booelan type or error on fails.
-pub fn Boolean.decode(src []u8) !(Boolean, int) {
+fn Boolean.decode(src []u8) !(Boolean, int) {
 	return Boolean.decode_with_rule(src, 0, .der)!
 }
 

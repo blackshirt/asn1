@@ -7,7 +7,7 @@ const printable_symbols = r"(')+,-./:=?".bytes()
 // The default tag of ASN.1 PRINTABLESTRING type.
 pub const default_printablestring_tag = Tag{.universal, false, int(TagType.printablestring)}
 
-// ASN.1 PRINTABLESTRING TYPE.
+// ASN.1 UNIVERSAL CLASS OF PRINTABLESTRING TYPE.
 //
 // PrintableString consists of:
 // Latin capital letters A, B, ... Z
@@ -53,7 +53,7 @@ fn PrintableString.from_bytes(src []u8) !PrintableString {
 }
 
 // parse an PrintableString from on going Parser
-pub fn PrintableString.parse(mut p Parser) !PrintableString {
+fn PrintableString.parse(mut p Parser) !PrintableString {
 	tag := p.read_tag()!
 	if !tag.equal(default_printablestring_tag) {
 		return error('Unexpected non-printablestring tag')
@@ -67,7 +67,7 @@ pub fn PrintableString.parse(mut p Parser) !PrintableString {
 	return pst
 }
 
-pub fn PrintableString.decode(src []u8) !(PrintableString, int) {
+fn PrintableString.decode(src []u8) !(PrintableString, int) {
 	return PrintableString.decode_with_rule(src, .der)!
 }
 

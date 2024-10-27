@@ -8,7 +8,7 @@ pub const default_utctime_tag = Tag{.universal, false, int(TagType.utctime)}
 // The default tag of ASN.1 GENERALIZEDTIME type.
 pub const default_generalizedtime_tag = Tag{.universal, false, int(TagType.generalizedtime)}
 
-// UtcTime
+// ASN.1 UNIVERSAL CLASS OF UTCTIME TYPE.
 // -------
 // For this time, UtcTime represented by simple string with format "YYMMDDhhmmssZ"
 // - the six digits YYMMDD where YY is the two low-order digits of the Christian year,
@@ -77,7 +77,7 @@ fn (utc UtcTime) payload_with_rule(rule EncodingRule) ![]u8 {
 	return utc.value.bytes()
 }
 
-pub fn UtcTime.parse(mut p Parser) !UtcTime {
+fn UtcTime.parse(mut p Parser) !UtcTime {
 	tag := p.read_tag()!
 	if !tag.equal(default_utctime_tag) {
 		return error('Bad UtcTime tag')
@@ -91,7 +91,7 @@ pub fn UtcTime.parse(mut p Parser) !UtcTime {
 }
 
 // UtcTime.decode tries to decode bytes into UtcTime with DER rule
-pub fn UtcTime.decode(src []u8) !(UtcTime, int) {
+fn UtcTime.decode(src []u8) !(UtcTime, int) {
 	return UtcTime.decode_with_rule(src, .der)!
 }
 
@@ -167,7 +167,7 @@ fn valid_time_contents(s string) bool {
 	return s.ends_with('Z') && s.contains_any('0123456789')
 }
 
-// GeneralizedTime.
+// ASN.1 UNIVERSAL CLASS OF GENERALIZEDTIME TYPE.
 //
 // In DER Encoding scheme, GeneralizedTime should :
 // - The encoding shall terminate with a "Z"
@@ -213,7 +213,7 @@ fn GeneralizedTime.from_bytes(b []u8) !GeneralizedTime {
 }
 
 // GeneralizedTime.parse tries to parse throught ongoing Parser into GeneralizedTime
-pub fn GeneralizedTime.parse(mut p Parser) !GeneralizedTime {
+fn GeneralizedTime.parse(mut p Parser) !GeneralizedTime {
 	tag := p.read_tag()!
 	if !tag.equal(default_generalizedtime_tag) {
 		return error('Bad GeneralizedTime tag')
@@ -226,7 +226,7 @@ pub fn GeneralizedTime.parse(mut p Parser) !GeneralizedTime {
 	return res
 }
 
-pub fn GeneralizedTime.decode(bytes []u8) !(GeneralizedTime, int) {
+fn GeneralizedTime.decode(bytes []u8) !(GeneralizedTime, int) {
 	return GeneralizedTime.decode_with_rule(bytes, .der)!
 }
 

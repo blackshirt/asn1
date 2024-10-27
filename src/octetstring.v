@@ -7,7 +7,8 @@ module asn1
 pub const default_octetstring_tag = Tag{.universal, false, int(TagType.octetstring)}
 const max_octetstring_length = 1 << 32 - 1
 
-// OCTETSTRING
+// ASN.1 UNIVERSAL TYPE OF OCTETSTRING.
+//
 // The ASN.1 OCTET STRING type contains arbitrary strings of octets.
 // This type is very similar to BIT STRING, except that all values must be an integral number of eight bits.
 // You can use constraints to specify a maximum length for an OCTET STRING type.
@@ -50,7 +51,7 @@ pub fn OctetString.new(s string) !OctetString {
 }
 
 // parse an OctetString from ongoing Parser
-pub fn OctetString.parse(mut p Parser) !OctetString {
+fn OctetString.parse(mut p Parser) !OctetString {
 	tag := p.read_tag()!
 	if !tag.equal(default_octetstring_tag) {
 		return error('Bad octetstring tag')
@@ -64,7 +65,7 @@ pub fn OctetString.parse(mut p Parser) !OctetString {
 	return oct
 }
 
-pub fn OctetString.decode(src []u8) !(OctetString, int) {
+fn OctetString.decode(src []u8) !(OctetString, int) {
 	return OctetString.decode_with_rule(src, .der)!
 }
 

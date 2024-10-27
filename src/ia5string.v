@@ -44,7 +44,7 @@ fn (v IA5String) str() string {
 	return 'IA5String: (${v.value})'
 }
 
-pub fn IA5String.parse(mut p Parser) !IA5String {
+fn IA5String.parse(mut p Parser) !IA5String {
 	tag := p.read_tag()!
 	if !tag.equal(default_ia5string_tag) {
 		return error('Bad Ia5String tag')
@@ -57,7 +57,7 @@ pub fn IA5String.parse(mut p Parser) !IA5String {
 	return res
 }
 
-pub fn IA5String.decode(bytes []u8) !(IA5String, int) {
+fn IA5String.decode(bytes []u8) !(IA5String, int) {
 	bs, next := IA5String.decode_with_rule(bytes, .der)!
 	return bs, next
 }

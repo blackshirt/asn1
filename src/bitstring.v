@@ -5,7 +5,7 @@ module asn1
 
 import arrays
 
-// ASN.1 BIT STRING type handling
+// ASN.1 UNIVERSAL CLASS OF BITSTRING TYPE.
 //
 // The BIT STRING type denotes an arbitrary string of bits (ones and zeroes).
 // A BIT STRING value can have any length, including zero. This type is a string type.
@@ -39,7 +39,7 @@ pub fn (bs BitString) payload() ![]u8 {
 }
 
 // parse BitString using ongoing Parser.
-pub fn BitString.parse(mut p Parser) !BitString {
+fn BitString.parse(mut p Parser) !BitString {
 	tag := p.read_tag()!
 	if !tag.equal(default_bitstring_tag) {
 		return error('Get unexpected non bitstring tag')
@@ -55,7 +55,7 @@ pub fn BitString.parse(mut p Parser) !BitString {
 	return bs
 }
 
-pub fn BitString.decode(bytes []u8) !(BitString, int) {
+fn BitString.decode(bytes []u8) !(BitString, int) {
 	bs, next := BitString.decode_with_rule(bytes, .der)!
 	return bs, next
 }

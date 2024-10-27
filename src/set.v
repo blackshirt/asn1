@@ -8,7 +8,7 @@ pub const default_set_tag = Tag{.universal, true, int(TagType.set)}
 const default_set_size = 64
 const max_set_size = 255
 
-// SET and SET OF
+// ASN.1 UNIVERSAL SET and SET OF TYPE.
 //
 // SET and SET OF contains an unordered series of fields of one or more types.
 // This differs from a SEQUENCE which contains an ordered list.
@@ -86,11 +86,11 @@ pub fn (set Set) fields() []Element {
 	return set.fields
 }
 
-pub fn Set.parse(mut p Parser) !Set {
+fn Set.parse(mut p Parser) !Set {
 	return error('not yet implemented')
 }
 
-pub fn Set.decode(bytes []u8) !(Set, int) {
+fn Set.decode(bytes []u8) !(Set, int) {
 	return Set.decode_with_rule(bytes, 0, .der)!
 }
 

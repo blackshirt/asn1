@@ -288,14 +288,6 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 
 </section>
 
-		<section id="BitString.decode" class="doc-node">
-			<div class="title"><h2>fn BitString.decode <a href="#BitString.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> BitString<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>bytes <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>BitString<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-
-
-</section>
-
 		<section id="BitString.from_binary_string" class="doc-node">
 			<div class="title"><h2>fn BitString.from_binary_string <a href="#BitString.from_binary_string">#</a></h2></div>
 <pre class="signature">
@@ -317,35 +309,11 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 
 </section>
 
-		<section id="BitString.parse" class="doc-node">
-			<div class="title"><h2>fn BitString.parse <a href="#BitString.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> BitString<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>BitString</code></pre>
-<p>parse BitString using ongoing Parser.</p>
-
-</section>
-
-		<section id="Boolean.decode" class="doc-node">
-			<div class="title"><h2>fn Boolean.decode <a href="#Boolean.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Boolean<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Boolean<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-<p>decode tries to decode bytes array into Booelan type or error on fails.</p>
-
-</section>
-
 		<section id="Boolean.new" class="doc-node">
 			<div class="title"><h2>fn Boolean.new <a href="#Boolean.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> Boolean<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>value <span class="token builtin">bool</span><span class="token punctuation">)</span> Boolean</code></pre>
 <p>new creates a new Boolean value from true or false value. By default, when you pass true, its would store 0xff as underlying byte value. If you want more to be relaxed, see from_u8 to creates with another byte value.</p>
-
-</section>
-
-		<section id="Boolean.parse" class="doc-node">
-			<div class="title"><h2>fn Boolean.parse <a href="#Boolean.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Boolean<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>Boolean</code></pre>
-<p>parse tries to read a Boolean type from parser or return error on fails</p>
 
 </section>
 
@@ -398,27 +366,11 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="Enumerated.decode" class="doc-node">
-			<div class="title"><h2>fn Enumerated.decode <a href="#Enumerated.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Enumerated<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Enumerated<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-
-
-</section>
-
 		<section id="Enumerated.new" class="doc-node">
 			<div class="title"><h2>fn Enumerated.new <a href="#Enumerated.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> Enumerated<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>val <span class="token builtin">int</span><span class="token punctuation">)</span> Enumerated</code></pre>
 <p>new creates a new Enumerated from int value.</p>
-
-</section>
-
-		<section id="Enumerated.parse" class="doc-node">
-			<div class="title"><h2>fn Enumerated.parse <a href="#Enumerated.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Enumerated<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>Enumerated</code></pre>
-<p>parse into Enumerated type from parser p.</p>
 
 </section>
 
@@ -438,35 +390,11 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="GeneralString.decode" class="doc-node">
-			<div class="title"><h2>fn GeneralString.decode <a href="#GeneralString.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> GeneralString<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>GeneralString<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-<p>decode tries to decode bytes array into GeneralString or return error on fails.</p>
-
-</section>
-
 		<section id="GeneralString.new" class="doc-node">
 			<div class="title"><h2>fn GeneralString.new <a href="#GeneralString.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> GeneralString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>GeneralString</code></pre>
 <p>Todo: proper check GeneralString validationnew creates GeneralString from string s</p>
-
-</section>
-
-		<section id="GeneralString.parse" class="doc-node">
-			<div class="title"><h2>fn GeneralString.parse <a href="#GeneralString.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> GeneralString<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>GeneralString</code></pre>
-<p>parse tries to read into GeneralString from parser p or return error on fails.</p>
-
-</section>
-
-		<section id="GeneralizedTime.decode" class="doc-node">
-			<div class="title"><h2>fn GeneralizedTime.decode <a href="#GeneralizedTime.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> GeneralizedTime<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>bytes <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>GeneralizedTime<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-
 
 </section>
 
@@ -478,43 +406,11 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="GeneralizedTime.parse" class="doc-node">
-			<div class="title"><h2>fn GeneralizedTime.parse <a href="#GeneralizedTime.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> GeneralizedTime<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>GeneralizedTime</code></pre>
-<p>GeneralizedTime.parse tries to parse throught ongoing Parser into GeneralizedTime</p>
-
-</section>
-
-		<section id="IA5String.decode" class="doc-node">
-			<div class="title"><h2>fn IA5String.decode <a href="#IA5String.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> IA5String<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>bytes <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>IA5String<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-
-
-</section>
-
 		<section id="IA5String.new" class="doc-node">
 			<div class="title"><h2>fn IA5String.new <a href="#IA5String.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> IA5String<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>IA5String</code></pre>
 <p>new creates IA5String from string s.</p>
-
-</section>
-
-		<section id="IA5String.parse" class="doc-node">
-			<div class="title"><h2>fn IA5String.parse <a href="#IA5String.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> IA5String<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>IA5String</code></pre>
-
-
-</section>
-
-		<section id="Integer.decode" class="doc-node">
-			<div class="title"><h2>fn Integer.decode <a href="#Integer.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Integer<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>bytes <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Integer<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-<p>decode tries to decode bytes array into Integer type or error on fails</p>
 
 </section>
 
@@ -558,14 +454,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="Integer.parse" class="doc-node">
-			<div class="title"><h2>fn Integer.parse <a href="#Integer.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Integer<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>Integer</code></pre>
-<p>parse tries to read and parse into Integer type or return error on fails.</p>
-
-</section>
-
 		<section id="Length.from_bytes" class="doc-node">
 			<div class="title"><h2>fn Length.from_bytes <a href="#Length.from_bytes">#</a></h2></div>
 <pre class="signature">
@@ -582,14 +470,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="Null.decode" class="doc-node">
-			<div class="title"><h2>fn Null.decode <a href="#Null.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Null<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>bytes <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Null<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-<p>Null.decode read Null from bytes.</p>
-
-</section>
-
 		<section id="Null.new" class="doc-node">
 			<div class="title"><h2>fn Null.new <a href="#Null.new">#</a></h2></div>
 <pre class="signature">
@@ -598,35 +478,11 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="Null.parse" class="doc-node">
-			<div class="title"><h2>fn Null.parse <a href="#Null.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Null<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>Null</code></pre>
-<p><code>Null.parse</code> tries to read into Null type from ongoing parser.</p>
-
-</section>
-
 		<section id="NumericString.new" class="doc-node">
 			<div class="title"><h2>fn NumericString.new <a href="#NumericString.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> NumericString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>NumericString</code></pre>
 <p>NumericString.new creates new NumericString from string s</p>
-
-</section>
-
-		<section id="NumericString.parse" class="doc-node">
-			<div class="title"><h2>fn NumericString.parse <a href="#NumericString.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> NumericString<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>NumericString</code></pre>
-
-
-</section>
-
-		<section id="ObjectIdentifier.decode" class="doc-node">
-			<div class="title"><h2>fn ObjectIdentifier.decode <a href="#ObjectIdentifier.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> ObjectIdentifier<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>ObjectIdentifier<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-
 
 </section>
 
@@ -646,35 +502,11 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="ObjectIdentifier.parse" class="doc-node">
-			<div class="title"><h2>fn ObjectIdentifier.parse <a href="#ObjectIdentifier.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> ObjectIdentifier<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>ObjectIdentifier</code></pre>
-
-
-</section>
-
-		<section id="OctetString.decode" class="doc-node">
-			<div class="title"><h2>fn OctetString.decode <a href="#OctetString.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> OctetString<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>OctetString<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-
-
-</section>
-
 		<section id="OctetString.new" class="doc-node">
 			<div class="title"><h2>fn OctetString.new <a href="#OctetString.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> OctetString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>OctetString</code></pre>
 <p>OctetString.new creates new octet string</p>
-
-</section>
-
-		<section id="OctetString.parse" class="doc-node">
-			<div class="title"><h2>fn OctetString.parse <a href="#OctetString.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> OctetString<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>OctetString</code></pre>
-<p>parse an OctetString from ongoing Parser</p>
 
 </section>
 
@@ -694,27 +526,11 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="PrintableString.decode" class="doc-node">
-			<div class="title"><h2>fn PrintableString.decode <a href="#PrintableString.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> PrintableString<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>PrintableString<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-
-
-</section>
-
 		<section id="PrintableString.new" class="doc-node">
 			<div class="title"><h2>fn PrintableString.new <a href="#PrintableString.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> PrintableString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>PrintableString</code></pre>
 
-
-</section>
-
-		<section id="PrintableString.parse" class="doc-node">
-			<div class="title"><h2>fn PrintableString.parse <a href="#PrintableString.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> PrintableString<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>PrintableString</code></pre>
-<p>parse an PrintableString from on going Parser</p>
 
 </section>
 
@@ -750,14 +566,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="Sequence.decode" class="doc-node">
-			<div class="title"><h2>fn Sequence.decode <a href="#Sequence.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Sequence<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>bytes <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Sequence<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-<p>decode tries to decode bytes into Sequence. Its return a decoded Sequence and next offset to read on if possible, or return error on fails.</p>
-
-</section>
-
 		<section id="Sequence.from_list" class="doc-node">
 			<div class="title"><h2>fn Sequence.from_list <a href="#Sequence.from_list">#</a></h2></div>
 <pre class="signature">
@@ -771,14 +579,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">fn</span> Sequence<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Sequence</code></pre>
 <p>new creates new Sequence with default size</p>
-
-</section>
-
-		<section id="Sequence.parse" class="doc-node">
-			<div class="title"><h2>fn Sequence.parse <a href="#Sequence.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Sequence<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>Sequence</code></pre>
-<p>parse tries to parse into Sequence from ongoing Parser p. Uts return a parsed Sequence or error on fails.</p>
 
 </section>
 
@@ -798,27 +598,11 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="Set.decode" class="doc-node">
-			<div class="title"><h2>fn Set.decode <a href="#Set.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Set<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>bytes <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Set<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-
-
-</section>
-
 		<section id="Set.new" class="doc-node">
 			<div class="title"><h2>fn Set.new <a href="#Set.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> Set<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Set</code></pre>
 <p>creates a new Set with default size</p>
-
-</section>
-
-		<section id="Set.parse" class="doc-node">
-			<div class="title"><h2>fn Set.parse <a href="#Set.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Set<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>Set</code></pre>
-
 
 </section>
 
@@ -854,35 +638,11 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="UtcTime.decode" class="doc-node">
-			<div class="title"><h2>fn UtcTime.decode <a href="#UtcTime.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> UtcTime<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>UtcTime<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-<p>UtcTime.decode tries to decode bytes into UtcTime with DER rule</p>
-
-</section>
-
 		<section id="UtcTime.new" class="doc-node">
 			<div class="title"><h2>fn UtcTime.new <a href="#UtcTime.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> UtcTime<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>UtcTime</code></pre>
 <p>new_utctime creates new UtcTime from string s.</p>
-
-</section>
-
-		<section id="UtcTime.parse" class="doc-node">
-			<div class="title"><h2>fn UtcTime.parse <a href="#UtcTime.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> UtcTime<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>UtcTime</code></pre>
-
-
-</section>
-
-		<section id="Utf8String.decode" class="doc-node">
-			<div class="title"><h2>fn Utf8String.decode <a href="#Utf8String.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Utf8String<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>Utf8String<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-
 
 </section>
 
@@ -898,14 +658,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn Utf8String.new <a href="#Utf8String.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> Utf8String<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>Utf8String</code></pre>
-
-
-</section>
-
-		<section id="Utf8String.parse" class="doc-node">
-			<div class="title"><h2>fn Utf8String.parse <a href="#Utf8String.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> Utf8String<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>Utf8String</code></pre>
 
 
 </section>
@@ -1207,7 +959,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	data <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span>
 	pad  <span class="token builtin">u8</span> <span class="token comment">// numbers of unused bits</span>
 <span class="token punctuation">}</span></code></pre>
-<p>ASN.1 BIT STRING type handling</p><p>The BIT STRING type denotes an arbitrary string of bits (ones and zeroes). A BIT STRING value can have any length, including zero. This type is a string type. BIT STRING, OCTET STRING, UTCTime, GeneralizedTime, and the various string types can use either primitive encoding or constructed encoding, at the sender’s discretion-- in BER. However, in DER all types that have an encoding choice between primitive and constructed must use the primitive encoding. DER restricts the encoding to primitive only. The same applies for BITSTRING. ie, For BIT STRING and OCTET STRING types, DER does not allow the constructed form (breaking a string into multiple TLVs) or the indefinite length form.</p>
+<p>ASN.1 UNIVERSAL CLASS OF BITSTRING TYPE.</p><p>The BIT STRING type denotes an arbitrary string of bits (ones and zeroes). A BIT STRING value can have any length, including zero. This type is a string type. BIT STRING, OCTET STRING, UTCTime, GeneralizedTime, and the various string types can use either primitive encoding or constructed encoding, at the sender’s discretion-- in BER. However, in DER all types that have an encoding choice between primitive and constructed must use the primitive encoding. DER restricts the encoding to primitive only. The same applies for BITSTRING. ie, For BIT STRING and OCTET STRING types, DER does not allow the constructed form (breaking a string into multiple TLVs) or the indefinite length form.</p>
 
 </section>
 
@@ -1237,7 +989,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	<span class="token comment">// true value others than 0xff, ie., non-null byte representing true value.</span>
 	value <span class="token builtin">u8</span>
 <span class="token punctuation">}</span></code></pre>
-<p>ASN.1 BOOLEAN</p><p>A Boolean value can take true or false. ASN.1 DER encoding restricts encoding of boolean true value into 0xff and otherwise, encodes into zero (0x00) for false value. The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.</p>
+<p>ASN.1 UNIVERSAL CLASS OF BOOLEAN TYPE.</p><p>A Boolean value can take true or false. ASN.1 DER encoding restricts encoding of boolean true value into 0xff and otherwise, encodes into zero (0x00) for false value. The encoding of a boolean value shall be primitive. The contents octets shall consist of a single octet.</p>
 
 </section>
 
@@ -1300,7 +1052,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <span class="token keyword">pub</span><span class="token punctuation">:</span>
 	value <span class="token builtin">int</span>
 <span class="token punctuation">}</span></code></pre>
-<p>ENUMERATED. Enumerated type treated as ordinary integer, only differs on tag value. The encoding of an enumerated value shall be that of the integer value with which it is associated.</p><p>Note: It is primitive.</p>
+<p>ASN.1 ENUMERATED TYPE.</p><p>Enumerated type treated as ordinary integer, only differs on tag value. The encoding of an enumerated value shall be that of the integer value with which it is associated.</p><p>Note: It is primitive.</p>
 
 </section>
 
@@ -1308,7 +1060,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (Enumerated) tag <a href="#Enumerated.tag">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>e Enumerated<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
-
+<p>The tag of enumerated element.</p>
 
 </section>
 
@@ -1316,7 +1068,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (Enumerated) payload <a href="#Enumerated.payload">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>e Enumerated<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
-
+<p>The payload of the enumerated element.</p>
 
 </section>
 
@@ -1400,7 +1152,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <span class="token keyword">pub</span><span class="token punctuation">:</span>
 	value <span class="token builtin">string</span>
 <span class="token punctuation">}</span></code></pre>
-<p>GeneralizedTime.</p><p>In DER Encoding scheme, GeneralizedTime should :- The encoding shall terminate with a "Z"</p><ul><li>The seconds element shall always be present</li><li>The fractional-seconds elements, if present, shall omit all trailing zeros;</li><li>if the elements correspond to 0, they shall be wholly omitted, and the decimal point element also shall be omitted</li></ul><p>GeneralizedTime values MUST be:- expressed in Greenwich Mean Time (Zulu) and MUST include seconds(i.e., times are <code>YYYYMMDDHHMMSSZ</code>), even where the number of seconds is zero.- GeneralizedTime values MUST NOT include fractional seconds.</p>
+<p>ASN.1 UNIVERSAL CLASS OF GENERALIZEDTIME TYPE.</p><p>In DER Encoding scheme, GeneralizedTime should :- The encoding shall terminate with a "Z"</p><ul><li>The seconds element shall always be present</li><li>The fractional-seconds elements, if present, shall omit all trailing zeros;</li><li>if the elements correspond to 0, they shall be wholly omitted, and the decimal point element also shall be omitted</li></ul><p>GeneralizedTime values MUST be:- expressed in Greenwich Mean Time (Zulu) and MUST include seconds(i.e., times are <code>YYYYMMDDHHMMSSZ</code>), even where the number of seconds is zero.- GeneralizedTime values MUST NOT include fractional seconds.</p>
 
 </section>
 
@@ -1561,7 +1313,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <span class="token keyword">mut</span><span class="token punctuation">:</span>
 	value <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
 <span class="token punctuation">}</span></code></pre>
-<p>ASN.1 ObjectIdentifier type. The ASN. 1 OBJECT IDENTIFIER type is used when you need to provide a unique identifier.</p>
+<p>ASN.1 ObjectIdentifier type.</p><p>The ASN. 1 OBJECT IDENTIFIER type is used when you need to provide a unique identifier.</p>
 
 </section>
 
@@ -1597,7 +1349,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <span class="token keyword">pub</span><span class="token punctuation">:</span>
 	value <span class="token builtin">string</span>
 <span class="token punctuation">}</span></code></pre>
-<p>OCTETSTRING The ASN.1 OCTET STRING type contains arbitrary strings of octets. This type is very similar to BIT STRING, except that all values must be an integral number of eight bits. You can use constraints to specify a maximum length for an OCTET STRING type.</p>
+<p>ASN.1 UNIVERSAL TYPE OF OCTETSTRING.</p><p>The ASN.1 OCTET STRING type contains arbitrary strings of octets. This type is very similar to BIT STRING, except that all values must be an integral number of eight bits. You can use constraints to specify a maximum length for an OCTET STRING type.</p>
 
 </section>
 
@@ -1742,14 +1494,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="Parser.read_element" class="doc-node">
-			<div class="title"><h2>fn (Parser) read_element <a href="#Parser.read_element">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> read_element<span class="token punctuation">[</span><span class="token builtin">T</span><span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">T</span></code></pre>
-<p>read_element read an element T from the current parser.</p><p>Note: somes builtin have not this method.</p>
-
-</section>
-
 		<section id="Parser.read_tlv" class="doc-node">
 			<div class="title"><h2>fn (Parser) read_tlv <a href="#Parser.read_tlv">#</a></h2></div>
 <pre class="signature">
@@ -1782,7 +1526,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <span class="token keyword">pub</span><span class="token punctuation">:</span>
 	value <span class="token builtin">string</span>
 <span class="token punctuation">}</span></code></pre>
-<p>ASN.1 PRINTABLESTRING TYPE.</p><p>PrintableString consists of: Latin capital letters A, B, ... Z Latin small letters a, b, ... z Digits 0, 1, ... 9 symbols:  (space) ' ( ) + , - . / : = ?</p>
+<p>ASN.1 UNIVERSAL CLASS OF PRINTABLESTRING TYPE.</p><p>PrintableString consists of: Latin capital letters A, B, ... Z Latin small letters a, b, ... z Digits 0, 1, ... 9 symbols:  (space) ' ( ) + , - . / : = ?</p>
 
 </section>
 
@@ -1939,7 +1683,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	<span class="token comment">// fields is the elements of the sequence</span>
 	fields <span class="token punctuation">[</span><span class="token punctuation">]</span>Element
 <span class="token punctuation">}</span></code></pre>
-<p>SEQUENCE and SEQUENCE OF handling</p><p><a href="https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der">https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der</a> These are two very different types. A SEQUENCE is equivalent to “struct” in most programming languages. It holds a fixed number of fields of different types. A SEQUENCE OF, holds an arbitrary number of fields of a single type. This is analogous to an array or a list in a programming language. Sequence structure can represents both SEQUENCE and SEQUENCE OF type. The encoding of a sequence value shall be constructed. in DER encoded of SEQUENCE or SET, never encode a default value.</p>
+<p>ASN.1 UNIVERSAL CLASS OF SEQUENCE and SEQUENCE OF TYPE.</p><p><a href="https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der">https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der</a> These are two very different types. A SEQUENCE is equivalent to “struct” in most programming languages. It holds a fixed number of fields of different types. A SEQUENCE OF, holds an arbitrary number of fields of a single type. This is analogous to an array or a list in a programming language. Sequence structure can represents both SEQUENCE and SEQUENCE OF type. The encoding of a sequence value shall be constructed. in DER encoded of SEQUENCE or SET, never encode a default value.</p>
 
 </section>
 
@@ -2023,7 +1767,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	<span class="token comment">// fields is the elements of the set</span>
 	fields <span class="token punctuation">[</span><span class="token punctuation">]</span>Element
 <span class="token punctuation">}</span></code></pre>
-<p>SET and SET OF</p><p>SET and SET OF contains an unordered series of fields of one or more types. This differs from a SEQUENCE which contains an ordered list. in DER encoding, SET types elements are sorted into tag order, and, for SET OF types elements are sorted into ascending order of encoding.</p>
+<p>ASN.1 UNIVERSAL SET and SET OF TYPE.</p><p>SET and SET OF contains an unordered series of fields of one or more types. This differs from a SEQUENCE which contains an ordered list. in DER encoding, SET types elements are sorted into tag order, and, for SET OF types elements are sorted into ascending order of encoding.</p>
 
 </section>
 
@@ -2150,7 +1894,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <span class="token keyword">pub</span><span class="token punctuation">:</span>
 	value <span class="token builtin">string</span>
 <span class="token punctuation">}</span></code></pre>
-<h2>UtcTime</h2><p>For this time, UtcTime represented by simple string with format "YYMMDDhhmmssZ"- the six digits YYMMDD where YY is the two low-order digits of the Christian year,(RFC 5280 defines it as a range from 1950 to 2049 for X.509), MM is the month (counting January as 01), and DD is the day of the month (01 to 31).- the four digits hhmm where hh is hour (00 to 23) and mm is minutes (00 to 59); (SEE NOTE BELOW)</p><ul><li>the six digits hhmmss where hh and mm are as in above, and ss is seconds (00 to 59);</li><li>the character Z;</li><li>one of the characters + or -, followed by hhmm, where hh is hour and mm is minutes (NOT SUPPORTED)</li></ul><h2>NOTE</h2><ul><li>Restrictions employed by DER, the encoding shall terminate with "Z".</li><li>The seconds element shall always be present, and DER (along with RFC 5280) specify that seconds must be present,</li><li>Fractional seconds must not be present.</li></ul><p>Todo:- check for invalid representation of date and hhmmss part.</p><ul><li>represented UtcTime in time.Time</li></ul>
+<h2>ASN.1 UNIVERSAL CLASS OF UTCTIME TYPE.</h2><p>For this time, UtcTime represented by simple string with format "YYMMDDhhmmssZ"- the six digits YYMMDD where YY is the two low-order digits of the Christian year,(RFC 5280 defines it as a range from 1950 to 2049 for X.509), MM is the month (counting January as 01), and DD is the day of the month (01 to 31).- the four digits hhmm where hh is hour (00 to 23) and mm is minutes (00 to 59); (SEE NOTE BELOW)</p><ul><li>the six digits hhmmss where hh and mm are as in above, and ss is seconds (00 to 59);</li><li>the character Z;</li><li>one of the characters + or -, followed by hhmm, where hh is hour and mm is minutes (NOT SUPPORTED)</li></ul><h2>NOTE</h2><ul><li>Restrictions employed by DER, the encoding shall terminate with "Z".</li><li>The seconds element shall always be present, and DER (along with RFC 5280) specify that seconds must be present,</li><li>Fractional seconds must not be present.</li></ul><p>Todo:- check for invalid representation of date and hhmmss part.</p><ul><li>represented UtcTime in time.Time</li></ul>
 
 </section>
 
@@ -2178,7 +1922,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <span class="token keyword">pub</span><span class="token punctuation">:</span>
 	value <span class="token builtin">string</span>
 <span class="token punctuation">}</span></code></pre>
-<p>ASN.1 Utf8String type. UTF8 unicode charset</p>
+<p>ASN.1 UNIVERSAL CLASS OF UTF8STRING TYPE.</p><p>UTF8STRING is UTF8 unicode charset</p>
 
 </section>
 
@@ -2227,7 +1971,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 27 Oct 2024 13:51:04</div>
+						<div class="footer">Powered by vdoc. Generated on: 27 Oct 2024 14:12:29</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
@@ -2261,25 +2005,13 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#ApplicationElement.new">fn ApplicationElement.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#BitString.decode">fn BitString.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#BitString.from_binary_string">fn BitString.from_binary_string</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#BitString.new">fn BitString.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#BitString.parse">fn BitString.parse</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Boolean.decode">fn Boolean.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#Boolean.new">fn Boolean.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Boolean.parse">fn Boolean.parse</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#ContextElement.explicit_context">fn ContextElement.explicit_context</a>        <ul>
@@ -2300,13 +2032,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#ElementList.from_bytes">fn ElementList.from_bytes</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#Enumerated.decode">fn Enumerated.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#Enumerated.new">fn Enumerated.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Enumerated.parse">fn Enumerated.parse</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#FieldOptions.from_attrs">fn FieldOptions.from_attrs</a>        <ul>
@@ -2315,34 +2041,13 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#FieldOptions.from_string">fn FieldOptions.from_string</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#GeneralString.decode">fn GeneralString.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#GeneralString.new">fn GeneralString.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#GeneralString.parse">fn GeneralString.parse</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#GeneralizedTime.decode">fn GeneralizedTime.decode</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#GeneralizedTime.new">fn GeneralizedTime.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#GeneralizedTime.parse">fn GeneralizedTime.parse</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#IA5String.decode">fn IA5String.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#IA5String.new">fn IA5String.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#IA5String.parse">fn IA5String.parse</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Integer.decode">fn Integer.decode</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Integer.from_bigint">fn Integer.from_bigint</a>        <ul>
@@ -2360,31 +2065,16 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#Integer.from_string">fn Integer.from_string</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#Integer.parse">fn Integer.parse</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#Length.from_bytes">fn Length.from_bytes</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Length.new">fn Length.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#Null.decode">fn Null.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#Null.new">fn Null.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#Null.parse">fn Null.parse</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#NumericString.new">fn NumericString.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#NumericString.parse">fn NumericString.parse</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#ObjectIdentifier.decode">fn ObjectIdentifier.decode</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#ObjectIdentifier.from_ints">fn ObjectIdentifier.from_ints</a>        <ul>
@@ -2393,16 +2083,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#ObjectIdentifier.new">fn ObjectIdentifier.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#ObjectIdentifier.parse">fn ObjectIdentifier.parse</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#OctetString.decode">fn OctetString.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#OctetString.new">fn OctetString.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#OctetString.parse">fn OctetString.parse</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Optional.new">fn Optional.new</a>        <ul>
@@ -2411,13 +2092,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#Parser.new">fn Parser.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#PrintableString.decode">fn PrintableString.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#PrintableString.new">fn PrintableString.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#PrintableString.parse">fn PrintableString.parse</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#PrivateELement.from_element">fn PrivateELement.from_element</a>        <ul>
@@ -2432,16 +2107,10 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#RawElement.new">fn RawElement.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#Sequence.decode">fn Sequence.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#Sequence.from_list">fn Sequence.from_list</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Sequence.new">fn Sequence.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Sequence.parse">fn Sequence.parse</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#SequenceOf.from_list">fn SequenceOf.from_list</a>        <ul>
@@ -2450,13 +2119,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#SequenceOf.new">fn SequenceOf.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#Set.decode">fn Set.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#Set.new">fn Set.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Set.parse">fn Set.parse</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#SetOf.from_list">fn SetOf.from_list</a>        <ul>
@@ -2471,25 +2134,13 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#Tag.new">fn Tag.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#UtcTime.decode">fn UtcTime.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#UtcTime.new">fn UtcTime.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#UtcTime.parse">fn UtcTime.parse</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Utf8String.decode">fn Utf8String.decode</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Utf8String.from_bytes">fn Utf8String.from_bytes</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Utf8String.new">fn Utf8String.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#Utf8String.parse">fn Utf8String.parse</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#VisibleString.decode">fn VisibleString.decode</a>        <ul>
@@ -2635,7 +2286,6 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li><a href="#Parser.read_tag">fn read_tag</a></li>
 <li><a href="#Parser.read_length">fn read_length</a></li>
 <li><a href="#Parser.read_bytes">fn read_bytes</a></li>
-<li><a href="#Parser.read_element">fn read_element</a></li>
 <li><a href="#Parser.read_tlv">fn read_tlv</a></li>
 <li><a href="#Parser.finish">fn finish</a></li>
 <li><a href="#Parser.is_empty">fn is_empty</a></li>

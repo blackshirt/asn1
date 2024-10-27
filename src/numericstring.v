@@ -47,7 +47,7 @@ fn (nst NumericString) payload_with_rule(rule EncodingRule) ![]u8 {
 	return bytes
 }
 
-pub fn NumericString.parse(mut p Parser) !NumericString {
+fn NumericString.parse(mut p Parser) !NumericString {
 	tag := p.read_tag()!
 	if !tag.equal(default_numericstring_tag) {
 		return error('Bad NumericString tag')
