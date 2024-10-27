@@ -9,7 +9,7 @@ pub const default_utctime_tag = Tag{.universal, false, int(TagType.utctime)}
 pub const default_generalizedtime_tag = Tag{.universal, false, int(TagType.generalizedtime)}
 
 // ASN.1 UNIVERSAL CLASS OF UTCTIME TYPE.
-// -------
+//
 // For this time, UtcTime represented by simple string with format "YYMMDDhhmmssZ"
 // - the six digits YYMMDD where YY is the two low-order digits of the Christian year,
 // (RFC 5280 defines it as a range from 1950 to 2049 for X.509), MM is the month

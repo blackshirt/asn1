@@ -10,12 +10,12 @@ const max_attributes_length = 5
 // Configuration format for field tagging.
 //
 // Currently, this configurations option support following string config, ie,
-// a. `class:number`, for wrapping the element with other non-universal class, for examole: `private:100`.
-// b: `explicit` or `implicit` mode.
-// c. `inner:5` the tag number of element being wrapped, should in UNIVERSAL class.
-// b. `optional` tagging for element with OPTIONAL behaviour.
-// c. `has_default` tagging for element with DEFAULT behaviour.
-
+// - `class:number`, for wrapping the element with other non-universal class, for examole: `private:100`.
+// - `explicit` or `implicit` mode.
+// - `inner:5` the tag number of element being wrapped, should in UNIVERSAL class.
+// - `optional` tagging for element with OPTIONAL behaviour.
+// - `has_default` tagging for element with DEFAULT behaviour.
+//
 // Field options attributes handling.
 //
 // FieldOptions is a structure to accomodate and allowing configures your complex structures

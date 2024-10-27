@@ -6,9 +6,9 @@ module asn1
 // The default tag of ASN.1 VISIBLESTRING type.
 pub const default_visiblestring_tag = Tag{.universal, false, int(TagType.visiblestring)}
 
-// ASN.1 VisibleString universal type.
-// The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.
+// ASN.1 UNIVERSAL CLASS OF VISIBLESTRING TYPE.
 //
+// The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.
 @[noinit]
 pub struct VisibleString {
 pub:
@@ -53,7 +53,7 @@ fn (vst VisibleString) str() string {
 	return 'VisibleString: (${vst.value})'
 }
 
-pub fn VisibleString.parse(mut p Parser) !VisibleString {
+fn VisibleString.parse(mut p Parser) !VisibleString {
 	tag := p.read_tag()!
 	if !tag.equal(default_visiblestring_tag) {
 		return error('Bad VisibleString tag')
@@ -66,7 +66,7 @@ pub fn VisibleString.parse(mut p Parser) !VisibleString {
 	return res
 }
 
-pub fn VisibleString.decode(src []u8) !(VisibleString, int) {
+fn VisibleString.decode(src []u8) !(VisibleString, int) {
 	return VisibleString.decode_with_rule(src, .der)!
 }
 

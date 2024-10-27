@@ -272,6 +272,14 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 
 </section>
 
+		<section id="Any.new" class="doc-node">
+			<div class="title"><h2>fn Any.new <a href="#Any.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Any<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>marker <span class="token builtin">string</span><span class="token punctuation">,</span> params Element<span class="token punctuation">)</span> Any</code></pre>
+
+
+</section>
+
 		<section id="ApplicationElement.from_element" class="doc-node">
 			<div class="title"><h2>fn ApplicationElement.from_element <a href="#ApplicationElement.from_element">#</a></h2></div>
 <pre class="signature">
@@ -662,27 +670,11 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="VisibleString.decode" class="doc-node">
-			<div class="title"><h2>fn VisibleString.decode <a href="#VisibleString.decode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> VisibleString<span class="token punctuation">.</span><span class="token function">decode</span><span class="token punctuation">(</span>src <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">(</span>VisibleString<span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
-
-
-</section>
-
 		<section id="VisibleString.new" class="doc-node">
 			<div class="title"><h2>fn VisibleString.new <a href="#VisibleString.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> VisibleString<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>VisibleString</code></pre>
 <p>from_string creates a new VisibleString from string s</p>
-
-</section>
-
-		<section id="VisibleString.parse" class="doc-node">
-			<div class="title"><h2>fn VisibleString.parse <a href="#VisibleString.parse">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> VisibleString<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token keyword">mut</span> p Parser<span class="token punctuation">)</span> <span class="token operator">!</span>VisibleString</code></pre>
-
 
 </section>
 
@@ -923,6 +915,22 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="Any.tag" class="doc-node">
+			<div class="title"><h2>fn (Any) tag <a href="#Any.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>a Any<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+
+
+</section>
+
+		<section id="Any.payload" class="doc-node">
+			<div class="title"><h2>fn (Any) payload <a href="#Any.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>a Any<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
+
+</section>
+
 		<section id="ApplicationElement" class="doc-node">
 			<div class="title"><h2>struct ApplicationElement <a href="#ApplicationElement">#</a></h2></div>
 <div class="attributes"><div class="attribute">@[noinit]</div></div>
@@ -1105,7 +1113,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	has_default   <span class="token builtin">bool</span>
 	default_value <span class="token operator">?</span>Element
 <span class="token punctuation">}</span></code></pre>
-<p>Field options attributes handling.</p><p>FieldOptions is a structure to accomodate and allowing configures your complex structures through string or arrays of string stored in FieldOptions fields. For example, you can tagging your fields of some element with tagging like <code>@[context_specific:10; explicit; inner:5; optional]</code>. Its will be parsed and can be used to drive encoding or decoding of Element.</p>
+<p>Configuration format for field tagging.</p><p>Currently, this configurations option support following string config, ie,- <code>class:number</code>, for wrapping the element with other non-universal class, for examole: <code>private:100</code>.</p><ul><li><code>explicit</code> or <code>implicit</code> mode.</li><li><code>inner:5</code> the tag number of element being wrapped, should in UNIVERSAL class.</li><li><code>optional</code> tagging for element with OPTIONAL behaviour.</li><li><code>has_default</code> tagging for element with DEFAULT behaviour.</li></ul><p>Field options attributes handling.</p><p>FieldOptions is a structure to accomodate and allowing configures your complex structures through string or arrays of string stored in FieldOptions fields. For example, you can tagging your fields of some element with tagging like <code>@[context_specific:10; explicit; inner:5; optional]</code>. Its will be parsed and can be used to drive encoding or decoding of Element.</p>
 
 </section>
 
@@ -1894,7 +1902,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <span class="token keyword">pub</span><span class="token punctuation">:</span>
 	value <span class="token builtin">string</span>
 <span class="token punctuation">}</span></code></pre>
-<h2>ASN.1 UNIVERSAL CLASS OF UTCTIME TYPE.</h2><p>For this time, UtcTime represented by simple string with format "YYMMDDhhmmssZ"- the six digits YYMMDD where YY is the two low-order digits of the Christian year,(RFC 5280 defines it as a range from 1950 to 2049 for X.509), MM is the month (counting January as 01), and DD is the day of the month (01 to 31).- the four digits hhmm where hh is hour (00 to 23) and mm is minutes (00 to 59); (SEE NOTE BELOW)</p><ul><li>the six digits hhmmss where hh and mm are as in above, and ss is seconds (00 to 59);</li><li>the character Z;</li><li>one of the characters + or -, followed by hhmm, where hh is hour and mm is minutes (NOT SUPPORTED)</li></ul><h2>NOTE</h2><ul><li>Restrictions employed by DER, the encoding shall terminate with "Z".</li><li>The seconds element shall always be present, and DER (along with RFC 5280) specify that seconds must be present,</li><li>Fractional seconds must not be present.</li></ul><p>Todo:- check for invalid representation of date and hhmmss part.</p><ul><li>represented UtcTime in time.Time</li></ul>
+<p>ASN.1 UNIVERSAL CLASS OF UTCTIME TYPE.</p><p>For this time, UtcTime represented by simple string with format "YYMMDDhhmmssZ"- the six digits YYMMDD where YY is the two low-order digits of the Christian year,(RFC 5280 defines it as a range from 1950 to 2049 for X.509), MM is the month (counting January as 01), and DD is the day of the month (01 to 31).- the four digits hhmm where hh is hour (00 to 23) and mm is minutes (00 to 59); (SEE NOTE BELOW)</p><ul><li>the six digits hhmmss where hh and mm are as in above, and ss is seconds (00 to 59);</li><li>the character Z;</li><li>one of the characters + or -, followed by hhmm, where hh is hour and mm is minutes (NOT SUPPORTED)</li></ul><h2>NOTE</h2><ul><li>Restrictions employed by DER, the encoding shall terminate with "Z".</li><li>The seconds element shall always be present, and DER (along with RFC 5280) specify that seconds must be present,</li><li>Fractional seconds must not be present.</li></ul><p>Todo:- check for invalid representation of date and hhmmss part.</p><ul><li>represented UtcTime in time.Time</li></ul>
 
 </section>
 
@@ -1950,7 +1958,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <span class="token keyword">pub</span><span class="token punctuation">:</span>
 	value <span class="token builtin">string</span>
 <span class="token punctuation">}</span></code></pre>
-<p>ASN.1 VisibleString universal type. The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.</p>
+<p>ASN.1 UNIVERSAL CLASS OF VISIBLESTRING TYPE.</p><p>The ASN.1 VisibleString type supports a subset of ASCII characters that does not include control characters.</p>
 
 </section>
 
@@ -1971,7 +1979,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 27 Oct 2024 14:12:29</div>
+						<div class="footer">Powered by vdoc. Generated on: 27 Oct 2024 14:21:08</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
@@ -1997,6 +2005,9 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#make_payload">fn make_payload</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Any.new">fn Any.new</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#ApplicationElement.from_element">fn ApplicationElement.from_element</a>        <ul>
@@ -2143,13 +2154,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li class="open"><a href="#Utf8String.new">fn Utf8String.new</a>        <ul>
 </ul>
 </li>
-<li class="open"><a href="#VisibleString.decode">fn VisibleString.decode</a>        <ul>
-</ul>
-</li>
 <li class="open"><a href="#VisibleString.new">fn VisibleString.new</a>        <ul>
-</ul>
-</li>
-<li class="open"><a href="#VisibleString.parse">fn VisibleString.parse</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#Element">interface Element</a>        <ul>
@@ -2194,6 +2199,8 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#Any">struct Any</a>        <ul>
+<li><a href="#Any.tag">fn tag</a></li>
+<li><a href="#Any.payload">fn payload</a></li>
 </ul>
 </li>
 <li class="open"><a href="#ApplicationElement">struct ApplicationElement</a>        <ul>

@@ -4,6 +4,7 @@
 module asn1
 
 // ANY DEFINED BY
+//
 @[noinit]
 pub struct Any {
 mut:
@@ -11,7 +12,7 @@ mut:
 	params Element
 }
 
-fn Any.new(marker string, params Element) Any {
+pub fn Any.new(marker string, params Element) Any {
 	return Any{marker, params}
 }
 
@@ -19,11 +20,11 @@ fn Any.decode(bytes []u8) !Any {
 	return error('not implemented')
 }
 
-fn (a Any) tag() Tag {
+pub fn (a Any) tag() Tag {
 	return a.params.tag()
 }
 
-fn (a Any) payload() ![]u8 {
+pub fn (a Any) payload() ![]u8 {
 	return a.params.payload()!
 }
 
