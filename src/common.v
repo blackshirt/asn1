@@ -87,10 +87,7 @@ fn parse_universal_primitive(tag Tag, content []u8) !Element {
 		}
 		else {
 			// return the raw element
-			return RawElement{
-				tag:     tag
-				content: content
-			}
+			return RawElement.new(tag, content)!
 		}
 	}
 }
@@ -111,32 +108,17 @@ fn parse_universal_constructed(tag Tag, content []u8) !Element {
 			return Set.from_bytes(content)!
 		}
 		else {
-			return RawElement{
-				tag:     tag
-				content: content
-			}
+			return RawElement.new(tag, content)!
 		}
 	}
 }
 
 fn parse_private(tag Tag, content []u8) !PrivateELement {
-	if tag.tag_class() != .private {
-		return error('parse on non-application class')
-	}
-	return PrivateELement{
-		tag:     tag
-		content: content
-	}
+	return PrivateELement.new(tag, content)!
 }
 
 fn parse_application(tag Tag, content []u8) !ApplicationElement {
-	if tag.tag_class() != .application {
-		return error('parse on non-application class')
-	}
-	return ApplicationElement{
-		tag:     tag
-		content: content
-	}
+	return ApplicationElement.new(tag, content)!
 }
 
 // parse_context_specific_with_mode parses tag and content as ContextElement when mode is availables
@@ -146,7 +128,7 @@ fn parse_context_specific_with_mode(tag Tag, content []u8, inner_tag Tag, mode T
 	}
 	if mode == .implicit {
 		inner := parse_element(inner_tag, content)!
-		ctx := ContextElement.new(inner, tag.number, mode)!
+		ctx := ContextElement.from_element(inner, tag.number, mode)!
 		return ctx
 	}
 	// explicit
@@ -160,7 +142,7 @@ fn parse_context_specific_with_mode(tag Tag, content []u8, inner_tag Tag, mode T
 	// should finish
 	p.finish()!
 
-	ctx := ContextElement.new(inner_el, tag.number, .explicit)!
+	ctx := ContextElement.from_element(inner_el, tag.number, .explicit)!
 
 	return ctx
 }
@@ -169,16 +151,9 @@ fn parse_context_specific_with_mode(tag Tag, content []u8, inner_tag Tag, mode T
 // The info of fields of ContextElement, ie, inner_tag and mode, is not availables here
 // You should provides this later with the correct value.
 fn parse_context_specific(tag Tag, content []u8) !ContextElement {
-	if tag.tag_class() != .context_specific {
-		return error('parse on non-context-specific class')
-	}
 	// mode and inner_tag is not set here without additional information,
 	// So its still none here, and you should set it with correct value
-	ctx := ContextElement{
-		tag:     tag
-		content: content
-		// inner_tag: ?
-		// mode: ?
-	}
+	ctx := ContextElement.new(tag, content)!
+
 	return ctx
 }

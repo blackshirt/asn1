@@ -6,11 +6,11 @@ module asn1
 // Limited support for other of ASN.1 Element.
 //
 
-// ASN.1 RawElement.
+// ASN.1 Raw Element.
 @[noinit]
 pub struct RawElement {
 mut:
-	// The (outer) tag is the tag of the TLV, if this a wrpper.
+	// The tag is the (outer) tag of the TLV, if this a wrpper.
 	tag Tag
 	// `content` is the value of a TLV. Its depends on the context.
 	content []u8
@@ -20,11 +20,21 @@ mut:
 	default_value ?Element
 }
 
+// creates a RawElement from tag and content. If your element is universal class,
+// use universal type constructor instead, provided in this module.
 pub fn RawElement.new(tag Tag, content []u8) !RawElement {
+	if tag.number < 0 || tag.number > max_tag_number {
+		return error('Unallowed tagnum was provided')
+	}
 	// universal class with constructed form only valid for sequence(of) and set(of) type.
-	if tag.class == .universal && tag.constructed {
-		if tag.number != int(TagType.sequence) && tag.number != int(TagType.set) {
-			return asn1_error(.invalid_tag_format, '${@METHOD}', 'required sequence or set number')!
+	if tag.class == .universal {
+		if tag.number > max_universal_tagnumber {
+			return error('Tag number for universal class was exceed limit')
+		}
+		if tag.constructed {
+			if tag.number != int(TagType.sequence) && tag.number != int(TagType.set) {
+				return asn1_error(.invalid_tag_format, '${@METHOD}', 'required sequence or set number')!
+			}
 		}
 	}
 	// otherwise, treats as a RawElement
@@ -34,8 +44,9 @@ pub fn RawElement.new(tag Tag, content []u8) !RawElement {
 	}
 }
 
-// wrap into RawElement
+// creates RawElement from another element (with wrapping semantic).
 pub fn RawElement.from_element(el Element, cls TagClass, tagnum int, mode TaggedMode) !RawElement {
+	// wrapping into .universal is not allowed.
 	if cls == .universal {
 		return asn1_error(.unallowed_operation, '${@METHOD}', 'wrap with universal class is unallowed')!
 	}
@@ -54,31 +65,63 @@ pub fn RawElement.from_element(el Element, cls TagClass, tagnum int, mode Tagged
 	return raw
 }
 
+// outer tag when its a wrapper.
+pub fn (r RawElement) tag() Tag {
+	return r.tag
+}
+
+// payload of the RawElement.
 pub fn (r RawElement) payload() ![]u8 {
 	return r.content
 }
 
-pub fn (mut r RawElement) set_raw_mode(mode TaggedMode) ! {
-	if r.mode != none {
-		return asn1_error(.unallowed_operation, '${@METHOD}', 'r.mode != none')!
-	}
+// forces mode of RawElement to mode. Its changes how the element was interpreted.
+pub fn (mut r RawElement) force_set_mode(mode TaggedMode) ! {
+	r.set_mode_with_flag(mode, true)!
+}
+
+// set mode of the RawElement into mode. If you want force it to use the mode, use `force_set_mode`.
+pub fn (mut r RawElement) set_mode(mode TaggedMode) ! {
+	r.set_mode_with_flag(mode, false)
+}
+
+fn (mut r RawElement) set_mode_with_flag(mode TaggedMode, force bool) ! {
 	if r.tag.class == .universal {
 		return asn1_error(.unallowed_operation, '${@METHOD}', 'No need it on universal class')!
 	}
+	if r.mode != none {
+		if !force {
+			return asn1_error(.unallowed_operation, '${@METHOD}', 'r.mode != none')!
+		}
+		r.mode = mode
+		return
+	}
+
 	r.mode = mode
 }
 
+// set inner tag of the RawElement into inner_tag. If its already set, it would return error.
+// Use `force_set_inner_tag` instead to force it.
 pub fn (mut r RawElement) set_inner_tag(inner_tag Tag) ! {
-	if r.inner_tag != none {
-		return asn1_error(.unallowed_operation, '${@METHOD}', 'r.inner_tag != none')!
-	}
+	r.set_inner_tag_with_flag(inner_tag, false)!
+}
+
+// forces set the inner tag of the RawElement into inner_tag even its has been set previously.
+pub fn (mut r RawElement) force_set_inner_tag(inner_tag Tag) ! {
+	r.set_inner_tag_with_flag(inner_tag, true)!
+}
+
+fn (mut r RawElement) set_inner_tag_with_flag(inner_tag Tag, force bool) ! {
+	// not needed in universal class
 	if r.tag.class == .universal {
 		return asn1_error(.unallowed_operation, '${@METHOD}', 'No need it on universal class')!
 	}
+	// we need mode first
 	mode := r.mode or {
 		return asn1_error(.unmeet_requirement, '${@METHOD}', 'set the mode first')!
 	}
 
+	// when its explicit, compares the provided tag with tag from the inner element.
 	if mode == .explicit {
 		if !r.tag.constructed {
 			return asn1_error(.unmeet_requirement, '${@METHOD}', 'explicit should be constructed')!
@@ -89,14 +132,43 @@ pub fn (mut r RawElement) set_inner_tag(inner_tag Tag) ! {
 			return asn1_error(.unmeet_requirement, '${@METHOD}', 'unequal supplied tag')!
 		}
 	}
+	if r.inner_tag != none {
+		if !force {
+			return asn1_error(.unallowed_operation, '${@METHOD}', 'r.inner_tag != none')!
+		}
+		r.inner_tag = inner_tag
+		return
+	}
+
 	r.inner_tag = inner_tag
 }
 
-// outer tag when its a wrapper.
-pub fn (r RawElement) tag() Tag {
-	return r.tag
+// forces set default value of this RawElement into value.
+pub fn (mut r RawElement) force_set_default_value(value Element) ! {
+	r.set_default_value_with_flag(value, true)!
 }
 
+// set default value of this RawElement to some value.
+pub fn (mut r RawElement) set_default_value(value Element) ! {
+	r.set_default_value_with_flag(value, false)!
+}
+
+fn (mut r RawElement) set_default_value_with_flag(value Element, force bool) ! {
+	// default value of this element should have equal tag.
+	if !value.tag().equal(r.tag) {
+		return error('You provides unequal tag for default value')
+	}
+	if r.default_value != none {
+		if !force {
+			return error('The RawElement already default_value being set')
+		}
+		r.default_value = value
+		return
+	}
+	r.default_value = value
+}
+
+// inner tag of the RawElement if it exists.
 pub fn (r RawElement) inner_tag() !Tag {
 	inner_tag := r.inner_tag or {
 		return asn1_error(.invalid_value, '${@METHOD}', ' r.inner_tag is not set')!
@@ -105,6 +177,7 @@ pub fn (r RawElement) inner_tag() !Tag {
 	return inner_tag
 }
 
+// inner element of the RawElement if its exists.
 pub fn (r RawElement) inner_element() !Element {
 	if r.tag.class == .universal {
 		asn1_error(.unallowed_operation, '${@METHOD}', 'inner element from universal class is not availables')!
@@ -159,33 +232,42 @@ pub struct ContextElement {
 	RawElement
 }
 
-// ContextElement.new creates a new tagged type of ContextElement from some element in inner.
-pub fn ContextElement.new(inner Element, tagnum int, mode TaggedMode) !ContextElement {
-	if tagnum < 0 || tagnum > max_tag_number {
-		return error('Unallowed tagnum was provided')
+// creates a raw context specific element. Use `ContextElement.from_element` instead if your context specific
+// element is wrapper of another element.
+pub fn ContextElement.new(tag Tag, content []u8) !ContextElement {
+	if tag.class != .context_specific {
+		return error('Your tag is not .context_specific')
 	}
+	raw := RawElement.new(tag, content)!
+	return ContextElement{raw}
+}
+
+// ContextElement.new creates a new tagged type of ContextElement from some element in inner.
+pub fn ContextElement.from_element(inner Element, tagnum int, mode TaggedMode) !ContextElement {
 	raw := RawElement.from_element(inner, .context_specific, tagnum, mode)!
 
 	ctx := ContextElement{raw}
 	return ctx
 }
 
+// The tag of context specific element.
 pub fn (ctx ContextElement) tag() Tag {
 	return ctx.tag
 }
 
+// The payload of the context specific element.
 pub fn (ctx ContextElement) payload() ![]u8 {
 	return ctx.content
 }
 
 // `explicit_context` creates new ContextElement with explicit mode.
 pub fn ContextElement.explicit_context(inner Element, tagnum int) !ContextElement {
-	return ContextElement.new(inner, tagnum, .explicit)!
+	return ContextElement.from_element(inner, tagnum, .explicit)!
 }
 
 // implicit_context creates new ContextElement with implicit mode.
 pub fn ContextElement.implicit_context(inner Element, tagnum int) !ContextElement {
-	return ContextElement.new(inner, tagnum, .implicit)!
+	return ContextElement.from_element(inner, tagnum, .implicit)!
 }
 
 fn ContextElement.decode_raw(bytes []u8) !(ContextElement, int) {
@@ -267,29 +349,28 @@ fn ContextElement.decode_with_options(bytes []u8, opt string) !(ContextElement, 
 	return ctx, next
 }
 
+// Limited support for APPLICATION CLASS Element.
 @[noinit]
 pub struct ApplicationElement {
 	RawElement
 }
 
-pub fn ApplicationElement.new(constructed bool, tagnum int, content []u8) !ApplicationElement {
-	tag := Tag.new(.application, constructed, tagnum)!
-	return ApplicationElement{
-		tag:     tag
-		content: content
+pub fn ApplicationElement.new(tag Tag, content []u8) !ApplicationElement {
+	if tag.class != .application {
+		return error('Your tag is not .application')
 	}
+	raw := RawElement.new(tag, content)!
+	return ApplicationElement{raw}
 }
 
+// creates application class element.
 pub fn ApplicationElement.from_element(inner Element, tagnum int, mode TaggedMode) !ApplicationElement {
-	if tagnum < 0 || tagnum > max_tag_number {
-		return error('Unallowed tagnum was provided')
-	}
 	raw := RawElement.from_element(inner, .application, tagnum, mode)!
-
 	app := ApplicationElement{raw}
 	return app
 }
 
+// tag of the APLLICATION CLASS element.
 pub fn (app ApplicationElement) tag() Tag {
 	return app.tag
 }
@@ -298,33 +379,36 @@ pub fn (app ApplicationElement) payload() ![]u8 {
 	return app.content
 }
 
+// Limited support for PRIVATE CLASS Element.
 @[noinit]
 pub struct PrivateELement {
 	RawElement
 }
 
-pub fn PrivateELement.new(constructed bool, tagnum int, content []u8) !PrivateELement {
-	tag := Tag.new(.private, constructed, tagnum)!
-	return PrivateELement{
-		tag:     tag
-		content: content
+// creates a raw private class element from tag and content.
+pub fn PrivateELement.new(tag Tag, content []u8) !PrivateELement {
+	if tag.class != .private {
+		return error('Your tag is not private')
 	}
+	raw := RawElement.new(tag, content)!
+
+	return PrivateELement{raw}
 }
 
+// creates private element from another element.
 pub fn PrivateELement.from_element(inner Element, tagnum int, mode TaggedMode) !PrivateELement {
-	if tagnum < 0 || tagnum > max_tag_number {
-		return error('Unallowed tagnum was provided')
-	}
 	raw := RawElement.from_element(inner, .private, tagnum, mode)!
-
 	app := PrivateELement{raw}
+
 	return app
 }
 
+// The tag of the private element.
 pub fn (prv PrivateELement) tag() Tag {
 	return prv.tag
 }
 
+// The payload of the private element.
 pub fn (prv PrivateELement) payload() ![]u8 {
 	return prv.content
 }

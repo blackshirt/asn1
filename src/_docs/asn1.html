@@ -276,14 +276,14 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 			<div class="title"><h2>fn ApplicationElement.from_element <a href="#ApplicationElement.from_element">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> ApplicationElement<span class="token punctuation">.</span><span class="token function">from_element</span><span class="token punctuation">(</span>inner Element<span class="token punctuation">,</span> tagnum <span class="token builtin">int</span><span class="token punctuation">,</span> mode TaggedMode<span class="token punctuation">)</span> <span class="token operator">!</span>ApplicationElement</code></pre>
-
+<p>creates application class element.</p>
 
 </section>
 
 		<section id="ApplicationElement.new" class="doc-node">
 			<div class="title"><h2>fn ApplicationElement.new <a href="#ApplicationElement.new">#</a></h2></div>
 <pre class="signature">
-<code><span class="token keyword">fn</span> ApplicationElement<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>constructed <span class="token builtin">bool</span><span class="token punctuation">,</span> tagnum <span class="token builtin">int</span><span class="token punctuation">,</span> content <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span>ApplicationElement</code></pre>
+<code><span class="token keyword">fn</span> ApplicationElement<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>tag Tag<span class="token punctuation">,</span> content <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span>ApplicationElement</code></pre>
 
 
 </section>
@@ -357,6 +357,14 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 
 </section>
 
+		<section id="ContextElement.from_element" class="doc-node">
+			<div class="title"><h2>fn ContextElement.from_element <a href="#ContextElement.from_element">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> ContextElement<span class="token punctuation">.</span><span class="token function">from_element</span><span class="token punctuation">(</span>inner Element<span class="token punctuation">,</span> tagnum <span class="token builtin">int</span><span class="token punctuation">,</span> mode TaggedMode<span class="token punctuation">)</span> <span class="token operator">!</span>ContextElement</code></pre>
+<p>ContextElement.new creates a new tagged type of ContextElement from some element in inner.</p>
+
+</section>
+
 		<section id="ContextElement.implicit_context" class="doc-node">
 			<div class="title"><h2>fn ContextElement.implicit_context <a href="#ContextElement.implicit_context">#</a></h2></div>
 <pre class="signature">
@@ -368,8 +376,8 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 		<section id="ContextElement.new" class="doc-node">
 			<div class="title"><h2>fn ContextElement.new <a href="#ContextElement.new">#</a></h2></div>
 <pre class="signature">
-<code><span class="token keyword">fn</span> ContextElement<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>inner Element<span class="token punctuation">,</span> tagnum <span class="token builtin">int</span><span class="token punctuation">,</span> mode TaggedMode<span class="token punctuation">)</span> <span class="token operator">!</span>ContextElement</code></pre>
-<p>ContextElement.new creates a new tagged type of ContextElement from some element in inner.</p>
+<code><span class="token keyword">fn</span> ContextElement<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>tag Tag<span class="token punctuation">,</span> content <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span>ContextElement</code></pre>
+<p>creates a raw context specific element. Use <code>ContextElement.from_element</code> instead if your context specific element is wrapper of another element.</p>
 
 </section>
 
@@ -714,15 +722,15 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn PrivateELement.from_element <a href="#PrivateELement.from_element">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> PrivateELement<span class="token punctuation">.</span><span class="token function">from_element</span><span class="token punctuation">(</span>inner Element<span class="token punctuation">,</span> tagnum <span class="token builtin">int</span><span class="token punctuation">,</span> mode TaggedMode<span class="token punctuation">)</span> <span class="token operator">!</span>PrivateELement</code></pre>
-
+<p>creates private element from another element.</p>
 
 </section>
 
 		<section id="PrivateELement.new" class="doc-node">
 			<div class="title"><h2>fn PrivateELement.new <a href="#PrivateELement.new">#</a></h2></div>
 <pre class="signature">
-<code><span class="token keyword">fn</span> PrivateELement<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>constructed <span class="token builtin">bool</span><span class="token punctuation">,</span> tagnum <span class="token builtin">int</span><span class="token punctuation">,</span> content <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span>PrivateELement</code></pre>
-
+<code><span class="token keyword">fn</span> PrivateELement<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>tag Tag<span class="token punctuation">,</span> content <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span>PrivateELement</code></pre>
+<p>creates a raw private class element from tag and content.</p>
 
 </section>
 
@@ -730,7 +738,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn RawElement.from_element <a href="#RawElement.from_element">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> RawElement<span class="token punctuation">.</span><span class="token function">from_element</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> cls TagClass<span class="token punctuation">,</span> tagnum <span class="token builtin">int</span><span class="token punctuation">,</span> mode TaggedMode<span class="token punctuation">)</span> <span class="token operator">!</span>RawElement</code></pre>
-<p>wrap into RawElement</p>
+<p>creates RawElement from another element (with wrapping semantic).</p>
 
 </section>
 
@@ -738,7 +746,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn RawElement.new <a href="#RawElement.new">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> RawElement<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>tag Tag<span class="token punctuation">,</span> content <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">)</span> <span class="token operator">!</span>RawElement</code></pre>
-
+<p>creates a RawElement from tag and content. If your element is universal class, use universal type constructor instead, provided in this module.</p>
 
 </section>
 
@@ -1170,7 +1178,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <code><span class="token keyword">struct</span> <span class="token symbol">ApplicationElement</span> <span class="token punctuation">{</span>
 	RawElement
 <span class="token punctuation">}</span></code></pre>
-
+<p>Limited support for APPLICATION CLASS Element.</p>
 
 </section>
 
@@ -1178,7 +1186,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (ApplicationElement) tag <a href="#ApplicationElement.tag">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>app ApplicationElement<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
-
+<p>tag of the APLLICATION CLASS element.</p>
 
 </section>
 
@@ -1272,7 +1280,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (ContextElement) tag <a href="#ContextElement.tag">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>ctx ContextElement<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
-
+<p>The tag of context specific element.</p>
 
 </section>
 
@@ -1280,7 +1288,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (ContextElement) payload <a href="#ContextElement.payload">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>ctx ContextElement<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
-
+<p>The payload of the context specific element.</p>
 
 </section>
 
@@ -1801,7 +1809,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <code><span class="token keyword">struct</span> <span class="token symbol">PrivateELement</span> <span class="token punctuation">{</span>
 	RawElement
 <span class="token punctuation">}</span></code></pre>
-
+<p>Limited support for PRIVATE CLASS Element.</p>
 
 </section>
 
@@ -1809,7 +1817,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (PrivateELement) tag <a href="#PrivateELement.tag">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>prv PrivateELement<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
-
+<p>The tag of the private element.</p>
 
 </section>
 
@@ -1817,7 +1825,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (PrivateELement) payload <a href="#PrivateELement.payload">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>prv PrivateELement<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
-
+<p>The payload of the private element.</p>
 
 </section>
 
@@ -1827,7 +1835,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">struct</span> <span class="token symbol">RawElement</span> <span class="token punctuation">{</span>
 <span class="token keyword">mut</span><span class="token punctuation">:</span>
-	<span class="token comment">// The (outer) tag is the tag of the TLV, if this a wrpper.</span>
+	<span class="token comment">// The tag is the (outer) tag of the TLV, if this a wrpper.</span>
 	tag Tag
 	<span class="token comment">// `content` is the value of a TLV. Its depends on the context.</span>
 	content <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span>
@@ -1836,31 +1844,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	mode          <span class="token operator">?</span>TaggedMode
 	default_value <span class="token operator">?</span>Element
 <span class="token punctuation">}</span></code></pre>
-<p>ASN.1 RawElement.</p>
-
-</section>
-
-		<section id="RawElement.payload" class="doc-node">
-			<div class="title"><h2>fn (RawElement) payload <a href="#RawElement.payload">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>r RawElement<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
-
-
-</section>
-
-		<section id="RawElement.set_raw_mode" class="doc-node">
-			<div class="title"><h2>fn (RawElement) set_raw_mode <a href="#RawElement.set_raw_mode">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> r RawElement<span class="token punctuation">)</span> <span class="token function">set_raw_mode</span><span class="token punctuation">(</span>mode TaggedMode<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
-
-
-</section>
-
-		<section id="RawElement.set_inner_tag" class="doc-node">
-			<div class="title"><h2>fn (RawElement) set_inner_tag <a href="#RawElement.set_inner_tag">#</a></h2></div>
-<pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> r RawElement<span class="token punctuation">)</span> <span class="token function">set_inner_tag</span><span class="token punctuation">(</span>inner_tag Tag<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
-
+<p>ASN.1 Raw Element.</p>
 
 </section>
 
@@ -1872,11 +1856,67 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="RawElement.payload" class="doc-node">
+			<div class="title"><h2>fn (RawElement) payload <a href="#RawElement.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>r RawElement<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+<p>payload of the RawElement.</p>
+
+</section>
+
+		<section id="RawElement.force_set_mode" class="doc-node">
+			<div class="title"><h2>fn (RawElement) force_set_mode <a href="#RawElement.force_set_mode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> r RawElement<span class="token punctuation">)</span> <span class="token function">force_set_mode</span><span class="token punctuation">(</span>mode TaggedMode<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+<p>forces mode of RawElement to mode. Its changes how the element was interpreted.</p>
+
+</section>
+
+		<section id="RawElement.set_mode" class="doc-node">
+			<div class="title"><h2>fn (RawElement) set_mode <a href="#RawElement.set_mode">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> r RawElement<span class="token punctuation">)</span> <span class="token function">set_mode</span><span class="token punctuation">(</span>mode TaggedMode<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+<p>set mode of the RawElement into mode. If you want force it to use the mode, use <code>force_set_mode</code>.</p>
+
+</section>
+
+		<section id="RawElement.set_inner_tag" class="doc-node">
+			<div class="title"><h2>fn (RawElement) set_inner_tag <a href="#RawElement.set_inner_tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> r RawElement<span class="token punctuation">)</span> <span class="token function">set_inner_tag</span><span class="token punctuation">(</span>inner_tag Tag<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+<p>set inner tag of the RawElement into inner_tag. If its already set, it would return error. Use <code>force_set_inner_tag</code> instead to force it.</p>
+
+</section>
+
+		<section id="RawElement.force_set_inner_tag" class="doc-node">
+			<div class="title"><h2>fn (RawElement) force_set_inner_tag <a href="#RawElement.force_set_inner_tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> r RawElement<span class="token punctuation">)</span> <span class="token function">force_set_inner_tag</span><span class="token punctuation">(</span>inner_tag Tag<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+<p>forces set the inner tag of the RawElement into inner_tag even its has been set previously.</p>
+
+</section>
+
+		<section id="RawElement.force_set_default_value" class="doc-node">
+			<div class="title"><h2>fn (RawElement) force_set_default_value <a href="#RawElement.force_set_default_value">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> r RawElement<span class="token punctuation">)</span> <span class="token function">force_set_default_value</span><span class="token punctuation">(</span>value Element<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+<p>forces set default value of this RawElement into value.</p>
+
+</section>
+
+		<section id="RawElement.set_default_value" class="doc-node">
+			<div class="title"><h2>fn (RawElement) set_default_value <a href="#RawElement.set_default_value">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> r RawElement<span class="token punctuation">)</span> <span class="token function">set_default_value</span><span class="token punctuation">(</span>value Element<span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+<p>set default value of this RawElement to some value.</p>
+
+</section>
+
 		<section id="RawElement.inner_tag" class="doc-node">
 			<div class="title"><h2>fn (RawElement) inner_tag <a href="#RawElement.inner_tag">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>r RawElement<span class="token punctuation">)</span> <span class="token function">inner_tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Tag</code></pre>
-
+<p>inner tag of the RawElement if it exists.</p>
 
 </section>
 
@@ -1884,7 +1924,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>fn (RawElement) inner_element <a href="#RawElement.inner_element">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>r RawElement<span class="token punctuation">)</span> <span class="token function">inner_element</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>Element</code></pre>
-
+<p>inner element of the RawElement if its exists.</p>
 
 </section>
 
@@ -2187,7 +2227,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 25 Oct 2024 04:03:42</div>
+						<div class="footer">Powered by vdoc. Generated on: 27 Oct 2024 13:50:36</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
@@ -2243,6 +2283,9 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#ContextElement.explicit_context">fn ContextElement.explicit_context</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#ContextElement.from_element">fn ContextElement.from_element</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#ContextElement.implicit_context">fn ContextElement.implicit_context</a>        <ul>
@@ -2609,10 +2652,14 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#RawElement">struct RawElement</a>        <ul>
-<li><a href="#RawElement.payload">fn payload</a></li>
-<li><a href="#RawElement.set_raw_mode">fn set_raw_mode</a></li>
-<li><a href="#RawElement.set_inner_tag">fn set_inner_tag</a></li>
 <li><a href="#RawElement.tag">fn tag</a></li>
+<li><a href="#RawElement.payload">fn payload</a></li>
+<li><a href="#RawElement.force_set_mode">fn force_set_mode</a></li>
+<li><a href="#RawElement.set_mode">fn set_mode</a></li>
+<li><a href="#RawElement.set_inner_tag">fn set_inner_tag</a></li>
+<li><a href="#RawElement.force_set_inner_tag">fn force_set_inner_tag</a></li>
+<li><a href="#RawElement.force_set_default_value">fn force_set_default_value</a></li>
+<li><a href="#RawElement.set_default_value">fn set_default_value</a></li>
 <li><a href="#RawElement.inner_tag">fn inner_tag</a></li>
 <li><a href="#RawElement.inner_element">fn inner_element</a></li>
 </ul>

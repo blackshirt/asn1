@@ -211,13 +211,13 @@ fn (el Element) wrap_with_options(fo FieldOptions) !Element {
 	match cls {
 		.context_specific {
 			// maybe constructed or primitive.
-			return ContextElement.new(el, fo.tagnum, mode)!
+			return ContextElement.from_element(el, fo.tagnum, mode)!
 		}
 		.application {
-			return ApplicationElement.new(constructed, fo.tagnum, payload)!
+			return ApplicationElement.from_element(el, fo.tagnum, mode)!
 		}
 		.private {
-			return PrivateELement.new(constructed, fo.tagnum, payload)!
+			return PrivateELement.from_element(el, fo.tagnum, mode)!
 		}
 		else {
 			return error('class wrapper not allowed')
@@ -235,7 +235,7 @@ fn wrap(el Element, cls TagClass, number int, mode TaggedMode) !Element {
 	}
 	match cls {
 		.context_specific {
-			return ContextElement.new(el, number, mode)!
+			return ContextElement.from_element(el, number, mode)!
 		}
 		.application {
 			return ApplicationElement.from_element(el, number, mode)!
