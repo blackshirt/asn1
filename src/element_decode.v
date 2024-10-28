@@ -6,13 +6,42 @@ module asn1
 // Handling of deserialization of bytes array into some Element.
 //
 
-// decode decodes single element from bytes, its not allowing trailing data
+// decode decodes single element from bytes, its not allowing trailing data.
+//
+// Examples:
+//
+// Original object was Utf8String with tag == 12 (0c)
+// ```v
+// original_obj := Utf8String.new('hi')!
+// bytes_data := [u8(0x0C), 0x02, 0x68, 0x69]
+// decoded_obj := decode(bytes_data)!
+// assert decoded_obj.equal(original_obj)
+// ```
 pub fn decode(src []u8) !Element {
 	return decode_with_options(src, '')
 }
 
 // decode_with_options decodes single element from bytes with options support, its not allowing trailing data.
 // Its accepts options string to drive decoding process.
+//
+// Examples:
+//
+// `UTF8String` with implicit tagging definded as [5] IMPLICIT UTF8String was serialized into 85 02 68 69
+//
+// ```v
+// original_obj := Utf8String.new('hi')!
+// implicit_data := [u8(0x85), 0x02, 0x68, 0x69]
+// obj_2 := decode_with_options(implicit_data, 'context_specific:5;implicit;inner:12')!
+// assert obj_2.equal(original_obj)
+// ```
+//
+// `UTF8String` with explicit tagging defined as [5] EXPLICIT UTF8String encoded into A5 04 0C 02 68 69
+//
+// ```v
+// explicit_data := [u8(0xA5), 0x04, 0x0C, 0x02, 0x68, 0x69]
+// obj_3 := decode_with_options(explicit_data, 'context_specific:5;explicit;inner:0x0c')!
+// assert obj_3.equal(original_obj)
+// ```
 pub fn decode_with_options(bytes []u8, opt string) !Element {
 	if opt.len == 0 {
 		el, pos := Element.decode(bytes)!
@@ -25,41 +54,33 @@ pub fn decode_with_options(bytes []u8, opt string) !Element {
 	return decode_with_field_options(bytes, fo)!
 }
 
+// decode_with_field_options is similar to `decode_with_options`, but its more controllable through FieldOptions.
 pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 	// TODO
 	if bytes.len == 0 {
 		return error('Empty bytes')
 	}
 	fo.check_wrapper()!
-	if fo.cls != '' {
-		cls := TagClass.from_string(fo.cls)!
-		mode := TaggedMode.from_string(fo.mode)!
-		inner_tag := universal_tag_from_int(fo.inner)!
-
-		inner_form := inner_tag.constructed
-		constructed := if mode == .implicit { inner_form } else { true }
-		outer_tag := Tag.new(cls, constructed, fo.tagnum)!
-		if fo.optional {
-			opt := decode_optional(bytes, outer_tag)!
-			return opt
-		}
-		// unwrap
-		mut p := Parser.new(bytes)
-		curr_tag := p.peek_tag()!
-		wrp_tag := fo.wrapper_tag()!
-
-		if curr_tag.class != wrp_tag.class {
-			return error('Get different class')
-		}
-		if curr_tag.number != wrp_tag.number {
-			return error('Get different tag number')
-		}
-		el := p.read_tlv()!
-		p.finish()!
-
-		return el
+	// read an element from bytes
+	mut p := Parser.new(bytes)
+	wrp_tag := fo.wrapper_tag()!
+	tlv := p.read_tlv()!
+	p.finish()!
+	// semantically no wraps
+	if fo.cls == '' {
+		return tlv
 	}
-	return error('decode_with_field_options failed')
+
+	// wrapped
+	if tlv.tag().class != wrp_tag.class {
+		return error('Get different class')
+	}
+	if tlv.tag().number != wrp_tag.number {
+		return error('Get different tag number')
+	}
+	// TODO: handle optional and default
+	el := tlv.unwrap_with_options(fo)!
+	return el
 }
 
 fn decode_optional(bytes []u8, expected_tag Tag) !Element {
@@ -80,84 +101,95 @@ fn decode_optional(bytes []u8, expected_tag Tag) !Element {
 	return opt
 }
 
-
 // unwrap_with_options performs unwrapping operations to the element with options provided.
 // Its technically reverse operation of the `.wrap()` applied to the element
 // with the same options. If you provide with diferent options,
 // the result is in undesired behaviour, even its success
 fn (el Element) unwrap_with_options(fo FieldOptions) !Element {
 	if fo.cls == '' {
-		// no unwrap 
-		return el 
+		// no unwrap
+		return el
 	}
-	fo.validate_options()!
+	el.validate_options(fo)!
 	// first, checks class of the element being to unwrap, should not universal class.
 	if el.tag().class == .universal {
 		return error('you cant unwrap universal element')
 	}
-	// its also happens to fo.cls, should not universal class 
-	if fo.cls 
-	// if optional 
-	if fo.optional {
-		opt := decode_optional(el.payload()!, el.tag())!
-		return opt 
+	// its also happens to fo.cls, should not universal class
+	if fo.cls == 'universal' {
+		return error('you cant unwrap universal element')
 	}
+
 	// element being unwrap should have matching with tag within options.
 	mode := TaggedMode.from_string(fo.mode)!
-	inner_form := false
+	inner_tag := universal_tag_from_int(fo.inner)!
+	if mode == .explicit {
+		if !el.tag().constructed {
+			return error('explicit mode should have constructed tag')
+		}
+		// checks inner tag from payload
+		tag, _ := Tag.decode_with_rule(el.payload()!, 0, .der)!
+		if !tag.equal(inner_tag) {
+			asn1_error(.unexpected_tag_value, 'Get unexpected inner tag from payload')!
+		}
+	}
+	inner_form := inner_tag.constructed
 	constructed := if mode == .explicit { true } else { inner_form }
-	tg := Tag.new(fo.cls, constructed, fo.tagnum)!
 
 	// check for class
 	cls := TagClass.from_string(fo.cls)!
 	if el.tag().class != cls {
 		return error('unmatching tag class')
 	}
+	built_tag := Tag.new(cls, constructed, fo.tagnum)!
 
-	// check tag equality
-	if !el.tag().equal(tg) {
+	// check outer tag equality
+	if !el.tag().equal(built_tag) {
 		return error('Element tag unequal with tag from options')
 	}
+
+	inner_el := unwrap(el, mode, inner_tag)!
+
+	return inner_el
 }
 
-// unwrap the provided element.
-fn unwrap(el Element, cls TagClass, number int, mode TaggedMode, inner_tag Tag) !Element {
-	if el.tag().class != cls {
-		return error('unwrap: unmatching tag class')
-	}
-	if cls == .universal || el.tag().class == .universal {
-		return error('unwrap: unalllowed universal class')
+// unwrap the provided element, turn into inner element.
+fn unwrap(el Element, mode TaggedMode, inner_tag Tag) !Element {
+	if el.tag().class == .universal {
+		return error('you cant unwrap universal element')
 	}
 	if mode == .explicit {
 		if !el.tag().constructed {
 			return error('explicit mode should have constructed tag')
 		}
-			// checks inner tag from payload 
+		// checks inner tag within payload
 		tag, _ := Tag.decode_with_rule(el.payload()!, 0, .der)!
 		if !tag.equal(inner_tag) {
-			return asn1_error(.unexpected_tag_value, 'Get unexpected inner tag from payload')!
+			asn1_error(.unexpected_tag_value, 'Get unexpected inner tag from payload')!
 		}
 	}
-	// the form taken from current element being wrapped 
-	form := el.tag().constructed 	
-	constructed := if mode == .explicit { true } else { form }
-	outer_tag := Tag.new(cls, constructed, number)!
-	
-	// This outer_tag should equal with current elements tag.
-	if !outer_tag.equal(el.tag()) {
-		return error('unwrap: unmatching tag found')
-	}
-
-	match cls {
-		.context_specific {
-
-		}
-		.application {}
-		.private {}
-		else {
-			return error('unwrap: Wrong class')
+	if mode == .implicit {
+		// the form should derived from inner element
+		if el.tag().constructed != inner_tag.constructed {
+			return error('Different form between element and provided inner_tag')
 		}
 	}
-
-	
+	match mode {
+		.explicit {
+			// el.payload is serialized of inner element
+			bytes := el.payload()!
+			inner_elem := decode(bytes)!
+			// recheck the tag
+			if !inner_elem.tag().equal(inner_tag) {
+				return error('unmatching inner_tag')
+			}
+			return inner_elem
+		}
+		.implicit {
+			// el.payload() is content of inner element
+			bytes := el.payload()!
+			inner_elem := parse_element(inner_tag, bytes)!
+			return inner_elem
+		}
+	}
 }

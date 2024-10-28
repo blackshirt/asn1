@@ -88,12 +88,6 @@ fn (el Element) validate_wrapper(fo FieldOptions) ! {
 	// Validates wrapper part
 	// Its discard all check when fo.cls is empty string, its marked as non-wrapped element.
 	if fo.cls != '' {
-		// wraps into the same class is not allowed
-		el_cls := el.tag().tag_class().str().to_lower()
-		if el_cls == fo.cls.to_lower() {
-			return error('wraps into same class is not allowed')
-		}
-
 		fo.check_wrapper()!
 	}
 }

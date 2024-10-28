@@ -25,7 +25,6 @@ pub fn encode(el Element) ![]u8 {
 // Examples:
 //
 // `Utf8String` defined as `[5] IMPLICIT UTF8String` was encoded into `85 02 68 69`.
-//
 // `Utf8String` defined as `[5] EXPLICIT UTF8String` was encoded into `A5 04 0C 02 68 69`.
 //
 // ```v
