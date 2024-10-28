@@ -86,3 +86,32 @@ fn (el Element) unwrap_with_options(fo FieldOptions) !Element {
 	// if unwrapping, el.tag() should == fo.inner produced by wrap operation
 	return error('Not implemented')
 }
+
+// unwrap performs unwrapping operations to the element with options provided.
+// Its technically reverse operation of the `.wrap()` applied to the element
+// with the same options. If you provide with diferent options,
+// the result is in undesired behaviour, even its success 
+fn unwrap(el Element, fo FieldOptions) !Element {
+	fo.validate_options()!
+	// first, checks class of the element being to unwrap
+	if el.tag().class == .universal {
+		return error('you cant unwrap universal element')
+	}
+	// element being unwrap should have matching with tag within options.
+	mode := TaggedMode.from_string(fo.mode)!
+	inner_form := false
+	constructed := if mode == .explicit {true} else {inner_form}
+	tg := Tag.new(fo.cls, constructed, fo.tagnum)!
+
+	//check for class
+	cls := TagClass.from_string(go.cls)!
+	if el.tag().class != cls {
+		return error('unmatching tag class'}
+	}
+		
+	// check tag equality 
+	if !el.tag().equal(tg) {
+		return error('Element tag unequal with tag from options')
+	}
+	
+}
