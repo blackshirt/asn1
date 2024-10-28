@@ -26,21 +26,25 @@ pub fn decode(src []u8) !Element {
 //
 // Examples:
 //
-// `UTF8String` with implicit tagging definded as [5] IMPLICIT UTF8String was serialized into 85 02 68 69
+// `UTF8String` with implicit tagging definded as `[5] IMPLICIT UTF8String` was encoded into `85 02 68 69`
 //
 // ```v
 // original_obj := Utf8String.new('hi')!
-// implicit_data := [u8(0x85), 0x02, 0x68, 0x69]
-// obj_2 := decode_with_options(implicit_data, 'context_specific:5;implicit;inner:12')!
+// implicit_bytes := [u8(0x85), 0x02, 0x68, 0x69]
+// obj_2 := decode_with_options(implicit_bytes, 'context_specific:5;implicit;inner:12')!
+//
 // assert obj_2.equal(original_obj)
+// dump(obj_2) // Output: obj_2: asn1.Element(Utf8String: (hi))
 // ```
 //
-// `UTF8String` with explicit tagging defined as [5] EXPLICIT UTF8String encoded into A5 04 0C 02 68 69
+// `UTF8String` with explicit tagging defined as `[5] EXPLICIT UTF8String` was encoded into `A5 04 0C 02 68 69`
 //
 // ```v
-// explicit_data := [u8(0xA5), 0x04, 0x0C, 0x02, 0x68, 0x69]
-// obj_3 := decode_with_options(explicit_data, 'context_specific:5;explicit;inner:0x0c')!
+// explicit_bytes := [u8(0xA5), 0x04, 0x0C, 0x02, 0x68, 0x69]
+// obj_3 := decode_with_options(explicit_bytes, 'context_specific:5;explicit;inner:0x0c')!
+//
 // assert obj_3.equal(original_obj)
+// dump(obj_3) // output: obj_3: asn1.Element(Utf8String: (hi))
 // ```
 pub fn decode_with_options(bytes []u8, opt string) !Element {
 	if opt.len == 0 {
