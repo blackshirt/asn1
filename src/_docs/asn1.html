@@ -337,6 +337,14 @@ payload <span class="token operator">:=</span> asn1<span class="token punctuatio
 
 </section>
 
+		<section id="Choice.new" class="doc-node">
+			<div class="title"><h2>fn Choice.new <a href="#Choice.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> Choice<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>el Element<span class="token punctuation">,</span> choices <span class="token punctuation">[</span><span class="token punctuation">]</span>Element<span class="token punctuation">)</span> <span class="token operator">!</span>Choice</code></pre>
+<p>Choice.new creates a new choice from choices list.</p>
+
+</section>
+
 		<section id="ContextElement.explicit_context" class="doc-node">
 			<div class="title"><h2>fn ContextElement.explicit_context <a href="#ContextElement.explicit_context">#</a></h2></div>
 <pre class="signature">
@@ -1034,6 +1042,44 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <pre class="signature">
 <code><span class="token keyword">fn</span> <span class="token punctuation">(</span>b Boolean<span class="token punctuation">)</span> <span class="token function">value</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span></code></pre>
 <p>value gets the boolean value represented by underlying byte value. It returns FALSE if the byte == 0x00 and TRUE otherwise.</p>
+
+</section>
+
+		<section id="Choice" class="doc-node">
+			<div class="title"><h2>struct Choice <a href="#Choice">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[noinit]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">Choice</span> <span class="token punctuation">{</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	size    <span class="token builtin">int</span> <span class="token operator">=</span> default_choices_size
+	choosen Element
+	choices <span class="token punctuation">[</span><span class="token punctuation">]</span>Element
+<span class="token punctuation">}</span></code></pre>
+<p>ASN.1 CHOICE</p>
+
+</section>
+
+		<section id="Choice.set_size" class="doc-node">
+			<div class="title"><h2>fn (Choice) set_size <a href="#Choice.set_size">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> c Choice<span class="token punctuation">)</span> <span class="token function">set_size</span><span class="token punctuation">(</span>size <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">!</span></code></pre>
+<p>set_size sets the maximal this choices size</p>
+
+</section>
+
+		<section id="Choice.tag" class="doc-node">
+			<div class="title"><h2>fn (Choice) tag <a href="#Choice.tag">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>c Choice<span class="token punctuation">)</span> <span class="token function">tag</span><span class="token punctuation">(</span><span class="token punctuation">)</span> Tag</code></pre>
+<p>Choice is an ASN.1 Element</p>
+
+</section>
+
+		<section id="Choice.payload" class="doc-node">
+			<div class="title"><h2>fn (Choice) payload <a href="#Choice.payload">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>c Choice<span class="token punctuation">)</span> <span class="token function">payload</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+
 
 </section>
 
@@ -1991,7 +2037,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 28 Oct 2024 08:23:49</div>
+						<div class="footer">Powered by vdoc. Generated on: 28 Oct 2024 08:58:20</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
@@ -2035,6 +2081,9 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#Boolean.new">fn Boolean.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Choice.new">fn Choice.new</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#ContextElement.explicit_context">fn ContextElement.explicit_context</a>        <ul>
@@ -2229,6 +2278,12 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <li><a href="#Boolean.tag">fn tag</a></li>
 <li><a href="#Boolean.payload">fn payload</a></li>
 <li><a href="#Boolean.value">fn value</a></li>
+</ul>
+</li>
+<li class="open"><a href="#Choice">struct Choice</a>        <ul>
+<li><a href="#Choice.set_size">fn set_size</a></li>
+<li><a href="#Choice.tag">fn tag</a></li>
+<li><a href="#Choice.payload">fn payload</a></li>
 </ul>
 </li>
 <li class="open"><a href="#ContextElement">struct ContextElement</a>        <ul>
