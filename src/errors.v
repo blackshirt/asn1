@@ -4,45 +4,29 @@ module asn1
 //
 enum ErrorKind {
 	// vfmt off
-	invalid_tag_class 		= 0
-	invalid_tag_form 		= 1
-	invalid_tag_number 		= 2
-	invalid_tag_format		= 4
-	unknown_tag_number		= 5
-	bytes_count_exceed		= 3
-	invalid_length_value	= 6
-	length_exceed_limit		= 7
-	unknown_error 			= 8
-	number_exceed_limit		= 9
-	too_short_data			= 10
-	invalid_offset			= 11
-	offset_exceed_limit		= 12
-	unsupported_rule		= 13
-	unsupported_format		= 14
-	invalid_value			= 15
-	unmeet_requirement		= 16
-	unallowed_operation		= 17
+	unexpected_tag_value 	= 0
+	unexpected_length_value	= 1
+	unexpected_limit_exceed	= 2
+	unexpected_bytes_data	= 3
+	unexpected_bytes_offset	= 4
+	unsupported_rule		= 5
+	unsupported_format		= 6
+	unexpected_value		= 7
+	unmeet_requirement		= 8
+	unallowed_operation		= 9
 	// vfmt on
 }
 
 fn (ek ErrorKind) str() string {
 	match ek {
-		.invalid_tag_class { return 'invalid_tag_class' }
-		.invalid_tag_form { return 'invalid_tag_form' }
-		.invalid_tag_number { return 'invalid_tag_number' }
-		.invalid_tag_format { return 'invalid_tag_format' }
-		.unknown_tag_number { return 'unknown_tag_number' }
-		.bytes_count_exceed { return 'bytes_count_exceed' }
-		.invalid_length_value { return 'invalid_length_value' }
-		.length_exceed_limit { return 'length_exceed_limit' }
-		.unknown_error { return 'unknown_error' }
-		.number_exceed_limit { return 'number_exceed_limit' }
-		.too_short_data { return 'too_short_data' }
-		.invalid_offset { return 'invalid_offset' }
-		.offset_exceed_limit { return 'offset_exceed_limit' }
+		.unexpected_tag_value { return 'unexpected_tag_value' }
+		.unexpected_length_value { return 'unexpected_length_value' }
+		.unexpected_limit_exceed { return 'unexpected_limit_exceed' }
+		.unexpected_bytes_data { return 'unexpected_bytes_data' }
+		.unexpected_bytes_offset { return 'unexpected_bytes_offset' }
 		.unsupported_rule { return 'unsupported_rule' }
 		.unsupported_format { return 'unsupported_format' }
-		.invalid_value { return 'invalid_value' }
+		.unexpected_value { return 'unexpected_value' }
 		.unmeet_requirement { return 'unmeet_requirement' }
 		.unallowed_operation { return 'unallowed_operation' }
 	}
@@ -50,23 +34,21 @@ fn (ek ErrorKind) str() string {
 
 struct Asn1Error {
 	Error
-	kind   ErrorKind
-	object string
-	msg    string
+	kind ErrorKind
+	msg  string
 }
 
 fn (er Asn1Error) msg() string {
-	return 'Error on ${er.object}: ${er.kind.str()} with error ${er.msg}'
+	return 'Error: ${er.kind.str()} with error ${er.msg}'
 }
 
 fn (er Asn1Error) code() int {
 	return er.code()
 }
 
-fn asn1_error(kind ErrorKind, obj string, msg string) !Asn1Error {
+fn asn1_error(kind ErrorKind, msg string) !Asn1Error {
 	return Asn1Error{
-		kind:   kind
-		object: obj
-		msg:    msg
+		kind: kind
+		msg:  msg
 	}
 }

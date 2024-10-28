@@ -33,7 +33,7 @@ pub fn RawElement.new(tag Tag, content []u8) !RawElement {
 		}
 		if tag.constructed {
 			if tag.number != int(TagType.sequence) && tag.number != int(TagType.set) {
-				return asn1_error(.invalid_tag_format, '${@METHOD}', 'required sequence or set number')!
+				return asn1_error(.unexpected_tag_value, 'required sequence or set number')!
 			}
 		}
 	}
@@ -48,7 +48,7 @@ pub fn RawElement.new(tag Tag, content []u8) !RawElement {
 pub fn RawElement.from_element(el Element, cls TagClass, tagnum int, mode TaggedMode) !RawElement {
 	// wrapping into .universal is not allowed.
 	if cls == .universal {
-		return asn1_error(.unallowed_operation, '${@METHOD}', 'wrap with universal class is unallowed')!
+		return asn1_error(.unexpected_tag_value, 'wrap with universal class is unallowed')!
 	}
 	inner_form := el.tag().is_constructed()
 	constructed := if mode == .explicit { true } else { inner_form }
@@ -82,16 +82,16 @@ pub fn (mut r RawElement) force_set_mode(mode TaggedMode) ! {
 
 // set mode of the RawElement into mode. If you want force it to use the mode, use `force_set_mode`.
 pub fn (mut r RawElement) set_mode(mode TaggedMode) ! {
-	r.set_mode_with_flag(mode, false)
+	r.set_mode_with_flag(mode, false)!
 }
 
 fn (mut r RawElement) set_mode_with_flag(mode TaggedMode, force bool) ! {
 	if r.tag.class == .universal {
-		return asn1_error(.unallowed_operation, '${@METHOD}', 'No need it on universal class')!
+		return asn1_error(.unexpected_tag_value, 'No need it on universal class')!
 	}
 	if r.mode != none {
 		if !force {
-			return asn1_error(.unallowed_operation, '${@METHOD}', 'r.mode != none')!
+			return asn1_error(.unallowed_operation, 'r.mode != none')!
 		}
 		r.mode = mode
 		return
@@ -114,27 +114,25 @@ pub fn (mut r RawElement) force_set_inner_tag(inner_tag Tag) ! {
 fn (mut r RawElement) set_inner_tag_with_flag(inner_tag Tag, force bool) ! {
 	// not needed in universal class
 	if r.tag.class == .universal {
-		return asn1_error(.unallowed_operation, '${@METHOD}', 'No need it on universal class')!
+		return asn1_error(.unexpected_tag_value, 'No need it on universal class')!
 	}
 	// we need mode first
-	mode := r.mode or {
-		return asn1_error(.unmeet_requirement, '${@METHOD}', 'set the mode first')!
-	}
+	mode := r.mode or { return asn1_error(.unmeet_requirement, 'set the mode first')! }
 
 	// when its explicit, compares the provided tag with tag from the inner element.
 	if mode == .explicit {
 		if !r.tag.constructed {
-			return asn1_error(.unmeet_requirement, '${@METHOD}', 'explicit should be constructed')!
+			return asn1_error(.unmeet_requirement, 'explicit should be constructed')!
 		}
 		// check inner_tag
 		itt, _ := Tag.decode(r.content)!
 		if !itt.equal(inner_tag) {
-			return asn1_error(.unmeet_requirement, '${@METHOD}', 'unequal supplied tag')!
+			return asn1_error(.unmeet_requirement, 'unequal supplied tag')!
 		}
 	}
 	if r.inner_tag != none {
 		if !force {
-			return asn1_error(.unallowed_operation, '${@METHOD}', 'r.inner_tag != none')!
+			return asn1_error(.unallowed_operation, 'r.inner_tag != none')!
 		}
 		r.inner_tag = inner_tag
 		return
@@ -143,7 +141,7 @@ fn (mut r RawElement) set_inner_tag_with_flag(inner_tag Tag, force bool) ! {
 	r.inner_tag = inner_tag
 }
 
-// forces set default value of this RawElement into value.
+// force_set_default_value forces set default value of this RawElement into value.
 pub fn (mut r RawElement) force_set_default_value(value Element) ! {
 	r.set_default_value_with_flag(value, true)!
 }
@@ -170,9 +168,7 @@ fn (mut r RawElement) set_default_value_with_flag(value Element, force bool) ! {
 
 // inner tag of the RawElement if it exists.
 pub fn (r RawElement) inner_tag() !Tag {
-	inner_tag := r.inner_tag or {
-		return asn1_error(.invalid_value, '${@METHOD}', ' r.inner_tag is not set')!
-	}
+	inner_tag := r.inner_tag or { return asn1_error(.unexpected_value, ' r.inner_tag is not set')! }
 
 	return inner_tag
 }
@@ -180,7 +176,7 @@ pub fn (r RawElement) inner_tag() !Tag {
 // inner element of the RawElement if its exists.
 pub fn (r RawElement) inner_element() !Element {
 	if r.tag.class == .universal {
-		asn1_error(.unallowed_operation, '${@METHOD}', 'inner element from universal class is not availables')!
+		asn1_error(.unallowed_operation, 'inner element from universal class is not availables')!
 	}
 	mode := r.mode or { return err }
 
@@ -188,7 +184,7 @@ pub fn (r RawElement) inner_element() !Element {
 
 	if mode == .explicit {
 		if !r.tag.constructed {
-			asn1_error(.unmeet_requirement, '${@METHOD}', 'tag should be constructed when in explicit')!
+			asn1_error(.unmeet_requirement, 'tag should be constructed when in explicit')!
 		}
 	}
 	// in implicit, r.content is inner element content with inner tag
@@ -201,7 +197,7 @@ pub fn (r RawElement) inner_element() !Element {
 	mut p := Parser.new(r.content)
 	tag := p.peek_tag()!
 	if !tag.equal(inner_tag) {
-		asn1_error(.invalid_value, '${@METHOD}', 'gets unequal inner_tag')!
+		asn1_error(.unexpected_tag_value, 'gets unequal inner_tag')!
 	}
 	el := p.read_tlv()!
 	// should finish
@@ -211,7 +207,7 @@ pub fn (r RawElement) inner_element() !Element {
 
 fn (r RawElement) check_inner_tag() ! {
 	if r.tag.class == .universal {
-		return asn1_error(.unallowed_operation, '${@METHOD}', 'Universal class dont have inner tag')!
+		return asn1_error(.unexpected_tag_value, 'Universal class does not have inner tag')!
 	}
 	mode := r.mode or { return error('You dont set any mode') }
 	if mode != .explicit {
@@ -221,7 +217,7 @@ fn (r RawElement) check_inner_tag() ! {
 	tag, _ := Tag.decode_with_rule(r.content, 0, .der)!
 	inner_tag := r.inner_tag or { return error('You dont set an inner_tag') }
 	if !tag.equal(inner_tag) {
-		return error('Get unexpected inner tag from bytes')
+		return asn1_error(.unexpected_tag_value, 'Get unexpected inner tag from bytes')!
 	}
 }
 
@@ -273,7 +269,7 @@ pub fn ContextElement.implicit_context(inner Element, tagnum int) !ContextElemen
 fn ContextElement.decode_raw(bytes []u8) !(ContextElement, int) {
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, .der)!
 	if tag.class != .context_specific {
-		return asn1_error(.invalid_tag_class, 'ContextElement', 'context_specific')!
+		return asn1_error(.unexpected_tag_value, 'tag required to be context_specific')!
 	}
 	length, content_pos := Length.decode_with_rule(bytes, length_pos, .der)!
 	content := if length == 0 {

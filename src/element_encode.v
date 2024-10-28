@@ -180,52 +180,16 @@ fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
 //		a) '[5] IMPLICIT INTEGER' has tag 0x85 (overwriting 0x02 = INTEGER)
 //		b) '[5] IMPLICIT SEQUENCE' has tag 0xA5 (overwriting 0x30 = SEQUENCE, CONSTRUCTED)
 fn (el Element) wrap_with_options(fo FieldOptions) !Element {
+	// validates options.
 	el.validate_options(fo)!
-	// we dont allow optional element to be wrapped
-	if el is Optional {
-		return error('optional is not allowed to be wrapped')
-	}
-	// wraps into .universal is not allowed
-	if fo.cls == 'universal' {
-		return error('no need to wrap into universal class')
-	}
 
-	el_cls := el.tag().tag_class()
-	// error when in the same class
-	if el_cls == TagClass.from_string(fo.cls)! {
-		return error('no need to wrap into same class')
-	}
-	// we dont allow other than .universal class to be wrapped
-	if el_cls != .universal {
-		return error('No need to wrap non-universal class')
-	}
 	mode := TaggedMode.from_string(fo.mode)!
-	payload := if mode == .explicit { encode_with_rule(el, .der)! } else { el.payload()! }
 	cls := TagClass.from_string(fo.cls)!
 
-	// when in implicit mode, wrapper's tag depends on form of element being wrapped.
-	// otherwise, when in explicit mode, should be in constructed form.
-	inner_form := el.tag().is_constructed()
-	constructed := if mode == .implicit { inner_form } else { true }
-
-	match cls {
-		.context_specific {
-			// maybe constructed or primitive.
-			return ContextElement.from_element(el, fo.tagnum, mode)!
-		}
-		.application {
-			return ApplicationElement.from_element(el, fo.tagnum, mode)!
-		}
-		.private {
-			return PrivateELement.from_element(el, fo.tagnum, mode)!
-		}
-		else {
-			return error('class wrapper not allowed')
-		}
-	}
+	return wrap(el, cls, fo.tagnum, mode)!
 }
 
-// wrao performs wrap to element and turns this element into another one.
+// wrao performs wrapping to element and turns this element into another one.
 fn wrap(el Element, cls TagClass, number int, mode TaggedMode) !Element {
 	if el is Optional {
 		return error('Optional cant be wrapped')

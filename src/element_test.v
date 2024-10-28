@@ -3,7 +3,7 @@ module asn1
 type MyOct = string
 
 fn (mo MyOct) tag() Tag {
-	return Tag{.universal, false, u32(int(TagType.octetstring))} // 0x04
+	return default_octetstring_tag
 }
 
 fn (mo MyOct) payload() ![]u8 {
@@ -13,7 +13,7 @@ fn (mo MyOct) payload() ![]u8 {
 type MyStr = string
 
 fn (ms MyStr) tag() Tag {
-	return Tag{.universal, false, u32(int(TagType.utf8string))} // 0x12
+	return default_utf8string_tag
 }
 
 fn (ms MyStr) payload() ![]u8 {
