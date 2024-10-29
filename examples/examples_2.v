@@ -1,0 +1,62 @@
+module main
+
+import asn1
+
+// This example ws taken from https://www.oss.com/asn1/resources/asn1-made-simple/asn1-quick-reference/sequence.html
+// Example schema:
+//
+// ModuleName DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+// PersonnelRecord ::= SEQUENCE {
+//         name     OCTET STRING,
+//         location INTEGER { home(0), field(1), roving(2)} OPTIONAL,
+//         age      INTEGER   OPTIONAL
+// }
+// END
+
+// The syntax above is equivalent with the following one:
+
+// PersonnelRecord ::= SEQUENCE {
+//         name     [0] IMPLICIT OCTET STRING,
+//         location [1] IMPLICIT INTEGER {home(0), field(1), roving(2)} OPTIONAL,
+//         age      [2] IMPLICIT INTEGER OPTIONAL
+// }
+struct PersonnelRecord {
+	name     asn1.OctetString @[context_specific: 0; implicit; inner: 4]
+	location asn1.Integer     @[context_specific: 1; implicit; inner: 2; optional]
+	age      asn1.Integer     @[context_specific: 2; implicit; inner: 2; optional]
+}
+
+fn (pr PersonnelRecord) tag() asn1.Tag {
+	return asn1.default_sequence_tag
+}
+
+fn (pr PersonnelRecord) payload() ![]u8 {
+	mut out := []u8{}
+
+	// by default, in .der, optional element was not included in the output, so, we remove optional options here.
+	out << asn1.encode_with_options(pr.name, 'context_specific:0; implicit; inner:4')!
+	out << asn1.encode_with_options(pr.location, 'context_specific:1; implicit; inner:2')!
+	// the example the third element is optional, but in .der it would not be serializable until you set it to present
+	out << asn1.encode_with_options(pr.age, 'context_specific:2; implicit; inner:2')!
+
+	return out
+}
+
+// expected output :
+// 30 10
+//   80 08 6269672068656164 // hex: 36323639363732303638363536313634
+//   81 01 02
+//   82 01 1A
+fn main() {
+	expected_output := [u8(0x30), 0x10, u8(0x80), 0x08, 0x36, 0x32, 0x36, 0x39, 0x36, 0x37, 0x32,
+		0x30, 0x36, 0x38, 0x36, 0x35, 0x36, 0x31, 0x36, 34, u8(0x81), 0x01, 0x02, u8(0x82), 0x01,
+		0x1A]
+	rock_star1 := PersonnelRecord{
+		name:     asn1.OctetString.new('6269672068656164')!
+		location: asn1.Integer.from_int(2)
+		age:      asn1.Integer.from_int(26)
+	}
+	dump(rock_star1)
+	out := asn1.encode(rock_star1)!
+	assert out == expected_output
+}
