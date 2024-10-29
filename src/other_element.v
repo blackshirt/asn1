@@ -36,6 +36,11 @@ pub fn RawElement.new(tag Tag, content []u8) !RawElement {
 				return asn1_error(.unexpected_tag_value, 'required sequence or set number')!
 			}
 		}
+		if tag.number == int(TagType.sequence) || tag.number == int(TagType.set) {
+			if !tag.constructed {
+				return asn1_error(.unexpected_tag_value, 'sequence or set number should in constructed tag')!
+			}
+		}
 	}
 	// otherwise, treats as a RawElement
 	return RawElement{
@@ -50,7 +55,7 @@ pub fn RawElement.from_element(el Element, cls TagClass, tagnum int, mode Tagged
 	if cls == .universal {
 		return asn1_error(.unexpected_tag_value, 'wrap with universal class is unallowed')!
 	}
-	inner_form := el.tag().is_constructed()
+	inner_form := el.tag().constructed
 	constructed := if mode == .explicit { true } else { inner_form }
 	content := if mode == .explicit { encode_with_rule(el, .der)! } else { el.payload()! }
 
@@ -179,7 +184,6 @@ pub fn (r RawElement) inner_element() !Element {
 		asn1_error(.unallowed_operation, 'inner element from universal class is not availables')!
 	}
 	mode := r.mode or { return err }
-
 	inner_tag := r.inner_tag or { return err }
 
 	if mode == .explicit {
@@ -222,7 +226,6 @@ fn (r RawElement) check_inner_tag() ! {
 }
 
 // ContextSpecific tagged type element.
-// Its always constructed (non-primitive).
 @[noinit]
 pub struct ContextElement {
 	RawElement

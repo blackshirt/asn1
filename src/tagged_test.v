@@ -5,7 +5,7 @@ module asn1
 
 fn test_explicit_context_null_pack_unpack() ! {
 	el := Null.new()
-	ex1 := ContextElement.explicit_context(el, 0)!
+	ex1 := ContextElement.from_element(el, 0, .explicit)!
 
 	out := encode(ex1)!
 	exp := [u8(0xa0), 0x02, 0x05, 0x00]
@@ -13,7 +13,6 @@ fn test_explicit_context_null_pack_unpack() ! {
 	// unpack back
 	ttback, _ := ContextElement.decode_with_options(out, 'explicit;inner:5')!
 	// ctxback := parse_context_specific_with_mode(tag Tag, content []u8, mode TaggedMode) !ContextElement {
-	// ttback, _ := TaggedType.decode(out, 0, .explicit, el.tag())!
 	assert ttback == ex1
 	itt := ttback.inner_tag?
 	assert itt.tag_number() == int(TagType.null)
@@ -22,7 +21,7 @@ fn test_explicit_context_null_pack_unpack() ! {
 fn test_explicit_context_nested_pack_unpack() ! {
 	el := Null.new()
 
-	ex1 := ContextElement.explicit_context(el, 1)!
+	ex1 := ContextElement.from_element(el, 1, .explicit)!
 
 	out := encode(ex1)!
 	assert out == [u8(0xa1), 0x02, u8(0x05), 0x00]
@@ -38,7 +37,7 @@ Example ::= SEQUENCE {
 }
 ```*/
 	oid := ObjectIdentifier.new('1.3.6.1.3')!
-	expl := ContextElement.explicit_context(oid, 1)!
+	expl := ContextElement.from_element(oid, 1, .explicit)!
 	mut seq := Sequence{}
 	seq.add_element(Utf8String.new('Hello')!)! // tag : 12
 	seq.add_element(Integer.from_i64(i64(42)))! // tag 2
