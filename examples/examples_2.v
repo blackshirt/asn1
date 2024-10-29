@@ -44,7 +44,7 @@ fn (pr PersonnelRecord) payload() ![]u8 {
 
 // expected output :
 // 30 10
-//   80 08 6269672068656164 // hex: 36323639363732303638363536313634
+//   80 08 6269672068656164 // hex: 
 //   81 01 02
 //   82 01 1A
 fn main() {
@@ -52,7 +52,7 @@ fn main() {
 		0x30, 0x36, 0x38, 0x36, 0x35, 0x36, 0x31, 0x36, 34, u8(0x81), 0x01, 0x02, u8(0x82), 0x01,
 		0x1A]
 	rock_star1 := PersonnelRecord{
-		name:     asn1.OctetString.new('6269672068656164')!
+		name:     asn1.OctetString.from_hexstring('6269672068656164')!
 		location: asn1.Integer.from_int(2)
 		age:      asn1.Integer.from_int(26)
 	}

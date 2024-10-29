@@ -3,9 +3,11 @@
 // that can be found in the LICENSE file.
 module asn1
 
+import encoding.hex
+
 // The default tag of ASN.1 OCTETSTRING type.
 pub const default_octetstring_tag = Tag{.universal, false, int(TagType.octetstring)}
-const max_octetstring_length = 1 << 32 - 1
+const max_octetstring_size = 1 << 32 - 1
 
 // ASN.1 UNIVERSAL TYPE OF OCTETSTRING.
 //
@@ -48,6 +50,14 @@ pub fn OctetString.new(s string) !OctetString {
 	return OctetString{
 		value: s
 	}
+}
+
+// from_hexstring creates OctetString from valid hex string or error on fails.
+pub fn OctetString.from_hexstring(hs string) !OctetString {
+	bytes := hex decode(hs)!
+	oct := OctetString.from_bytes(bytes)!
+
+	return oct
 }
 
 // parse an OctetString from ongoing Parser
