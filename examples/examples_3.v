@@ -34,7 +34,19 @@ module main
 // Date ::= [APPLICATION 3] IMPLICIT VisibleString -- YYYYMMDD
 struct ChildInformation {
 	name          Name
-	date_of_birth Date
+	date_of_birth Date @[context_specific;implicit;0]
+}
+
+fn (ci ChildInformation) tag() Tag {
+	return asn1.default_set_tag 
+}
+
+fn (ci ChildInformation) payload() ![]u8 {
+	mut out := []u8{}
+	out << encode(ci.name)!
+	out << encode_with_options(ci.date_of_birth, 'context_specific;implicit;0]')!
+
+	return out 
 }
 
 type EmployeeNumber = asn1.Integer
@@ -83,3 +95,39 @@ fn (n Name) payload() ![]u8 {
 
 	return out
 }
+
+// The value of John Smith's personnel record is formally described below using ASN.1.
+// { name {givenName "John",initial "P",familyName "Smith"},
+//		title 	"Director",
+//		number 	51,
+//		dateOfHire "19710917",
+//		nameOfSpouse {givenName "Mary",initial "T",familyName "Smith"},
+//		children {
+//			{ name {givenName "Ralph",initial "T",familyName "Smith"},
+//			  dateOfBirth "19571111"
+//			},
+//			{ name {givenName "Susan",initial "B",familyName "Jones"},
+//			  dateOfBirth "19590717"
+//			}
+//		}
+//	}
+
+// Representation of this record value
+// 60 8185
+//		61 10 	1A 94 'John'
+//				iA 01 'P'
+//				1A 05 'Smith'
+//		A0 0A	1A 08 'Director'
+//		42 01	33
+//		A1 0A	43 08 '19710917'
+//		A2 12	61 10 	1A 	04 'Mary'
+//						1A	01	'T'
+//						1A	05	'Smith'
+//		A3 42	31 1F	61	11	1A 05 'Ralph'
+//								1A 01 'T'
+//								1A 05 'Smith'
+//						A0	0A	43 08 '19571111'	
+//				31 1F	61	11	1A 05 'Susan'
+//								1A 01 'B'
+//								1A 05 'Jones'
+//						A0	0A	45 08 '19590717'
