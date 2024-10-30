@@ -47,6 +47,7 @@ mut:
 	// Set `optional` to true when this element has OPTIONAL keyword in the definition of element.
 	// Usually element with OPTIONAL keyword is not presents in the encoding (decoding) data.
 	optional bool
+	present  bool
 
 	// This field applied to element with DEFAULT keyword behaviour.
 	// Its applied into wrapping of element or optionality of the element.
@@ -146,20 +147,23 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 			if inn_ctr > 1 {
 				return error('multiples inner tag format defined')
 			}
-			if !valid_inner_value(value) {
+			if !valid_inner_universal_form(value) {
 				return error('Bad inner value')
 			}
 			num := value.int()
 			fo.inner = num
 		}
 		if is_optional_marker(item) {
-			opt := parse_optional_marker(item)!
+			opt, value := parse_optional_marker(item)!
 			opt_ctr += 1
 			if opt_ctr > 1 {
 				return error('multiples optional tag')
 			}
-			present := if valid_optional_key(opt) { true } else { false }
-			fo.optional = present
+			optional := if valid_optional_key(opt) { true } else { false }
+			fo.optional = optional
+
+			present := if valid_optional_present_bit_marker(value) { true } else { false }
+			fo.present = present
 		}
 		if is_default_marker(item) {
 			default_marker := parse_default_marker(item)!
@@ -322,8 +326,10 @@ fn valid_mode_value(s string) bool {
 
 // INNER TAG OPTIONS.
 //
-// parse inner value to be used by decoder, only support 'universal' class currently.
-// format : `inner=number`
+// parse inner value to be used by decoder.
+// support two format:
+// - unviersal inner format in the form `inner:number`, where number is universal class number.
+// - extended inner format in the form 'inner:class,form,number' for more broad support of the inner class.
 fn parse_inner_tag_marker(attr string) !(string, string) {
 	src := attr.trim_space()
 	if is_inner_tag_marker(src) {
@@ -331,14 +337,44 @@ fn parse_inner_tag_marker(attr string) !(string, string) {
 		if item.len != 2 {
 			return error('bad inner tag marker length')
 		}
-		// 'inner:number' part
+		// check for inner part
 		key := item[0].trim_space()
 		if !valid_inner_tag_key(key) {
 			return error('bad inner key')
 		}
+		// check for universal or extended form.
+		// item is comma separated value.
 		value := item[1].trim_space()
-		if !valid_inner_value(value) {
-			return error('Get unexpected inner value')
+		items := value.split(',')
+		if items.len == 0 {
+			return error('no inner value')
+		}
+		// length should 1 (universal) or 3 (extended)
+		if items.len != 1 && items.len != 3 {
+			return error('Invalid items.len')
+		}
+		// if its in universal form, should be a number
+		if items.len == 1 {
+			if !valid_inner_universal_form(value) {
+				return error('Get invalid universal inner value')
+			}
+		}
+		// extended form
+		if items.len == 3 {
+			if !is_extended_inner_cls_marker(items[0].trim_space()) {
+				return error('Your first ext inner is not extended cls')
+			}
+			if !valid_extended_inner_cls_marker(items[0].trim_space()) {
+				return error('Your first ext inner is not valid ext cls')
+			}
+			// second form should be 'true' or 'false'
+			if !valid_extended_inner_form_marker(items[1].trim_space()) {
+				return error('Your ext inner form is invalid')
+			}
+			// third item should be a number
+			if !valid_extended_inner_number_marker(items[2].trim_space()) {
+				return error('invalid ext inner number part')
+			}
 		}
 		return key, value
 	}
@@ -353,23 +389,95 @@ fn valid_inner_tag_key(s string) bool {
 	return s == 'inner'
 }
 
-fn valid_inner_value(s string) bool {
+fn valid_inner_universal_form(s string) bool {
 	// 'inner: number' part
 	value := s.trim_space()
 	return valid_string_tag_number(value)
 }
 
+fn parse_inner_extended_form(s string) !(string, string, string) {
+	// 'inner:class,form,number' part
+	value := s.trim_space()
+	// comma separated value.
+	items := value.split(',')
+	if items.len != 3 {
+		return error('invalid extended form length')
+	}
+	cls := items[0].trim_space()
+	if !is_extended_inner_cls_marker(cls) {
+		return error('Your first ext inner is not extended cls')
+	}
+	if !valid_extended_inner_cls_marker(cls) {
+		return error('Your first ext inner is not valid ext cls')
+	}
+	// second form should be 'true' or 'false'
+	form := items[1].trim_space()
+	if !valid_extended_inner_form_marker(form) {
+		return error('Your ext inner form is invalid')
+	}
+
+	// third item should be a number
+	third := items[2].trim_space()
+	if !valid_extended_inner_number_marker(third) {
+		return error('invalid ext inner number part')
+	}
+	return cls, form, third
+}
+
+// allows universal class as an inner.
+fn is_extended_inner_cls_marker(attr string) bool {
+	return is_tag_marker(attr) || attr.starts_with('universal')
+}
+
+fn valid_extended_inner_cls_marker(attr string) bool {
+	return valid_tagclass_name(attr) || attr == 'universal'
+}
+
+fn valid_extended_inner_form_marker(attr string) bool {
+	s := attr.trim_space()
+	return s == 'true' || s == 'false'
+}
+
+fn valid_extended_inner_number_marker(attr string) bool {
+	s := attr.trim_space()
+	return valid_string_tag_number(s)
+}
+
 // OPTIONAL.
 //
-// parse 'optional' marker
-fn parse_optional_marker(attr string) !string {
-	key := attr.trim_space()
-	if is_optional_marker(key) {
-		if !valid_optional_key(key) {
+// support two form of optional marker.
+// - the only optional key 'optional' marker, and
+// - extended bit of presence of optional, 'optional:present'
+fn parse_optional_marker(attr string) !(string, string) {
+	opt := attr.trim_space()
+	values := opt.split(':')
+	if values.len != 1 && values.len != 2 {
+		return error('Bad optional length')
+	}
+	if values.len == 1 {
+		key := values[0].trim_space()
+		if is_optional_marker(key) {
+			if !valid_optional_key(key) {
+				return error('bad optional key')
+			}
+			return key, ''
+		}
+	}
+	if values.len == 2 {
+		first := values[0].trim_space()
+		if !valid_optional_key(first) {
 			return error('bad optional key')
 		}
-		return key
+		second := values[1].trim_space()
+		if !is_optional_present_bit_marker(second) {
+			return error('Non optional presence bit marker')
+		}
+		if !valid_optional_present_bit_marker(second) {
+			return error('Not valid optional presence bit marker')
+		}
+		return first, second
 	}
+
 	return error('not optional marker')
 }
 
@@ -379,6 +487,14 @@ fn is_optional_marker(attr string) bool {
 
 fn valid_optional_key(attr string) bool {
 	return attr == 'optional'
+}
+
+fn is_optional_present_bit_marker(attr string) bool {
+	return attr.starts_with('present')
+}
+
+fn valid_optional_present_bit_marker(attr string) bool {
+	return attr == 'present'
 }
 
 // DEFAULT OPTIONS.

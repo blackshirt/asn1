@@ -3,6 +3,7 @@ module main
 import asn1
 
 // This example ws taken from https://www.oss.com/asn1/resources/asn1-made-simple/asn1-quick-reference/sequence.html
+// But modified with removed optional key.
 // Example schema:
 //
 // ModuleName DEFINITIONS AUTOMATIC TAGS ::= BEGIN
@@ -22,8 +23,8 @@ import asn1
 // }
 struct PersonnelRecord {
 	name     asn1.OctetString @[context_specific: 0; implicit; inner: 4]
-	location asn1.Integer     @[context_specific: 1; implicit; inner: 2; optional]
-	age      asn1.Integer     @[context_specific: 2; implicit; inner: 2; optional]
+	location asn1.Integer     @[context_specific: 1; implicit; inner: 2]
+	age      asn1.Integer     @[context_specific: 2; implicit; inner: 2]
 }
 
 fn (pr PersonnelRecord) tag() asn1.Tag {
@@ -56,7 +57,7 @@ fn main() {
 		location: asn1.Integer.from_int(2)
 		age:      asn1.Integer.from_int(26)
 	}
-	dump(rock_star1)
+
 	out := asn1.encode(rock_star1)!
-	assert out == expected_output
+	dump(out == expected_output) //  out == expected_output: true
 }
