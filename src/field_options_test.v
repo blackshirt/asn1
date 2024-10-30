@@ -1,6 +1,5 @@
 module asn1
 
-/*
 struct StringOption {
 	src         string
 	cls         string
@@ -29,7 +28,7 @@ fn test_parse_string_option() ! {
 		StringOption{'implicit;inner:33', '', -1, 'implicit', '33', false, false, error('You provides incorrect inner number')},
 	]
 	for i, item in data {
-		dump(i)
+		// dump(i)
 		fo := FieldOptions.from_string(item.src) or {
 			assert err == item.err
 			continue
@@ -42,7 +41,6 @@ fn test_parse_string_option() ! {
 		assert fo.inner == item.inner
 	}
 }
-*/
 
 struct TagMarker {
 	attr string
@@ -156,36 +154,38 @@ fn test_has_default_marker_parsing() ! {
 	}
 }
 
-/*
-
 struct OptionalMarker {
-	attr  string
-	valid bool
-	err   IError
+	attr    string
+	valid   bool
+	present bool
+	err     IError
 }
 
 fn test_optional_marker_parsing() ! {
 	data := [
 		// exactly matching key
-		OptionalMarker{'optional', true, none},
+		OptionalMarker{'optional', true, false, none},
+		OptionalMarker{'optional:    present ', true, true, none},
 		// matching key contains spaces is allowed
-		OptionalMarker{'optional ', true, none},
-		OptionalMarker{'      optional ', true, none},
+		OptionalMarker{'optional ', true, false, none},
+		OptionalMarker{'      optional ', true, false, none},
+		OptionalMarker{'optional:present ', true, true, none},
 		// contains another key is not allowed
-		OptionalMarker{'optional: true ', false, error('bad optional key')},
-		OptionalMarker{'optional-- ', false, error('bad optional key')},
+		OptionalMarker{'optional: true ', false, false, error('Non optional presence bit marker')},
+		OptionalMarker{'optional-- ', false, false, error('bad optional key')},
 		// this should not allowed
-		OptionalMarker{'', false, error('not optional marker')},
-		OptionalMarker{'optional_aaa', false, error('bad optional key')},
-		OptionalMarker{'opt', false, error('not optional marker')},
-		OptionalMarker{'xx_optional_ ', false, error('not optional marker')},
+		OptionalMarker{'', false, false, error('not optional marker')},
+		OptionalMarker{'optional_aaa', false, false, error('bad optional key')},
+		OptionalMarker{'opt', false, false, error('not optional marker')},
+		OptionalMarker{'xx_optional_ ', false, false, error('not optional marker')},
 	]
-	for item in data {
-		res := parse_optional_marker(item.attr) or {
+	for i, item in data {
+		// dump(i)
+		key, prs := parse_optional_marker(item.attr) or {
 			assert err == item.err
 			continue
 		}
-		assert valid_optional_key(res) == true
+		assert valid_optional_key(key) == item.valid
+		assert valid_optional_present_bit_marker(prs) == item.present
 	}
 }
-*/

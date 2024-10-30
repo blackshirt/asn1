@@ -154,13 +154,13 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 			fo.inner = value
 		}
 		if is_optional_marker(item) {
-			opt, value := parse_optional_marker(item)!
+			_, value := parse_optional_marker(item)!
 			opt_ctr += 1
 			if opt_ctr > 1 {
 				return error('multiples optional tag')
 			}
-			optional := if valid_optional_key(opt) { true } else { false }
-			fo.optional = optional
+			// when this present, its an optional
+			fo.optional = true
 
 			present := if valid_optional_present_bit_marker(value) { true } else { false }
 			fo.present = present
@@ -275,8 +275,8 @@ fn (fo FieldOptions) check_wrapper() ! {
 		if fo.inner == '' {
 			return error('You provides incorrect inner number')
 		}
-		if valid_inner_universal_form(fo.inner.trim_space())
-			|| valid_extended_inner_form(fo.inner.trim_space()) {
+		inner := fo.inner.trim_space()
+		if !valid_inner_universal_form(inner) && !valid_extended_inner_form(inner) {
 			return error('invalid inner value format')
 		}
 		if valid_inner_universal_form(fo.inner) {

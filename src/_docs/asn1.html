@@ -530,6 +530,14 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="OctetString.from_hexstring" class="doc-node">
+			<div class="title"><h2>fn OctetString.from_hexstring <a href="#OctetString.from_hexstring">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> OctetString<span class="token punctuation">.</span><span class="token function">from_hexstring</span><span class="token punctuation">(</span>hs <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>OctetString</code></pre>
+<p>from_hexstring creates OctetString from valid hex string or error on fails.</p>
+
+</section>
+
 		<section id="OctetString.new" class="doc-node">
 			<div class="title"><h2>fn OctetString.new <a href="#OctetString.new">#</a></h2></div>
 <pre class="signature">
@@ -1090,7 +1098,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 <code><span class="token keyword">struct</span> <span class="token symbol">ContextElement</span> <span class="token punctuation">{</span>
 	RawElement
 <span class="token punctuation">}</span></code></pre>
-<p>ContextSpecific tagged type element. Its always constructed (non-primitive).</p>
+<p>ContextSpecific tagged type element.</p>
 
 </section>
 
@@ -1156,14 +1164,18 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	<span class="token comment">// 3. You should provide mode for wrapping, explicit or implicit.</span>
 	<span class="token comment">// 4. If cls == '', no wrapping is performed, discarding all wrapper options</span>
 	cls    <span class="token builtin">string</span> <span class="token comment">// should cls != 'universal'</span>
-	tagnum <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token comment">// Provides with wrapper tag number.</span>
+	tagnum <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token comment">// Provides with wrapper tag number, as n outer tag number.</span>
 	mode   <span class="token builtin">string</span> <span class="token comment">// explicit or implicit, depends on definition schema.</span>
-	inner  <span class="token builtin">int</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token comment">// should valid universal tag number.</span>
+
+	<span class="token comment">// inner should valid inner tag format, ie, universal form in single value 'number'</span>
+	<span class="token comment">// or extended form in triplet value of 'class,form,number' format.</span>
+	inner <span class="token builtin">string</span>
 
 	<span class="token comment">// optional field applied to element with OPTIONAL behaviour, with or without DEFAULT value.</span>
 	<span class="token comment">// Set `optional` to true when this element has OPTIONAL keyword in the definition of element.</span>
 	<span class="token comment">// Usually element with OPTIONAL keyword is not presents in the encoding (decoding) data.</span>
 	optional <span class="token builtin">bool</span>
+	present  <span class="token builtin">bool</span>
 
 	<span class="token comment">// This field applied to element with DEFAULT keyword behaviour.</span>
 	<span class="token comment">// Its applied into wrapping of element or optionality of the element.</span>
@@ -2037,7 +2049,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 28 Oct 2024 08:58:20</div>
+						<div class="footer">Powered by vdoc. Generated on: 30 Oct 2024 04:52:24</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
@@ -2153,6 +2165,9 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#ObjectIdentifier.new">fn ObjectIdentifier.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#OctetString.from_hexstring">fn OctetString.from_hexstring</a>        <ul>
 </ul>
 </li>
 <li class="open"><a href="#OctetString.new">fn OctetString.new</a>        <ul>
