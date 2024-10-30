@@ -54,7 +54,8 @@ pub fn OctetString.new(s string) !OctetString {
 
 // from_hexstring creates OctetString from valid hex string or error on fails.
 pub fn OctetString.from_hexstring(hs string) !OctetString {
-	bytes := hex decode(hs)!
+	bytes := hex
+	decode(hs)!
 	oct := OctetString.from_bytes(bytes)!
 
 	return oct
