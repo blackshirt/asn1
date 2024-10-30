@@ -50,7 +50,7 @@ fn (pr PersonnelRecord) payload() ![]u8 {
 fn main() {
 	expected_output := [u8(0x30), 0x10, u8(0x80), 0x08, 0x62, 0x69, 0x67, 0x20, 0x68, 0x65, 0x61,
 		0x64, u8(0x81), 0x01, 0x02, u8(0x82), 0x01, 0x1A]
-	
+
 	rock_star1 := PersonnelRecord{
 		name:     asn1.OctetString.from_hexstring('6269672068656164')!
 		location: asn1.Integer.from_int(2)
