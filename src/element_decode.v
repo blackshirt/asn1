@@ -113,7 +113,7 @@ pub fn (el Element) unwrap_with_options(opt string) !Element {
 	if opt.len == 0 {
 		return el
 	}
-	fo := FieldOptions.from_string(opt)
+	fo := FieldOptions.from_string(opt)!
 	return el.unwrap_with_field_options(fo)!
 }
 
