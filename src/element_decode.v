@@ -126,7 +126,7 @@ fn (el Element) unwrap_with_options(fo FieldOptions) !Element {
 
 	// element being unwrap should have matching with tag within options.
 	mode := TaggedMode.from_string(fo.mode)!
-	inner_tag := universal_tag_from_int(fo.inner)!
+	inner_tag := fo.inner_tag()!
 	if mode == .explicit {
 		if !el.tag().constructed {
 			return error('explicit mode should have constructed tag')

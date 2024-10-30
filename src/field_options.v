@@ -39,9 +39,12 @@ mut:
 	// 3. You should provide mode for wrapping, explicit or implicit.
 	// 4. If cls == '', no wrapping is performed, discarding all wrapper options
 	cls    string // should cls != 'universal'
-	tagnum int = -1 // Provides with wrapper tag number.
+	tagnum int = -1 // Provides with wrapper tag number, as n outer tag number.
 	mode   string // explicit or implicit, depends on definition schema.
-	inner  int = -1 // should valid universal tag number.
+
+	// inner should valid inner tag format, ie, universal form in single value 'number'
+	// or extended form in triplet value of 'class,form,number' format.
+	inner string
 
 	// optional field applied to element with OPTIONAL behaviour, with or without DEFAULT value.
 	// Set `optional` to true when this element has OPTIONAL keyword in the definition of element.
@@ -147,11 +150,8 @@ pub fn FieldOptions.from_attrs(attrs []string) !FieldOptions {
 			if inn_ctr > 1 {
 				return error('multiples inner tag format defined')
 			}
-			if !valid_inner_universal_form(value) {
-				return error('Bad inner value')
-			}
-			num := value.int()
-			fo.inner = num
+
+			fo.inner = value
 		}
 		if is_optional_marker(item) {
 			opt, value := parse_optional_marker(item)!
@@ -206,12 +206,30 @@ fn (fo FieldOptions) wrapper_tag() !Tag {
 
 // inner_tag gets inner Tag from FieldOptions.
 fn (fo FieldOptions) inner_tag() !Tag {
-	if fo.inner < 0 || fo.inner > max_universal_tagnumber {
-		return error('You cant create tag from empty inner string')
+	// universal or extended form of inner value
+	st := fo.inner.trim_space()
+	if st == '' {
+		return error('invalid empty inner value')
 	}
-	utag := universal_tag_from_int(fo.inner)!
+	if valid_inner_universal_form(st) {
+		val := st.int()
+		if val < 0 || val > max_universal_tagnumber {
+			return error('You cant create universal tag from invalid inner value')
+		}
+		utag := universal_tag_from_int(val)!
+		return utag
+	}
+	if !valid_extended_inner_form(st) {
+		return error('invalid extended inner value')
+	}
+	c, form, n := parse_inner_extended_form(st)!
 
-	return utag
+	cls := TagClass.from_string(c)!
+	constructed := if form == 'true' { true } else { false }
+	number := n.int()
+
+	inn_tag := Tag.new(cls, constructed, number)!
+	return inn_tag
 }
 
 // install_default tries to install and sets element el as a default value when has_default flag of FieldOptions
@@ -254,11 +272,19 @@ fn (fo FieldOptions) check_wrapper() ! {
 			return error('Invalid zonk or uncorerct mode value')
 		}
 		// when wrapped, you should provide inner tag number value.
-		if fo.inner < 0 {
+		if fo.inner == '' {
 			return error('You provides incorrect inner number')
 		}
-		if fo.inner > max_universal_tagnumber {
-			return error('Inner number exceed universal limit')
+		if valid_inner_universal_form(fo.inner.trim_space())
+			|| valid_extended_inner_form(fo.inner.trim_space()) {
+			return error('invalid inner value format')
+		}
+		if valid_inner_universal_form(fo.inner) {
+			val := fo.inner.trim_space()
+			num := val.int()
+			if num > max_universal_tagnumber {
+				return error('Inner number exceed universal limit')
+			}
 		}
 	}
 }
@@ -393,6 +419,35 @@ fn valid_inner_universal_form(s string) bool {
 	// 'inner: number' part
 	value := s.trim_space()
 	return valid_string_tag_number(value)
+}
+
+fn valid_extended_inner_form(s string) bool {
+	// 'inner:class,form,number' part
+	value := s.trim_space()
+	// comma separated value.
+	items := value.split(',')
+	if items.len != 3 {
+		return false
+	}
+	cls := items[0].trim_space()
+	if !is_extended_inner_cls_marker(cls) {
+		return false
+	}
+	if !valid_extended_inner_cls_marker(cls) {
+		return false
+	}
+	// second form should be 'true' or 'false'
+	form := items[1].trim_space()
+	if !valid_extended_inner_form_marker(form) {
+		return false
+	}
+
+	// third item should be a number
+	third := items[2].trim_space()
+	if !valid_extended_inner_number_marker(third) {
+		return false
+	}
+	return true
 }
 
 fn parse_inner_extended_form(s string) !(string, string, string) {

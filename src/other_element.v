@@ -302,7 +302,7 @@ fn ContextElement.decode_with_options(bytes []u8, opt string) !(ContextElement, 
 		return error('Get unexpected mode option for ContextElement')
 	}
 	mode := TaggedMode.from_string(fo.mode)!
-	inner_tag := universal_tag_from_int(fo.inner)!
+	inner_tag := fo.inner_tag()!
 
 	// outer tag from bytes
 	tag, length_pos := Tag.decode_with_rule(bytes, 0, .der)!
