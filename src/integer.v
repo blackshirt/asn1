@@ -36,6 +36,13 @@ mut:
 	value IntValue
 }
 
+fn (v Integer) str() string {
+	match v.value {
+		i64 { return 'Integer: ${v.value.str()}' }
+		big.Integer { return 'Integer (big): ${v.value.str()}' }
+	}
+}
+	
 // IntValue represents arbitrary integer value, currently we support
 // through primitive 164 type for integer value below < max_i64, and
 // use `big.Integer` for support arbitrary length of integer values.
