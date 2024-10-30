@@ -45,14 +45,9 @@ pub fn (v Boolean) tag() Tag {
 
 fn (v Boolean) str() string {
 	value := v.value()
-	match value {
-		false {
-			return 'false'
-		}
-		true {
-			return 'true'
-		}
-	}
+	res := if v.value() { 'Boolean: TRUE' } else { 'Boolean: FALSE' }
+
+	return res
 }
 
 // The payload of Boolean type in .der rule.
