@@ -22,6 +22,7 @@ import asn1
 //         age      [2] IMPLICIT INTEGER OPTIONAL
 // }
 struct PersonnelRecord {
+mut:
 	name     asn1.OctetString @[context_specific: 0; implicit; inner: 4]
 	location asn1.Integer     @[context_specific: 1; implicit; inner: 2]
 	age      asn1.Integer     @[context_specific: 2; implicit; inner: 2]
@@ -43,6 +44,25 @@ fn (pr PersonnelRecord) payload() ![]u8 {
 	return out
 }
 
+// This is we can write routine for decode PersonnelRecord.
+fn PersonnelRecord.decode(bytes []u8) !PersonnelRecord {
+	elem := asn1.decode(bytes)!
+	assert elem.tag().equal(asn1.default_sequence_tag)
+
+	seq := elem as asn1.Sequence 
+	fields := seq.fields()
+
+	name := fields[0].unwrap_with_options('context_specific:0; implicit; inner:4')!
+	location := fields[1].unwrap_with_options('context_specific:1; implicit; inner:2')!
+	age := fields[2].unwrap_with_options('context_specific:2; implicit; inner:2')!
+
+	return PersonnelRecord{
+		name:     name
+		location: location
+		age:      age
+	}
+}
+
 // expected output :
 // 30 10
 //   80 08 6269672068656164 // bytestr: 'big head'
@@ -60,4 +80,7 @@ fn main() {
 
 	out := asn1.encode(rock_star1)!
 	dump(out == expected_output) //  out == expected_output: true
+
+	out_back := PersonnelRecord.decode(out)!
+	dump(out_back)
 }

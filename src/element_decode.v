@@ -83,7 +83,7 @@ pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 		return error('Get different tag number')
 	}
 	// TODO: handle optional and default
-	el := tlv.unwrap_with_options(fo)!
+	el := tlv.unwrap_with_field_options(fo)!
 	return el
 }
 
@@ -109,7 +109,16 @@ fn decode_optional(bytes []u8, expected_tag Tag) !Element {
 // Its technically reverse operation of the `.wrap()` applied to the element
 // with the same options. If you provide with diferent options,
 // the result is in undesired behaviour, even its success
-fn (el Element) unwrap_with_options(fo FieldOptions) !Element {
+pub fn (el Element) unwrap_with_options(opt string) !Element {
+	if opt.len == 0 {
+		return el
+	}
+	fo := FieldOptions.from_string(opt)
+	return el.unwrap_with_field_options(fo)!
+}
+
+// unwrap_with_field_options performs unwrapping operations with FieldOptions.
+pub fn (el Element) unwrap_with_field_options(fo FieldOptions) !Element {
 	if fo.cls == '' {
 		// no unwrap
 		return el
