@@ -1,7 +1,11 @@
-# `asn1` module documentation.
+# `asn1` module design and documentation.
 
 ## About `asn1` module
-`asn1` is a pure V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http://www.itu.int/rec/T-REC-X.680/en) objects encoded in Distinguished Encoding Rules (DER) [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) encoding scheme.
+`asn1` is a pure `experimental` V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http://www.itu.int/rec/T-REC-X.680/en) objects encoded in Distinguished Encoding Rules (DER) [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) encoding scheme.
+
+## About this document
+This document is intended to serve as documentation of internal details of this asn1 module.
+Its describes some parts of the module in the way is implemented, the lack and also issues or limitation we have found around it.
 
 ## Table of Contents
 - [About `asn1` module](#about-asn1-module)
@@ -65,25 +69,34 @@ Fundamentally, DER
 encoding of ASN.1 is serialization of a Tag, Length and Value (TLV) triplets. Every ASN.1 object has a tag that represents what is type of the object. The Tag part specifies the type of the data structure being sent, the Length part specifies the number of bytes of content being transferred, and the Value part contains the content. Note that the Value part can be a triplet if it contains a constructed data type.
 
 ### ASN.1 Tag
-ASN.1 type has a tag which is byte or series of bytes that describing class of the ASN.1 object, constructed (contains other object) or primitive and a non negative tag number. In this v `asn1` module, its support short form tag for tag number below 31 and long form tag (multi byte tag) for representing tag number bigger than 31.
-To represent tag, in this `asn1` module was using this structure:
+Every ASN.1 type has a tag which acts as an identifier of some ASN.1 element. The tag is byte or series of bytes that describing class of the ASN.1 object, constructed (contains other object) or primitive and a non negative tag number. 
+
+ASN.1 Tag identifier was represented by this compact structure, ie, 
 ```v
 struct Tag {
 mut:
-	class       Class
+	class       TagClass
 	constructed bool
 	number      int
 }
 ```
-Where `Class` represent class of ASN.1 type. There are four class of ASN.1 type represented in:
+Where `TagClass` represent class of ASN.1 type. There are four class of ASN.1 type represented in:
 ```v
-enum Class {
+enum TagClass {
 	universal = 0x00
 	application = 0x01
 	context = 0x02
 	private = 0x03
 }
 ```
+### Limitation of the Tag in this module.
+There are two form how the ASN.1 tag was represented, ie, short form tag for tag number below 31 and long form tag (multi byte tag) for representing tag number bigger than 31.
+
+This module support both of form, but the size (length) is limited to `max_tag_length` constant, currently set to 3 bytes length.
+This effectively limits the tag number supported by this module to be in 0..16.383 number ranges.
+See comment on `core.v` file for the background on this 
+
+When your tag has a class of `universal` type, your tag nunber also be limited to be under 255, hopefully if your tag is universal type, just use universal type supported by this module.
 
 ### Create new tag
 Most of the time, you don't need create tag structure manually, all basic universal type constructor set it for you internally, but for convenience, you can create a new tag, with the following constructor:
