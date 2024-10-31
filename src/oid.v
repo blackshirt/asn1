@@ -170,13 +170,15 @@ pub fn (oid ObjectIdentifier) equal(oth ObjectIdentifier) bool {
 
 fn (oid ObjectIdentifier) str() string {
 	if oid.value.len == 0 {
-		return 'nil'
+		return 'OID <nil>'
 	}
 	mut s := []string{}
 	for i in oid.value {
 		s << i.str()
 	}
-	return s.join('.')
+	res := s.join('.')
+	
+	return 'OID (${res})'
 }
 
 fn (oid ObjectIdentifier) validate() bool {
