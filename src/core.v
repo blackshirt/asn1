@@ -358,7 +358,7 @@ pub fn (t Tag) universal_tag_type() !TagType {
 	}
 }
 
-// TagClass is an enume of ASN.1 tag class.
+// TagClass is an enum of ASN.1 tag class.
 //
 // To make sure ASN.1 encodings are not ambiguous, every ASN.1 type is associated with a tag.
 // A tag consists of three parts: the tag class, tag form and the tag number.
@@ -559,36 +559,17 @@ pub enum EncodingRule {
 	xer = 4
 }
 
-// custom Error
-struct SyntaxError {
-	Error
-mut:
-	msg string
-}
-
-fn (se &SyntaxError) msg() string {
-	return se.msg
-}
-
-// syntaxError allocates a new ParseError,
-fn syntax_error(msg string, opts &FieldOptions) &SyntaxError {
-	se := &SyntaxError{
-		msg: msg
-	}
-	return se
-}
-
 // EXPLICIT and IMPLICIT MODE
 //
-// TaggedMode is the rule of context specific wrapping.
-// Explicit rule add new tag to the existing element,
-// where implicit rule replaces the tag of original object.
+// TaggedMode is way of rule how some element is being wrapped (unwrapped).
+// Explicit rule add new (outer) tag to the existing element,
+// where implicit rule replaces the tag of existing element.
 pub enum TaggedMode {
+	exolicit
 	implicit
-	explicit
 }
 
-// `from_string` creates TaggedMode from string s.
+// `TaggedMode.from_string` creates TaggedMode from string s.
 fn TaggedMode.from_string(s string) !TaggedMode {
 	match s {
 		'explicit' { return .explicit }
