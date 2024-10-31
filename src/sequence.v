@@ -238,9 +238,9 @@ mut:
 
 fn (s SequenceOf[T]) str() string {
 	if s.fields.len == 0 {
-		return 'SEQUENCE OF: <empty>'
+		return 'SEQUENCE OF (<empty>)'
 	}
-	return 'SEQUENCE OF: ${s.fields.len} ${typeof(s).name}'
+	return 'SEQUENCE OF (${s.fields.len} ${typeof(s).name})'
 }
 
 // SequenceOf.new creates a new SequenceOf[T]

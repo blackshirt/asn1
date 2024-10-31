@@ -37,7 +37,10 @@ pub fn (nst NumericString) payload() ![]u8 {
 }
 
 fn (nst NumericString) str() string {
-	return 'NumericString ${nst.value}'
+	if nst.value.len == 0 {
+		return 'NumericString (<empty>)'
+	}
+	return 'NumericString (${nst.value})'
 }
 
 fn (nst NumericString) payload_with_rule(rule EncodingRule) ![]u8 {

@@ -44,7 +44,7 @@ pub fn (v Boolean) tag() Tag {
 }
 
 fn (v Boolean) str() string {
-	res := if v.value() { 'Boolean: TRUE' } else { 'Boolean: FALSE' }
+	res := if v.value() { 'Boolean (TRUE)' } else { 'Boolean (FALSE)' }
 	return res
 }
 

@@ -52,9 +52,9 @@ fn UtcTime.from_bytes(b []u8) !UtcTime {
 
 fn (utc UtcTime) str() string {
 	if utc.value.len == 0 {
-		return 'UtcTime: (<empty>)'
+		return 'UtcTime (<empty>)'
 	}
-	return 'UtcTime: (${utc.value})'
+	return 'UtcTime (${utc.value})'
 }
 
 // the tag of UtcTime

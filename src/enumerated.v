@@ -18,7 +18,7 @@ pub:
 }
 
 fn (e Enumerated) str() string {
-	return 'Enumerated: ({e.value})'
+	return 'Enumerated (${e.value})'
 }
 
 // new creates a new Enumerated from int value.

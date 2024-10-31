@@ -48,9 +48,9 @@ pub fn (vst VisibleString) payload() ![]u8 {
 
 fn (vst VisibleString) str() string {
 	if vst.value.len == 0 {
-		return 'VisibleString: (<empty>)'
+		return 'VisibleString (<empty>)'
 	}
-	return 'VisibleString: (${vst.value})'
+	return 'VisibleString (${vst.value})'
 }
 
 fn VisibleString.parse(mut p Parser) !VisibleString {

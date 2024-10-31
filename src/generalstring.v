@@ -34,9 +34,9 @@ pub fn GeneralString.new(s string) !GeneralString {
 
 fn (gst GeneralString) str() string {
 	if gst.value.len == 0 {
-		return 'GeneralString: (<empty>)'
+		return 'GeneralString (<empty>)'
 	}
-	return 'GeneralString: (${gst.value})'
+	return 'GeneralString (${gst.value})'
 }
 
 // The tag of GeneralString

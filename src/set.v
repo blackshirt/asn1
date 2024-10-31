@@ -25,9 +25,9 @@ mut:
 
 fn (s Set) str() string {
 	if s.fields.len == 0 {
-		return 'SET: <empty>'
+		return 'SET (<empty>)'
 	}
-	return 'SET: (${s.fields.len} Elements)'
+	return 'SET (${s.fields.len} Elements)'
 }
 
 // creates a new Set with default size
@@ -219,9 +219,9 @@ pub fn SetOf.new[T]() !SetOf[T] {
 
 fn (s SetOf[T]) str() string {
 	if s.fields.len == 0 {
-		return 'SET OF: <empty> ${typeof(s).name}'
+		return 'SET OF (<empty>)'
 	}
-	return 'SET OF: (${s.fields.len} ${typeof(s).name})'
+	return 'SET OF (${s.fields.len} ${typeof(s).name})'
 }
 
 // creates new SetOf type T from arrays of T.

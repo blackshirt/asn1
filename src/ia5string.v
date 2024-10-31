@@ -39,9 +39,9 @@ pub fn (v IA5String) payload() ![]u8 {
 
 fn (v IA5String) str() string {
 	if v.value.len == 0 {
-		return 'IA5String: (<empty>)'
+		return 'IA5String (<empty>)'
 	}
-	return 'IA5String: (${v.value})'
+	return 'IA5String (${v.value})'
 }
 
 fn IA5String.parse(mut p Parser) !IA5String {

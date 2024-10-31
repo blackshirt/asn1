@@ -121,6 +121,11 @@ fn (el Element) validate_optional(fo FieldOptions) ! {
 // see `make_payload` below.
 pub type KeyDefault = map[string]Element
 
+// new_key_default creates empty KeyDefault maps.
+fn new_key_default() KeyDefault {
+	return KeyDefault(map[string]Element{})
+}
+
 // `make_payload` builds bytes of payload for some structures contains field of Elements.
 // Consider this examples from RFC 5280 defines schema.
 //  ```v
@@ -300,7 +305,7 @@ pub fn ElementList.from_bytes(src []u8) ![]Element {
 // Utility function
 //
 // is_element check whethers T is fullfills Element
-fn is_element[T]() bool {
+pub fn is_element[T]() bool {
 	s := $if T is Element { true } $else { false }
 	return s
 }

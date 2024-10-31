@@ -45,9 +45,9 @@ pub fn (uts Utf8String) payload() ![]u8 {
 
 fn (uts Utf8String) str() string {
 	if uts.value.len == 0 {
-		return 'Utf8String: (<empty>)'
+		return 'Utf8String (<empty>)'
 	}
-	return 'Utf8String: (${uts.value})'
+	return 'Utf8String (${uts.value})'
 }
 
 fn (uts Utf8String) payload_with_rule(rule EncodingRule) ![]u8 {

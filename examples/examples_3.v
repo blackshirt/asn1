@@ -34,11 +34,11 @@ module main
 // Date ::= [APPLICATION 3] IMPLICIT VisibleString -- YYYYMMDD
 struct ChildInformation {
 	name          Name
-	date_of_birth Date @[context_specific;implicit;0]
+	date_of_birth Date @[context_specific: 0; implicit]
 }
 
 fn (ci ChildInformation) tag() Tag {
-	return asn1.default_set_tag 
+	return asn1.default_set_tag
 }
 
 fn (ci ChildInformation) payload() ![]u8 {
@@ -46,7 +46,7 @@ fn (ci ChildInformation) payload() ![]u8 {
 	out << encode(ci.name)!
 	out << encode_with_options(ci.date_of_birth, 'context_specific;implicit;0]')!
 
-	return out 
+	return out
 }
 
 type EmployeeNumber = asn1.Integer
