@@ -177,7 +177,7 @@ fn (oid ObjectIdentifier) str() string {
 		s << i.str()
 	}
 	res := s.join('.')
-	
+
 	return 'OID (${res})'
 }
 

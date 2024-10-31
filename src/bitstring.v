@@ -38,10 +38,10 @@ pub fn (bs BitString) payload() ![]u8 {
 	return out
 }
 
-fn (bs Bitsring) str() string {
+fn (bs BitString) str() string {
 	return 'BitString: ${bs.data.hex()} (${bs.pad})'
 }
-	
+
 // parse BitString using ongoing Parser.
 fn BitString.parse(mut p Parser) !BitString {
 	tag := p.read_tag()!

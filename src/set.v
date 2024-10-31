@@ -23,6 +23,13 @@ mut:
 	fields []Element
 }
 
+fn (s Set) str() string {
+	if s.fields.len == 0 {
+		return 'SET: <empty>'
+	}
+	return 'SET: (${s.fields.len} Elements)'
+}
+
 // creates a new Set with default size
 pub fn Set.new() !Set {
 	return Set.new_with_size(default_set_size)!
@@ -73,13 +80,6 @@ fn (mut s Set) payload_with_rule(rule EncodingRule) ![]u8 {
 		out << obj
 	}
 	return out
-}
-
-fn (s Set) str() string {
-	if s.fields.len == 0 {
-		return 'Set(max: ${s.size}): <empty>'
-	}
-	return 'Set(max: ${s.size}): ${s.fields.len} fields'
 }
 
 pub fn (set Set) fields() []Element {
@@ -215,6 +215,13 @@ pub fn SetOf.new[T]() !SetOf[T] {
 		return error('Yur T is not Element')
 	}
 	return SetOf[T]{}
+}
+
+fn (s SetOf[T]) str() string {
+	if s.fields.len == 0 {
+		return 'SET OF: <empty> ${typeof(s).name}'
+	}
+	return 'SET OF: (${s.fields.len} ${typeof(s).name})'
 }
 
 // creates new SetOf type T from arrays of T.

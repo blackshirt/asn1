@@ -565,7 +565,7 @@ pub enum EncodingRule {
 // Explicit rule add new (outer) tag to the existing element,
 // where implicit rule replaces the tag of existing element.
 pub enum TaggedMode {
-	exolicit
+	explicit
 	implicit
 }
 

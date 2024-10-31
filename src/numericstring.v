@@ -35,11 +35,11 @@ pub fn (nst NumericString) tag() Tag {
 pub fn (nst NumericString) payload() ![]u8 {
 	return nst.payload_with_rule(.der)!
 }
-		
+
 fn (nst NumericString) str() string {
 	return 'NumericString ${nst.value}'
 }
-		
+
 fn (nst NumericString) payload_with_rule(rule EncodingRule) ![]u8 {
 	bytes := nst.value.bytes()
 	if !all_numeric_string(bytes) {
