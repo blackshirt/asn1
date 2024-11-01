@@ -54,18 +54,8 @@ pub fn (mut opt Optional) set_default(el Element) ! {
 	opt.default_value = el
 }
 
-fn (mut opt Optional) set_kehadiran(hadir bool) {
-	opt.present = hadir
-}
-
-// set_to_present make this optional present
-pub fn (mut opt Optional) set_to_present() {
-	opt.set_kehadiran(true)
-}
-
-// set_to_unpresent makes this optional was not present
-pub fn (mut opt Optional) set_to_unpresent() {
-	opt.set_kehadiran(false)
+pub fn (mut opt Optional) set_present_bit(present bool) {
+	opt.present = present
 }
 
 pub fn (opt Optional) tag() Tag {
@@ -83,14 +73,15 @@ pub fn (opt Optional) encode() ![]u8 {
 
 fn (opt Optional) encode_with_rule(rule EncodingRule) ![]u8 {
 	if opt.present {
-		elem := opt.into_element()!
-		return encode_with_rule(elem, .der)!
+		// elem := opt.into_element()!
+		return encode_with_rule(opt, .der)!
 	}
 	// not present
 	return []u8{}
 }
-
-fn (opt Optional) into_element() !Element {
+		
+// into_element turns this optional into Element.
+pub fn (opt Optional) into_element() !Element {
 	return parse_element(opt.tag(), opt.payload()!)!
 }
 
