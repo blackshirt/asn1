@@ -145,17 +145,17 @@ fn (el Element) apply_optional_options(fo FieldOptions) !Element {
 		return el
 	}
 	el.validate_optional(fo)!
-	opt := if fo.optional { el.into_optional(fo.default_value)! } else { el }
+	opt := if fo.optional { el.into_optional(fo.present)! } else { el }
 
 	return opt
 }
 
 // into_optional turns this element into Optional with default_value if there.
-fn (el Element) into_optional(with_default ?Element) !Element {
+fn (el Element) into_optional(with_present bool) !Element {
 	if el is Optional {
 		return error('already optional element')
 	}
-	opt := Optional.new(el, with_default)!
+	opt := Optional.new(el, with_present)!
 	return opt
 }
 
