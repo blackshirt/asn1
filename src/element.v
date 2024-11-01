@@ -59,7 +59,7 @@ pub fn Element.from_object[T](t T) !Element {
 // ```
 // and then treats os as an OctetString.
 pub fn (el Element) into_object[T]() !T {
-	if el is T {
+	$if el is T {
 		return *el
 	}
 	return error('Element el does not holding T')
