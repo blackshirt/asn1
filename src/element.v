@@ -313,7 +313,7 @@ pub fn ElementList.from_bytes(src []u8) ![]Element {
 // Utility function
 //
 // is_element check whethers T is fullfills Element
-pub fn is_element[T]() bool {
+fn is_element[T]() bool {
 	s := $if T is Element { true } $else { false }
 	return s
 }

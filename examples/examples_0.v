@@ -43,7 +43,7 @@ fn (ksl KerberosStringList) payload() ![]u8 {
 	mut out := []u8{}
 	for item in ksl {
 		// maybe produces x00000000: at ???: RUNTIME ERROR: invalid memory access
-		// `item` cannot be used as interface object outside `unsafe` blocks as it 
+		// `item` cannot be used as interface object outside `unsafe` blocks as it
 		// might be stored on stack. Consider declaring `KerberosString` as `@[heap]`
 		obj := unsafe { item }
 		out << asn1.encode(obj)!

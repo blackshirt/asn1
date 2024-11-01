@@ -280,7 +280,7 @@ explicit_out <span class="token operator">:=</span> asn1<span class="token punct
         signature_algorithm	AlgorithmIdentifier
         signature_value		BitString
 <span class="token punctuation">}</span></code></pre><p>Usually you can do.</p><pre><code class="language-v">cert <span class="token operator">:=</span> Certificate<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">!</span>
-payload <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>make_payload<span class="token punctuation">[</span>Certificate<span class="token punctuation">]</span><span class="token punctuation">(</span>cert<span class="token punctuation">)</span><span class="token operator">!</span></code></pre><p>and then you can use the produced payload.</p>
+payload <span class="token operator">:=</span> asn1<span class="token punctuation">.</span>make_payload<span class="token punctuation">[</span>Certificate<span class="token punctuation">]</span><span class="token punctuation">(</span>cert<span class="token punctuation">)</span><span class="token operator">!</span></code></pre><p>and then you can use the produced payload.</p><p>BUG: there are some issues would you encounter when your T contains fields that have generic in it, its would produce unexpected result, see  detail bug on: <a href="https://github.com/vlang/v/issues/22721">https://github.com/vlang/v/issues/22721</a>. So, just use this when your T.fields is not contains generic within it.</p>
 
 </section>
 
@@ -721,6 +721,22 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
+		<section id="Element.encoded_len" class="doc-node">
+			<div class="title"><h2>fn (Element) encoded_len <a href="#Element.encoded_len">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>el Element<span class="token punctuation">)</span> <span class="token function">encoded_len</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">int</span></code></pre>
+<p><code>encoded_len</code> calculates the length of bytes when this element was serialized.</p>
+
+</section>
+
+		<section id="Element.equal" class="doc-node">
+			<div class="title"><h2>fn (Element) equal <a href="#Element.equal">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>el Element<span class="token punctuation">)</span> <span class="token function">equal</span><span class="token punctuation">(</span>other Element<span class="token punctuation">)</span> <span class="token builtin">bool</span></code></pre>
+<p>equal checks whether this two element equal and holds the same tag and content</p>
+
+</section>
+
 		<section id="Element.into_object" class="doc-node">
 			<div class="title"><h2>fn (Element) into_object <a href="#Element.into_object">#</a></h2></div>
 <pre class="signature">
@@ -738,19 +754,19 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 
 </section>
 
-		<section id="Element.encoded_len" class="doc-node">
-			<div class="title"><h2>fn (Element) encoded_len <a href="#Element.encoded_len">#</a></h2></div>
+		<section id="Element.unwrap_with_field_options" class="doc-node">
+			<div class="title"><h2>fn (Element) unwrap_with_field_options <a href="#Element.unwrap_with_field_options">#</a></h2></div>
 <pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>el Element<span class="token punctuation">)</span> <span class="token function">encoded_len</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">int</span></code></pre>
-<p><code>encoded_len</code> calculates the length of bytes when this element was serialized.</p>
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>el Element<span class="token punctuation">)</span> <span class="token function">unwrap_with_field_options</span><span class="token punctuation">(</span>fo FieldOptions<span class="token punctuation">)</span> <span class="token operator">!</span>Element</code></pre>
+<p>unwrap_with_field_options performs unwrapping operations with FieldOptions.</p>
 
 </section>
 
-		<section id="Element.equal" class="doc-node">
-			<div class="title"><h2>fn (Element) equal <a href="#Element.equal">#</a></h2></div>
+		<section id="Element.unwrap_with_options" class="doc-node">
+			<div class="title"><h2>fn (Element) unwrap_with_options <a href="#Element.unwrap_with_options">#</a></h2></div>
 <pre class="signature">
-<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>el Element<span class="token punctuation">)</span> <span class="token function">equal</span><span class="token punctuation">(</span>other Element<span class="token punctuation">)</span> <span class="token builtin">bool</span></code></pre>
-<p>equal checks whether this two element equal and holds the same tag and content</p>
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>el Element<span class="token punctuation">)</span> <span class="token function">unwrap_with_options</span><span class="token punctuation">(</span>opt <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>Element</code></pre>
+<p>unwrap_with_options performs unwrapping operations to the element with options provided. Its technically reverse operation of the <code>.wrap()</code> applied to the element with the same options. If you provide with diferent options, the result is in undesired behaviour, even its success</p>
 
 </section>
 
@@ -862,7 +878,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 	context_specific <span class="token operator">=</span> <span class="token number">0x02</span> <span class="token comment">// 0b10</span>
 	private          <span class="token operator">=</span> <span class="token number">0x03</span> <span class="token comment">// 0b11</span>
 <span class="token punctuation">}</span></code></pre>
-<p>TagClass is an enume of ASN.1 tag class.</p><p>To make sure ASN.1 encodings are not ambiguous, every ASN.1 type is associated with a tag. A tag consists of three parts: the tag class, tag form and the tag number. The following classes are defined in the ASN.1 standard.</p>
+<p>TagClass is an enum of ASN.1 tag class.</p><p>To make sure ASN.1 encodings are not ambiguous, every ASN.1 type is associated with a tag. A tag consists of three parts: the tag class, tag form and the tag number. The following classes are defined in the ASN.1 standard.</p>
 
 </section>
 
@@ -923,10 +939,10 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 			<div class="title"><h2>enum TaggedMode <a href="#TaggedMode">#</a></h2></div>
 <pre class="signature">
 <code><span class="token keyword">enum</span> <span class="token symbol">TaggedMode</span> <span class="token punctuation">{</span>
-	implicit
 	explicit
+	implicit
 <span class="token punctuation">}</span></code></pre>
-<p>EXPLICIT and IMPLICIT MODE</p><p>TaggedMode is the rule of context specific wrapping. Explicit rule add new tag to the existing element, where implicit rule replaces the tag of original object.</p>
+<p>EXPLICIT and IMPLICIT MODE</p><p>TaggedMode is way of rule how some element is being wrapped (unwrapped). Explicit rule add new (outer) tag to the existing element, where implicit rule replaces the tag of existing element.</p>
 
 </section>
 
@@ -2049,7 +2065,7 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </section>
 
 
-						<div class="footer">Powered by vdoc. Generated on: 30 Oct 2024 04:52:24</div>
+						<div class="footer">Powered by vdoc. Generated on: 1 Nov 2024 02:12:48</div>
 					</div>
 					<div class="doc-toc"><ul><li class="open"><a href="#readme_asn1">README</a></li>
 <li class="open"><a href="#Constants">Constants</a></li>
@@ -2234,10 +2250,12 @@ el <span class="token operator">:=</span> Element<span class="token punctuation"
 </ul>
 </li>
 <li class="open"><a href="#Element">interface Element</a>        <ul>
-<li><a href="#Element.into_object">fn into_object</a></li>
-<li><a href="#Element.length">fn length</a></li>
 <li><a href="#Element.encoded_len">fn encoded_len</a></li>
 <li><a href="#Element.equal">fn equal</a></li>
+<li><a href="#Element.into_object">fn into_object</a></li>
+<li><a href="#Element.length">fn length</a></li>
+<li><a href="#Element.unwrap_with_field_options">fn unwrap_with_field_options</a></li>
+<li><a href="#Element.unwrap_with_options">fn unwrap_with_options</a></li>
 </ul>
 </li>
 <li class="open"><a href="#ElementList">type ElementList</a>        <ul>
