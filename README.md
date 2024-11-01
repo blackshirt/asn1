@@ -50,7 +50,7 @@ It's currently supports following basic ASN1 type:
 
 Here are some simple usage examples.
 
-### Encode ASN.1 Object.
+### Serializing ASN.1 Object.
 
 Encode a sequence containing a UTF-8 string, an integer
 and an explicitly tagged object identifier, conforming to the following
@@ -73,7 +73,17 @@ struct Example {
     // you can tag your struct fields with supported options.
     tipe        asn1.ObjectIdentifier @[context_specific:1;explicit; inner:6]
 }
+```
 
+For your structure to be treated as `asn1.Element`, you should provide
+two methods on the object, ie,
+
+- `fn (ex Example) tag() Tag` and
+- `fn (ex Example) payload() ![]u8`
+
+That's it, then you can use methods (functions) on this modules that operates on element.
+
+```v
 fn (ex Example) tag() asn1.Tag {
     return asn1.default_sequence_tag
 }
@@ -100,11 +110,10 @@ fn main() {
 }
 ```
 
-### Decode of DER Serialized bytes into ASN.1 Object.
+### Deserializing of DER encoded bytes into ASN.1 Object.
 
-You can write routines for deserialize Example structure. This is only examples way,
-but its possible to use other way with the help from this module, like use
-`Parser` codec.
+You can write routines for deserializing bytes into Example structure. This is only examples way,
+but its possible to use other way with the help from this module, like the use of `Parser` codec.
 
 ```v
 fn Example.decode(bytes []u8) !Example {
@@ -116,13 +125,13 @@ fn Example.decode(bytes []u8) !Example {
 	seq := elem.into_object[asn1.Sequence]()!
 	fields := seq.fields()
 
-	// and then, turn every field into desired object based your schema.
-	// first two field is not wrapped element, so just turn into real object
+	// and then, turn every field into desired object based on your schema.
+	// first of the two fields is non-wrapped element, so just turn into real object.
 	greeting := fields[0].into_object[asn1.Utf8String]()!
 	answer := fields[1].into_object[asn1.Integer]()!
 
 	// the third field is context_specific wrapped element, just unwrap it with the
-	// same options used to encode
+	// same options used to encode, then turn into object.
 	oid_tipe := fields[2].unwrap_with_options('context_specific:1;explicit; inner:6')!
 	tipe := oid_tipe.into_object[asn1.ObjectIdentifier]()!
 
