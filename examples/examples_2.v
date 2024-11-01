@@ -1,109 +1,133 @@
 module main
 
-import asn1
-
-// This example was taken from https://www.oss.com/asn1/resources/asn1-made-simple/asn1-quick-reference/sequence.html
-// But little modified with removed optional key in the structure and serialization.
-// Example schema:
+// This examples is taken from ITU-T X.690 Information technology – ASN.1 encoding rules:
+// Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and
+// Distinguished Encoding Rules (DER) document.
 //
-// ModuleName DEFINITIONS AUTOMATIC TAGS ::= BEGIN
-// PersonnelRecord ::= SEQUENCE {
-//         name     OCTET STRING,
-//         location INTEGER { home(0), field(1), roving(2)} OPTIONAL,
-//         age      INTEGER   OPTIONAL
-// }
-// END
+// Especially from Annex A. Example of encodings of the document.
 
-// The syntax above is equivalent with the following one:
-
-// PersonnelRecord ::= SEQUENCE {
-//         name     [0] IMPLICIT OCTET STRING,
-//         location [1] IMPLICIT INTEGER {home(0), field(1), roving(2)} OPTIONAL,
-//         age      [2] IMPLICIT INTEGER OPTIONAL
+// from A.1 ASN.1 description of the record structure.
+// The structure of the hypothetical personnel record is formally described below using ASN.1 specified in
+// ITU-T Rec. X.680 | ISO/IEC 8824-1 for defining types.
+//
+// PersonnelRecord ::= [APPLICATION 0] IMPLICIT SET {
+//      name            Name,
+//      title           [0] VisibleString,
+//      number          EmployeeNumber,
+//      dateOfHire      [1] Date,
+//      nameOfSpouse    [2] Name,
+//      children        [3] IMPLICIT SEQUENCE OF ChildInformation DEFAULT {}
 // }
-struct PersonnelRecord {
-mut:
-	name     asn1.OctetString @[context_specific: 0; implicit; inner: 4]
-	location asn1.Integer     @[context_specific: 1; implicit; inner: 2]
-	age      asn1.Integer     @[context_specific: 2; implicit; inner: 2]
+//
+// ChildInformation ::= SET {
+//      name            Name,
+//      dateOfBirth     [0] Date
+// }
+//
+// Name ::= [APPLICATION 1] IMPLICIT SEQUENCE {
+//      givenName       VisibleString,
+//      initial         VisibleString,
+//      familyName      VisibleString
+// }
+//
+// EmployeeNumber ::= [APPLICATION 2] IMPLICIT INTEGER
+// Date ::= [APPLICATION 3] IMPLICIT VisibleString -- YYYYMMDD
+struct ChildInformation {
+	name          Name
+	date_of_birth Date @[context_specific: 0; implicit]
 }
 
-fn (pr PersonnelRecord) tag() asn1.Tag {
-	return asn1.default_sequence_tag
+fn (ci ChildInformation) tag() Tag {
+	return asn1.default_set_tag
 }
 
-fn (pr PersonnelRecord) payload() ![]u8 {
+fn (ci ChildInformation) payload() ![]u8 {
 	mut out := []u8{}
-
-	// by default, in .der, optional element was not included in the output, so, we remove optional options here.
-	out << asn1.encode_with_options(pr.name, 'context_specific:0; implicit; inner:4')!
-	out << asn1.encode_with_options(pr.location, 'context_specific:1; implicit; inner:2')!
-	// the example the third element is optional, but in .der it would not be serializable until you set it to present
-	out << asn1.encode_with_options(pr.age, 'context_specific:2; implicit; inner:2')!
+	out << encode(ci.name)!
+	out << encode_with_options(ci.date_of_birth, 'context_specific;implicit;0]')!
 
 	return out
 }
 
-// This is an example of way how we can write routine for decode PersonnelRecord from bytes.
-fn PersonnelRecord.decode(bytes []u8) !PersonnelRecord {
-	// decode should produces Sequence type
-	elem := asn1.decode(bytes)!
-	assert elem.tag().equal(asn1.default_sequence_tag)
+type EmployeeNumber = asn1.Integer
 
-	// cast it into Sequence type and get the fields
-	seq := elem as asn1.Sequence
-	fields := seq.fields()
-
-	// every fields of the sequence is raw of wrapped element, so we should unwrap it with
-	// the same options used to wrap in encode step, and turn to the real underlying object.
-	el_name := fields[0].unwrap_with_options('context_specific:0; implicit; inner:4')!
-	name := el_name.into_object[asn1.OctetString]()!
-
-	el_location := fields[1].unwrap_with_options('context_specific:1; implicit; inner:2')!
-	location := el_location.into_object[asn1.Integer]()!
-
-	el_age := fields[2].unwrap_with_options('context_specific:2; implicit; inner:2')!
-	age := el_age.into_object[asn1.Integer]()!
-
-	return PersonnelRecord{
-		name:     name
-		location: location
-		age:      age
-	}
+fn (e EmployeeNumber) tag() asn1.Tag {
+	return asn1.default_integer_tag
 }
 
-// expected output :
-// 30 10
-//   80 08 6269672068656164 // bytestr: 'big head'
-//   81 01 02
-//   82 01 1A
-fn main() {
-	expected_output := [u8(0x30), 0x10, u8(0x80), 0x08, 0x62, 0x69, 0x67, 0x20, 0x68, 0x65, 0x61,
-		0x64, u8(0x81), 0x01, 0x02, u8(0x82), 0x01, 0x1A]
-
-	rock_star1 := PersonnelRecord{
-		name:     asn1.OctetString.from_hexstring('6269672068656164')!
-		location: asn1.Integer.from_int(2)
-		age:      asn1.Integer.from_int(26)
-	}
-
-	// serializes the object into bytes array and check the result
-	out := asn1.encode(rock_star1)!
-	dump(out == expected_output) //  out == expected_output: true
-
-	// deserializes bytes back into PersonnelRecord object.
-	out_back := PersonnelRecord.decode(out)!
-	dump(out_back)
-	// out_back: PersonnelRecord{
-	//  name: OctetString (big head)
-	//  location: asn1.Integer{
-	//     value: 2
-	//  }
-	//  age: asn1.Integer{
-	//     value: 26
-	// 	}
-	// }
-	dump(out_back.name == rock_star1.name) // true
-	dump(out_back.location == rock_star1.location) // true
-	dump(out_back.age == rock_star1.age) // true
+fn (e EmployeeNumber) payload() ![]u8 {
+	v := e as asn1.Integer
+	return v.payload()!
 }
+
+type Date = asn1.VisibleString
+
+fn (d Date) tag() asn1.Tag {
+	return asn1.default_visisblestring_tag
+}
+
+fn (d Date) payload() ![]u8 {
+	v := d as asn1.VisibleString
+	return v.payload()!
+}
+
+// You can write routine for encodes the Date or pass the options later.
+fn encode_date(d Date) ![]u8 {
+	// visiblestring tag = 26
+	return asn1.encode_with_options(d, 'application:3;implicit;inner:26')
+}
+
+struct Name {
+	given_name  asn1.VisibleString
+	initial     asn1.VisibleString
+	family_name asn1.VisibleString
+}
+
+fn (n Name) tag() asn1.Tag {
+	return asn1.default_sequence_tag
+}
+
+fn (n Name) payload() ![]u8 {
+	mut out := []u8{}
+	out << asn1.encode(n.given_name)!
+	out << asn1.encode(n.initial)!
+	out << asn1.encode(n.family_name)!
+
+	return out
+}
+
+// The value of John Smith's personnel record is formally described below using ASN.1.
+// { name {givenName "John",initial "P",familyName "Smith"},
+//		title 	"Director",
+//		number 	51,
+//		dateOfHire "19710917",
+//		nameOfSpouse {givenName "Mary",initial "T",familyName "Smith"},
+//		children {
+//			{ name {givenName "Ralph",initial "T",familyName "Smith"},
+//			  dateOfBirth "19571111"
+//			},
+//			{ name {givenName "Susan",initial "B",familyName "Jones"},
+//			  dateOfBirth "19590717"
+//			}
+//		}
+//	}
+
+// Representation of this record value
+// 60 8185
+//		61 10 	1A 94 'John'
+//				iA 01 'P'
+//				1A 05 'Smith'
+//		A0 0A	1A 08 'Director'
+//		42 01	33
+//		A1 0A	43 08 '19710917'
+//		A2 12	61 10 	1A 	04 'Mary'
+//						1A	01	'T'
+//						1A	05	'Smith'
+//		A3 42	31 1F	61	11	1A 05 'Ralph'
+//								1A 01 'T'
+//								1A 05 'Smith'
+//						A0	0A	43 08 '19571111'	
+//				31 1F	61	11	1A 05 'Susan'
+//								1A 01 'B'
+//								1A 05 'Jones'
+//						A0	0A	45 08 '19590717'

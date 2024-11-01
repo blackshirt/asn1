@@ -151,10 +151,18 @@ fn new_key_default() KeyDefault {
 // ```
 //
 // and then you can use the produced payload.
+//
+// BUG: there are some issues would you encounter when your T contains
+// fields that have generic in it, its would produce unexpected result,
+// see  detail bug on: https://github.com/vlang/v/issues/22721.
+// So, just use this when your T.fields is not contains generic within it.
 pub fn make_payload[T](val T, kd KeyDefault) ![]u8 {
 	mut out := []u8{}
 	$for field in val.fields {
 		// only serialiaze field that implement interfaces
+		// Issue: `$if field.typ is Element` check would false when field.type contains generic structure.
+		// even the `field.type` is fullfills the interfaces.
+		// see detail bug on: https://github.com/vlang/v/issues/22721
 		$if field.typ is Element {
 			// if there attributes option
 			if field.attrs.len != 0 {

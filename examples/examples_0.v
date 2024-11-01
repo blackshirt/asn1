@@ -2,36 +2,53 @@ module main
 
 import asn1
 
-type KerberosString = asn1.GeneralString
+// defined type KerberosString = asn1.GeneralString directly
+// produces x00000000: at ???: RUNTIME ERROR: invalid memory access
+// /tmp/v_0/examples_0.01JBJNNT0EJVN2FRKJ3ZM83EC9.tmp.c:22858: by asn1__Element_encode_with_options
+// /tmp/v_0/examples_0.01JBJNNT0EJVN2FRKJ3ZM83EC9.tmp.c:22838: by asn1__encode_with_options
+// /tmp/v_0/examples_0.01JBJNNT0EJVN2FRKJ3ZM83EC9.tmp.c:22825: by asn1__encode
+// /tmp/v_0/examples_0.01JBJNNT0EJVN2FRKJ3ZM83EC9.tmp.c:28683: by main__KerberosStringList_payload
+// /tmp/v_0/examples_0.01JBJNNT0EJVN2FRKJ3ZM83EC9.tmp.c:4319: by main__KerberosStringList_payload_Interface_asn1__Element_method_wrapper
+struct KerberosString {
+	val asn1.GeneralString
+}
 
 fn (k KerberosString) tag() asn1.Tag {
 	return asn1.default_generalstring_tag
 }
 
-fn valid_kerberos_string(s string) bool {
-	return s.is_ascii()
-}
-
 fn KerberosString.new(s string) !KerberosString {
-	if !valid_kerberos_string(s) {
-		return error('not valid kerberos string')
+	return KerberosString{
+		val: asn1.GeneralString.new(s)!
 	}
-	return KerberosString(asn1.GeneralString.new(s))
 }
 
 fn KerberosString.from_bytes(b []u8) !KerberosString {
-	if !valid_kerberos_string(b.bytestr()) {
-		return error('not valid kerberos string')
+	return KerberosString{
+		val: asn1.GeneralString.new(b.bytestr())!
 	}
-	return KerberosString(asn1.GeneralString.new(b.bytestr()))
 }
 
 fn (k KerberosString) payload() ![]u8 {
-	if !valid_kerberos_string(k.value) {
-		return error('contains invalid string')
-	}
+	return k.val.payload()!
+}
 
-	return k.payload()!
+type KerberosStringList = []KerberosString
+
+fn (ksl KerberosStringList) tag() asn1.Tag {
+	return asn1.default_sequence_tag
+}
+
+fn (ksl KerberosStringList) payload() ![]u8 {
+	mut out := []u8{}
+	for item in ksl {
+		// maybe produces x00000000: at ???: RUNTIME ERROR: invalid memory access
+		// `item` cannot be used as interface object outside `unsafe` blocks as it 
+		// might be stored on stack. Consider declaring `KerberosString` as `@[heap]`
+		obj := unsafe { item }
+		out << asn1.encode(obj)!
+	}
+	return out
 }
 
 // PrincipalName   ::= SEQUENCE {
@@ -39,8 +56,13 @@ fn (k KerberosString) payload() ![]u8 {
 //    name-string     [1] SEQUENCE OF KerberosString
 // }
 struct PrincipalName {
-	name_type   asn1.Integer                    @[context_specific: 0; explicit; inner: 2]  // integer tag = (universal, false, 2)
-	name_string asn1.SequenceOf[KerberosString] @[context_specific: 1; explicit; inner: 16] // sequence tag = (universal, true, 16)
+	name_type asn1.Integer @[context_specific: 0; explicit; inner: 2] // integer tag = (universal, false, 2)
+
+	// defines name_string  as asn1.SequenceOf[KerberosString] would produces unexpected result
+	// when you build payload with `asn1.make_payload`,
+	// see issues at https://github.com/vlang/v/issues/22721
+	// so we build with KerberosStringList
+	name_string KerberosStringList @[context_specific: 1; explicit; inner: 16] // sequence tag = (universal, true, 16)
 }
 
 fn (pn PrincipalName) tag() asn1.Tag {
@@ -49,6 +71,8 @@ fn (pn PrincipalName) tag() asn1.Tag {
 
 fn (pn PrincipalName) payload() ![]u8 {
 	kd := asn1.KeyDefault(map[string]asn1.Element{})
+	// there are some issues with make_payload when your structure contains generic.
+	// see https://github.com/vlang/v/issues/22721
 	payload := asn1.make_payload[PrincipalName](pn, kd)!
 	return payload
 }
@@ -70,14 +94,17 @@ fn PrincipalName.decode(bytes []u8) !PrincipalName {
 	// tag 16 is sequence tag, its decoded into Sequence type
 	el_name_string := fields[1].unwrap_with_options('context_specific: 1; explicit; inner: 16')!
 	el_seq := el_name_string.into_object[asn1.Sequence]()!
+
+	// KerberosString string has a general_string tag, so it would be parsed as asn1.GeneralString
+	// so, we transforms it into KerberosString back and build KerberosStringList.
 	mut a := []KerberosString{}
 	for item in el_seq.fields() {
 		gst := item.into_object[asn1.GeneralString]()!
-		obj := KerberosString(gst)
+		obj := KerberosString{gst}
 		a << obj
 	}
 
-	name_string_list := asn1.SequenceOf.from_list[KerberosString](a)!
+	name_string_list := KerberosStringList(a)
 
 	return PrincipalName{
 		name_type:   name_type
@@ -92,23 +119,16 @@ fn main() {
 	els := [KerberosString.new('bobba-fett')!]
 
 	pn := PrincipalName{
-		name_type:   asn1.Integer.from_i64(1)
-		name_string: asn1.SequenceOf.from_list[KerberosString](els)!
+		name_type:   asn1.Integer.from_int(1)
+		name_string: KerberosStringList(els)
 	}
-	$for field in pn.fields {
-		dump(field)
-		// dump(field.typ is asn1.Element)
-		// only serialiaze field that implement interfaces
-		$if field.typ is asn1.Element {
-			// dump(field)
-		}
-	}
-	dump(pn.payload()!)
+
 	out1 := asn1.encode(pn)!
-	//dump(out1.hex())
 	back := PrincipalName.decode(data)!
-	//dump(back)
-	//dump(back == pn)
-	//dump(out1.hex()) // should assert to true
-	//dump(data.hex())
+	dump(back == pn) // should assert to true
+	dump(out1.hex() == data.hex()) // should assert to true
+
+	// run this produces:
+	// [examples/examples_0.v:128] back == pn: true
+	// [examples/examples_0.v:129] out1.hex() == data.hex(): true
 }
