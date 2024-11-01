@@ -20,18 +20,12 @@ mut:
 	default_value ?Element
 }
 
-fn (opt Optional) validate() ! {
-	/*
-	if opt.has_default && opt.default_value == none {
-		return error('Optional with has_default but default_value is none')
-	}
-	if opt.has_default && opt.default_value != none {
-		val := opt.default_value or { return error('none') }
-		if opt.elem.tag() != val.tag() {
-			return error('default value with different tag is not allowed')
+fn (opt Optional) check() ! {
+	if opt.default_value != none {
+		if !opt.tag().equal(opt.default_value.tag()) {
+			return error('unmatching tag between default and optional')
 		}
 	}
-	*/
 }
 
 // Optional.new creates and marked element as an Optional element.
@@ -63,7 +57,6 @@ pub fn (opt Optional) tag() Tag {
 }
 
 pub fn (opt Optional) payload() ![]u8 {
-	// opt.validate()!
 	return opt.elem.payload()!
 }
 
