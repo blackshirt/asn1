@@ -164,11 +164,27 @@ fn (el Element) into_optional(with_present bool) !Element {
 // by default, optional attribute is more higher precedence over wrapper attribut, ie,
 // take the wrap step and then turn into optional (if true)
 fn (el Element) apply_field_options(fo FieldOptions) !Element {
-	wrapped := el.apply_wrappers_options(fo)!
+	el.validate_options(fo)!
+	// if there a wrapper
+	if fo.cls != '' {
+		wrapped_el := el.wrap_with_options(fo)!
+		if fo.optional {
+			return wrapped_el.into_optional(fo.present)!
+		}
+		// not-optional, just return wrapped element
+		return wrapped_el
+	}
+	// no-wrapper, check for optional
+	if fo.optional {
+		return el.into_optional(fo.present)!
+	}
+	// otherwise, its no-wrapper and non-optional
+	return el
+	// wrapped := el.apply_wrappers_options(fo)!
 	// optional options take precedence over wrapper
 	// wehen fo.optional is false, new_el is current wrapped element
-	new_el := wrapped.apply_optional_options(fo)!
-	return new_el
+	// new_el := wrapped.apply_optional_options(fo)!
+	// return new_el
 }
 
 fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
