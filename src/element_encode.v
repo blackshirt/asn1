@@ -57,10 +57,12 @@ fn (el Element) encode_with_options(opt string) ![]u8 {
 
 // encode_with_field_options serializes element into bytes arrays with supplied FieldOptions.
 fn (el Element) encode_with_field_options(fo FieldOptions) ![]u8 {
-	if el is Optional {
-		return el.encode()
-	}
+	// validates options again this element.
 	el.validate_options(fo)!
+	
+	// check for default_value for this element 
+	// if we have it matching with current element,
+	// by default, in .der mode, it should not be serialized.
 	if fo.has_default {
 		def_element := fo.default_value or { return error('bad default_value') }
 		// If this element is equal with default_value, by default its should not be serialized.
@@ -68,8 +70,25 @@ fn (el Element) encode_with_field_options(fo FieldOptions) ![]u8 {
 			return []u8{}
 		}
 	}
-	new_element := el.apply_field_options(fo)!
-	out := encode_with_rule(new_element, .der)!
+	// wrapped element
+	wrapped := el.wrap_with_options(fo)!
+	if fo.optional {
+		if el is Optional {
+			return error('el is already optional')
+		}
+		// when its present bit was set, its should serializable.
+		if fo.present {
+			return encode_with_rule(wrapped, .der)!
+		}
+		// not present, so irs not included
+		return []u8{}
+	}
+	if el is Optional {
+		return el.encode()
+	}
+	
+	// new_element := el.apply_field_options(fo)!
+	out := encode_with_rule(wrapped, .der)!
 	return out
 }
 
@@ -106,10 +125,6 @@ fn (el Element) apply_wrappers_options(fo FieldOptions) !Element {
 	// no wraps, and discard other wrapper options
 	if fo.cls == '' {
 		return el
-	}
-	// element being wrapped should have universal class
-	if el.tag().class != .universal {
-		return error('non-universal going to wrapped')
 	}
 	el.validate_wrapper(fo)!
 	if fo.has_default {
