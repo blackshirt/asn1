@@ -70,25 +70,30 @@ fn (el Element) encode_with_field_options(fo FieldOptions) ![]u8 {
 			return []u8{}
 		}
 	}
-	// wrapped element
-	wrapped := el.wrap_with_options(fo)!
-	if fo.optional {
-		if el is Optional {
-			return error('el is already optional')
+	// is there a wrapper?
+	if fo.cls != '' {
+		// wrapped element
+		wrapped := el.wrap_with_options(fo)!
+	    // is there optional flag?
+		if fo.optional {
+			if el is Optional {
+				return error('el is already optional')
+			}
+			// when its present bit was set, its should serializable.
+			if fo.present {
+				return encode_with_rule(wrapped, .der)!
+			}
+			// not present, so irs not included
+			return []u8{}
 		}
-		// when its present bit was set, its should serializable.
-		if fo.present {
-			return encode_with_rule(wrapped, .der)!
-		}
-		// not present, so irs not included
-		return []u8{}
 	}
+	// is already optional ?
 	if el is Optional {
 		return el.encode()
 	}
 	
-	// new_element := el.apply_field_options(fo)!
-	out := encode_with_rule(wrapped, .der)!
+	// no-wrap nor optional
+	out := encode_with_rule(el, .der)!
 	return out
 }
 
@@ -180,16 +185,12 @@ fn (el Element) apply_field_options(fo FieldOptions) !Element {
 	}
 	// otherwise, its no-wrapper and non-optional
 	return el
-	// wrapped := el.apply_wrappers_options(fo)!
-	// optional options take precedence over wrapper
-	// wehen fo.optional is false, new_el is current wrapped element
-	// new_el := wrapped.apply_optional_options(fo)!
-	// return new_el
 }
-
-fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
+		
+// set_default_value installs default value within FieldOptions for the element 
+pub fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
 	// the default tag should match with the current tag
-	if el.tag() != value.tag() {
+	if !el.tag().equal(value.tag()) {
 		return error('unmatching tag of default value')
 	}
 	fo.install_default(value, false)!
