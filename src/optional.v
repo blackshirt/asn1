@@ -8,44 +8,25 @@ module asn1
 // (except for primitive type values in PER which are required by the PER standard to be absent in the encoding),
 // while with others (like DER) the DEFAULT value is NEVER encoded. For all encoding rules,
 // if the component that has a DEFAULT value is not encoded the receiving application must behave as though the DEFAULT value had been encoded.
-@[heap; noinit]
+@[noinit]
 pub struct Optional {
 	// underlying element marked as an optional
 	elem Element
 mut:
 	// presence of this flag negates optionality of this elemeent.
-	// set to true when its should present, if notu sure, just set to to false
+	// set to true when its should present, if not sure, just set to to false
 	present bool
-	// set to none when have no default
-	default_value ?Element
-}
-
-fn (opt Optional) check() ! {
-	if opt.default_value != none {
-		if !opt.tag().equal(opt.default_value.tag()) {
-			return error('unmatching tag between default and optional')
-		}
-	}
 }
 
 // Optional.new creates and marked element as an Optional element.
-pub fn Optional.new(el Element, with_default ?Element) !Optional {
+pub fn Optional.new(el Element, with_present bool) !Optional {
 	if el is Optional {
 		return error('recursive optional is not allowed')
 	}
 	return Optional{
-		elem:          el
-		default_value: with_default
+		elem:    el
+		present: with_present
 	}
-}
-
-// set_default sets the default value of this optional. You should provide it with element
-// that has equal tag with the tag of this optional element or error otherwise.
-pub fn (mut opt Optional) set_default(el Element) ! {
-	if !opt.tag().equal(el.tag()) {
-		return error('default value with different tag is not allowed')
-	}
-	opt.default_value = el
 }
 
 pub fn (mut opt Optional) set_present_bit(present bool) {
