@@ -70,30 +70,18 @@ fn (el Element) encode_with_field_options(fo FieldOptions) ![]u8 {
 			return []u8{}
 		}
 	}
-	// is there a wrapper?
-	if fo.cls != '' {
-		// wrapped element
-		wrapped := el.wrap_with_options(fo)!
-	    // is there optional flag?
-		if fo.optional {
-			if el is Optional {
-				return error('el is already optional')
-			}
-			// when its present bit was set, its should serializable.
-			if fo.present {
-				return encode_with_rule(wrapped, .der)!
-			}
-			// not present, so irs not included
-			return []u8{}
-		}
-	}
-	// is already optional ?
-	if el is Optional {
-		return el.encode()
-	}
 	
-	// no-wrap nor optional
-	out := encode_with_rule(el, .der)!
+	// apply field options, turns this element 
+	// into optional, wrapped element or original one.
+	new_el:= el.apply_field_options(fo)!
+	
+	// if new_el is Optional, encode with optional behaviour
+	if new_el is Optional {
+		return new_el.encode()!
+	}
+	// otherwise, just serializing it
+	out := encode_with_rule(new_el, .der)!
+	
 	return out
 }
 
@@ -123,39 +111,9 @@ fn encode_with_rule(el Element, rule EncodingRule) ![]u8 {
 
 // Helper for wrapping element
 //
-
-// apply_wrappers_options turns this element into another element by wrapping it
-// with the some options defined in FieldOptions.
-fn (el Element) apply_wrappers_options(fo FieldOptions) !Element {
-	// no wraps, and discard other wrapper options
-	if fo.cls == '' {
-		return el
-	}
-	el.validate_wrapper(fo)!
-	if fo.has_default {
-		el.validate_default(fo)!
-	}
-
-	new_el := el.wrap_with_options(fo)!
-
-	return new_el
-}
-
-// Helper for turns the element into Optional.
 //
-// apply_optional_options turns this element into another element with OPTIONAL semantic.
-fn (el Element) apply_optional_options(fo FieldOptions) !Element {
-	// not an optional element, just return the current element.
-	if !fo.optional {
-		return el
-	}
-	el.validate_optional(fo)!
-	opt := if fo.optional { el.into_optional(fo.present)! } else { el }
-
-	return opt
-}
-
-// into_optional turns this element into Optional with default_value if there.
+// into_optional turns this element into Optional with present bit.
+// When you set with_present into true, its makes this optional was present.
 fn (el Element) into_optional(with_present bool) !Element {
 	if el is Optional {
 		return error('already optional element')
