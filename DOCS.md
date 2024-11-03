@@ -122,20 +122,21 @@ It would create a tag from bytes, and return a tag and remaining bytes (bytes af
 ### ASN.1 Length handling 
 ASN.1 length indicates how many bytes you should read to get values or contents part. It always represents the total number of bytes in the object including all sub-objects but does not include the lengths of the identifier or of the length field itself.
 
-The standard of X.690 ITU document defines two length types - definite length, and 
+The standard of X.690 ITU document defines two length types 
+- definite length, and 
 - indefinite length.
 
-ASN.1 definite length comes in two form: short and long form, short form fits in single byte for length between 0 and 127, and the others is long form in multi byte form.
+ASN.1 definite length comes in two form: short and long form. The short form fits in single byte for length between 0 and 127, and the others is long form in multi byte form.
 
 > **Note**
 > This module only support definite length but its only limited to DER encoding of length.
 > Theoretically, definite length support for very big number for length value, ie, value between 0 and 2^1008-1, but in this module, this limited to pre-defined constant, `max_definite_length_count` set to 6 bytes currently, and `max_definite_length_value` set to builtin `max_int`.
 
-ASN.1 length represented in simple type, ie, 
+ASN.1 length was represented in a simple type, ie, 
 ```v
 type Length = int
 ```
-You can create length from regular integer with 
+You can create a length from regular integer with 
 ```v
 fn Length.new(v int) !Length 
 ```
@@ -143,14 +144,27 @@ and, you can read a length from bytes with
 ```v
 fn Length.from_bytes(bytes []u8) !(Length, []u8)
 ```
-It would return a lemgth and remaining bytes on succes or error on fails.
+It would return a length and remaining bytes on succes or error on fails.
 
 ### Serializing ASN.1 Length
-This module provides method you to serialize the length into destionation buffer, 
+This module provides method to serialize the length into destionation buffer, 
 ```v
 fn (v Length) encode(mut dst []u8) !
 ```
+## ASN.1 Element
+At the core for support handling element in generic and concise way, a fundamental and abstracted way provided in this module is an `Element` interface, dedined as 
+```v
+interface Element {
+    tag()     Tag
+    payload() ![]u8
+}
+```
+where the `tag` acts as an identifier of the element and `payload` tells the value's part of the element.
+The `payload` methods of the `Element` does not dictates on how your element generates payload. Its up to specific  encoding rules or other constraints.
 
+> **Note**
+> Most of the functions or methods defined in this module was accept or return an `Element`.
+> Most of them is implemented with DER encoding in mind, so, your custom element hopefylly would be supported by this functions (methods) if your element correctly implemented required constraints in this module.
 
 ## Supported Basic ASN.1 Type
 Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
