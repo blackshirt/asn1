@@ -1,7 +1,7 @@
-# `asn1` module design and documentation.
+# `asn1` module documentation.
 
 ## About `asn1` module
-`asn1` is a pure `experimental` V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http://www.itu.int/rec/T-REC-X.680/en) objects encoded in Distinguished Encoding Rules (DER) [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) encoding scheme.
+`asn1` is a `experimental` pure V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http://www.itu.int/rec/T-REC-X.680/en) objects encoded in Distinguished Encoding Rules (DER) [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) encoding scheme.
 
 ## About this document
 This document is intended to serve as documentation of internal details of this asn1 module.
@@ -98,14 +98,28 @@ See comment on `core.v` file for the background on this
 
 When your tag has a class of `universal` type, your tag nunber also be limited to be under 255, hopefully if your tag is universal type, just use universal type supported by this module.
 
-### Create new tag
+### Create ASN.1 Tag
 Most of the time, you don't need create tag structure manually, all basic universal type constructor set it for you internally, but for convenience, you can create a new tag, with the following constructor:
 ```v
-fn new_tag(c Class, constructed bool, number int) Tag
+fn Tag.new(c TagClass, constructed bool, number int) !Tag
 ```
 where `c` is the ASN.1 class this object belong to, `constructed` boolean flag tells if this object constructed or primitive, and provided tag `number`.
 
-### Length handling 
+### Serializing tag into bytes
+You can serialize (encode) your tga with method defined in this module, 
+```v
+fn (t Tag) encode(mut dst []u8) !
+```
+By default, `encode` would try to serialize tag in DER rule into destination buffer provided in `dst`, or returns error on fails.
+
+### Read ASN.1 Tag from bytes 
+This module provides routine for reading tag from bytes. You can use 
+```v
+fn Tag.from_bytes(bytes []u8) !(Tag, []u8)
+```
+It would create a tag from bytes, and return a tag and remaining bytes (bytes after tag) on success, or returns error on fails.
+
+### ASN.1 Length handling 
 ASN.1 length indicates how many bytes you should read to get values or contents part. It always represents the total number of bytes in the object including all sub-objects but does not include the lengths of the identifier or of the length field itself.
 
 ASN.1 length comes in two form: short and long form, short form fits in single byte for length between 0 and 127, and the others is long form in multi byte form. This module support both of them, but, its only limited to DER encoding of length, ie, use definite length encoding and use the smallest possible length representation.
@@ -133,17 +147,18 @@ Basic ASN.1 type was a ASN.1 object which has universal class. It's currently su
 
 
 
-## Generic ASN.1 Object 
-For the purposes of handling ASN.1 object in general way, we use `ASN1Object` that defined as:
+## Generic ASN.1 Element
+For the purposes of handling ASN.1 object in general way, this module provides `RawElement` that defined as:
 ```v
-struct ASN1Object {
-	tag    Tag 
-	values []u8
+struct RawElement {
+	tag     Tag 
+	content []u8
+
 }
 ```
 where:
 * `tag` is the tag of object, and 
-* `values` is the raw bytes array (contents) of the object without tag and length part.
+* `content` is the raw bytes array (contents) of the object without tag and length part.
 
 You can create  `ASN1Object` object with  the constructor, provided with parameters :
 * `Class` this object belong to,
