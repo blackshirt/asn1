@@ -35,7 +35,7 @@ pub interface Element {
 // Examples:
 // ```v
 // oc := asn1.OctetString.new("xxx")!
-// el := Element.from_object[OctetString](oc)!
+// el := asn1.Element.from_object[OctetString](oc)!
 // ```
 // and then treats your OctetString as an Element
 pub fn Element.from_object[T](t T) !Element {
@@ -51,7 +51,7 @@ pub fn Element.from_object[T](t T) !Element {
 // Examples:
 // ```v
 // oc := asn1.OctetString.new("xxx")!
-// el := Element.from_object[OctetString](oc)!
+// el := asn1.Element.from_object[OctetString](oc)!
 // ```
 // cast back the element into OctetString.
 // ```v
@@ -59,10 +59,10 @@ pub fn Element.from_object[T](t T) !Element {
 // ```
 // and then treats os as an OctetString.
 pub fn (el Element) into_object[T]() !T {
-	$if el is T {
+	if el is T {
 		return *el
 	}
-	return error('Element el does not holding T')
+	return error('Element el does not holding ${typeof(T{}).name}')
 }
 
 // length tells the payload length of this element.

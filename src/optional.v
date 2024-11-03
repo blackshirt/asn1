@@ -53,7 +53,7 @@ fn (opt Optional) encode_with_rule(rule EncodingRule) ![]u8 {
 	// not present
 	return []u8{}
 }
-		
+
 // into_element turns this optional into Element.
 pub fn (opt Optional) into_element() !Element {
 	return parse_element(opt.tag(), opt.payload()!)!

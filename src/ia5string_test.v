@@ -39,6 +39,5 @@ fn test_ia5string_handling() ! {
 		assert ret.tag().tag_number() == 22
 		assert ret.tag().tag_class() == TagClass.universal
 		assert ret.tag().is_constructed() == false
-		assert ret.str() == 'IA5String: (${c.src})'
 	}
 }

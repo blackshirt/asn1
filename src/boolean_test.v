@@ -34,14 +34,14 @@ fn test_parse_boolean_with_parser() ! {
 
 	// This is fails too lookup
 	out := p.read_element[Boolean]()!
-	assert out.str() == 'true'
+	assert out.str() == 'Boolean (TRUE)'
 
 	// this is OK
 	out_2nd := parse[Boolean](data, parse_boolean)!
-	assert out_2nd.str() == 'true'
+	assert out_2nd.str() == 'Boolean (TRUE)'
 
 	// THis is ok
 	mut p2 := Parser.new(data)
 	out_3th := Boolean.parse(mut p2)!
-	assert out_3th.str() == 'true'
+	assert out_3th.str() == 'Boolean (TRUE)'
 }

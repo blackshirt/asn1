@@ -59,8 +59,8 @@ fn (el Element) encode_with_options(opt string) ![]u8 {
 fn (el Element) encode_with_field_options(fo FieldOptions) ![]u8 {
 	// validates options again this element.
 	el.validate_options(fo)!
-	
-	// check for default_value for this element 
+
+	// check for default_value for this element
 	// if we have it matching with current element,
 	// by default, in .der mode, it should not be serialized.
 	if fo.has_default {
@@ -70,18 +70,18 @@ fn (el Element) encode_with_field_options(fo FieldOptions) ![]u8 {
 			return []u8{}
 		}
 	}
-	
-	// apply field options, turns this element 
+
+	// apply field options, turns this element
 	// into optional, wrapped element or original one.
-	new_el:= el.apply_field_options(fo)!
-	
+	new_el := el.apply_field_options(fo)!
+
 	// if new_el is Optional, encode with optional behaviour
 	if new_el is Optional {
 		return new_el.encode()!
 	}
 	// otherwise, just serializing it
 	out := encode_with_rule(new_el, .der)!
-	
+
 	return out
 }
 
@@ -144,8 +144,8 @@ fn (el Element) apply_field_options(fo FieldOptions) !Element {
 	// otherwise, its no-wrapper and non-optional
 	return el
 }
-		
-// set_default_value installs default value within FieldOptions for the element 
+
+// set_default_value installs default value within FieldOptions for the element
 pub fn (el Element) set_default_value(mut fo FieldOptions, value Element) ! {
 	// the default tag should match with the current tag
 	if !el.tag().equal(value.tag()) {

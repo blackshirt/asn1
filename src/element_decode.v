@@ -12,9 +12,11 @@ module asn1
 //
 // Original object was Utf8String with tag == 12 (0c)
 // ```v
-// original_obj := Utf8String.new('hi')!
+// import asn1
+//
+// original_obj := asn1.Utf8String.new('hi')!
 // bytes_data := [u8(0x0C), 0x02, 0x68, 0x69]
-// decoded_obj := decode(bytes_data)!
+// decoded_obj := asn1.decode(bytes_data)!
 // assert decoded_obj.equal(original_obj)
 // ```
 pub fn decode(src []u8) !Element {
@@ -29,9 +31,9 @@ pub fn decode(src []u8) !Element {
 // `UTF8String` with implicit tagging definded as `[5] IMPLICIT UTF8String` was encoded into `85 02 68 69`
 //
 // ```v
-// original_obj := Utf8String.new('hi')!
+// original_obj := asn1.Utf8String.new('hi')!
 // implicit_bytes := [u8(0x85), 0x02, 0x68, 0x69]
-// obj_2 := decode_with_options(implicit_bytes, 'context_specific:5;implicit;inner:12')!
+// obj_2 := asn1.decode_with_options(implicit_bytes, 'context_specific:5;implicit;inner:12')!
 //
 // assert obj_2.equal(original_obj)
 // dump(obj_2) // Output: obj_2: asn1.Element(Utf8String: (hi))
@@ -41,7 +43,7 @@ pub fn decode(src []u8) !Element {
 //
 // ```v
 // explicit_bytes := [u8(0xA5), 0x04, 0x0C, 0x02, 0x68, 0x69]
-// obj_3 := decode_with_options(explicit_bytes, 'context_specific:5;explicit;inner:0x0c')!
+// obj_3 := asn1.decode_with_options(explicit_bytes, 'context_specific:5;explicit;inner:0x0c')!
 //
 // assert obj_3.equal(original_obj)
 // dump(obj_3) // output: obj_3: asn1.Element(Utf8String: (hi))
@@ -65,11 +67,19 @@ pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 		return error('Empty bytes')
 	}
 	fo.check_wrapper()!
+
+	// check for optional, and return it, maybe nil optional
+	// expected optional tag is outer wrapper tag
+	wrp_tag := fo.wrapper_tag()!
+	if fo.optional {
+		opt := decode_optional(bytes, wrp_tag)!
+		return opt
+	}
 	// read an element from bytes
 	mut p := Parser.new(bytes)
-	wrp_tag := fo.wrapper_tag()!
 	tlv := p.read_tlv()!
 	p.finish()!
+
 	// semantically no wraps
 	if fo.cls == '' {
 		return tlv
@@ -82,7 +92,7 @@ pub fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element {
 	if tlv.tag().number != wrp_tag.number {
 		return error('Get different tag number')
 	}
-	// TODO: handle optional and default
+	// TODO: default
 	el := tlv.unwrap_with_field_options(fo)!
 	return el
 }
@@ -94,14 +104,12 @@ fn decode_optional(bytes []u8, expected_tag Tag) !Element {
 	if ct.equal(expected_tag) {
 		// present
 		el := p.read_tlv()!
-		mut opt := Optional.new(el, none)!
-		// set this optional presence to true
-		opt.set_to_present()
+		mut opt := Optional.new(el, true)!
 		return opt
 	}
 	// optional element with no-presence semantic
 	el := RawElement.new(expected_tag, []u8{})!
-	opt := Optional.new(el, none)!
+	opt := Optional.new(el, false)!
 	return opt
 }
 
@@ -149,13 +157,14 @@ pub fn (el Element) unwrap_with_field_options(fo FieldOptions) !Element {
 	inner_form := inner_tag.constructed
 	constructed := if mode == .explicit { true } else { inner_form }
 
-	// check for class
+	// check for tag equality
+	// The tag of element being unwrapped with tag from FieldOptions should matching.
+	// Its should comes from same options on wrapping.
 	cls := TagClass.from_string(fo.cls)!
 	if el.tag().class != cls {
-		return error('unmatching tag class')
+		return error('unmatching outer tag class')
 	}
 	built_tag := Tag.new(cls, constructed, fo.tagnum)!
-
 	// check outer tag equality
 	if !el.tag().equal(built_tag) {
 		return error('Element tag unequal with tag from options')
