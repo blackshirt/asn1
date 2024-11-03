@@ -122,7 +122,35 @@ It would create a tag from bytes, and return a tag and remaining bytes (bytes af
 ### ASN.1 Length handling 
 ASN.1 length indicates how many bytes you should read to get values or contents part. It always represents the total number of bytes in the object including all sub-objects but does not include the lengths of the identifier or of the length field itself.
 
-ASN.1 length comes in two form: short and long form, short form fits in single byte for length between 0 and 127, and the others is long form in multi byte form. This module support both of them, but, its only limited to DER encoding of length, ie, use definite length encoding and use the smallest possible length representation.
+The standard of X.690 ITU document defines two length types - definite length, and 
+- indefinite length.
+
+ASN.1 definite length comes in two form: short and long form, short form fits in single byte for length between 0 and 127, and the others is long form in multi byte form.
+
+> **Note**
+> This module only support definite length but its only limited to DER encoding of length.
+> Theoretically, definite length support for very big number for length value, ie, value between 0 and 2^1008-1, but in this module, this limited to pre-defined constant, `max_definite_length_count` set to 6 bytes currently, and `max_definite_length_value` set to builtin `max_int`.
+
+ASN.1 length represented in simple type, ie, 
+```v
+type Length = int
+```
+You can create length from regular integer with 
+```v
+fn Length.new(v int) !Length 
+```
+and, you can read a length from bytes with 
+```v
+fn Length.from_bytes(bytes []u8) !(Length, []u8)
+```
+It would return a lemgth and remaining bytes on succes or error on fails.
+
+### Serializing ASN.1 Length
+This module provides method you to serialize the length into destionation buffer, 
+```v
+fn (v Length) encode(mut dst []u8) !
+```
+
 
 ## Supported Basic ASN.1 Type
 Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
