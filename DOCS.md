@@ -1,12 +1,16 @@
 # `asn1` module documentation.
 
+> [!CAUTION]
+> This module is marked as an experimental, so, its a subject to change (even rapidly).
+> Use it with caution, submit when found a bug and gives yours feedback and review.
+
 ## About `asn1` module
 
 `asn1` is a `experimental` pure V module for handling Abstract Syntax Notation One (ASN.1) [[X.680]](http://www.itu.int/rec/T-REC-X.680/en) objects encoded in Distinguished Encoding Rules (DER) [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) encoding scheme.
 
 ## About this document
 
-This document is intended to serve as documentation of internal details of this asn1 module.
+This document is intended to serve as documentation (actually as a note) of internal details of this `asn1` module.
 Its describes some parts of the module in the way is implemented, the lack and also issues or limitation we have found around it.
 
 ## Table of Contents
@@ -14,40 +18,25 @@ Its describes some parts of the module in the way is implemented, the lack and a
 - [About `asn1` module](#about-asn1-module)
 - [What is ASN.1](#what-is-asn1)
 - [ASN.1 Encoding](#encoding-of-asn1)
-- [Basic ASN.1 Type System](#basic-of-asn1-type-system)
+- [ASN.1 Type System](#asn1-type-system)
   - [Tag handling](#asn1-tag)
-  - [Create tag](#create-new-tag)
-  - [Length handling](#length-handling)
-- [Supported ASN.1 type](#supported-basic-asn1-type)
-- [Generic ASN.1 Object](#generic-asn1-object)
-- [Basic ASN.1 Constructor](#create-basic-asn1-type)
-- [Encoding of ASN.1 Object](#encoding-asn1-object)
-  - [Encoder interface](#encoder-interface)
-  - [Serializing ASN.1 Object to bytes](#serializing-asn1-object-to-bytes)
-  - [Example #1](#example-1)
-  - [Example #2](#example-2)
-  - [Example #3](#example-3)
-- [Decoding of ASN.1 Bytes](#decoding-asn1-bytes)
-  - [Decoding function](#der_decode-function)
-  - [Example](#example)
-- [Module Index](#module-index)
-  - [ASN.1 Class](#class)
-  - [Tag Type](#tagtype)
-  - [NULL](#null)
-  - [BOOLEAN](#boolean)
-  - [INTEGER](#integer)
-  - [ENUMERATED](#enumerated)
-  - [BIT STRING](#bitstring)
-  - [OCTET STRING](#octetstring)
-  - [OBJECT IDENTIFIER](#oid)
-  - [UTF8STRING](#utf8string)
-  - [IA5STRING](#ia5string)
-  - [PRINTABLE STRING](#printablestring)
-  - [VISIBLE STRING](#visiblestring)
-  - [UTCTIME](#utctime)
-  - [GENERALIZED TIME](#generalizedtime)
-  - [Sequence Type](#sequence)
-  - [Set Type](#set)
+  - [Limitation](#limitation-of-the-tag-in-this-module)
+  - [Create ASN.1 tag](#create-asn1-tag)
+  - [Serializing tag into bytes](#serializing-tag-into-bytes)
+  - [Read ASN.1 Tag from bytes](#read-asn1-tag-from-bytes)
+  - [ASN.1 Length handling](#asn1-length-handling)
+  - [Serializing ASN.1 Length](#serializing-asn1-length)
+- [ASN.1 Element](#asn1-element)
+  - [Build custom element payload](#build-custom-element-payload)
+  - [Serializing ASN.1 Element](#serializing-asn1-element)
+  - [Deserializing ASN.1 DER bytes into Element](#deserializing-asn1-der-bytes-into-element)
+- [Flexible ASN.1 Element Serialization (Deserialization) with FieldOptionse](#flexible-asn1-element-serialization-(deserialization)-with-fieldoptions)
+  - [Wrapping an Element through FieldOptions](#wrapping-an-element-through-fieldoptions)
+  - [Handling optional with FieldOptions](#handling-optional-with-fieldoptions)
+  - [Handling element with DEFAULT keyword](#handling-element-with-default-keyword)
+- [Supported basic UNIVERSAL ASN.1 Type](#supported-basic-universal-asn1-type)
+- [Constructor of Universal ASN.1 Type](#constructor-of-universal-asn1-type)
+- [Support for non-universal class of ASN.1 Element](#support-for-non-universal-class-of-asn1-element)
 - [Reference](#reference)
 
 ## What is ASN.1
@@ -70,10 +59,9 @@ See [[X.690]](https://www.itu.int/rec/T-REC-X.690/en) for more information about
 >
 > This module only support the DER encoding
 
-## Basic of ASN.1 Type System
+## ASN.1 Type System
 
-Fundamentally, DER
-encoding of ASN.1 is serialization of a Tag, Length and Value (TLV) triplets. Every ASN.1 object has a tag that represents what is type of the object. The Tag part specifies the type of the data structure being sent, the Length part specifies the number of bytes of content being transferred, and the Value part contains the content. Note that the Value part can be a triplet if it contains a constructed data type.
+Fundamentally, DERencoding  of ASN.1 is serialization of a Tag, Length and Value (TLV) triplets. Every ASN.1 object has a tag that represents what is type of the object. The Tag part specifies the type of the data structure being sent, the Length part specifies the number of bytes of content being transferred, and the Value part contains the content. Note that the Value part can be a triplet if it contains a constructed data type.
 
 ### ASN.1 Tag
 
@@ -229,7 +217,7 @@ serializing element with wrapping, optional or default semantic to existing elem
 (deserialization) process.
 For more information in detail, see [FieldOptions](#flexible-asn1-element-serialization-with-fieldoptions)
 
-### Example 
+#### Example 
 A PrintableString containing “hi” was serialized into 13 02 68 69.
 ```v
 obj := asn1.PrintableString.new('hi')!
@@ -276,7 +264,7 @@ So, its also happens to pass an options string when this bytes comes from serial
 obj := asn1.decode_with_options([u8(0xA5), 0x04, 0x13, 0x02, 0x68, 0x69], 'context_specific:5;explicit;inner:0x13')!
 ```
 
-## Flexible ASN.1 Element Serialization (Deserialization) with FieldOptions.
+## Flexible ASN.1 Element Serialization (Deserialization) with FieldOptions
 For supporting more complex scenarios, inspired by the same options used in go version of `asn1` module, this module comes with
 support configures serialization (deserialization) process through configuration options stored in `FieldOptions` structure.
 
@@ -392,7 +380,7 @@ Basic ASN.1 type was a ASN.1 object which has universal class. It's currently su
 - [x] Set
 - [x] SetOf
 
-## Construct Universal ASN.1 Type
+## Constructor of Universal ASN.1 Type
 Most Universal class of ASN.1 type supported in this modules comes with builtin constructor. You should use this constructor when 
 you hope an universal type. Its comes with common signature of the constructor (not at all, but most of them), see module doc for detail.
 ```v
