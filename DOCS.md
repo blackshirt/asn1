@@ -214,7 +214,7 @@ fn encode_with_field_options(el Element, fo FieldOptions) ![]u8
 All of three's functions produces bytes result on success or error on fails. The two latest form is serialization routines intended for
 serializing element with wrapping, optional or default semantic to existing element, gives you a extra flexibility to the serialization
 (deserialization) process.
-For more information in detail, see [FieldOptions](##flexible-asn1-element-serialization-with-fieldoptions)
+For more information in detail, see [FieldOptions](#flexible-asn1-element-serialization-with-fieldoptions)
 
 ### Example 
 A PrintableString containing “hi” was serialized into 13 02 68 69.
@@ -249,6 +249,21 @@ ps := el.into_object[asn1.PrintableString]()!
 ```
 
 ## Flexible ASN.1 Element Serialization with FieldOptions.
+This module support configures encode (decode) process through configuration options stored in `FieldOptions` structure.
+This options allowing flexible configuration of serialization on Element.
+```v
+pub struct FieldOptions {
+mut:
+	cls    			string 
+	tagnum 			int = -1 
+	mode   			string 
+	inner  			string
+	optional 		bool
+	present  		bool
+	has_default   	bool
+	default_value 	?Element
+}
+```
 ## Supported Basic ASN.1 Type
 
 Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
