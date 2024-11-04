@@ -206,7 +206,7 @@ The `payload` methods of the `Element` does not dictates on how your element gen
 
 This modules provides several functions for serializing ASN.1 Element, in three forms, ie:
 
-````v
+```v
 fn encode(el Element) ![]u8
 fn encode_with_options(el Element, opt string) ![]u8
 fn encode_with_field_options(el Element, fo FieldOptions) ![]u8
