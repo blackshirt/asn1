@@ -224,6 +224,17 @@ output := asn1.encode(obj)!
 
 assert output == [u8(0x13), 0x02, 0x68, 0x69]
 ```
+When your element is tagged type element, defined with `[5] IMPLICIT PrintableString`, you can pass
+a string option into `encode`, ie:
+```v
+output := encode_with_options(obj, 'context_specific:5;implicit;inner:19')!
+assert output == [u8(0x85), 0x02, 0x68, 0x69]
+```
+Or when its a explicit tagged element defined as `[5] EXPLICIT PrintableString`
+```v
+output := encode_with_options(obj, 'context_specific:5;explicit;inner:0x13')!
+assert output == [u8(0xA5), 0x04, 0x13, 0x02, 0x68, 0x69]
+```
 
 ### Deserializing ASN.1 DER bytes into Element
 For deserialization purposes, this module provides functions with similar in serialization parts, ie, in the form:
@@ -247,23 +258,98 @@ Examples:
 el := asn1.decode([u8(0x13), 0x02, 0x68, 0x69])!
 ps := el.into_object[asn1.PrintableString]()!
 ```
-
-## Flexible ASN.1 Element Serialization with FieldOptions.
-This module support configures encode (decode) process through configuration options stored in `FieldOptions` structure.
-This options allowing flexible configuration of serialization on Element.
+So, its also happens to pass an options string when this bytes comes from serialized tagged type element,
 ```v
-pub struct FieldOptions {
+obj := asn1.decode_with_options([u8(0xA5), 0x04, 0x13, 0x02, 0x68, 0x69], 'context_specific:5;explicit;inner:0x13')!
+```
+
+## Flexible ASN.1 Element Serialization (Deserialization) with FieldOptions.
+For supporting more complex scenarios, inspired by the same options used in go version of `asn1` module, this module comes with
+support configures serialization (deserialization) process through configuration options stored in `FieldOptions` structure.
+
+Consider some Certificate structure represents more complex ASN.1 schemas from [RFC 5280](https://datatracker.ietf.org/doc/html/rfc5280#section-4.1.1.2),
+```asn1
+ Certificate  ::=  SEQUENCE  {
+        tbsCertificate       TBSCertificate,
+        signatureAlgorithm   AlgorithmIdentifier,
+        signatureValue       BIT STRING  
+	}
+
+   TBSCertificate  ::=  SEQUENCE  {
+        version         [0]  EXPLICIT Version DEFAULT v1,
+        serialNumber         CertificateSerialNumber,
+        signature            AlgorithmIdentifier,
+        issuer               Name,
+        validity             Validity,
+        subject              Name,
+        subjectPublicKeyInfo SubjectPublicKeyInfo,
+        issuerUniqueID  [1]  IMPLICIT UniqueIdentifier OPTIONAL
+   }
+```
+This schema required support for other machinery in the form of tagged element (we call it wrapping semantic), 
+OPTIONAL keyword handling, and DEFAULT keyword handling, through the `FieldOptions` structures defined as:
+```v
+struct FieldOptions {
 mut:
+	// For wrapping purposes
 	cls           string
 	tagnum        int = -1
 	mode          string
 	inner         string
+
+	// for OPTIONAL handling
 	optional      bool
 	present       bool
+	
+	// FOR DEFAULT handling
 	has_default   bool
 	default_value ?Element
 }
 ```
+The main purpose of this options structures is used for:
+- handling of wrapping some element, turn some element into another element.
+- handling of OPTIONAL element.
+- handling of element with DEFAULT keywoard.
+
+### Wrapping an Element through FieldOptions
+There are two constructor for construct a `FieldOptions`, ie 
+```v
+fn FieldOptions.from_string(s string) !FieldOptions
+fn FieldOptions.from_attrs(attrs []string) !FieldOptions
+```
+The first function allowing you pass a string as an options, likes an examples above.
+Examples:
+```
+fo := FieldOptions.from_string('context_specific:5;explicit;inner:0x13')!
+```
+or,
+```
+fo := FieldOptions.from_string('context_specific:5;explicit;inner:0x13;optional')!
+```
+
+The second form, is gives more controllable options, and its allowing tag your field of struct
+with the supported options,
+Examples :
+```v
+struct PersonnelRecord {
+mut:
+	name     asn1.OctetString @[context_specific: 0; implicit; inner: 4]
+	location asn1.Integer     @[context_specific: 1; implicit; inner: 2]
+	age      asn1.Integer     @[context_specific: 2; implicit; inner: 2]
+}
+
+attrs := ['context_specific: 0', 'implicit', 'inner: 4']
+fo := FieldOptions.from_attrs(attrs)!
+// and then you can pass the options to serialization phase
+out := asn1.encode(p.name, fo)!
+```
+
+### Handling optional with FieldOptions
+The field `optional` and `present` of the `FieldOptions` was used for handling OPTINAL semantic of the element.
+The mean of the flags:
+- when `optional` bit was set into 'true`, thats mean, the element treated as element with OPTIONAL semantic.
+- when `present` bit was set into `true`, this optional element mean was present in the encoding data, by default optional was not included in the encoding phase (not present)
+
 ## Supported Basic ASN.1 Type
 
 Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
