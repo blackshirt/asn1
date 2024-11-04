@@ -202,6 +202,18 @@ The `payload` methods of the `Element` does not dictates on how your element gen
 > Most of the functions or methods defined in this module was accept or return an `Element`.
 > Most of them is implemented with DER encoding in mind, so, your custom element hopefylly would be supported by this functions (methods) if your element correctly implemented required constraints in this module.
 
+### Build custom element payload
+Its possible to build complex structure, your own defined struct contains multiples field of elements with the help of function on this modules.
+Of course, you can build your payload manually, but this `asn1` module has provides helper routine to do that, in the form :
+```v
+fn make_payload[T](val T, kd KeyDefault) ![]u8 
+```
+> ***Note***
+> - `T` is struct contains one or more fields that fullfills Element interface.
+> - KeyDefault is map of 'field.name` key with some element value (only the field has DEFAULT keyword) to setup default value.
+
+Its would produces only element's payload without tag or length bytes included.
+
 ### Serializing ASN.1 Element
 
 This modules provides several functions for serializing ASN.1 Element, in three forms, ie:
