@@ -339,11 +339,11 @@ mut:
 attrs := ['context_specific: 0', 'implicit', 'inner: 4']
 fo := FieldOptions.from_attrs(attrs)!
 // and then you can pass the options to serialization phase
-out := asn1.encode(p.name, fo)!
+out := asn1.encode_with_field_options(p.name, fo)!
 ```
 
 ### Handling optional with FieldOptions
-The field `optional` and `present` of the `FieldOptions` was used for handling OPTINAL semantic of the element.
+The field `optional` and `present` of the `FieldOptions` was used for handling element with OPTINAL keyword within element definition.
 The mean of the flags:
 - when `optional` bit was set into `true`, thats mean, the element treated as element with OPTIONAL semantic.
 - when `present` bit was set into `true`, this optional element mean was present in the encoding data, by default optional was not included in the encoding phase (not present)
