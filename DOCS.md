@@ -319,11 +319,8 @@ fn FieldOptions.from_attrs(attrs []string) !FieldOptions
 ```
 The first function allowing you pass a string as an options, likes an examples above.
 Examples:
-```
+```v
 fo := FieldOptions.from_string('context_specific:5;explicit;inner:0x13')!
-```
-or,
-```
 fo := FieldOptions.from_string('context_specific:5;explicit;inner:0x13;optional')!
 ```
 
@@ -347,10 +344,19 @@ out := asn1.encode(p.name, fo)!
 ### Handling optional with FieldOptions
 The field `optional` and `present` of the `FieldOptions` was used for handling OPTINAL semantic of the element.
 The mean of the flags:
-- when `optional` bit was set into 'true`, thats mean, the element treated as element with OPTIONAL semantic.
+- when `optional` bit was set into `true`, thats mean, the element treated as element with OPTIONAL semantic.
 - when `present` bit was set into `true`, this optional element mean was present in the encoding data, by default optional was not included in the encoding phase (not present)
 
-## Supported Basic ASN.1 Type
+### Handling element with DEFAULT keyword
+Element with DEFAULT keyword, by DER encoding rule, when the element is equal with default value provided, its not present 
+in the serialized bytes. For this purposes, before serialization, you should call 
+```v
+fn (el Element) set_default_value(mut fo FieldOptions, value Element) !
+``` 
+to setup default value within the options for the current element, or would be error if `has_default` flag is set but default value
+is not availables.
+
+## Supported basic UNIVERSAL ASN.1 Type
 
 Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
 
