@@ -214,7 +214,7 @@ fn encode_with_field_options(el Element, fo FieldOptions) ![]u8
 All of three's functions produces bytes result on success or error on fails. The two latest form is serialization routines intended for
 serializing element with wrapping, optional or default semantic to existing element, gives you a extra flexibility to the serialization
 (deserialization) process.
-For more information in detail, see [FieldOptions](## Flexible ASN.1 Element Serialization with FieldOptions)
+For more information in detail, see [FieldOptions](##flexible-asn1-element-serialization-with-fieldoptions)
 
 ### Example 
 A PrintableString containing “hi” was serialized into 13 02 68 69.
