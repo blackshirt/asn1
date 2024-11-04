@@ -203,16 +203,17 @@ The `payload` methods of the `Element` does not dictates on how your element gen
 > Most of them is implemented with DER encoding in mind, so, your custom element hopefylly would be supported by this functions (methods) if your element correctly implemented required constraints in this module.
 
 ### Build custom element payload
-Its possible to build complex structure, your own defined struct contains multiples field of elements with the help of function on this modules.
+Its possible to build payload for complex structure, your own defined struct contains multiples field of elements with the help of function on this modules.
 Of course, you can build your payload manually, but this `asn1` module has provides helper routine to do that, in the form :
 ```v
 fn make_payload[T](val T, kd KeyDefault) ![]u8 
 ```
 > ***Note***
 > - `T` is struct contains one or more fields that fullfills Element interface.
-> - KeyDefault is map of 'field.name` key with some element value (only the field has DEFAULT keyword) to setup default value.
+> - KeyDefault is map of `field.name` key with some element value (only the field has DEFAULT keyword) to setup default value.
 
-Its would produces only element's payload without tag or length bytes included.
+Its would produces only element's payload without tag or length bytes included. When your structures does not contains the fields that 
+fullfills interfaces, it would produces and return empty bytes.
 
 ### Serializing ASN.1 Element
 
@@ -391,6 +392,17 @@ Basic ASN.1 type was a ASN.1 object which has universal class. It's currently su
 - [x] Set
 - [x] SetOf
 
+## Construct Universal ASN.1 Type
+Most Universal class of ASN.1 type supported in this modules comes with builtin constructor. You should use this constructor when 
+you hope an universal type. Its comes with common signature of the constructor (not at all, but most of them), see module doc for detail.
+```v
+fn T.new(value) !T
+fn T.from_string(string) !T // for string-based type
+fn T.from_int(int) !T // for integer-based
+fn T.from_bigint(bigint) !T // for integer with big.Integer
+```
+
+
 ## Support for non-universal class of ASN.1 Element
 When your element is non-universal class, this module has a limited support for this type of element.
 Its represented in several structures, defined as :
@@ -419,35 +431,7 @@ pub struct PrivateELement {
 	RawElement
 }
 ```
-
-## Create Basic ASN.1 Type
-
-You can use following function to create basic UNIVERSAL ASN.1 type. Most of the constructor return `Encoder` interfaces.
-
-> **Note**
->
-> By default, all basic constructor has ASN.1 UNIVERSAL class tag, and the tag number is universal tag number defined in [`TagType`](#tagtype) enum, where
-> constructed flag set to `true` value by default on SEQUENCE (SEQUENCE OF) and SET (SET OF) type.
-> Some of the tag number was not supported in this module.
-
-| No  | Function                                      |     ASN.1 Object      | Description                                                                      |
-| :-: | --------------------------------------------- | :-------------------: | -------------------------------------------------------------------------------- |
-|  1  | [new_boolean](#new_boolean)                   |        BOOLEAN        |                                                                                  |
-|  2  | [new_integer](#new_integer)                   |        INTEGER        |                                                                                  |
-|  3  | [new_bitstring](#new_bitstring)               |       BITSTRING       | its accepts arbitrary v string, not a bit string                                 |
-|  4  | [new_octetstring](#new_octetstring)           |     OCTET STRING      |                                                                                  |
-|  5  | [new_null](#new_null)                         |         NULL          |                                                                                  |
-|  6  | [new_oid_from_string](#new_oid_from_string)   |   OBJECT IDENTIFIER   |                                                                                  |
-|  7  | [new_enumerated](#new_enumerated)             |      ENUMERATED       |                                                                                  |
-|  8  | [new_utf8string](#new_utf8string)             |      UTF8STRING       |                                                                                  |
-|  9  | [new_sequence](#new_sequence)                 | SEQUENCE, SEQUENCE OF | for sequence of, you should ensure you add the same object to sequence elements. |
-| 10  | [new_set](#new_set)                           |      SET, SET OF      | likes a sequence of, ensure add the same object to set elements                  |
-| 11  | [new_numeric_string](#new_numeric_string)     |    NUMERIC STRING     |                                                                                  |
-| 12  | [new_printable_string](#new_printable_string) |   PRINTABLE STRING    |                                                                                  |
-| 13  | [new_ia5string](#new_ia5string)               |       IA5STRING       |                                                                                  |
-| 14  | [new_utctime](#new_utctime)                   |        UTCTIME        |                                                                                  |
-| 15  | [new_generalizedtime](#new_generalizedtime)   |   GENERALIZED TIME    |                                                                                  |
-| 16  | [new_visiblestring](#new_visiblestring)       |     VISIBLESTRING     |                                                                                  |
+See `other_element.v` on the repo for more details on this.
 
 [[Return to contents]](#table-of-contents)
 
