@@ -30,7 +30,7 @@ Its describes some parts of the module in the way is implemented, the lack and a
   - [Build custom element payload](#build-custom-element-payload)
   - [Serializing ASN.1 Element](#serializing-asn1-element)
   - [Deserializing ASN.1 DER bytes into Element](#deserializing-asn1-der-bytes-into-element)
-- [Flexible ASN.1 Element Serialization (Deserialization) with FieldOptionse](#flexible-asn1-element-serialization-(deserialization)-with-fieldoptions)
+- [Flexible ASN.1 Element Serialization (Deserialization) with FieldOptions](#flexible-asn1-element-serialization-(deserialization)-with-fieldoptions)
   - [Wrapping an Element through FieldOptions](#wrapping-an-element-through-fieldoptions)
   - [Handling optional with FieldOptions](#handling-optional-with-fieldoptions)
   - [Handling element with DEFAULT keyword](#handling-element-with-default-keyword)
