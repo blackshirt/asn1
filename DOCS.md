@@ -287,29 +287,35 @@ Basic ASN.1 type was a ASN.1 object which has universal class. It's currently su
 - [x] Set
 - [x] SetOf
 
-## Generic ASN.1 Element
-
-For the purposes of handling ASN.1 object in general way, this module provides `RawElement` that defined as:
-
+## Support for non-universal class of ASN.1 Element
+When your element is non-universal class, this module has a limited support for this type of element.
+Its represented in several structures, defined as :
 ```v
-struct RawElement {
-	tag     Tag
+pub struct RawElement {
+mut:
+	// The tag is the (outer) tag of the TLV, if this a wrpper.
+	tag Tag
+	// `content` is the value of a TLV. Its depends on the context.
 	content []u8
-
+	// optional fields
+	inner_tag     ?Tag
+	mode          ?TaggedMode
+	default_value ?Element
 }
-````
 
-where:
+pub struct ContextElement {
+	RawElement
+}
 
-- `tag` is the tag of object, and
-- `content` is the raw bytes array (contents) of the object without tag and length part.
+pub struct ApplicationElement {
+	RawElement
+}
 
-You can create `ASN1Object` object with the constructor, provided with parameters :
+pub struct PrivateELement {
+	RawElement
+}
+```
 
-- `Class` this object belong to,
-- `constructed` boolean flag that tell this object constructed or primitive,
-- `tagnum` is the tag number, and,
-- `values` is bytes array of contents.
 
 ```v
 fn new_asn_object(c Class, constructed bool, tagnum int, values []u8) ASN1Object
