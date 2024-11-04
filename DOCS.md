@@ -214,10 +214,41 @@ fn encode_with_field_options(el Element, fo FieldOptions) ![]u8
 All of three's functions produces bytes result on success or error on fails. The two latest form is serialization routines intended for
 serializing element with wrapping, optional or default semantic to existing element, gives you a extra flexibility to the serialization
 (deserialization) process.
-For more information in detail, see [Configure serialization (deserialization) of ASN.1 Element with FieldOptions](##Configure serialization (deserialization) of ASN.1 Element with FieldOptions)
+For more information in detail, see [FieldOptions](## Flexible ASN.1 Element Serialization with FieldOptions)
 
+### Example 
+A PrintableString containing “hi” was serialized into 13 02 68 69.
+```v
+obj := asn1.PrintableString.new('hi')!
+output := asn1.encode(obj)!
 
-## Configure serialization (deserialization) of ASN.1 Element with FieldOptions.
+assert output == [u8(0x13), 0x02, 0x68, 0x69]
+```
+
+### Deserializing ASN.1 DER bytes into Element
+For deserialization purposes, this module provides functions with similar in serialization parts, ie, in the form:
+```v
+fn decode(src []u8) !Element
+fn decode_with_options(bytes []u8, opt string) !Element
+fn decode_with_field_options(bytes []u8, fo FieldOptions) !Element
+```
+Technically, the deserialization mechanism is reverse of serialization process. When you pass an options to decode routine,
+you should ensure its a same options used for serialization in `encode` part, or the decode would result in undefined behaviour
+if its differs.
+
+The `decode` function families, accepts DER serialized bytes, and an options (if its should be) and return some `Element`, 
+or return error on fails. When you get result an `Element` from `decode` routine, you can get underlying object by calling `into_object` 
+method on the element.
+```v
+fn (el Element) into_object[T]() !T
+```
+Examples:
+```v
+el := asn1.decode([u8(0x13), 0x02, 0x68, 0x69])!
+ps := el.into_object[asn1.PrintableString]()!
+```
+
+## Flexible ASN.1 Element Serialization with FieldOptions.
 ## Supported Basic ASN.1 Type
 
 Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
