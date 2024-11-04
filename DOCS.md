@@ -254,14 +254,14 @@ This options allowing flexible configuration of serialization on Element.
 ```v
 pub struct FieldOptions {
 mut:
-	cls    			string 
-	tagnum 			int = -1 
-	mode   			string 
-	inner  			string
-	optional 		bool
-	present  		bool
-	has_default   	bool
-	default_value 	?Element
+	cls           string
+	tagnum        int = -1
+	mode          string
+	inner         string
+	optional      bool
+	present       bool
+	has_default   bool
+	default_value ?Element
 }
 ```
 ## Supported Basic ASN.1 Type
