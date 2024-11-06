@@ -53,18 +53,28 @@ fn PersonnelRecord.decode(bytes []u8) !PersonnelRecord {
 
 	set := el.into_object[asn1.Set]()!
 	fields := set.fields()
-	dump(fields)
+	// dump(fields)
 	title := fields[1].unwrap_with_options('context_specific:0;explicit;inner:26')!
 	doh := fields[3].unwrap_with_options('context_specific: 1; explicit; inner:application,false,3')!
 	nosp := fields[4].unwrap_with_options('context_specific: 2; explicit; inner:application,true,1')!
 	children := fields[5].unwrap_with_options('context_specific: 3; implicit; inner:16')!
+
+	children_seq := children.into_object[asn1.Sequence]()!
+	// children_seq_fields := children_seq.fields() // []Element
+	// els := children_seq.into_sequence_of[asn1.Set]()!
+	
+	mut chls := []ChildInformation{}
+	for item in children_seq.fields() {
+		i := ChildInformation.from_set(item.into_object[asn1.Set]()!)!
+		chls << i
+	}
 	pr := PersonnelRecord{
 		name:           fields[0].into_object[Name]()!
 		title:          title.into_object[asn1.VisibleString]()!
 		number:         fields[2].into_object[EmployeeNumber]()!
 		date_of_hire:   doh.into_object[Date]()!
 		name_of_spouse: nosp.into_object[Name]()!
-		children:       children.into_object[asn1.SequenceOf[ChildInformation]]()!
+		children:       asn1.SequenceOf.from_list[ChildInformation](chls)!
 	}
 	return pr
 }
@@ -90,6 +100,17 @@ fn PersonnelRecord.decode(bytes []u8) !PersonnelRecord {
 struct ChildInformation {
 	name          Name
 	date_of_birth Date
+}
+
+fn ChildInformation.from_set(s asn1.Set) !ChildInformation {
+	if s.fields().len != 2 {
+		return error('Bad ChildInformation set')
+	}
+	ch := ChildInformation{
+		name:          s.fields()[0].into_object[Name]()!
+		date_of_birth: s.fields()[1].into_object[Date]()!
+	}
+	return ch
 }
 
 fn (ci ChildInformation) tag() asn1.Tag {
