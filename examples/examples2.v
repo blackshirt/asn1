@@ -104,6 +104,14 @@ fn Name.new(el NameEntry) !asn1.ApplicationElement {
 	return asn1.ApplicationElement.from_element(el, 1, .implicit)!
 }
 
+fn (n Name) tag() asn1.Tag {
+	return asn1.Tag.new(.application, true, 1) or { panic(err) }
+}
+
+fn (n Name) payload() ![]u8 {
+	return n.payload()!
+}
+
 struct NameEntry {
 	given_name  asn1.VisibleString
 	initial     asn1.VisibleString
@@ -176,5 +184,10 @@ fn main() {
 	}
 	dump(childinfo0.tag())
 	dump(childinfo0.name.inner_tag()!)
-	dump(childinfo0.payload()!)
+	dump(childinfo0)
+	nm := asn1.Element.from_object[Name](childinfo0.name)!
+	dump(nm)
+	dump(nm.tag())
+	dump(nm.payload()!)
+	dump(asn1.encode(nm)!)
 }

@@ -251,12 +251,12 @@ pub fn ContextElement.from_element(inner Element, tagnum int, mode TaggedMode) !
 
 // The tag of context specific element.
 pub fn (ctx ContextElement) tag() Tag {
-	return ctx.tag
+	return ctx.RawElement.tag
 }
 
 // The payload of the context specific element.
 pub fn (ctx ContextElement) payload() ![]u8 {
-	return ctx.content
+	return ctx.RawElement.content
 }
 
 // `explicit_context` creates new ContextElement with explicit mode.
@@ -371,11 +371,11 @@ pub fn ApplicationElement.from_element(inner Element, tagnum int, mode TaggedMod
 
 // tag of the APLLICATION CLASS element.
 pub fn (app ApplicationElement) tag() Tag {
-	return app.tag
+	return app.RawElement.tag
 }
 
 pub fn (app ApplicationElement) payload() ![]u8 {
-	return app.content
+	return app.RawElement.content
 }
 
 // Limited support for PRIVATE CLASS Element.
@@ -404,10 +404,10 @@ pub fn PrivateELement.from_element(inner Element, tagnum int, mode TaggedMode) !
 
 // The tag of the private element.
 pub fn (prv PrivateELement) tag() Tag {
-	return prv.tag
+	return prv.RawElement.tag
 }
 
 // The payload of the private element.
 pub fn (prv PrivateELement) payload() ![]u8 {
-	return prv.content
+	return prv.RawElement.content
 }
