@@ -192,6 +192,16 @@ fn (n NameEntry) payload() ![]u8 {
 //						A0	0A	43 08 '19590717' => 31 39 35 39 30 37 31 37
 
 fn main() {
+	//		61 10 	1A 94 'John'			// name
+    //				iA 01 'P'
+    //				1A 05 'Smith'
+	// PersonelRecord.name 
+	pr_nme := Name.new(NameEntry{
+		given_name: asn1.VisibleString.new('John')!
+		initial: asn1.VisibleString.new('P')!
+		family_nams: asn1.VisibleString.new('Smith')!
+	})!
+	
 	// { name {givenName "Ralph",initial "T",familyName "Smith"},
 	//			  dateOfBirth "19571111"
 	//			},
