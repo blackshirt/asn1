@@ -33,7 +33,7 @@ struct PersonnelRecord {
 fn (pr PersonnelRecord) payload() ![]u8 {
 	mut out := []u8{}
 	out << asn1.encode(pr.name)!
-	out << asn1.encode_with_options(pr.title, 'context_specific;explicit;inner:26')!
+	out << asn1.encode_with_options(pr.title, 'context_specific:0;explicit;inner:26')!
 	out << asn1.encode(pr.number)!
 	out << asn1.encode_with_options(pr.date_of_hire, 'context_specific: 1; explicit; inner:application,false,3')!
 	out << asn1.encode_with_options(pr.name_of_spouse, 'context_specific: 2; explicit; inner:application,true,1')!
@@ -173,8 +173,8 @@ fn (n NameEntry) payload() ![]u8 {
 // Representation of this record value
 //
 // 60 8185
-//		61 10 	1A 94 'John'			// name
-//				iA 01 'P'
+//		61 10 	1A 04 'John'			// name
+//				1A 01 'P'
 //				1A 05 'Smith'
 //		A0 0A	1A 08 'Director' 		// title
 //		42 01	33						// number
@@ -192,16 +192,41 @@ fn (n NameEntry) payload() ![]u8 {
 //						A0	0A	43 08 '19590717' => 31 39 35 39 30 37 31 37
 
 fn main() {
-	//		61 10 	1A 94 'John'			// name
-    //				iA 01 'P'
-    //				1A 05 'Smith'
-	// PersonelRecord.name 
+	// We detailed every pieces of element
+
+	//		61 10 	1A 04 'John'	=> 4a 6f 68 6e			// name
+	//				1A 01 'P'	 	=> 50	
+	//				1A 05 'Smith'	=> 53 6d 69 74 68
+	// PersonelRecord.name
 	pr_nme := Name.new(NameEntry{
-		given_name: asn1.VisibleString.new('John')!
-		initial: asn1.VisibleString.new('P')!
-		family_nams: asn1.VisibleString.new('Smith')!
+		given_name:  asn1.VisibleString.new('John')!
+		initial:     asn1.VisibleString.new('P')!
+		family_name: asn1.VisibleString.new('Smith')!
 	})!
-	
+	pr_name_bytes := [u8(0x61), 0x10, 0x1A, 0x04, 0x4a, 0x6f, 0x68, 0x6e, 0x1A, 0x01, 0x50, 0x1A,
+		0x05, 0x53, 0x6d, 0x69, 0x74, 0x68]
+
+	assert asn1.encode(pr_nme)! == pr_name_bytes
+
+	// PersonnelRecord.title
+	//		A0 0A	1A 08 'Director' => 44 69 72 65 63 74 6f 72	// title
+	title := asn1.VisibleString.new('Director')!
+	title_bytes := [u8(0xA0), 0x0A, 0x1A, 0x08, u8(0x44), 0x69, 0x72, 0x65, 0x63, 0x74, 0x6f, 0x72]
+	assert asn1.encode_with_options(title, 'context_specific:0;explicit;inner:26')! == title_bytes
+
+	// PersonnelRecord.EmployeeNumber
+	//		42 01	33						// number
+	emp_num := EmployeeNumber.new(asn1.Integer.from_int(51))!
+	emp_bytes := [u8(0x42), 0x01, 0x33]
+	assert asn1.encode(emp_num)! == emp_bytes
+
+	// PersonnelRecord.dateOfHire
+	//		A1 0A	43 08 '19710917'	=> 31 39 37 31 30 39 31 37	// dateOfHire
+	// dateOfHire      [1] Date,
+	doh := Date.new(asn1.VisibleString.new('19710917')!)!
+	doh_bytes := [u8(0xA1), 0x0A, 0x43, 0x08, 0x31, 0x39, 0x37, 0x31, 0x30, 0x39, 0x31, 0x37]
+	assert asn1.encode_with_options(doh, 'context_specific: 1; explicit; inner:application,false,3')! == doh_bytes
+
 	// { name {givenName "Ralph",initial "T",familyName "Smith"},
 	//			  dateOfBirth "19571111"
 	//			},
@@ -218,9 +243,10 @@ fn main() {
 	//					1A 01 'T'  		=> 54
 	//					1A 05 'Smith'	=> 53 6d 69 74 68
 	//			A0	0A	43 08 '19571111' => 31 39 35 37 31 31 31 31
-	ch0 := [u8(0x31), 0x1F, 0x61, 0x11, 0x1A, 0x05, 0x52, 0x61, 0x6c, 0x70, 0x68, 0x1A, 0x01, 0x54,
-		0x1A, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68, 0xA0, 0x0A, 0x43, 0x08, 0x31, 0x39, 0x35, 0x37,
-		0x31, 0x31, 0x31, 0x31]
+	ch0_bytes := [u8(0x31), 0x1F, 0x61, 0x11, 0x1A, 0x05, 0x52, 0x61, 0x6c, 0x70, 0x68, 0x1A, 0x01,
+		0x54, 0x1A, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68, 0xA0, 0x0A, 0x43, 0x08, 0x31, 0x39, 0x35,
+		0x37, 0x31, 0x31, 0x31, 0x31]
+	assert asn1.encode(childinfo0)! == ch0_bytes
 
 	n1 := NameEntry{
 		given_name:  asn1.VisibleString.new('Susan')!
@@ -235,10 +261,8 @@ fn main() {
 	//								1A 01 'B'		=> 42
 	//								1A 05 'Jones'	=> 4a 6f 6e 65 73
 	//						A0	0A	43 08 '19590717' => 31 39 35 39 30 37 31 37
-	ch1 := [u8(0x31), 0x1F, 0x61, 0x11, 0x1A, 0x05, 0x53, 0x75, 0x73, 0x61, 0x6e, 0x1A, 0x01, 0x42,
-		0x1A, 0x05, 0x4a, 0x6f, 0x6e, 0x65, 0x73, 0xA0, 0x0A, 0x43, 0x08, 0x31, 0x39, 0x35, 0x39,
-		0x30, 0x37, 0x31, 0x37]
-
-	dump(asn1.encode(childinfo0)! == ch0)
-	dump(asn1.encode(childinfo1)! == ch1)
+	ch1_bytes := [u8(0x31), 0x1F, 0x61, 0x11, 0x1A, 0x05, 0x53, 0x75, 0x73, 0x61, 0x6e, 0x1A, 0x01,
+		0x42, 0x1A, 0x05, 0x4a, 0x6f, 0x6e, 0x65, 0x73, 0xA0, 0x0A, 0x43, 0x08, 0x31, 0x39, 0x35,
+		0x39, 0x30, 0x37, 0x31, 0x37]
+	assert asn1.encode(childinfo1)! == ch1_bytes
 }

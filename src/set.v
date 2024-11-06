@@ -35,6 +35,15 @@ pub fn Set.new() !Set {
 	return Set.new_with_size(default_set_size)!
 }
 
+pub fn Set.from_list(els []Element) !Set {
+	if els.len > max_set_size {
+		return error('Sequence size exceed limit')
+	}
+	return Set{
+		fields: els
+	}
+}
+
 fn Set.new_with_size(size int) !Set {
 	if size > max_set_size {
 		return error('size is exceed limit')
