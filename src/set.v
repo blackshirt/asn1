@@ -136,7 +136,7 @@ fn Set.from_bytes(bytes []u8) !Set {
 }
 
 // by default allow add with the same tag
-fn (mut set Set) add_element(el Element) ! {
+pub fn (mut set Set) add_element(el Element) ! {
 	set.relaxed_add_element(el, true)!
 }
 
@@ -280,7 +280,7 @@ fn (mut so SetOf[T]) sort_setof_fields() {
 }
 
 // by default allow add with the same tag
-fn (mut so SetOf[T]) add_element(el Element) ! {
+pub fn (mut so SetOf[T]) add_element(el Element) ! {
 	so.relaxed_add_element(el, true)!
 }
 

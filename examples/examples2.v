@@ -71,8 +71,10 @@ fn (ci ChildInformation) tag() asn1.Tag {
 
 fn (ci ChildInformation) payload() ![]u8 {
 	mut out := []u8{}
+	dump(ci.name.payload()!.hex())
 	out << asn1.encode(ci.name)!
-	out << asn1.encode_with_options(ci.date_of_birth, 'context_specific: 0; explicit; inner:application,false,3')!
+	//, 'context_specific: 0; explicit; inner:application,false,3'
+	out << asn1.encode(ci.date_of_birth)!
 
 	return out
 }
@@ -149,7 +151,7 @@ fn (n NameEntry) payload() ![]u8 {
 //		A2 12	61 10 	1A 	04 'Mary' 	// nameOfSpouse
 //						1A	01	'T'
 //						1A	05	'Smith'
-//		A3 42	31 1F	61	11	1A 05 'Ralph'	=> 52 61 6c 70 68 // children 
+//		A3 42	31 1F	61	11	1A 05 'Ralph'	=> 52 61 6c 70 68 // children
 //								1A 01 'T'  		=> 54
 //								1A 05 'Smith'	=> 53 6d 69 74 68
 //						A0	0A	43 08 '19571111'	
