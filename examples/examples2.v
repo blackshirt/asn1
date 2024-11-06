@@ -185,35 +185,50 @@ fn (n NameEntry) payload() ![]u8 {
 //		A3 42	31 1F	61	11	1A 05 'Ralph'	=> 52 61 6c 70 68 // children
 //								1A 01 'T'  		=> 54
 //								1A 05 'Smith'	=> 53 6d 69 74 68
-//						A0	0A	43 08 '19571111'	
-//				31 1F	61	11	1A 05 'Susan'
-//								1A 01 'B'
-//								1A 05 'Jones'
-//						A0	0A	45 08 '19590717'
+//						A0	0A	43 08 '19571111' => 31 39 35 37 31 31 31 31
+//				31 1F	61	11	1A 05 'Susan'	=> 53 75 73 61 6e
+//								1A 01 'B'		=> 42
+//								1A 05 'Jones'	=> 4a 6f 6e 65 73
+//						A0	0A	43 08 '19590717' => 31 39 35 39 30 37 31 37
 
 fn main() {
 	// { name {givenName "Ralph",initial "T",familyName "Smith"},
 	//			  dateOfBirth "19571111"
 	//			},
-	// (1a) 05 52 61 6c 70 68 (1a) 01 54 (1a) 05 53 6d 69 74 68
 	n0 := NameEntry{
 		given_name:  asn1.VisibleString.new('Ralph')!
 		initial:     asn1.VisibleString.new('T')!
 		family_name: asn1.VisibleString.new('Smith')!
 	}
+	childinfo0 := ChildInformation{
+		name:          Name.new(n0)!
+		date_of_birth: Date.new(asn1.VisibleString.new('19571111')!)!
+	}
+	// 31 1F	61	11	1A 05 'Ralph'	=> 52 61 6c 70 68
+	//					1A 01 'T'  		=> 54
+	//					1A 05 'Smith'	=> 53 6d 69 74 68
+	//			A0	0A	43 08 '19571111' => 31 39 35 37 31 31 31 31
+	ch0 := [u8(0x31), 0x1F, 0x61, 0x11, 0x1A, 0x05, 0x52, 0x61, 0x6c, 0x70, 0x68, 0x1A, 0x01, 0x54,
+		0x1A, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68, 0xA0, 0x0A, 0x43, 0x08, 0x31, 0x39, 0x35, 0x37,
+		0x31, 0x31, 0x31, 0x31]
+
 	n1 := NameEntry{
 		given_name:  asn1.VisibleString.new('Susan')!
 		initial:     asn1.VisibleString.new('B')!
 		family_name: asn1.VisibleString.new('Jones')!
 	}
-	childinfo0 := ChildInformation{
-		name:          Name.new(n0)!
-		date_of_birth: Date.new(asn1.VisibleString.new('19571111')!)!
-	}
 	childinfo1 := ChildInformation{
 		name:          Name.new(n1)!
 		date_of_birth: Date.new(asn1.VisibleString.new('19590717')!)!
 	}
-	dump(asn1.encode(childinfo0)!.hex())
-	dump(asn1.encode(childinfo1)!.hex())
+	//				31 1F	61	11	1A 05 'Susan'	=> 53 75 73 61 6e
+	//								1A 01 'B'		=> 42
+	//								1A 05 'Jones'	=> 4a 6f 6e 65 73
+	//						A0	0A	43 08 '19590717' => 31 39 35 39 30 37 31 37
+	ch1 := [u8(0x31), 0x1F, 0x61, 0x11, 0x1A, 0x05, 0x53, 0x75, 0x73, 0x61, 0x6e, 0x1A, 0x01, 0x42,
+		0x1A, 0x05, 0x4a, 0x6f, 0x6e, 0x65, 0x73, 0xA0, 0x0A, 0x43, 0x08, 0x31, 0x39, 0x35, 0x39,
+		0x30, 0x37, 0x31, 0x37]
+
+	dump(asn1.encode(childinfo0)! == ch0)
+	dump(asn1.encode(childinfo1)! == ch1)
 }
