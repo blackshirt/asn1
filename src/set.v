@@ -75,7 +75,8 @@ fn (mut s Set) payload_with_rule(rule EncodingRule) ![]u8 {
 	s.sort_set_fields()
 
 	mut out := []u8{}
-	for item in s.fields {
+	for field in s.fields {
+		item := unsafe { field }
 		obj := encode_with_rule(item, rule)!
 		out << obj
 	}
