@@ -1,5 +1,7 @@
 module main
 
+import asn1
+
 // This examples is taken from ITU-T X.690 Information technology – ASN.1 encoding rules:
 // Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and
 // Distinguished Encoding Rules (DER) document.
@@ -19,6 +21,27 @@ module main
 //      children        [3] IMPLICIT SEQUENCE OF ChildInformation DEFAULT {}
 // }
 //
+struct PersonnelRecord {
+	name           Name
+	title          asn1.VisibleString // @[context_specific: 0; explicit; inner: 26]
+	number         EmployeeNumber
+	date_of_hire   Date
+	name_of_spouse Name
+	children       asn1.SequenceOf[ChildInformation]
+}
+
+fn (pr PersonnelRecord) payload() ![]u8 {
+	mut out := []u8{}
+	out << asn1.encode(pr.name)!
+	out << asn1.encode_with_options(pr.title, 'context_specific;explicit;inner:26')!
+	out << asn1.encode(pr.number)!
+	out << asn1.encode_with_options(pr.date_of_hire, 'context_specific: 1; explicit; inner:application,false,3')!
+	out << asn1.encode_with_options(pr.name_of_spouse, 'context_specific: 2; explicit; inner:application,true,1')!
+	out << asn1.encode_with_options(pr.children, 'context_specific: 3; explicit; inner:16')!
+
+	return out
+}
+
 // ChildInformation ::= SET {
 //      name            Name,
 //      dateOfBirth     [0] Date
@@ -32,62 +55,64 @@ module main
 //
 // EmployeeNumber ::= [APPLICATION 2] IMPLICIT INTEGER
 // Date ::= [APPLICATION 3] IMPLICIT VisibleString -- YYYYMMDD
+
+// ChildInformation ::= SET {
+//      name            Name,
+//      dateOfBirth     [0] Date
+// }
 struct ChildInformation {
 	name          Name
-	date_of_birth Date @[context_specific: 0; implicit]
+	date_of_birth Date
 }
 
-fn (ci ChildInformation) tag() Tag {
+fn (ci ChildInformation) tag() asn1.Tag {
 	return asn1.default_set_tag
 }
 
 fn (ci ChildInformation) payload() ![]u8 {
 	mut out := []u8{}
-	out << encode(ci.name)!
-	out << encode_with_options(ci.date_of_birth, 'context_specific;implicit;0]')!
+	out << asn1.encode(ci.name)!
+	out << asn1.encode_with_options(ci.date_of_birth, 'context_specific: 0; explicit; inner:application,false,3')!
 
 	return out
 }
 
-type EmployeeNumber = asn1.Integer
+// EmployeeNumber ::= [APPLICATION 2] IMPLICIT INTEGER
+type EmployeeNumber = asn1.ApplicationElement
 
-fn (e EmployeeNumber) tag() asn1.Tag {
-	return asn1.default_integer_tag
+fn EmployeeNumber.new(val asn1.Integer) !asn1.ApplicationElement {
+	return asn1.ApplicationElement.from_element(val, 2, .implicit)!
 }
 
-fn (e EmployeeNumber) payload() ![]u8 {
-	v := e as asn1.Integer
-	return v.payload()!
+// // Date ::= [APPLICATION 3] IMPLICIT VisibleString -- YYYYMMDD
+type Date = asn1.ApplicationElement
+
+fn Date.new(val asn1.VisibleString) !asn1.ApplicationElement {
+	return asn1.ApplicationElement.from_element(val, 3, .implicit)!
 }
 
-type Date = asn1.VisibleString
+// Name ::= [APPLICATION 1] IMPLICIT SEQUENCE {
+//      givenName       VisibleString,
+//      initial         VisibleString,
+//      familyName      VisibleString
+// }
+type Name = asn1.ApplicationElement
 
-fn (d Date) tag() asn1.Tag {
-	return asn1.default_visisblestring_tag
+fn Name.new(el NameEntry) !asn1.ApplicationElement {
+	return asn1.ApplicationElement.from_element(el, 1, .implicit)!
 }
 
-fn (d Date) payload() ![]u8 {
-	v := d as asn1.VisibleString
-	return v.payload()!
-}
-
-// You can write routine for encodes the Date or pass the options later.
-fn encode_date(d Date) ![]u8 {
-	// visiblestring tag = 26
-	return asn1.encode_with_options(d, 'application:3;implicit;inner:26')
-}
-
-struct Name {
+struct NameEntry {
 	given_name  asn1.VisibleString
 	initial     asn1.VisibleString
 	family_name asn1.VisibleString
 }
 
-fn (n Name) tag() asn1.Tag {
+fn (n NameEntry) tag() asn1.Tag {
 	return asn1.default_sequence_tag
 }
 
-fn (n Name) payload() ![]u8 {
+fn (n NameEntry) payload() ![]u8 {
 	mut out := []u8{}
 	out << asn1.encode(n.given_name)!
 	out << asn1.encode(n.initial)!
@@ -115,20 +140,39 @@ fn (n Name) payload() ![]u8 {
 // Representation of this record value
 //
 // 60 8185
-//		61 10 	1A 94 'John'
+//		61 10 	1A 94 'John'			// name
 //				iA 01 'P'
 //				1A 05 'Smith'
-//		A0 0A	1A 08 'Director'
-//		42 01	33
-//		A1 0A	43 08 '19710917'
-//		A2 12	61 10 	1A 	04 'Mary'
+//		A0 0A	1A 08 'Director' 		// title
+//		42 01	33						// number
+//		A1 0A	43 08 '19710917'		// dateOfHire
+//		A2 12	61 10 	1A 	04 'Mary' 	// nameOfSpouse
 //						1A	01	'T'
 //						1A	05	'Smith'
-//		A3 42	31 1F	61	11	1A 05 'Ralph'
-//								1A 01 'T'
-//								1A 05 'Smith'
+//		A3 42	31 1F	61	11	1A 05 'Ralph'	=> 52 61 6c 70 68 // children 
+//								1A 01 'T'  		=> 54
+//								1A 05 'Smith'	=> 53 6d 69 74 68
 //						A0	0A	43 08 '19571111'	
 //				31 1F	61	11	1A 05 'Susan'
 //								1A 01 'B'
 //								1A 05 'Jones'
 //						A0	0A	45 08 '19590717'
+
+fn main() {
+	// { name {givenName "Ralph",initial "T",familyName "Smith"},
+	//			  dateOfBirth "19571111"
+	//			},
+	// (1a) 05 52 61 6c 70 68 (1a) 01 54 (1a) 05 53 6d 69 74 68
+	n0 := NameEntry{
+		given_name:  asn1.VisibleString.new('Ralph')!
+		initial:     asn1.VisibleString.new('T')!
+		family_name: asn1.VisibleString.new('Smith')!
+	}
+	childinfo0 := ChildInformation{
+		name:          Name.new(n0)!
+		date_of_birth: Date.new(asn1.VisibleString.new('19571111')!)!
+	}
+	dump(childinfo0.tag())
+	dump(childinfo0.name.inner_tag()!)
+	dump(childinfo0.payload()!)
+}

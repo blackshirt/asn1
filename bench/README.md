@@ -1,7 +1,7 @@
 Benchmark of `asn1` module
 --------------------------
 
-This is benchmark of `asn1` module compared with go version (on my dev machine)
+This is benchmark of `asn1` module compared with go version (on free gitpod workspace)
 
 Regular benchmark produces this result:
 ```bash
