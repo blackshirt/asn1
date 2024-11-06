@@ -62,7 +62,7 @@ pub fn (el Element) into_object[T]() !T {
 	if el is T {
 		return *el
 	}
-	return error('Element el does not holding ${typeof(T{}).name}')
+	return error('Element el does not holding T}')
 }
 
 // length tells the payload length of this element.

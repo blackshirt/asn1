@@ -30,6 +30,10 @@ struct PersonnelRecord {
 	children       asn1.SequenceOf[ChildInformation]
 }
 
+fn (pr PersonnelRecord) tag() asn1.Tag {
+	return asn1.default_set_tag
+}
+
 fn (pr PersonnelRecord) payload() ![]u8 {
 	mut out := []u8{}
 	out << asn1.encode(pr.name)!
@@ -37,9 +41,32 @@ fn (pr PersonnelRecord) payload() ![]u8 {
 	out << asn1.encode(pr.number)!
 	out << asn1.encode_with_options(pr.date_of_hire, 'context_specific: 1; explicit; inner:application,false,3')!
 	out << asn1.encode_with_options(pr.name_of_spouse, 'context_specific: 2; explicit; inner:application,true,1')!
-	out << asn1.encode_with_options(pr.children, 'context_specific: 3; explicit; inner:16')!
+	out << asn1.encode_with_options(pr.children, 'context_specific: 3; implicit; inner:16')!
 
 	return out
+}
+
+// deserializer of Pe
+fn PersonnelRecord.decode(bytes []u8) !PersonnelRecord {
+	el := asn1.decode_with_options(bytes, 'application:0;implicit;inner:17')!
+	assert el.tag() == asn1.default_set_tag
+
+	set := el.into_object[asn1.Set]()!
+	fields := set.fields()
+	dump(fields)
+	title := fields[1].unwrap_with_options('context_specific:0;explicit;inner:26')!
+	doh := fields[3].unwrap_with_options('context_specific: 1; explicit; inner:application,false,3')!
+	nosp := fields[4].unwrap_with_options('context_specific: 2; explicit; inner:application,true,1')!
+	children := fields[5].unwrap_with_options('context_specific: 3; implicit; inner:16')!
+	pr := PersonnelRecord{
+		name:           fields[0].into_object[Name]()!
+		title:          title.into_object[asn1.VisibleString]()!
+		number:         fields[2].into_object[EmployeeNumber]()!
+		date_of_hire:   doh.into_object[Date]()!
+		name_of_spouse: nosp.into_object[Name]()!
+		children:       children.into_object[asn1.SequenceOf[ChildInformation]]()!
+	}
+	return pr
 }
 
 // ChildInformation ::= SET {
@@ -194,19 +221,19 @@ fn (n NameEntry) payload() ![]u8 {
 fn main() {
 	// We detailed every pieces of element
 
-	//		61 10 	1A 04 'John'	=> 4a 6f 68 6e			// name
-	//				1A 01 'P'	 	=> 50	
-	//				1A 05 'Smith'	=> 53 6d 69 74 68
-	// PersonelRecord.name
-	pr_nme := Name.new(NameEntry{
+	// PersonnelRecord.name
+	pr_name := Name.new(NameEntry{
 		given_name:  asn1.VisibleString.new('John')!
 		initial:     asn1.VisibleString.new('P')!
 		family_name: asn1.VisibleString.new('Smith')!
 	})!
+	//		61 10 	1A 04 'John'	=> 4a 6f 68 6e			// name
+	//				1A 01 'P'	 	=> 50	
+	//				1A 05 'Smith'	=> 53 6d 69 74 68
 	pr_name_bytes := [u8(0x61), 0x10, 0x1A, 0x04, 0x4a, 0x6f, 0x68, 0x6e, 0x1A, 0x01, 0x50, 0x1A,
 		0x05, 0x53, 0x6d, 0x69, 0x74, 0x68]
 
-	assert asn1.encode(pr_nme)! == pr_name_bytes
+	assert asn1.encode(pr_name)! == pr_name_bytes
 
 	// PersonnelRecord.title
 	//		A0 0A	1A 08 'Director' => 44 69 72 65 63 74 6f 72	// title
@@ -226,6 +253,20 @@ fn main() {
 	doh := Date.new(asn1.VisibleString.new('19710917')!)!
 	doh_bytes := [u8(0xA1), 0x0A, 0x43, 0x08, 0x31, 0x39, 0x37, 0x31, 0x30, 0x39, 0x31, 0x37]
 	assert asn1.encode_with_options(doh, 'context_specific: 1; explicit; inner:application,false,3')! == doh_bytes
+
+	// PersonnelRecord.nameOfSpouse
+	//		A2 12	61 10 	1A 	04 'Mary'	=> 4d 61 72 79 	// nameOfSpouse
+	//						1A	01	'T'		=> 54
+	//						1A	05	'Smith'	=> 53 6d 69 74 68
+	nosp := Name.new(NameEntry{
+		given_name:  asn1.VisibleString.new('Mary')!
+		initial:     asn1.VisibleString.new('T')!
+		family_name: asn1.VisibleString.new('Smith')!
+	})!
+	nosp_bytes := [u8(0xA2), 0x12, 0x61, 0x10, 0x1A, 0x04, 0x4d, 0x61, 0x72, 0x79, 0x1A, 0x01,
+		0x54, 0x1A, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68]
+	//      nameOfSpouse    [2] Name,
+	assert asn1.encode_with_options(nosp, 'context_specific: 2; explicit; inner:application,true,1')! == nosp_bytes
 
 	// { name {givenName "Ralph",initial "T",familyName "Smith"},
 	//			  dateOfBirth "19571111"
@@ -265,4 +306,46 @@ fn main() {
 		0x42, 0x1A, 0x05, 0x4a, 0x6f, 0x6e, 0x65, 0x73, 0xA0, 0x0A, 0x43, 0x08, 0x31, 0x39, 0x35,
 		0x39, 0x30, 0x37, 0x31, 0x37]
 	assert asn1.encode(childinfo1)! == ch1_bytes
+
+	// PersonnelRecord.children
+	children := asn1.SequenceOf.from_list[ChildInformation]([childinfo0, childinfo1])!
+	//		A3 42	31 1F	61	11	1A 05 'Ralph'	=> 52 61 6c 70 68 // children
+	//								1A 01 'T'  		=> 54
+	//								1A 05 'Smith'	=> 53 6d 69 74 68
+	//						A0	0A	43 08 '19571111' => 31 39 35 37 31 31 31 31
+	//				31 1F	61	11	1A 05 'Susan'	=> 53 75 73 61 6e
+	//								1A 01 'B'		=> 42
+	//								1A 05 'Jones'	=> 4a 6f 6e 65 73
+	//						A0	0A	43 08 '19590717' => 31 39 35 39 30 37 31 37
+	children_bytes := [u8(0xA3), 0x42, u8(0x31), 0x1F, 0x61, 0x11, 0x1A, 0x05, 0x52, 0x61, 0x6c,
+		0x70, 0x68, 0x1A, 0x01, 0x54, 0x1A, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68, 0xA0, 0x0A, 0x43,
+		0x08, 0x31, 0x39, 0x35, 0x37, 0x31, 0x31, 0x31, 0x31, u8(0x31), 0x1F, 0x61, 0x11, 0x1A,
+		0x05, 0x53, 0x75, 0x73, 0x61, 0x6e, 0x1A, 0x01, 0x42, 0x1A, 0x05, 0x4a, 0x6f, 0x6e, 0x65,
+		0x73, 0xA0, 0x0A, 0x43, 0x08, 0x31, 0x39, 0x35, 0x39, 0x30, 0x37, 0x31, 0x37]
+	assert asn1.encode_with_options(children, 'context_specific: 3; implicit; inner:16')! == children_bytes
+
+	// PersonnelRecord entries
+	pr := PersonnelRecord{
+		name:           pr_name
+		title:          title
+		number:         emp_num
+		date_of_hire:   doh
+		name_of_spouse: nosp
+		children:       children
+	}
+
+	mut expected_record_bytes := [u8(0x60), 0x81, 0x85]
+	expected_record_bytes << pr_name_bytes
+	expected_record_bytes << title_bytes
+	expected_record_bytes << emp_bytes
+	expected_record_bytes << doh_bytes
+	expected_record_bytes << nosp_bytes
+	expected_record_bytes << children_bytes
+
+	// PersonnelRecord ::= [APPLICATION 0] IMPLICIT SET {
+	pr_record_output := asn1.encode_with_options(pr, 'application:0;implicit;inner:17')!
+	assert pr_record_output == expected_record_bytes
+
+	pr_record := PersonnelRecord.decode(pr_record_output)!
+	dump(pr_record)
 }
