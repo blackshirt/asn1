@@ -71,10 +71,9 @@ fn (ci ChildInformation) tag() asn1.Tag {
 
 fn (ci ChildInformation) payload() ![]u8 {
 	mut out := []u8{}
-	dump(ci.name.payload()!.hex())
 	out << asn1.encode(ci.name)!
 	//, 'context_specific: 0; explicit; inner:application,false,3'
-	out << asn1.encode(ci.date_of_birth)!
+	out << asn1.encode_with_options(ci.date_of_birth, 'context_specific: 0; explicit; inner:application,false,3')!
 
 	return out
 }
@@ -86,11 +85,34 @@ fn EmployeeNumber.new(val asn1.Integer) !asn1.ApplicationElement {
 	return asn1.ApplicationElement.from_element(val, 2, .implicit)!
 }
 
+fn (e EmployeeNumber) tag() asn1.Tag {
+	return e.RawElement.tag()
+}
+
+fn (e EmployeeNumber) payload() ![]u8 {
+	return e.RawElement.payload()!
+}
+
 // // Date ::= [APPLICATION 3] IMPLICIT VisibleString -- YYYYMMDD
 type Date = asn1.ApplicationElement
 
 fn Date.new(val asn1.VisibleString) !asn1.ApplicationElement {
 	return asn1.ApplicationElement.from_element(val, 3, .implicit)!
+}
+
+// Issues: without defines this required tag and payload, this leads into panic RUNTIME ERROR
+// 0x00000000: at ???: RUNTIME ERROR: invalid memory access
+// /tmp/v_33333/examples2.01JBZV5E8Q7159BDF4PWJXJ3QK.tmp.c:23109: by asn1__Element_encode_with_options
+// /tmp/v_33333/examples2.01JBZV5E8Q7159BDF4PWJXJ3QK.tmp.c:23090: by asn1__encode_with_options
+// /tmp/v_33333/examples2.01JBZV5E8Q7159BDF4PWJXJ3QK.tmp.c:23077: by asn1__encode
+// /tmp/v_33333/examples2.01JBZV5E8Q7159BDF4PWJXJ3QK.tmp.c:29098: by main__main
+// /tmp/v_33333/examples2.01JBZV5E8Q7159BDF4PWJXJ3QK.tmp.c:29396: by main
+fn (d Date) tag() asn1.Tag {
+	return d.RawElement.tag()
+}
+
+fn (d Date) payload() ![]u8 {
+	return d.RawElement.payload()!
 }
 
 // Name ::= [APPLICATION 1] IMPLICIT SEQUENCE {
@@ -104,12 +126,13 @@ fn Name.new(el NameEntry) !asn1.ApplicationElement {
 	return asn1.ApplicationElement.from_element(el, 1, .implicit)!
 }
 
+// Issues: without defines this required tag and payload, this leads into panic RUNTIME ERROR
 fn (n Name) tag() asn1.Tag {
-	return asn1.Tag.new(.application, true, 1) or { panic(err) }
+	return n.RawElement.tag()
 }
 
 fn (n Name) payload() ![]u8 {
-	return n.payload()!
+	return n.RawElement.payload()!
 }
 
 struct NameEntry {
@@ -178,16 +201,19 @@ fn main() {
 		initial:     asn1.VisibleString.new('T')!
 		family_name: asn1.VisibleString.new('Smith')!
 	}
+	n1 := NameEntry{
+		given_name:  asn1.VisibleString.new('Susan')!
+		initial:     asn1.VisibleString.new('B')!
+		family_name: asn1.VisibleString.new('Jones')!
+	}
 	childinfo0 := ChildInformation{
 		name:          Name.new(n0)!
 		date_of_birth: Date.new(asn1.VisibleString.new('19571111')!)!
 	}
-	dump(childinfo0.tag())
-	dump(childinfo0.name.inner_tag()!)
-	dump(childinfo0)
-	nm := asn1.Element.from_object[Name](childinfo0.name)!
-	dump(nm)
-	dump(nm.tag())
-	dump(nm.payload()!)
-	dump(asn1.encode(nm)!)
+	childinfo1 := ChildInformation{
+		name:          Name.new(n1)!
+		date_of_birth: Date.new(asn1.VisibleString.new('19590717')!)!
+	}
+	dump(asn1.encode(childinfo0)!.hex())
+	dump(asn1.encode(childinfo1)!.hex())
 }
