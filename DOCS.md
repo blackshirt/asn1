@@ -357,6 +357,8 @@ fn (el Element) set_default_value(mut fo FieldOptions, value Element) !
 to setup default value within the options for the current element, or would be error if `has_default` flag is set but default value
 is not availables.
 
+See [field_options.v](src/field_options.v) for more detail on this options.
+
 ## Supported basic UNIVERSAL ASN.1 Type
 
 Basic ASN.1 type was a ASN.1 object which has universal class. It's currently supports following basic ASN1 type:
@@ -419,7 +421,20 @@ pub struct PrivateELement {
 	RawElement
 }
 ```
-See `other_element.v` on the repo for more details on this.
+Intended usage for this non-universal class is for wrapping semantic, instead create your own non-universal manually.
+For examples, if you have some element (maybe non-universal), you want create non-universal element from this element,
+you can call (for creating private type element) routine :
+```v
+fn PrivateELement.from_element(inner Element, tagnum int, mode TaggedMode) !PrivateELement
+```
+Its currently support nested wrapping, but the unwrapping process should do by your self.
+
+> **Warning**
+> There are some limitation on this wrapping,
+> - You can't wrap into universal class
+> - You can't wrap an Optional Element.
+
+See [other_element.v](src/other_element.v) on the repo for more details on this.
 
 [[Return to contents]](#table-of-contents)
 

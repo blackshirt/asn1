@@ -2,6 +2,9 @@ module main
 
 import asn1
 
+// This example takes more complex scenario, in the sense of nested wrapping, the use of
+// other class Element supported in this module.
+//
 // This examples is taken from ITU-T X.690 Information technology – ASN.1 encoding rules:
 // Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and
 // Distinguished Encoding Rules (DER) document.
@@ -23,7 +26,7 @@ import asn1
 //
 struct PersonnelRecord {
 	name           Name
-	title          asn1.VisibleString // @[context_specific: 0; explicit; inner: 26]
+	title          asn1.VisibleString
 	number         EmployeeNumber
 	date_of_hire   Date
 	name_of_spouse Name
@@ -46,35 +49,61 @@ fn (pr PersonnelRecord) payload() ![]u8 {
 	return out
 }
 
-// deserializer of Pe
+// deserializer of PersonellRecord bytes
 fn PersonnelRecord.decode(bytes []u8) !PersonnelRecord {
+	// we perfrom decoding as a reverse of the serialization with the same options.
+	// after that, we get an Element (with the Set type of PersonellRecord)
 	el := asn1.decode_with_options(bytes, 'application:0;implicit;inner:17')!
 	assert el.tag() == asn1.default_set_tag
-
 	set := el.into_object[asn1.Set]()!
-	fields := set.fields()
-	// dump(fields)
-	title := fields[1].unwrap_with_options('context_specific:0;explicit;inner:26')!
-	doh := fields[3].unwrap_with_options('context_specific: 1; explicit; inner:application,false,3')!
-	nosp := fields[4].unwrap_with_options('context_specific: 2; explicit; inner:application,true,1')!
-	children := fields[5].unwrap_with_options('context_specific: 3; implicit; inner:16')!
 
+	// fields is series of element ([]Element), PersonellRecord fields
+	fields := set.fields()
+
+	// we turn series of element into underlying desired type.
+	// its rather clumsy to transforms it, because Sequenve (and Set) fields is an []Element, so you should care
+	// to turn this into desired object
+	name_app := fields[0].into_object[asn1.ApplicationElement]()!
+	name := Name(name_app)
+
+	// Title
+	title_elem := fields[1].unwrap_with_options('context_specific:0;explicit;inner:26')!
+	title := title_elem.into_object[asn1.VisibleString]()!
+
+	// EmployeNumber
+	emp_num := fields[2].into_object[asn1.ApplicationElement]()!
+	employe_number := EmployeeNumber(emp_num)
+
+	// dateOfHire
+	doh := fields[3].unwrap_with_options('context_specific: 1; explicit; inner:application,false,3')!
+	doh_app := doh.into_object[asn1.ApplicationElement]()!
+	date_of_hire := Date(doh_app)
+
+	// nameOfSpouse
+	nosp := fields[4].unwrap_with_options('context_specific: 2; explicit; inner:application,true,1')!
+	nosp_app := nosp.into_object[asn1.ApplicationElement]()!
+	name_of_spouse := Name(nosp_app)
+
+	// The children is Sequence of Set, first we unwrap it then turn into sequence.
+	children := fields[5].unwrap_with_options('context_specific: 3; implicit; inner:16')!
 	children_seq := children.into_object[asn1.Sequence]()!
-	// children_seq_fields := children_seq.fields() // []Element
-	// els := children_seq.into_sequence_of[asn1.Set]()!
-	
-	mut chls := []ChildInformation{}
-	for item in children_seq.fields() {
-		i := ChildInformation.from_set(item.into_object[asn1.Set]()!)!
-		chls << i
+	childset_fields := children_seq.fields() // []Element
+
+	mut childset := []ChildInformation{}
+	for item in childset_fields {
+		// item is an Element
+		obj := item.into_object[asn1.Set]()!
+		i := ChildInformation.from_set(obj)!
+		childset << i
 	}
+
 	pr := PersonnelRecord{
-		name:           fields[0].into_object[Name]()!
-		title:          title.into_object[asn1.VisibleString]()!
-		number:         fields[2].into_object[EmployeeNumber]()!
-		date_of_hire:   doh.into_object[Date]()!
-		name_of_spouse: nosp.into_object[Name]()!
-		children:       asn1.SequenceOf.from_list[ChildInformation](chls)!
+		name:           name
+		title:          title
+		number:         employe_number
+		date_of_hire:   date_of_hire
+		name_of_spouse: name_of_spouse
+		children:       asn1.SequenceOf.from_list[ChildInformation](childset)!
 	}
 	return pr
 }
@@ -102,13 +131,18 @@ struct ChildInformation {
 	date_of_birth Date
 }
 
+// s should Set with series of Element with []ChildInformation within underlying fields.
 fn ChildInformation.from_set(s asn1.Set) !ChildInformation {
 	if s.fields().len != 2 {
 		return error('Bad ChildInformation set')
 	}
+	fields := s.fields() // serialized name and dateOfBirth of ChildInformation
+	name := fields[0].into_object[asn1.ApplicationElement]()!
+	doh := fields[1].unwrap_with_options('context_specific: 0; explicit; inner:application,false,3')!
+	date := doh.into_object[asn1.ApplicationElement]()!
 	ch := ChildInformation{
-		name:          s.fields()[0].into_object[Name]()!
-		date_of_birth: s.fields()[1].into_object[Date]()!
+		name:          Name(name)
+		date_of_birth: Date(date)
 	}
 	return ch
 }
@@ -120,7 +154,6 @@ fn (ci ChildInformation) tag() asn1.Tag {
 fn (ci ChildInformation) payload() ![]u8 {
 	mut out := []u8{}
 	out << asn1.encode(ci.name)!
-	//, 'context_specific: 0; explicit; inner:application,false,3'
 	out << asn1.encode_with_options(ci.date_of_birth, 'context_specific: 0; explicit; inner:application,false,3')!
 
 	return out
@@ -133,6 +166,8 @@ fn EmployeeNumber.new(val asn1.Integer) !asn1.ApplicationElement {
 	return asn1.ApplicationElement.from_element(val, 2, .implicit)!
 }
 
+// Issues: without defines this required tag and payload, this leads into panic RUNTIME ERROR
+// 0x00000000: at ???: RUNTIME ERROR: invalid memory access
 fn (e EmployeeNumber) tag() asn1.Tag {
 	return e.RawElement.tag()
 }
@@ -150,11 +185,6 @@ fn Date.new(val asn1.VisibleString) !asn1.ApplicationElement {
 
 // Issues: without defines this required tag and payload, this leads into panic RUNTIME ERROR
 // 0x00000000: at ???: RUNTIME ERROR: invalid memory access
-// /tmp/v_33333/examples2.01JBZV5E8Q7159BDF4PWJXJ3QK.tmp.c:23109: by asn1__Element_encode_with_options
-// /tmp/v_33333/examples2.01JBZV5E8Q7159BDF4PWJXJ3QK.tmp.c:23090: by asn1__encode_with_options
-// /tmp/v_33333/examples2.01JBZV5E8Q7159BDF4PWJXJ3QK.tmp.c:23077: by asn1__encode
-// /tmp/v_33333/examples2.01JBZV5E8Q7159BDF4PWJXJ3QK.tmp.c:29098: by main__main
-// /tmp/v_33333/examples2.01JBZV5E8Q7159BDF4PWJXJ3QK.tmp.c:29396: by main
 fn (d Date) tag() asn1.Tag {
 	return d.RawElement.tag()
 }
@@ -292,13 +322,12 @@ fn main() {
 	// { name {givenName "Ralph",initial "T",familyName "Smith"},
 	//			  dateOfBirth "19571111"
 	//			},
-	n0 := NameEntry{
-		given_name:  asn1.VisibleString.new('Ralph')!
-		initial:     asn1.VisibleString.new('T')!
-		family_name: asn1.VisibleString.new('Smith')!
-	}
 	childinfo0 := ChildInformation{
-		name:          Name.new(n0)!
+		name:          Name.new(NameEntry{
+			given_name:  asn1.VisibleString.new('Ralph')!
+			initial:     asn1.VisibleString.new('T')!
+			family_name: asn1.VisibleString.new('Smith')!
+		})!
 		date_of_birth: Date.new(asn1.VisibleString.new('19571111')!)!
 	}
 	// 31 1F	61	11	1A 05 'Ralph'	=> 52 61 6c 70 68
@@ -310,13 +339,12 @@ fn main() {
 		0x37, 0x31, 0x31, 0x31, 0x31]
 	assert asn1.encode(childinfo0)! == ch0_bytes
 
-	n1 := NameEntry{
-		given_name:  asn1.VisibleString.new('Susan')!
-		initial:     asn1.VisibleString.new('B')!
-		family_name: asn1.VisibleString.new('Jones')!
-	}
 	childinfo1 := ChildInformation{
-		name:          Name.new(n1)!
+		name:          Name.new(NameEntry{
+			given_name:  asn1.VisibleString.new('Susan')!
+			initial:     asn1.VisibleString.new('B')!
+			family_name: asn1.VisibleString.new('Jones')!
+		})!
 		date_of_birth: Date.new(asn1.VisibleString.new('19590717')!)!
 	}
 	//				31 1F	61	11	1A 05 'Susan'	=> 53 75 73 61 6e
@@ -368,5 +396,7 @@ fn main() {
 	assert pr_record_output == expected_record_bytes
 
 	pr_record := PersonnelRecord.decode(pr_record_output)!
-	dump(pr_record)
+	pr_record_encoded_back := asn1.encode_with_options(pr_record, 'application:0;implicit;inner:17')!
+
+	dump(pr_record_encoded_back == expected_record_bytes) // true
 }
