@@ -82,10 +82,10 @@ Where `TagClass` represent class of ASN.1 type. There are four class of ASN.1 ty
 
 ```v
 enum TagClass {
-	universal = 0x00
+	universal   = 0x00
 	application = 0x01
-	context = 0x02
-	private = 0x03
+	context     = 0x02
+	private     = 0x03
 }
 ```
 
@@ -178,8 +178,8 @@ At the core for support handling element in generic and concise way, a fundament
 
 ```v
 interface Element {
-    tag()     Tag
-    payload() ![]u8
+	tag() Tag
+	payload() ![]u8
 }
 ```
 
@@ -194,7 +194,7 @@ The `payload` methods of the `Element` does not dictates on how your element gen
 Its possible to build payload for complex structure, your own defined struct contains multiples field of elements with the help of function on this modules.
 Of course, you can build your payload manually, but this `asn1` module has provides helper routine to do that, in the form :
 ```v
-fn make_payload[T](val T, kd KeyDefault) ![]u8 
+fn make_payload[T](val T, kd KeyDefault) ![]u8
 ```
 > ***Note***
 > - `T` is struct contains one or more fields that fullfills Element interface.
@@ -257,7 +257,7 @@ fn (el Element) into_object[T]() !T
 Examples:
 ```v
 el := asn1.decode([u8(0x13), 0x02, 0x68, 0x69])!
-ps := el.into_object[asn1.PrintableString]()!
+ps := el.into_object[PrintableString]()!
 ```
 So, its also happens to pass an options string when this bytes comes from serialized tagged type element,
 ```v
@@ -293,15 +293,15 @@ OPTIONAL keyword handling, and DEFAULT keyword handling, through the `FieldOptio
 struct FieldOptions {
 mut:
 	// For wrapping purposes
-	cls           string
-	tagnum        int = -1
-	mode          string
-	inner         string
+	cls    string
+	tagnum int = -1
+	mode   string
+	inner  string
 
 	// for OPTIONAL handling
-	optional      bool
-	present       bool
-	
+	optional bool
+	present  bool
+
 	// FOR DEFAULT handling
 	has_default   bool
 	default_value ?Element

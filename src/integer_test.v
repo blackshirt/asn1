@@ -117,7 +117,7 @@ const integer_test_data = [
 // from golang encoding/asn1 test
 fn test_asn1_unpack_and_validate() {
 	for i, v in integer_test_data {
-		ret := Integer.unpack_and_validate(v.bytes) or {
+			ret := Integer.unpack_and_validate(v.bytes) or {
 			assert err == v.err
 			continue
 		}

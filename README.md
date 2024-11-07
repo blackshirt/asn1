@@ -4,8 +4,8 @@
 Distinguished Encoding Rules (DER) encoding and decoding.
 
 This module provides you with the ability to generate and parse ASN.1 encoded data.
-More precisely, it provides you with the ability to generate and parse data encoded with ASN.1’s DER (Distinguished Encoding Rules) encoding.
-It does not support other than DER.
+More precisely, it provides you with the ability to generate and parse data encoded with 
+ASN.1’s DER (Distinguished Encoding Rules) encoding. It does not support other than DER.
 
 ## Status
 
@@ -66,15 +66,6 @@ Example ::= SEQUENCE {
 
 You can represent above structure with related structure in `v`, similar like:
 
-```v
-struct Example {
-    greeting    asn1.Utf8String
-    answer      asn1.Integer
-    // you can tag your struct fields with supported options.
-    tipe        asn1.ObjectIdentifier @[context_specific:1;explicit; inner:6]
-}
-```
-
 For your structure to be treated as `asn1.Element`, you should provide
 two methods on the object, ie,
 
@@ -84,29 +75,39 @@ two methods on the object, ie,
 That's it, then you can use methods (functions) on this modules that operates on element.
 
 ```v
+import asn1
+
+struct Example {
+	greeting asn1.Utf8String
+	answer   asn1.Integer
+	// you can tag your struct fields with supported options.
+	tipe asn1.ObjectIdentifier @[context_specific: 1; explicit; inner: 6]
+}
+
 fn (ex Example) tag() asn1.Tag {
-    return asn1.default_sequence_tag
+	return asn1.default_sequence_tag
 }
 
 // you can build your payload manually or use `asn1.make_payload`, but with aware,
 // if your structure contains generic, its maybe not work (currently).
 fn (ex Example) payload() ![]u8 {
-    kd := asn1.KeyDefault(map[string]asn1.Element{})
-    payload := asn1.make_payload[Example](ex, kd)!
+	kd := asn1.KeyDefault(map[string]asn1.Element{})
+	payload := asn1.make_payload[Example](ex, kd)!
 
-    return payload
+	return payload
 }
 
 fn main() {
-    expected_output := [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1), 6, 6, 4, 43, 6, 1, 3]
-    ex := Example {
-        greeting : asn1.Utf8String.new('Hello')!
-        answer : asn1.Integer.from_int(42)
-        tipe : asn1.ObjectIdentifier.new('1.3.6.1.3')!
-    }
+	expected_output := [u8(0x30), 18, u8(12), 5, 72, 101, 108, 108, 111, u8(2), 1, 42, u8(0xA1),
+		6, 6, 4, 43, 6, 1, 3]
+	ex := Example{
+		greeting: asn1.Utf8String.new('Hello')!
+		answer:   asn1.Integer.from_int(42)
+		tipe:     asn1.ObjectIdentifier.new('1.3.6.1.3')!
+	}
 
-    out := asn1.encode(ex)!
-    assert out == expected_output
+	out := asn1.encode(ex)!
+	assert out == expected_output
 }
 ```
 
@@ -117,23 +118,23 @@ but its possible to use other way with the help from this module, like the use o
 
 ```v
 fn Example.decode(bytes []u8) !Example {
-        // just call raw .decode on bytes, by example, its should produce sequence type.
+	// just call raw .decode on bytes, by example, its should produce sequence type.
 	elem := asn1.decode(bytes)!
 	assert elem.tag().equal(asn1.default_sequence_tag) // should true
 
 	// cast produced element into Sequence type and get the fields.
-	seq := elem.into_object[asn1.Sequence]()!
+	seq := elem.into_object[Sequence]()!
 	fields := seq.fields()
 
 	// and then, turn every field into desired object based on your schema.
 	// first of the two fields is non-wrapped element, so just turn into real object.
-	greeting := fields[0].into_object[asn1.Utf8String]()!
-	answer := fields[1].into_object[asn1.Integer]()!
+	greeting := fields[0].into_object[Utf8String]()!
+	answer := fields[1].into_object[Integer]()!
 
 	// the third field is context_specific wrapped element, just unwrap it with the
 	// same options used to encode, then turn into object.
 	oid_tipe := fields[2].unwrap_with_options('context_specific:1;explicit; inner:6')!
-	tipe := oid_tipe.into_object[asn1.ObjectIdentifier]()!
+	tipe := oid_tipe.into_object[ObjectIdentifier]()!
 
 	// then build your Example struct
 	ex := Example{
